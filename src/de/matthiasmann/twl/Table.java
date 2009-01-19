@@ -82,26 +82,26 @@ public class Table extends TableBase {
     }
 
     class ModelChangeListener implements TableModel.ChangeListener {
-        public void rowsInserted(int first, int last) {
+        public void rowsInserted(int idx, int count) {
             numRows = model.getNumRows();
-            modelRowsInserted(first, last-first+1);
+            modelRowsInserted(idx, count);
         }
-        public void rowsDeleted(int first, int last) {
+        public void rowsDeleted(int idx, int count) {
             numRows = model.getNumRows();
-            modelRowsDeleted(first, last-first+1);
+            modelRowsDeleted(idx, count);
         }
-        public void rowsChanged(int first, int last) {
-            for(int row=first ; row<=last ; row++) {
-                modelRowChanged(row);
+        public void rowsChanged(int idx, int count) {
+            for(int i=0 ; i<count ; i++) {
+                modelRowChanged(idx + i);
             }
         }
         public void columnDeleted(int idx, int count) {
             numColumns = model.getNumColumns();
-            throw new UnsupportedOperationException("Not supported yet.");
+            modelColumnsDeleted(count, count);
         }
         public void columnInserted(int idx, int count) {
             numColumns = model.getNumColumns();
-            throw new UnsupportedOperationException("Not supported yet.");
+            modelColumnsInserted(count, count);
         }
         public void cellChanged(int row, int column) {
             modelCellChanged(row, column);

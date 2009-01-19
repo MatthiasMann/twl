@@ -37,36 +37,37 @@ public interface TableModel {
 
     public interface ChangeListener {
         /**
-         * New rows have been inserted. The existing rows starting at first
-         * have been shifted. The range first-last (inclusive) are new.
+         * New rows have been inserted. The existing rows starting at idx
+         * have been shifted. The range idx to idx+count-1 (inclusive) are new.
          *
-         * @param first the first new row
-         * @param last the last new row. Must be >= first.
+         * @param idx the first new row
+         * @param count the number of inserted rows. Must be >= 1.
          */
-        public void rowsInserted(int first, int last);
+        public void rowsInserted(int idx, int count);
 
         /**
-         * Rows that were at the range first to last (inclusive) have been removed.
-         * Rows that were following last (starting with last+1) have been shifted
-         * to first.
-         * @param first the first removed row
-         * @param last the last removed row. Must be >= first.
+         * Rows that were at the range idx to idx+count-1 (inclusive) have been removed.
+         * Rows starting at idx+count have been shifted to idx.
+         *
+         * @param idx the first removed row
+         * @param count the number of removed rows. Must be >= 1.
          */
-        public void rowsDeleted(int first, int last);
+        public void rowsDeleted(int idx, int count);
 
         /**
-         * Rows in the range first to last (inclusive) have been changed.
-         * @param first the first changed row
-         * @param last the last changed row. Must be >= first.
+         * Rows in the range idx to idx+count-1 (inclusive) have been changed.
+         *
+         * @param idx the first changed row
+         * @param count the number of changed rows. Must be >= 1.
          */
-        public void rowsChanged(int first, int last);
+        public void rowsChanged(int idx, int count);
 
         /**
          * New columns have been inserted. The existing columns starting at idx
          * have been shifted. The range idx to idx+count-1 (inclusive) are new.
          *
          * @param idx the first new column
-         * @param count the number of inserted column. Must be >= 1.
+         * @param count the number of inserted columns. Must be >= 1.
          */
         public void columnInserted(int idx, int count);
 
@@ -75,7 +76,7 @@ public interface TableModel {
          * Columns starting at idx+count have been shifted to idx.
          *
          * @param idx the first removed column
-         * @param count the number of removed column. Must be >= 1.
+         * @param count the number of removed columns. Must be >= 1.
          */
         public void columnDeleted(int idx, int count);
 

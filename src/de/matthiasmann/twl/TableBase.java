@@ -548,11 +548,53 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             }
         }
         if(rowModel != null) {
-            rowModel.remove(count, count);
+            rowModel.remove(row, count);
         }
         if(!widgetGrid.isEmpty()) {
             widgetGrid.iterate(row, 0, row+count-1, numColumns, removeCellWidgetsFunction);
             widgetGrid.removeRows(row, count);
+        }
+        invalidateLayout();
+        invalidateParentLayout();
+    }
+
+    protected void modelColumnsInserted(int column, int count) {
+        columnModel.insert(column, count);
+        if(!widgetGrid.isEmpty() || hasCellWidgetCreators) {
+            removeAllCellWidgets();
+            widgetGrid.insertColumns(column, count);
+
+            for(int row=0 ; row<numRows ; row++) {
+                for(int i=0 ; i<count ; i++) {
+                    updateCellWidget(row, column + i);
+                }
+            }
+        }
+        if(column < getColumnStartPosition(scrollPosX)) {
+            ScrollPane sp = ScrollPane.getContainingScrollPane(this);
+            if(sp != null) {
+                int columnsStart = getColumnStartPosition(column);
+                int columnsEnd = getColumnEndPosition(column + count - 1);
+                sp.setScrollPositionX(scrollPosX + columnsEnd - columnsStart);
+            }
+        }
+        invalidateLayout();
+        invalidateParentLayout();
+    }
+
+    protected void modelColumnsDeleted(int column, int count) {
+        if(column+count <= getColumnStartPosition(scrollPosX)) {
+            ScrollPane sp = ScrollPane.getContainingScrollPane(this);
+            if(sp != null) {
+                int columnsStart = getColumnStartPosition(column);
+                int columnsEnd = getColumnEndPosition(column + count - 1);
+                sp.setScrollPositionY(scrollPosX - columnsEnd + columnsStart);
+            }
+        }
+        columnModel.remove(column, count);
+        if(!widgetGrid.isEmpty()) {
+            widgetGrid.iterate(0, column, numRows, column+count-1, removeCellWidgetsFunction);
+            widgetGrid.removeColumns(column, count);
         }
         invalidateLayout();
         invalidateParentLayout();

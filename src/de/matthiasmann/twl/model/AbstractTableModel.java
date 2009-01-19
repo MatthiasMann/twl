@@ -47,26 +47,26 @@ public abstract class AbstractTableModel implements TableModel {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, listener, ChangeListener.class);
     }
 
-    protected void fireRowsInserted(int first, int last) {
+    protected void fireRowsInserted(int idx, int count) {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
-                cl.rowsInserted(first, last);
+                cl.rowsInserted(idx, count);
             }
         }
     }
 
-    protected void fireRowsDeleted(int first, int last) {
+    protected void fireRowsDeleted(int idx, int count) {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
-                cl.rowsDeleted(first, last);
+                cl.rowsDeleted(idx, count);
             }
         }
     }
 
-    protected void fireRowsChanged(int first, int last) {
+    protected void fireRowsChanged(int idx, int count) {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
-                cl.rowsChanged(first, last);
+                cl.rowsChanged(idx, count);
             }
         }
     }
