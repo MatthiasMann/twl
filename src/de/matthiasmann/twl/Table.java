@@ -91,9 +91,7 @@ public class Table extends TableBase {
             modelRowsDeleted(idx, count);
         }
         public void rowsChanged(int idx, int count) {
-            for(int i=0 ; i<count ; i++) {
-                modelRowChanged(idx + i);
-            }
+            modelRowsChanged(idx, count);
         }
         public void columnDeleted(int idx, int count) {
             numColumns = model.getNumColumns();

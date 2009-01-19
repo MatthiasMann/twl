@@ -504,6 +504,18 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         invalidateLayout();
     }
 
+    protected void modelRowsChanged(int idx, int count) {
+        for(int i=0 ; i<count ; i++) {
+            if(rowModel != null) {
+                autoSizeRow(idx+i);
+            }
+            for(int col=0 ; col<numColumns ; col++) {
+                updateCellWidget(idx+i, col);
+            }
+        }
+        invalidateLayout();
+    }
+
     protected void modelCellChanged(int row, int column) {
         if(rowModel != null) {
             autoSizeRow(row);

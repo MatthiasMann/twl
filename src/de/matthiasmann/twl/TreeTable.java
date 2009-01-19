@@ -43,11 +43,14 @@ import de.matthiasmann.twl.utils.SizeSequence;
  */
 public class TreeTable extends TableBase {
 
+    private final ModelChangeListener modelChangeListener;
+
     private NodeState[] nodeStateTable;
     private TreeTableModel model;
     private NodeState rootNodeState;
 
     public TreeTable() {
+        modelChangeListener = new ModelChangeListener();
         nodeStateTable = new NodeState[64];
         super.registerCellRenderer(TreeTableNode.class, new TreeLeafCellRenderer());
         super.registerCellRenderer(NodeState.class, new TreeNodeCellRenderer());
@@ -64,12 +67,25 @@ public class TreeTable extends TableBase {
     }
 
     public void setModel(TreeTableModel model) {
+        if(this.model != null) {
+            this.model.removeChangeListener(modelChangeListener);
+        }
         this.model = model;
         this.nodeStateTable = new NodeState[64];
-        this.rootNodeState = createNodeState(model);
-        this.rootNodeState.initChildSizes();
-        this.numRows = getNumRows();
-        this.numColumns = model.getNumColumns();
+        if(this.model != null) {
+            this.model.addChangeListener(modelChangeListener);
+            this.rootNodeState = createNodeState(model);
+            this.rootNodeState.expanded = true;
+            this.rootNodeState.initChildSizes();
+            this.numRows = getNumRows();
+            this.numColumns = model.getNumColumns();
+        } else {
+            this.rootNodeState = null;
+            this.numRows = 0;
+            this.numColumns = 0;
+        }
+        invalidateLayout();
+        invalidateParentLayout();
     }
 
     public int getRowFromNode(TreeTableNode node) {
@@ -89,20 +105,23 @@ public class TreeTable extends TableBase {
     }
 
     public TreeTableNode getNodeFromRow(int row) {
-        TreeTableNode node = model;
-        row++;
-        while(row > 0) {
-            NodeState ns = HashEntry.get(nodeStateTable, node);
-            if(ns.childSizes != null) {
-                int idx = ns.childSizes.getIndex(row - 1);
-                row -= ns.childSizes.getPosition(idx) + 1;
-                node = ns.key.getChild(idx);
+        NodeState ns = rootNodeState;
+        for(;;) {
+            int prevRow = row;
+            int idx;
+            if(ns.childSizes == null) {
+                idx = Math.min(ns.key.getNumChildren()-1, row);
+                row -= idx + 1;
             } else {
-                node = ns.key.getChild(row - 1);
-                row  = 0;
+                idx = ns.childSizes.getIndex(row);
+                row -= ns.childSizes.getPosition(idx) + 1;
             }
+            if(row < 0) {
+                return ns.key.getChild(idx);
+            }
+            assert ns.childs[idx] != null;
+            ns = ns.childs[idx];
         }
-        return node;
     }
 
     protected NodeState getOrCreateNodeState(TreeTableNode node) {
@@ -172,16 +191,146 @@ public class TreeTable extends TableBase {
         return node.getData(column);
     }
 
+    private boolean updateParentSizes(NodeState ns) {
+        while(ns.expanded && ns.parent != null) {
+            NodeState parent = ns.parent;
+            int idx = parent.key.getChildIndex(ns.key);
+            assert parent.childSizes.size() == parent.key.getNumChildren();
+            parent.childSizes.setSize(idx, ns.getChildRows() + 1);
+            ns = parent;
+        }
+        numRows = getNumRows();
+        return ns.parent == null;
+    }
+    
+    protected void modelNodesAdded(TreeTableNode parent, int idx, int count) {
+        NodeState ns = HashEntry.get(nodeStateTable, parent);
+        // if ns is null then this node has not yet been displayed
+        if(ns != null) {
+            if(ns.childSizes != null) {
+                assert idx <= ns.childSizes.size();
+                ns.childSizes.insert(idx, count);
+                assert ns.childSizes.size() == parent.getNumChildren();
+            }
+            if(ns.childs != null) {
+                NodeState[] newChilds = new NodeState[parent.getNumChildren()];
+                System.arraycopy(ns.childs, 0, newChilds, 0, idx);
+                System.arraycopy(ns.childs, idx, newChilds, idx+count, ns.childs.length - idx);
+                ns.childs = newChilds;
+            }
+            if(updateParentSizes(ns)) {
+                int row = getRowFromNode(parent.getChild(idx));
+                assert row < numRows;
+                modelRowsInserted(row, count);
+            }
+        }
+    }
+
+    protected void recursiveRemove(NodeState ns) {
+        if(ns != null) {
+            HashEntry.remove(nodeStateTable, ns);
+            if(ns.childs != null) {
+                for(NodeState nsChild : ns.childs) {
+                    recursiveRemove(nsChild);
+                }
+            }
+        }
+    }
+
+    protected void modelNodesRemoved(TreeTableNode parent, int idx, int count) {
+        NodeState ns = HashEntry.get(nodeStateTable, parent);
+        // if ns is null then this node has not yet been displayed
+        if(ns != null) {
+            int rowsBase = getRowFromNode(parent) + 1;
+            int rowsStart = rowsBase + idx;
+            int rowsEnd = rowsBase + idx + count;
+            if(ns.childSizes != null) {
+                assert ns.childSizes.size() == parent.getNumChildren() + count;
+                rowsStart = rowsBase + ns.childSizes.getPosition(idx);
+                rowsEnd = rowsBase + ns.childSizes.getPosition(idx + count);
+                ns.childSizes.remove(idx, count);
+                assert ns.childSizes.size() == parent.getNumChildren();
+            }
+            if(ns.childs != null) {
+                for(int i=0 ; i<count ; i++) {
+                    recursiveRemove(ns.childs[idx+i]);
+                }
+                int numChildren = parent.getNumChildren();
+                if(numChildren > 0) {
+                    NodeState[] newChilds = new NodeState[numChildren];
+                    System.arraycopy(ns.childs, 0, newChilds, 0, idx);
+                    System.arraycopy(ns.childs, idx+count, newChilds, idx, newChilds.length - idx);
+                    ns.childs = newChilds;
+                } else {
+                    ns.childs = null;
+                }
+            }
+            if(updateParentSizes(ns)) {
+                modelRowsDeleted(rowsStart, rowsEnd - rowsStart);
+            }
+        }
+    }
+
+    protected boolean isVisible(NodeState ns) {
+        while(ns.expanded && ns.parent != null) {
+            ns = ns.parent;
+        }
+        return ns.expanded;
+    }
+    
+    protected void modelNodesChanged(TreeTableNode parent, int idx, int count) {
+        NodeState ns = HashEntry.get(nodeStateTable, parent);
+        // if ns is null then this node has not yet been displayed
+        if(ns != null && isVisible(ns)) {
+            int rowsBase = getRowFromNode(parent) + 1;
+            int rowsStart = rowsBase + idx;
+            int rowsEnd = rowsBase + idx + count;
+            if(ns.childSizes != null) {
+                rowsStart = rowsBase + ns.childSizes.getPosition(idx);
+                rowsEnd = rowsBase + ns.childSizes.getPosition(idx + count);
+            }
+            modelRowsChanged(rowsStart, rowsEnd - rowsStart);
+        }
+    }
+
+    protected class ModelChangeListener implements TreeTableModel.ChangeListener {
+        public void nodesAdded(TreeTableNode parent, int idx, int count) {
+            modelNodesAdded(parent, idx, count);
+        }
+        public void nodesRemoved(TreeTableNode parent, int idx, int count) {
+            modelNodesRemoved(parent, idx, count);
+        }
+        public void nodesChanged(TreeTableNode parent, int idx, int count) {
+            modelNodesChanged(parent, idx, count);
+        }
+        public void columnInserted(int idx, int count) {
+            numColumns = model.getNumColumns();
+            modelColumnsInserted(idx, count);
+        }
+        public void columnDeleted(int idx, int count) {
+            numColumns = model.getNumColumns();
+            modelColumnsDeleted(idx, count);
+        }
+    }
+
     protected class NodeState extends HashEntry<TreeTableNode, NodeState> implements BooleanModel {
         final NodeState parent;
         boolean expanded;
         SizeSequence childSizes;
+        NodeState[] childs;
         int level;
 
         public NodeState(TreeTableNode key, NodeState parent) {
             super(key);
             this.parent = parent;
             this.level = (parent != null) ? parent.level + 1 : 0;
+
+            if(parent != null) {
+                if(parent.childs == null) {
+                    parent.childs = new NodeState[parent.key.getNumChildren()];
+                }
+                parent.childs[parent.key.getChildIndex(key)] = this;
+            }
         }
 
         public void addCallback(Runnable callback) {
@@ -250,6 +399,7 @@ public class TreeTable extends TableBase {
             return level;
         }
     }
+
     static class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CellWidgetCreator {
         public Widget updateWidget(int row, int column, Object data, Widget existingWidget) {
             ToggleButton tb = (ToggleButton)existingWidget;
