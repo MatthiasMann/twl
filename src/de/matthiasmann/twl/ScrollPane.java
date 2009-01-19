@@ -156,7 +156,7 @@ public class ScrollPane extends Widget {
     @Override
     public int getMinWidth() {
         if(fixed == Fixed.HORIZONTAL && content != null) {
-            return content.getMinWidth();
+            return Math.max(content.getMinWidth(), super.getMinWidth());
         }
         return super.getMinWidth();
     }
@@ -164,7 +164,7 @@ public class ScrollPane extends Widget {
     @Override
     public int getMinHeight() {
         if(fixed == Fixed.VERTICAL && content != null) {
-            return content.getMinHeight();
+            return Math.max(content.getMinHeight(), super.getMinHeight());
         }
         return super.getMinHeight();
     }
