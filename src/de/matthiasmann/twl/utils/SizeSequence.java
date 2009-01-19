@@ -51,6 +51,10 @@ public class SizeSequence {
         table = new int[initialCapacity];
     }
 
+    public int size() {
+        return size;
+    }
+
     public int getPosition(int index) {
         int low = 0;
         int high = size;
@@ -151,6 +155,8 @@ public class SizeSequence {
             int[] sizes = new int[newSize];
             toSizes(0, size, sizes);
             table = sizes;
+        } else {
+            toSizes(0, size, table);
         }
         System.arraycopy(table, index, table, index+count, size-index);
         size = newSize;
