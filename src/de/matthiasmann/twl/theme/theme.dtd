@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    PUBLIC ID  : -//www.matthiasmann.de//TWL-Theme//EN
+    SYSTEM ID  : http://www.matthiasmann.de/java/twl/theme.dtd
+-->
+
+<!ELEMENT themes (textures|fontFile|theme|constantDef|include)*>
+
+<!ELEMENT textures (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage|cursor)*>
+<!ATTLIST textures
+    file    CDATA #REQUIRED
+    format  CDATA #REQUIRED
+    filter  CDATA #IMPLIED>
+
+<!ELEMENT hvsplit (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage)*>
+<!ATTLIST hvsplit
+    name            CDATA #IMPLIED
+    x               CDATA #IMPLIED
+    y               CDATA #IMPLIED
+    width           CDATA #IMPLIED
+    height          CDATA #IMPLIED
+    splitx          CDATA #IMPLIED
+    splity          CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    nocenter        (true|false) #IMPLIED
+    tint            CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT hsplit (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage)*>
+<!ATTLIST hsplit
+    name            CDATA #IMPLIED
+    x               CDATA #IMPLIED
+    y               CDATA #IMPLIED
+    width           CDATA #IMPLIED
+    height          CDATA #IMPLIED
+    splitx          CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    tint            CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT vsplit (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage)*>
+<!ATTLIST vsplit
+    name            CDATA #IMPLIED
+    x               CDATA #IMPLIED
+    y               CDATA #IMPLIED
+    width           CDATA #IMPLIED
+    height          CDATA #IMPLIED
+    splity          CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    tint            CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT texture EMPTY>
+<!ATTLIST texture
+    name            CDATA #IMPLIED
+    x               CDATA #REQUIRED
+    y               CDATA #REQUIRED
+    width           CDATA #REQUIRED
+    height          CDATA #REQUIRED
+    tiled           (true|false) #IMPLIED
+    border          CDATA #IMPLIED
+    tint            CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT alias EMPTY>
+<!ATTLIST alias
+    name            CDATA #IMPLIED
+    ref             CDATA #REQUIRED
+    tint            CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT composed (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation)*>
+<!ATTLIST composed
+    name            CDATA #IMPLIED
+    tint            CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT select (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation)*>
+<!ATTLIST select
+    name            CDATA #IMPLIED
+    tint            CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT grid (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation)*>
+<!ATTLIST grid
+    name            CDATA #IMPLIED
+    weightsX        CDATA #REQUIRED
+    weightsY        CDATA #REQUIRED
+    tint            CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    repeatX         (true|false) #IMPLIED
+    repeatY         (true|false) #IMPLIED
+    sizeOverwriteH  CDATA #IMPLIED
+    sizeOverwriteV  CDATA #IMPLIED
+    center          (true|false) #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+
+<!ELEMENT animation (repeat|frame)+>
+<!ATTLIST animation
+    name            CDATA #IMPLIED
+    count           CDATA #IMPLIED
+    timeSource      CDATA #REQUIRED
+    tint            CDATA #IMPLIED
+    border          CDATA #IMPLIED
+    inset           CDATA #IMPLIED
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>
+    
+<!ELEMENT frame EMPTY>
+<!ATTLIST frame
+    ref             CDATA #REQUIRED
+    duration        CDATA #REQUIRED
+    tint            CDATA #IMPLIED>
+
+<!ELEMENT repeat (repeat|image)+>
+<!ATTLIST repeat
+    count           CDATA #IMPLIED>
+
+<!ELEMENT cursor (#PCDATA)>
+<!ATTLIST cursor
+    name            CDATA #IMPLIED
+    x               CDATA #IMPLIED
+    y               CDATA #IMPLIED
+    width           CDATA #IMPLIED
+    height          CDATA #IMPLIED
+    hotSpotX        CDATA #IMPLIED
+    hotSpotY        CDATA #IMPLIED
+    ref             CDATA #IMPLIED>
+
+<!ELEMENT fontFile EMPTY>
+<!ATTLIST fontFile
+    name            CDATA #REQUIRED
+    filename        CDATA #REQUIRED>
+
+<!ELEMENT include EMPTY>
+<!ATTLIST include
+    filename        CDATA #REQUIRED>
+
+<!ELEMENT theme (border|param|theme)*>
+<!ATTLIST theme
+    name            CDATA #REQUIRED
+    ref             CDATA #IMPLIED
+    merge           (true|false) #IMPLIED
+    allowWildcard   (true|false) #IMPLIED>
+
+<!ELEMENT border EMPTY>
+<!ATTLIST border
+    ref             CDATA #IMPLIED
+    border          CDATA #IMPLIED>
+
+<!ELEMENT param (color|enum|string|font|int|float|bool|dimension|constant|image|cursor|list|map)>
+<!ATTLIST param
+    name            CDATA #REQUIRED>
+
+<!ELEMENT color (#PCDATA)>
+<!ELEMENT enum (#PCDATA)>
+<!ELEMENT string (#PCDATA)>
+<!ELEMENT font (#PCDATA)>
+<!ELEMENT int (#PCDATA)>
+<!ELEMENT float (#PCDATA)>
+<!ELEMENT bool (#PCDATA)>
+<!ATTLIST enum
+    type            CDATA #IMPLIED>
+<!ELEMENT dimension (#PCDATA)>
+<!ELEMENT constant (#PCDATA)>
+<!ELEMENT image (#PCDATA)>
+<!ELEMENT list (color|enum|string|font|int|float|bool|dimension|constant|image|cursor|list|map)*>
+<!ELEMENT map (param)*>
+
+<!ELEMENT constantDef (color|enum|string|font|int|float|bool|dimension|constant|list|map)>
+<!ATTLIST constantDef
+    name            CDATA #REQUIRED>

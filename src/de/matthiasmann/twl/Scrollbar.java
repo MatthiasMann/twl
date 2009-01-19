@@ -1,0 +1,485 @@
+/*
+ * Copyright (c) 2008, Matthias Mann
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ *     * Redistributions of source code must retain the above copyright notice,
+ *       this list of conditions and the following disclaimer.
+ *     * Redistributions in binary form must reproduce the above copyright
+ *       notice, this list of conditions and the following disclaimer in the
+ *       documentation and/or other materials provided with the distribution.
+ *     * Neither the name of Matthias Mann nor the names of its contributors may
+ *       be used to endorse or promote products derived from this software
+ *       without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+ * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+ * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+package de.matthiasmann.twl;
+
+import de.matthiasmann.twl.utils.CallbackSupport;
+import org.lwjgl.input.Keyboard;
+
+/**
+ * A scroll bar
+ *
+ * @author Matthias Mann
+ */
+public class Scrollbar extends Widget {
+
+    public enum Orientation {
+        HORIZONTAL,
+        VERTICAL
+    };
+    
+    private static final int INITIAL_DELAY = 300;
+    private static final int REPEAT_DELAY = 75;
+
+    private final Orientation orientation;
+    private final Button btnUpLeft;
+    private final Button btnDownRight;
+    private final DraggableButton thumb;
+    private final DraggableButton.DragListener dragListener;
+    private final Runnable timerCallback;
+    private Timer timer;
+    private int trackClicked;
+    private int trackClickLimit;
+    private Runnable[] callbacks;
+
+    private int pageSize;
+    private int stepSize;
+    private boolean scaleThumb;
+    
+    private int minValue;
+    private int maxValue;
+    private int value;
+    
+    public Scrollbar() {
+        this(Orientation.VERTICAL);
+    }
+
+    public Scrollbar(Orientation orientation) {
+        this.orientation  = orientation;
+        this.btnUpLeft    = new Button();
+        this.btnDownRight = new Button();
+        this.thumb        = new DraggableButton();
+
+        Runnable cbUpdateTimer = new Runnable() {
+            public void run() {
+                updateTimer();
+            }
+        };
+
+        if(orientation == Orientation.HORIZONTAL) {
+            setTheme("hscrollbar");
+            btnUpLeft.setTheme("leftbutton");
+            btnDownRight.setTheme("rightbutton");
+        } else {
+            setTheme("vscrollbar");
+            btnUpLeft.setTheme("upbutton");
+            btnDownRight.setTheme("downbutton");
+        }
+
+        dragListener = new DraggableButton.DragListener() {
+            private int startValue;
+            public void dragStarted() {
+                startValue = getValue();
+            }
+            public void dragged(int deltaX, int deltaY) {
+                int mouseDelta;
+                if(getOrientation() == Orientation.HORIZONTAL) {
+                    mouseDelta = deltaX;
+                } else {
+                    mouseDelta = deltaY;
+                }
+                int delta = (getMaxValue() - getMinValue()) * mouseDelta / calcThumbArea();
+                int newValue = range(startValue + delta);
+                setValue(newValue);
+            }
+            public void dragStopped() {
+            }
+        };
+
+        btnUpLeft.setCanAcceptKeyboardFocus(false);
+        btnUpLeft.getModel().addStateCallback(cbUpdateTimer);
+        btnDownRight.setCanAcceptKeyboardFocus(false);
+        btnDownRight.getModel().addStateCallback(cbUpdateTimer);
+        thumb.setCanAcceptKeyboardFocus(false);
+        thumb.setTheme("thumb");
+        thumb.setListener(dragListener);
+        
+        timerCallback = new Runnable() {
+            public void run() {
+                timer.setDelay(REPEAT_DELAY);
+                onTimer();
+            }
+        };
+        
+        add(btnUpLeft);
+        add(btnDownRight);
+        add(thumb);
+        
+        this.pageSize = 10;
+        this.stepSize = 1;
+        this.maxValue = 100;
+        
+        setSize(30, 200);
+    }
+
+    public void addCallback(Runnable cb) {
+        callbacks = CallbackSupport.addCallbackToList(callbacks, cb, Runnable.class);
+    }
+
+    public void removeCallback(Runnable cb) {
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, Runnable.class);
+    }
+
+    protected void doCallback() {
+        if(callbacks != null) {
+            for(Runnable cb : callbacks) {
+                cb.run();
+            }
+        }
+    }
+
+    public Orientation getOrientation() {
+        return orientation;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int current) {
+        current = range(current);
+        if(this.value != current) {
+            this.value = current;
+            setThumbPos();
+            doCallback();
+        }
+    }
+    
+    public void scroll(int amount) {
+        if(minValue < maxValue) {
+            setValue(value + amount);
+        } else {
+            setValue(value - amount);
+        }
+    }
+
+    public int getMinValue() {
+        return minValue;
+    }
+
+    public int getMaxValue() {
+        return maxValue;
+    }
+
+    public void setMinMaxValue(int minValue, int maxValue) {
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+        this.value = range(value);
+        setThumbPos();
+        thumb.setVisible(minValue != maxValue);
+    }
+
+    public int getPageSize() {
+        return pageSize;
+    }
+
+    public void setPageSize(int pageSize) {
+        if(pageSize < 1) {
+            throw new IllegalArgumentException("pageSize < 1");
+        }
+        this.pageSize = pageSize;
+        if(scaleThumb) {
+            setThumbPos();
+        }
+    }
+
+    public int getStepSize() {
+        return stepSize;
+    }
+
+    public void setStepSize(int stepSize) {
+        if(stepSize < 1) {
+            throw new IllegalArgumentException("stepSize < 1");
+        }
+        this.stepSize = stepSize;
+    }
+
+    public boolean isScaleThumb() {
+        return scaleThumb;
+    }
+
+    public void setScaleThumb(boolean scaleThumb) {
+        this.scaleThumb = scaleThumb;
+        setThumbPos();
+    }
+
+    public void externalDragStart() {
+        thumb.getAnimationState().setAnimationState(Button.STATE_PRESSED, true);
+        dragListener.dragStarted();
+    }
+
+    public void externalDragged(int deltaX, int deltaY) {
+        dragListener.dragged(deltaX, deltaY);
+    }
+
+    public void externalDragStopped() {
+        dragListener.dragStopped();
+        thumb.getAnimationState().setAnimationState(Button.STATE_PRESSED, false);
+    }
+
+    public boolean isUpLeftButtonArmed() {
+        return btnUpLeft.getModel().isArmed();
+    }
+
+    public boolean isDownRightButtonArmed() {
+        return btnDownRight.getModel().isArmed();
+    }
+
+    @Override
+    protected void applyTheme(ThemeInfo themeInfo) {
+        super.applyTheme(themeInfo);
+        applyThemeScrollbar(themeInfo);
+    }
+
+    protected void applyThemeScrollbar(ThemeInfo themeInfo) {
+        setScaleThumb(themeInfo.getParameter("scaleThumb", false));
+    }
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        timer = gui.createTimer();
+        timer.setCallback(timerCallback);
+        timer.setContinuous(true);
+    }
+
+    @Override
+    protected void beforeRemoveFromGUI(GUI gui) {
+        super.beforeRemoveFromGUI(gui);
+        if(timer != null) {
+            timer.stop();
+        }
+        timer = null;
+    }
+
+    @Override
+    public boolean handleEvent(Event evt) {
+        if(evt.getType() == Event.Type.MOUSE_BTNUP &&
+                evt.getMouseButton() == Event.MOUSE_LBUTTON) {
+            trackClicked = 0;
+            updateTimer();
+        }
+
+        if(!super.handleEvent(evt)) {
+            if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
+                    evt.getMouseButton() == Event.MOUSE_LBUTTON) {
+                if(isMouseInside(evt)) {
+                    if(orientation == Orientation.HORIZONTAL) {
+                        trackClickLimit = evt.getMouseX();
+                        if(evt.getMouseX() < thumb.getX()) {
+                            trackClicked = -1;
+                        } else {
+                            trackClicked = 1;
+                        }
+                    } else {
+                        trackClickLimit = evt.getMouseY();
+                        if(evt.getMouseY() < thumb.getY()) {
+                            trackClicked = -1;
+                        } else {
+                            trackClicked = 1;
+                        }
+                    }
+                    updateTimer();
+                }
+            }
+        }
+
+        boolean page = (evt.getModifiers() & Event.MODIFIER_CTRL) != 0;
+        int step = page ? pageSize : stepSize;
+
+        switch(evt.getType()) {
+        case KEY_PRESSED:
+            switch(evt.getKeyCode()) {
+            case Keyboard.KEY_LEFT:
+                if(orientation == Orientation.HORIZONTAL) {
+                    setValue(value - step);
+                    return true;
+                }
+                break;
+            case Keyboard.KEY_RIGHT:
+                if(orientation == Orientation.HORIZONTAL) {
+                    setValue(value + step);
+                    return true;
+                }
+                break;
+            case Keyboard.KEY_UP:
+                if(orientation == Orientation.VERTICAL) {
+                    setValue(value - step);
+                    return true;
+                }
+                break;
+            case Keyboard.KEY_DOWN:
+                if(orientation == Orientation.VERTICAL) {
+                    setValue(value + step);
+                    return true;
+                }
+                break;
+            }
+            break;
+        case MOUSE_WHEEL:
+            setValue(value - step * evt.getMouseWheelDelta());
+            break;
+        }
+
+        // eat all mouse events
+        return evt.isMouseEvent();
+    }
+
+    int range(int current) {
+        if(minValue < maxValue) {
+            if(current < minValue) {
+                current = minValue;
+            } else if(current > maxValue) {
+                current = maxValue;
+            }
+        } else {
+            if(current > minValue) {
+                current = minValue;
+            } else if(current < maxValue) {
+                current = maxValue;
+            }
+        }
+        return current;
+    }
+    
+    void onTimer() {
+        if(trackClicked != 0) {
+            int thumbPos;
+            if(orientation == Orientation.HORIZONTAL) {
+                thumbPos = thumb.getX();
+            } else {
+                thumbPos = thumb.getY();
+            }
+            if((trackClickLimit - thumbPos) * trackClicked > 0) {
+                scroll(trackClicked * pageSize);
+            }
+        } else if(btnUpLeft.getModel().isArmed()) {
+            scroll(-stepSize);
+        } else if(btnDownRight.getModel().isArmed()) {
+            scroll(stepSize);
+        }
+    }
+    
+    void updateTimer() {
+        if(trackClicked != 0 ||
+                btnUpLeft.getModel().isArmed() ||
+                btnDownRight.getModel().isArmed()) {
+            if(!timer.isRunning()) {
+                onTimer();
+                timer.setDelay(INITIAL_DELAY);
+                timer.start();
+            }
+        } else {
+            timer.stop();
+        }
+    }
+
+    @Override
+    public int getMinWidth() {
+        if(orientation == Orientation.HORIZONTAL) {
+            return Math.max(super.getMinWidth(), btnUpLeft.getMinWidth() + thumb.getMinWidth() + btnDownRight.getMinWidth());
+        } else {
+            return Math.max(super.getMinWidth(), thumb.getMinWidth());
+        }
+    }
+
+    @Override
+    public int getMinHeight() {
+        if(orientation == Orientation.HORIZONTAL) {
+            return Math.max(super.getMinHeight(), thumb.getMinHeight());
+        } else {
+            return Math.max(super.getMinHeight(), btnUpLeft.getMinHeight() + thumb.getMinHeight() + btnDownRight.getMinHeight());
+        }
+    }
+
+    @Override
+    public int getPreferedWidth() {
+        return getMinWidth();
+    }
+
+    @Override
+    public int getPreferedHeight() {
+        return getMinHeight();
+    }
+    
+    @Override
+    protected void layout() {
+        if(orientation == Orientation.HORIZONTAL) {
+            btnUpLeft.setSize(btnUpLeft.getPreferedWidth(), getHeight());
+            btnUpLeft.setPosition(getX(), getY());
+            btnDownRight.setSize(btnUpLeft.getPreferedWidth(), getHeight());
+            btnDownRight.setPosition(getX() + getWidth() - btnDownRight.getWidth(), getY());
+        } else {
+            btnUpLeft.setSize(getWidth(), btnUpLeft.getPreferedHeight());
+            btnUpLeft.setPosition(getX(), getY());
+            btnDownRight.setSize(getWidth(), btnDownRight.getPreferedHeight());
+            btnDownRight.setPosition(getX(), getY() + getHeight() - btnDownRight.getHeight());
+        }
+        setThumbPos();
+    }
+
+    int calcThumbArea() {
+        if(orientation == Orientation.HORIZONTAL) {
+            return Math.max(1, getWidth() - btnUpLeft.getWidth() - thumb.getWidth() - btnDownRight.getWidth());
+        } else {
+            return Math.max(1, getHeight() - btnUpLeft.getHeight() - thumb.getHeight() - btnDownRight.getHeight());
+        }
+    }
+
+    private void setThumbPos() {
+        int delta = maxValue - minValue;
+        if(orientation == Orientation.HORIZONTAL) {
+            int thumbWidth = thumb.getPreferedWidth();
+            if(scaleThumb) {
+                long availArea = Math.max(1, getWidth() - btnUpLeft.getWidth() - btnDownRight.getWidth());
+                thumbWidth = (int)Math.max(thumbWidth, availArea * pageSize / (pageSize + delta + 1));
+            }
+            thumb.setSize(thumbWidth, getHeight());
+
+            int xpos = btnUpLeft.getX() + btnUpLeft.getWidth();
+            if(delta != 0) {
+                xpos += (value - minValue) * calcThumbArea() / delta;
+            }
+            thumb.setPosition(xpos, getY());
+        } else {
+            int thumbHeight = thumb.getPreferedHeight();
+            if(scaleThumb) {
+                long availArea = Math.max(1, getHeight() - btnUpLeft.getHeight() - btnDownRight.getHeight());
+                thumbHeight = (int)Math.max(thumbHeight, availArea * pageSize / (pageSize + delta + 1));
+            }
+            thumb.setSize(getWidth(), thumbHeight);
+
+            int ypos = btnUpLeft.getY() + btnUpLeft.getHeight();
+            if(delta != 0) {
+                ypos += (value - minValue) * calcThumbArea() / delta;
+            }
+            thumb.setPosition(getX(), ypos);
+        }
+    }
+}
