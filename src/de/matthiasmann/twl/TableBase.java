@@ -31,10 +31,12 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
 import de.matthiasmann.twl.utils.SparseGrid;
 import de.matthiasmann.twl.utils.SparseGrid.Entry;
 import de.matthiasmann.twl.utils.TypeMapping;
+import java.util.ArrayList;
 
 /**
  *
@@ -66,6 +68,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected final SizeSequence columnModel;
     protected SizeSequence rowModel;
     protected boolean hasCellWidgetCreators;
+    protected WidgetCache[] widgetCacheTable;
 
     protected Image imageRowDivider;
     protected Image imageColumnDivider;
@@ -390,6 +393,18 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         autoSizeAllRows = false;
     }
 
+    protected WidgetCache getWidgetCache(String tag) {
+        if(widgetCacheTable == null) {
+            widgetCacheTable = new WidgetCache[16];
+        }
+        WidgetCache widgetCache = HashEntry.get(widgetCacheTable, tag);
+        if(widgetCache == null) {
+            widgetCache = new WidgetCache(tag);
+            HashEntry.insertEntry(widgetCacheTable, widgetCache);
+        }
+        return widgetCache;
+    }
+    
     protected void removeCellWidget(Widget widget) {
         int idx = super.getChildIndex(widget);
         if(idx >= 0) {
@@ -430,19 +445,30 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     // discard the old widget
                     oldWidget = null;
                 }
-                newWidget = cellWidgetCreator.updateWidget(row, col, data, oldWidget);
-                if(newWidget != null) {
+                if(cellWidgetCreator instanceof CachableCellWidgetCreator) {
+                    CachableCellWidgetCreator ccwc = (CachableCellWidgetCreator)cellWidgetCreator;
                     if(we == null) {
                         we = new WidgetEntry();
                         widgetGrid.set(row, col, we);
                     }
-                    we.widget = newWidget;
                     we.creator = cellWidgetCreator;
+                    we.cache = getWidgetCache(ccwc.getCacheTag(row, col));
+                } else {
+                    newWidget = cellWidgetCreator.updateWidget(row, col, data, oldWidget);
+                    if(newWidget != null) {
+                        if(we == null) {
+                            we = new WidgetEntry();
+                            widgetGrid.set(row, col, we);
+                        }
+                        we.widget = newWidget;
+                        we.creator = cellWidgetCreator;
+                        we.cache = null;
+                    }
                 }
             }
         }
 
-        if(newWidget == null && we != null) {
+        if(newWidget == null && we != null && we.cache == null) {
             widgetGrid.remove(row, col);
         }
         
@@ -483,6 +509,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             widgetGrid.clear();
         }
 
+        widgetCacheTable = null;
+        
         columnModel.setDefaultValue(columnWidth);
         columnModel.initializeAll(numColumns);
         if(rowModel != null) {
@@ -628,8 +656,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     class RemoveCellWidgets implements SparseGrid.GridFunction {
         public void apply(int row, int column, Entry e) {
             WidgetEntry widgetEntry = (WidgetEntry)e;
-            if(widgetEntry.widget != null) {
-                removeCellWidget(widgetEntry.widget);
+            Widget widget = widgetEntry.widget;
+            if(widget != null) {
+                removeCellWidget(widget);
+                if(widgetEntry.cache != null) {
+                    widgetEntry.cache.put(widget);
+                    widgetEntry.widget = null;
+                }
             }
         }
     }
@@ -637,7 +670,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     class InsertCellWidgets implements SparseGrid.GridFunction {
         public void apply(int row, int column, Entry e) {
             WidgetEntry widgetEntry = (WidgetEntry)e;
-            if(widgetEntry.widget != null) {
+            Widget widget = widgetEntry.widget;
+            if(widget == null && widgetEntry.cache != null) {
+                widget = widgetEntry.cache.get();
+                widget = widgetEntry.creator.updateWidget(row, column,
+                        getCellData(row, column, null), widget);
+                widgetEntry.widget = widget;
+            }
+            if(widget != null) {
                 insertCellWidget(row, column, widgetEntry.widget, widgetEntry.creator);
             }
         }
@@ -646,6 +686,28 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     static class WidgetEntry extends SparseGrid.Entry {
         Widget widget;
         CellWidgetCreator creator;
+        WidgetCache cache;
+    }
+
+    protected static class WidgetCache extends HashEntry<String, WidgetCache> {
+        private final ArrayList<Widget> widgets;
+
+        protected WidgetCache(String key) {
+            super(key);
+            this.widgets = new ArrayList<Widget>();
+        }
+
+        public Widget get() {
+            int size = widgets.size();
+            if(size > 0) {
+                return widgets.remove(size - 1);
+            }
+            return null;
+        }
+
+        public void put(Widget widget) {
+            widgets.add(widget);
+        }
     }
 
     static class StringCellRenderer extends TextWidget implements CellRenderer {

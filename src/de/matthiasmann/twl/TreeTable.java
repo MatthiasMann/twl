@@ -399,7 +399,7 @@ public class TreeTable extends TableBase {
         }
     }
 
-    static class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CellWidgetCreator {
+    static class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CachableCellWidgetCreator {
         public Widget updateWidget(int row, int column, Object data, Widget existingWidget) {
             ToggleButton tb = (ToggleButton)existingWidget;
             if(tb == null) {
@@ -422,6 +422,10 @@ public class TreeTable extends TableBase {
             Object colData = node.key.getData(column);
             setText(String.valueOf(colData));
             level = node.level;
+        }
+
+        public String getCacheTag(int row, int column) {
+            return "treeButton";
         }
     }
 }
