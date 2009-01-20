@@ -384,6 +384,14 @@ public class Widget {
         return borderRight;
     }
 
+    public int getBorderHorizontal() {
+        return borderLeft + borderRight;
+    }
+
+    public int getBorderVertical() {
+        return borderTop + borderBottom;
+    }
+
     /**
      * Sets a border for this widget.
      * @param top the top border
@@ -539,19 +547,54 @@ public class Widget {
         maxHeight = (short)Math.min(height, Short.MAX_VALUE);
     }
 
+    public static int computeSize(int min, int width, int max) {
+        if(max > 0) {
+            width = Math.min(width, max);
+        }
+        return Math.max(min, width);
+    }
+
     /**
      * Auto adjust the size of this widget based on it's prefered size.
-     * This method first calls adjustSize() on all child windows.
+     * 
      * Subclasses can provide more functionality
      */
     public void adjustSize() {
+        /*
         if(childs != null) {
             for(int i=0,n=childs.size() ; i<n ; i++) {
                 Widget child = childs.get(i);
                 child.adjustSize();
             }
+        }*/
+        /*
+        System.out.println(this+" minSize="+getMinWidth()+","+getMinHeight()+
+                " prefSize="+getPreferedWidth()+","+getPreferedHeight()+
+                " maxSize="+getMaxWidth()+","+getMaxHeight());
+         * */
+        setSize(computeSize(getMinWidth(), getPreferedWidth(), getMaxWidth()),
+                computeSize(getMinHeight(), getPreferedHeight(), getMaxHeight()));
+        validateLayout();
+    }
+
+    /**
+     * Called when something has changed which affected the layout of this widget.
+     * The default implementation sets a layout invalid flag which causes layout() to be called.
+     *
+     * Called by the default implementation of sizeChanged, borderChanged and childChangedSize.
+     *
+     * @see #sizeChanged()
+     * @see #borderChanged()
+     * @see #childChangedSize(Widget)
+     */
+    public void invalidateLayout() {
+        if(!layoutInvalid) {
+            layoutInvalid = true;
+            GUI gui = getGUI();
+            if(gui != null) {
+                gui.hasInvalidLayouts = true;
+            }
         }
-        setSize(getPreferedWidth(), getPreferedHeight());
     }
 
     /**
@@ -1141,26 +1184,6 @@ public class Widget {
      * Called from paint() when the layoutInvalid flag is set
      */
     protected void layout() {
-    }
-    
-    /**
-     * Called when something has changed which affected the layout of this widget.
-     * The default implementation sets a layout invalid flag which causes layout() to be called.
-     * 
-     * Called by the default implementation of sizeChanged, borderChanged and childChangedSize.
-     * 
-     * @see #sizeChanged()
-     * @see #borderChanged()
-     * @see #childChangedSize(Widget)
-     */
-    protected void invalidateLayout() {
-        if(!layoutInvalid) {
-            layoutInvalid = true;
-            GUI gui = getGUI();
-            if(gui != null) {
-                gui.hasInvalidLayouts = true;
-            }
-        }
     }
 
     /**

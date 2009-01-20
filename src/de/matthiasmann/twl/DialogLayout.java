@@ -182,41 +182,53 @@ public class DialogLayout extends Widget {
 
     @Override
     public int getMinWidth() {
-        return (horz != null) ? (horz.getMinSize(AXIS_X) + getBorderLeft() + getBorderRight()) : super.getMinWidth();
+        if(horz != null) {
+            prepare();
+            return horz.getMinSize(AXIS_X) + getBorderHorizontal();
+        }
+        return super.getMinWidth();
     }
 
     @Override
     public int getMinHeight() {
-        return (vert != null) ? (vert.getMinSize(AXIS_Y) + getBorderTop() + getBorderBottom()) : super.getMinHeight();
+        if(vert != null) {
+            prepare();
+            return vert.getMinSize(AXIS_Y) + getBorderVertical();
+        }
+        return super.getMinHeight();
     }
 
     @Override
     public int getPreferedInnerWidth() {
-        return (horz != null) ? (horz.getPrefSize(AXIS_X) + getBorderLeft() + getBorderRight()) : super.getPreferedInnerWidth();
+        if(horz != null) {
+            prepare();
+            return horz.getPrefSize(AXIS_X);
+        }
+        return super.getPreferedInnerWidth();
     }
 
     @Override
     public int getPreferedInnerHeight() {
-        return (vert != null) ? (vert.getPrefSize(AXIS_Y) + getBorderTop() + getBorderBottom()) : super.getPreferedInnerHeight();
-    }
-
-    @Override
-    public int getMaxWidth() {
-        return (horz != null) ? (horz.getMaxSize(AXIS_X) + getBorderLeft() + getBorderRight()) : super.getMaxWidth();
-    }
-
-    @Override
-    public int getMaxHeight() {
-        return (vert != null) ? (vert.getMaxSize(AXIS_Y) + getBorderTop() + getBorderBottom()) : super.getMaxHeight();
+        if(vert != null) {
+            prepare();
+            return vert.getPrefSize(AXIS_Y);
+        }
+        return super.getPreferedInnerHeight();
     }
 
     @Override
     public void adjustSize() {
         if(horz != null && vert != null) {
             prepare();
+            int minWidth = horz.getMinSize(AXIS_X);
+            int minHeight = vert.getMinSize(AXIS_Y);
             int prefWidth = horz.getPrefSize(AXIS_X);
             int prefHeight = vert.getPrefSize(AXIS_Y);
-            setInnerSize(prefWidth, prefHeight);
+            int maxWidth = getMaxWidth();
+            int maxHeight = getMaxHeight();
+            setInnerSize(
+                    computeSize(minWidth, prefWidth, maxWidth),
+                    computeSize(minHeight, prefHeight, maxHeight));
             doLayout();
         }
     }
@@ -357,8 +369,8 @@ public class DialogLayout extends Widget {
         @Override
         int getPrefSize(int axis) {
             switch(axis) {
-            case AXIS_X: return prefWidth;
-            case AXIS_Y: return prefHeight;
+            case AXIS_X: return computeSize(w.getMinWidth(), prefWidth, w.getMaxWidth());
+            case AXIS_Y: return computeSize(w.getMinHeight(), prefHeight, w.getMaxHeight());
             default: throw new IllegalArgumentException("axis");
             }
         }
@@ -366,8 +378,8 @@ public class DialogLayout extends Widget {
         @Override
         int getMaxSize(int axis) {
             switch(axis) {
-            case AXIS_X: return Math.max(w.getMaxWidth(), prefWidth);
-            case AXIS_Y: return Math.max(w.getMaxHeight(), prefHeight);
+            case AXIS_X: return w.getMaxWidth();
+            case AXIS_Y: return w.getMaxHeight();
             default: throw new IllegalArgumentException("axis");
             }
         }
@@ -559,18 +571,10 @@ public class DialogLayout extends Widget {
          * Add a default gap between all childs except if the neighbour is already a Gap.
          */
         public void addDefaultGap() {
-            if(springs.size() > 1) {
-                boolean wasGap = true;
-                for(int i=0 ; i<springs.size() ; i++) {
-                    Spring s = springs.get(i);
-                    boolean isGap = s instanceof GapSpring;
-                    if(!isGap && !wasGap) {
-                        springs.add(i++, new GapSpring(DEFAULT_GAP, DEFAULT_GAP, DEFAULT_GAP, true));
-                    }
-                    wasGap = isGap;
-                    if(s instanceof Group) {
-                        ((Group)s).addDefaultGap();
-                    }
+            for(int i=0 ; i<springs.size() ; i++) {
+                Spring s = springs.get(i);
+                if(s instanceof Group) {
+                    ((Group)s).addDefaultGap();
                 }
             }
         }
@@ -636,11 +640,26 @@ public class DialogLayout extends Widget {
 
         @Override
         int getMaxSize(int axis) {
-            int size = 0;
-            for(int i=0,n=springs.size() ; i<n ; i++) {
-                size += springs.get(i).getMaxSize(axis);
+            return 0;
+        }
+        
+        /**
+         * Add a default gap between all childs except if the neighbour is already a Gap.
+         */
+        @Override
+        public void addDefaultGap() {
+            if(springs.size() > 1) {
+                boolean wasGap = true;
+                for(int i=0 ; i<springs.size() ; i++) {
+                    Spring s = springs.get(i);
+                    boolean isGap = s instanceof GapSpring;
+                    if(!isGap && !wasGap) {
+                        springs.add(i++, new GapSpring(DEFAULT_GAP, DEFAULT_GAP, DEFAULT_GAP, true));
+                    }
+                    wasGap = isGap;
+                }
             }
-            return size;
+            super.addDefaultGap();
         }
 
         @Override

@@ -412,7 +412,7 @@ public class ResizableFrame extends Widget {
         int minWidth = super.getMinWidth();
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            minWidth = Math.max(minWidth, child.getMinWidth() + getBorderLeft() + getBorderRight());
+            minWidth = Math.max(minWidth, child.getMinWidth() + getBorderHorizontal());
         }
         if(hasTitleBar() && titleAreaRight < 0) {
             minWidth = Math.max(minWidth, titleWidget.getPreferedWidth() + titleAreaLeft - titleAreaRight);
@@ -425,7 +425,7 @@ public class ResizableFrame extends Widget {
         int minHeight = super.getMinHeight();
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            minHeight = Math.max(minHeight, child.getMinHeight() + getBorderTop() + getBorderBottom());
+            minHeight = Math.max(minHeight, child.getMinHeight() + getBorderVertical());
         }
         return minHeight;
     }
@@ -464,7 +464,6 @@ public class ResizableFrame extends Widget {
         layoutTitle();
         super.adjustSize();
     }
-
 
     private int getTitleX(int offset) {
         return (offset < 0) ? getRight() + offset : getX() + offset;

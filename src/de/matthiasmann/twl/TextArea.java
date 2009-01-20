@@ -195,21 +195,20 @@ public class TextArea extends Widget {
 
     @Override
     public int getPreferedInnerHeight() {
+        validateLayout();
         return curY;
     }
-
+    
     @Override
     public int getPreferedWidth() {
-        int preferedWidth = Math.max(getMinWidth(), super.getPreferedWidth());
-        if(getMaxWidth() > 0) {
-            preferedWidth = Math.min(getMaxWidth(), preferedWidth);
-        }
-        return preferedWidth;
+        return computeSize(getMinWidth(), super.getPreferedWidth(), getMaxWidth());
     }
-
+    
     @Override
     protected void layout() {
-        int targetWidth = getInnerWidth();
+        int targetWidth = computeSize(getMinWidth(), getWidth(), getMaxWidth());
+        targetWidth -= getBorderHorizontal();
+        
         // only recompute the layout when it has changed
         if(lastWidth != targetWidth) {
             this.lastWidth = targetWidth;
@@ -235,18 +234,14 @@ public class TextArea extends Widget {
                     }
                 }
 
-                setInnerSize(lastWidth, curY);
+                //setInnerSize(lastWidth, curY);
+                invalidateParentLayout();
             } finally {
                 inLayoutCode = false;
                 objLeft.clear();
                 objRight.clear();
             }
         }
-    }
-
-    @Override
-    public void adjustSize() {
-        setSize(getPreferedWidth(), getPreferedHeight());
     }
 
     @Override

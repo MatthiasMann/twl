@@ -47,7 +47,6 @@ public class ComboBox extends Widget {
     private final Listbox listbox;
 
     private Runnable[] selectionChangedListeners;
-    private int popupHeight = 100;
     
     public ComboBox(ListModel model) {
         this();
@@ -128,14 +127,6 @@ public class ComboBox extends Widget {
         }
     }
 
-    public int getPopupHeight() {
-        return popupHeight;
-    }
-
-    public void setPopupHeight(int popupHeight) {
-        this.popupHeight = popupHeight;
-    }
-
     public void setModel(ListModel model) {
         listbox.setModel(model);
     }
@@ -155,6 +146,10 @@ public class ComboBox extends Widget {
     
     protected void openPopup() {
         if(popup.openPopup()) {
+            int popupHeight = computeSize(
+                    popup.getMinHeight(), 
+                    popup.getPreferedHeight(),
+                    popup.getMaxHeight());
             if(getBottom() + popupHeight > popup.getParent().getInnerHeight() &&
                     getY() - popupHeight > popup.getParent().getInnerY()) {
                 popup.setPosition(getX(), getY() - popupHeight);
@@ -184,12 +179,6 @@ public class ComboBox extends Widget {
             label.setText(getModel().getEntry(selected).toString());
         }
         invalidateParentLayout();
-    }
-
-    @Override
-    protected void applyTheme(ThemeInfo themeInfo) {
-        super.applyTheme(themeInfo);
-        popupHeight = themeInfo.getParameter("popupHeight", 100);
     }
 
     @Override
@@ -223,12 +212,17 @@ public class ComboBox extends Widget {
 
     @Override
     public int getMinWidth() {
-        return getPreferedWidth();
+        int minWidth = super.getMinWidth();
+        minWidth = Math.max(minWidth, label.getMinWidth() + button.getMinWidth());
+        return minWidth;
     }
 
     @Override
     public int getMinHeight() {
-        return getPreferedHeight();
+        int minHeight = super.getMinHeight();
+        minHeight = Math.max(minHeight, label.getMinHeight());
+        minHeight = Math.max(minHeight, button.getMinHeight());
+        return minHeight;
     }
 
     @Override

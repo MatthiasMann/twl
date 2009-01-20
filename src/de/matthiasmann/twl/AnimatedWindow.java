@@ -161,12 +161,11 @@ public class AnimatedWindow extends Widget {
     }
 
     @Override
-    protected void invalidateLayout() {
+    protected void layout() {
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
             child.setPosition(getInnerX(), getInnerY());
         }
-        adjustSize();
     }
     
     @Override

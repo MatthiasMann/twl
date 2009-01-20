@@ -159,12 +159,12 @@ public class Label extends TextWidget {
 
     @Override
     public int getMinWidth() {
-        return getPreferedWidth();
+        return Math.max(super.getMinWidth(), getPreferedWidth());
     }
 
     @Override
     public int getMinHeight() {
-        return getPreferedHeight();
+        return Math.max(super.getMinHeight(), getPreferedHeight());
     }
 
     @Override

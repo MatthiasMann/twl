@@ -95,6 +95,26 @@ public class PopupWindow extends Widget {
     }
 
     @Override
+    public int getPreferedInnerWidth() {
+        int prefWidth = 0;
+        for(int i=0,n=getNumChilds() ; i<n ; i++) {
+            Widget child = getChild(i);
+            prefWidth = Math.max(prefWidth, child.getPreferedWidth());
+        }
+        return prefWidth;
+    }
+
+    @Override
+    public int getPreferedInnerHeight() {
+        int prefHeight = 0;
+        for(int i=0,n=getNumChilds() ; i<n ; i++) {
+            Widget child = getChild(i);
+            prefHeight = Math.max(prefHeight, child.getPreferedHeight());
+        }
+        return prefHeight;
+    }
+
+    @Override
     protected void layout() {
         for(int i=0,n=getNumChilds() ; i<n ; i++) {
             Widget child = getChild(i);

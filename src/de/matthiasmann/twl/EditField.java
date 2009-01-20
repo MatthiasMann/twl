@@ -202,37 +202,46 @@ public class EditField extends Widget {
         textRenderer.setPosition(getInnerX(), getInnerY());
         textRenderer.setSize(getInnerWidth(), getInnerHeight());
     }
-
-    @Override
-    public int getPreferedInnerWidth() {
-        int prefWidth = 0;
+        
+    private int computeInnerWidth() {
         Font font = textRenderer.getFont();
         if(font != null) {
             int lineHeight = font.getLineHeight();
-            prefWidth = Math.max(prefWidth, lineHeight*desiredWidthinCharacters/2);
+            return lineHeight*desiredWidthinCharacters/2;
         }
-        return prefWidth;
+        return 0;
     }
 
-    @Override
-    public int getPreferedInnerHeight() {
-        int prefHeight = super.getPreferedInnerHeight();
+    private int computeInnerHeight() {
         Font font = textRenderer.getFont();
         if(font != null) {
-            int lineHeight = font.getLineHeight();
-            prefHeight = Math.max(prefHeight, lineHeight);
+            return font.getLineHeight();
         }
-        return prefHeight;
+        return 0;
     }
 
     @Override
     public int getMinWidth() {
-        return getPreferedWidth();
+        int minWidth = super.getMinWidth();
+        minWidth = Math.max(minWidth, computeInnerWidth() + getBorderHorizontal());
+        return minWidth;
     }
 
     @Override
     public int getMinHeight() {
-        return getPreferedHeight();
+        int minHeight = super.getMinHeight();
+        minHeight = Math.max(minHeight, computeInnerHeight() + getBorderVertical());
+        return minHeight;
+    }
+
+    @Override
+    public int getPreferedInnerWidth() {
+        return computeInnerWidth();
+    }
+
+    @Override
+    public int getPreferedInnerHeight() {
+        return computeInnerHeight();
     }
 
     public void setErrorMessage(Object errorMsg) {

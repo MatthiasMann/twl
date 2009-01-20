@@ -430,11 +430,7 @@ public class Listbox extends Widget {
 
     @Override
     public int getPreferedInnerHeight() {
-        return Math.max(super.getPreferedInnerHeight(), scrollbar.getPreferedHeight());
-    }
-
-    @Override
-    public void adjustSize() {
+        return Math.max(getNumRows() * getCellHeight(), scrollbar.getPreferedHeight());
     }
 
     @Override

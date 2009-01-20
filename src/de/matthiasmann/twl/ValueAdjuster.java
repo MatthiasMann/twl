@@ -126,11 +126,10 @@ public abstract class ValueAdjuster extends Widget {
     public int getMinWidth() {
         int minWidth = super.getMinWidth();
         minWidth = Math.max(minWidth,
-                getBorderLeft() +
+                getBorderHorizontal() +
                 decButton.getMinWidth() +
                 Math.max(width, label.getMinWidth()) +
-                incButton.getMinWidth() +
-                getBorderRight());
+                incButton.getMinWidth());
         return minWidth;
     }
 
@@ -139,7 +138,7 @@ public abstract class ValueAdjuster extends Widget {
         int minHeight = label.getMinHeight();
         minHeight = Math.max(minHeight, decButton.getMinHeight());
         minHeight = Math.max(minHeight, incButton.getMinHeight());
-        minHeight += getBorderTop() + getBorderBottom();
+        minHeight += getBorderVertical();
         return Math.max(minHeight, super.getMinHeight());
     }
 
