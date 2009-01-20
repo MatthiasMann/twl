@@ -107,7 +107,6 @@ public class TreeTable extends TableBase {
     public TreeTableNode getNodeFromRow(int row) {
         NodeState ns = rootNodeState;
         for(;;) {
-            int prevRow = row;
             int idx;
             if(ns.childSizes == null) {
                 idx = Math.min(ns.key.getNumChildren()-1, row);
