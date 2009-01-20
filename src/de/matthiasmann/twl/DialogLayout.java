@@ -353,8 +353,8 @@ public class DialogLayout extends Widget {
             this.y = w.getY();
             this.width = w.getWidth();
             this.height = w.getHeight();
-            this.prefWidth = w.getPreferedWidth();
-            this.prefHeight = w.getPreferedHeight();
+            this.prefWidth = computeSize(w.getMinWidth(), w.getPreferedWidth(), w.getMaxWidth());
+            this.prefHeight = computeSize(w.getMinHeight(), w.getPreferedHeight(), w.getMaxHeight());
         }
 
         @Override
@@ -369,8 +369,8 @@ public class DialogLayout extends Widget {
         @Override
         int getPrefSize(int axis) {
             switch(axis) {
-            case AXIS_X: return computeSize(w.getMinWidth(), prefWidth, w.getMaxWidth());
-            case AXIS_Y: return computeSize(w.getMinHeight(), prefHeight, w.getMaxHeight());
+            case AXIS_X: return prefWidth;
+            case AXIS_Y: return prefHeight;
             default: throw new IllegalArgumentException("axis");
             }
         }
@@ -730,7 +730,15 @@ public class DialogLayout extends Widget {
                 }
             } else {
                 for(Spring s : springs) {
-                    int ssize = useMin ? s.getMinSize(axis) : s.getMaxSize(axis);
+                    int ssize;
+                    if(useMin) {
+                        ssize = s.getMinSize(axis);
+                    } else {
+                        ssize = s.getMaxSize(axis);
+                        if(ssize == 0) {
+                            ssize = s.getPrefSize(axis);
+                        }
+                    }
                     s.setSize(axis, pos, ssize);
                     pos += ssize;
                 }
