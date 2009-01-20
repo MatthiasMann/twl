@@ -156,7 +156,7 @@ public class ScrollPane extends Widget {
     @Override
     public int getMinWidth() {
         if(fixed == Fixed.HORIZONTAL && content != null) {
-            return Math.max(content.getMinWidth(), super.getMinWidth());
+            return Math.max(content.getMinWidth(), super.getMinWidth()) + scrollbarV.getWidth();
         }
         return super.getMinWidth();
     }
@@ -172,7 +172,7 @@ public class ScrollPane extends Widget {
     @Override
     public int getPreferedInnerWidth() {
         if(fixed == Fixed.HORIZONTAL && content != null) {
-            return content.getPreferedWidth();
+            return Math.max(content.getMinWidth(), content.getPreferedWidth());
         }
         return super.getPreferedInnerWidth();
     }
@@ -180,7 +180,7 @@ public class ScrollPane extends Widget {
     @Override
     public int getPreferedInnerHeight() {
         if(fixed == Fixed.VERTICAL && content != null) {
-            return content.getPreferedInnerHeight();
+            return Math.max(content.getMinHeight(), content.getPreferedHeight());
         }
         return super.getPreferedInnerHeight();
     }
@@ -202,11 +202,29 @@ public class ScrollPane extends Widget {
 
     @Override
     public int getPreferedWidth() {
+        switch(fixed) {
+        case HORIZONTAL:
+            return Math.max(getMinWidth(), super.getPreferedWidth());
+        case VERTICAL:
+            if(getMaxWidth() > 0) {
+                return Math.max(getMinWidth(), Math.min(getMaxWidth(), super.getPreferedWidth()));
+            }
+            break;
+        }
         return getMinWidth();
     }
 
     @Override
     public int getPreferedHeight() {
+        switch(fixed) {
+        case HORIZONTAL:
+            if(getMaxHeight() > 0) {
+                return Math.max(getMinHeight(), Math.min(getMaxHeight(), super.getPreferedHeight()));
+            }
+            break;
+        case VERTICAL:
+            return Math.max(getMinHeight(), super.getPreferedHeight());
+        }
         return getMinHeight();
     }
 
@@ -271,6 +289,8 @@ public class ScrollPane extends Widget {
                 requiredHeight = content.getPreferedHeight();
                 break;
             }
+
+            System.out.println("required="+requiredWidth+","+requiredHeight+" avail="+availWidth+","+availHeight);
             
             do{
                 repeat = false;

@@ -199,10 +199,20 @@ public class TextArea extends Widget {
     }
 
     @Override
+    public int getPreferedWidth() {
+        int preferedWidth = Math.max(getMinWidth(), super.getPreferedWidth());
+        if(getMaxWidth() > 0) {
+            preferedWidth = Math.min(getMaxWidth(), preferedWidth);
+        }
+        return preferedWidth;
+    }
+
+    @Override
     protected void layout() {
+        int targetWidth = getInnerWidth();
         // only recompute the layout when it has changed
-        if(lastWidth != getInnerWidth()) {
-            this.lastWidth = getInnerWidth();
+        if(lastWidth != targetWidth) {
+            this.lastWidth = targetWidth;
             this.inLayoutCode = true;
 
             try {
@@ -307,7 +317,7 @@ public class TextArea extends Widget {
     }
 
     private void computeMargin() {
-        int right = getInnerWidth();
+        int right = lastWidth;
         int left = 0;
 
         for(int i=0,n=objLeft.size() ; i<n ; i++) {
