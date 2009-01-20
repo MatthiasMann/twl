@@ -290,7 +290,7 @@ public class ScrollPane extends Widget {
                 break;
             }
 
-            System.out.println("required="+requiredWidth+","+requiredHeight+" avail="+availWidth+","+availHeight);
+            //System.out.println("required="+requiredWidth+","+requiredHeight+" avail="+availWidth+","+availHeight);
             
             do{
                 repeat = false;
