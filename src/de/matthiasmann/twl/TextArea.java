@@ -207,6 +207,22 @@ public class TextArea extends Widget {
         }
         return computeSize(getMinWidth(), super.getPreferedWidth(), maxWidth);
     }
+
+    @Override
+    public void setMaxSize(int width, int height) {
+        if(width != getMaxWidth()) {
+            invalidateLayout();
+        }
+        super.setMaxSize(width, height);
+    }
+
+    @Override
+    public void setMinSize(int width, int height) {
+        if(width != getMinWidth()) {
+            invalidateLayout();
+        }
+        super.setMinSize(width, height);
+    }
     
     @Override
     protected void layout() {
