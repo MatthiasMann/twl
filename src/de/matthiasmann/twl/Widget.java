@@ -561,13 +561,6 @@ public class Widget {
      */
     public void adjustSize() {
         /*
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                Widget child = childs.get(i);
-                child.adjustSize();
-            }
-        }*/
-        /*
         System.out.println(this+" minSize="+getMinWidth()+","+getMinHeight()+
                 " prefSize="+getPreferedWidth()+","+getPreferedHeight()+
                 " maxSize="+getMaxWidth()+","+getMaxHeight());
@@ -603,15 +596,15 @@ public class Widget {
      * @see #layout()
      */
     public void validateLayout() {
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                childs.get(i).validateLayout();
-            }
-        }
         if(layoutInvalid) {
             layout();
             // reset flag after calling layout() to prevent loops caused by childChangedSize(Widget)
             layoutInvalid = false;
+        }
+        if(childs != null) {
+            for(int i=0,n=childs.size() ; i<n ; i++) {
+                childs.get(i).validateLayout();
+            }
         }
     }
     
