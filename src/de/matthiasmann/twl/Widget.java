@@ -598,14 +598,14 @@ public class Widget {
     public void validateLayout() {
         if(layoutInvalid) {
             layout();
-            // reset flag after calling layout() to prevent loops caused by childChangedSize(Widget)
-            layoutInvalid = false;
         }
         if(children != null) {
             for(int i=0,n=children.size() ; i<n ; i++) {
                 children.get(i).validateLayout();
             }
         }
+        // reset flag after calling layout() to prevent loops caused by childChangedSize(Widget)
+        layoutInvalid = false;
     }
     
     /**
@@ -1716,4 +1716,16 @@ public class Widget {
         }
         return true;
     }
+
+    void collectLayoutLoop(ArrayList<Widget> result) {
+        if(layoutInvalid) {
+            result.add(this);
+        }
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                children.get(i).collectLayoutLoop(result);
+            }
+        }
+    }
+
 }

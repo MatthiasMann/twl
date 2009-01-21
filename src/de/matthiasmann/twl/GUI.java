@@ -267,7 +267,7 @@ public final class GUI extends Widget {
             count--;
         }
         if(count == 0) {
-            System.err.println("WARNING: layout loop");
+            debugLayoutLoop();
         }
     }
 
@@ -631,7 +631,16 @@ public final class GUI extends Widget {
         }
         return super.requestKeyboardFocus(child);
     }
-    
+
+    private void debugLayoutLoop() {
+        ArrayList<Widget> widgetsInLoop = new ArrayList<Widget>();
+        collectLayoutLoop(widgetsInLoop);
+        System.err.println("WARNING: layout loop detected - printing");
+        for(int i=0,n=widgetsInLoop.size() ; i<n ; i++) {
+            System.err.println(i+": "+widgetsInLoop.get(i));
+        }
+    }
+
     private void hideTooltip() {
         tooltipWindow.setVisible(false);
         tooltipOwner = null;
