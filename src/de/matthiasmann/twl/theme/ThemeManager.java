@@ -196,7 +196,7 @@ public class ThemeManager {
                 xpp = factory.newPullParser();
                 is = url.openStream();
                 if(is == null) {
-                    throw new FileNotFoundException();
+                    throw new FileNotFoundException(url.toString());
                 }
                 xpp.setInput(is, "UTF8");
             }
@@ -204,6 +204,8 @@ public class ThemeManager {
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
             xpp.nextTag();
             parseThemeFile(xpp, url);
+        } catch (Exception ex) {
+            throw (IOException)(new IOException("while parsing Theme XML: " + url).initCause(ex));
         } finally {
             if(is != null) {
                 is.close();

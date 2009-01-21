@@ -43,7 +43,6 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -169,7 +168,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return BitmapFont.loadFont(this, url);
     }
 
-    public Texture loadTexture(URL url, String formatStr, String filterStr) {
+    public Texture loadTexture(URL url, String formatStr, String filterStr) throws IOException {
         LWJGLTexture.Format format = LWJGLTexture.Format.RGBA;
         LWJGLTexture.Filter filter = LWJGLTexture.Filter.LINEAR;
         if(formatStr != null) {
@@ -222,7 +221,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         }
     }
 
-    public LWJGLTexture load(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) {
+    public LWJGLTexture load(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
         if(textureUrl == null) {
             throw new NullPointerException("textureUrl");
         }
@@ -234,36 +233,31 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return tex;
     }
 
-    private LWJGLTexture createTexture(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) {
+    private LWJGLTexture createTexture(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
+        InputStream is = textureUrl.openStream();
         try {
-            InputStream is = textureUrl.openStream();
-            try {
-                PNGDecoder dec = new PNGDecoder(is);
-                fmt = dec.decideTextureFormat(fmt);
+            PNGDecoder dec = new PNGDecoder(is);
+            fmt = dec.decideTextureFormat(fmt);
 
-                if(GLContext.getCapabilities().GL_EXT_abgr) {
-                    if(fmt == LWJGLTexture.Format.RGBA) {
-                        fmt = LWJGLTexture.Format.ABGR;
-                    }
-                } else if(fmt == LWJGLTexture.Format.ABGR) {
-                    fmt = LWJGLTexture.Format.RGBA;
+            if(GLContext.getCapabilities().GL_EXT_abgr) {
+                if(fmt == LWJGLTexture.Format.RGBA) {
+                    fmt = LWJGLTexture.Format.ABGR;
                 }
-
-                int stride = dec.getWidth() * fmt.getPixelSize();
-                ByteBuffer buf = BufferUtils.createByteBuffer(stride * dec.getHeight());
-                dec.decode(buf, stride, fmt);
-                buf.flip();
-
-                return new LWJGLTexture(this, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
-            } finally {
-                try {
-                    is.close();
-                } catch (IOException ex) {
-                }
+            } else if(fmt == LWJGLTexture.Format.ABGR) {
+                fmt = LWJGLTexture.Format.RGBA;
             }
-        } catch (Throwable ex) {
-            logger.log(Level.SEVERE, "Unable to load texture: " + textureUrl, ex);
-            return null;
+
+            int stride = dec.getWidth() * fmt.getPixelSize();
+            ByteBuffer buf = BufferUtils.createByteBuffer(stride * dec.getHeight());
+            dec.decode(buf, stride, fmt);
+            buf.flip();
+
+            return new LWJGLTexture(this, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
+        } finally {
+            try {
+                is.close();
+            } catch (IOException ex) {
+            }
         }
     }
 

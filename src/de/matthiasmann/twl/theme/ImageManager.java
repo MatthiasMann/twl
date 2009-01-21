@@ -121,29 +121,36 @@ class ImageManager {
         String filter = xpp.getAttributeValue(null, "filter");
         String fileName = xpp.getAttributeValue(null, "file");
 
-        Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
-        textureResources.add(texture);
-
         try {
-            xpp.nextTag();
-            while(xpp.getEventType() != XmlPullParser.END_TAG) {
-                String name = ParserUtil.getAttributeNotNull(xpp, "name");
-                ParserUtil.checkNameNotEmpty(name, xpp);
-                if(images.containsKey(name)) {
-                    throw new XmlPullParserException("image \"" + name + "\" already defined", xpp, null);
-                }
-                String tagName = xpp.getName();
-                if("cursor".equals(xpp.getName())) {
-                    parseCursor(xpp, name, texture);
-                } else {
-                    Image image = parseImage(xpp, tagName);
-                    images.put(name, image);
-                }
-                xpp.require(XmlPullParser.END_TAG, null, tagName);
-                xpp.nextTag();
+            Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
+            if(texture == null) {
+                throw new NullPointerException("loadTexture returned null");
             }
-        } finally {
-            texture.themeLoadingDone();
+            textureResources.add(texture);
+
+            try {
+                xpp.nextTag();
+                while(xpp.getEventType() != XmlPullParser.END_TAG) {
+                    String name = ParserUtil.getAttributeNotNull(xpp, "name");
+                    ParserUtil.checkNameNotEmpty(name, xpp);
+                    if(images.containsKey(name)) {
+                        throw new XmlPullParserException("image \"" + name + "\" already defined", xpp, null);
+                    }
+                    String tagName = xpp.getName();
+                    if("cursor".equals(xpp.getName())) {
+                        parseCursor(xpp, name, texture);
+                    } else {
+                        Image image = parseImage(xpp, tagName);
+                        images.put(name, image);
+                    }
+                    xpp.require(XmlPullParser.END_TAG, null, tagName);
+                    xpp.nextTag();
+                }
+            } finally {
+                texture.themeLoadingDone();
+            }
+        } catch (Exception ex) {
+            throw new XmlPullParserException("Unable to load texture: " + fileName, xpp, ex);
         }
     }
 
