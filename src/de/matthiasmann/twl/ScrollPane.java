@@ -161,7 +161,8 @@ public class ScrollPane extends Widget {
         int border = getBorderHorizontal();
         //minWidth = Math.max(minWidth, scrollbarH.getMinWidth() + border);
         if(fixed == Fixed.HORIZONTAL && content != null) {
-            minWidth = Math.max(minWidth, content.getMinWidth() + border);
+            minWidth = Math.max(minWidth, content.getMinWidth() +
+                    border + scrollbarV.getMinWidth());
         }
         return minWidth;
     }
@@ -172,7 +173,8 @@ public class ScrollPane extends Widget {
         int border = getBorderVertical();
         //minHeight = Math.max(minHeight, scrollbarV.getMinHeight() + border);
         if(fixed == Fixed.VERTICAL && content != null) {
-            minHeight = Math.max(minHeight, content.getMinHeight() + border);
+            minHeight = Math.max(minHeight, content.getMinHeight() +
+                    border + scrollbarH.getMinHeight());
         }
         return minHeight;
     }
