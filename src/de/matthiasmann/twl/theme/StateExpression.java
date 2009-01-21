@@ -47,7 +47,7 @@ public abstract class StateExpression {
     }
 
     private static StateExpression parse(StringIterator si) throws ParseException {
-        ArrayList<StateExpression> childs = new ArrayList<StateExpression>();
+        ArrayList<StateExpression> children = new ArrayList<StateExpression>();
         char kind = ' ';
         
         while(si.skipSpaces()) {
@@ -75,13 +75,13 @@ public abstract class StateExpression {
             }
 
             child.negate = negate;
-            childs.add(child);
+            children.add(child);
 
             if(!si.skipSpaces()) {
                 break;
             }
 
-            if(childs.size() == 1) {
+            if(children.size() == 1) {
                 kind = si.peek();
                 if("|+^".indexOf(kind) < 0) {
                     si.unexpected();
@@ -94,18 +94,18 @@ public abstract class StateExpression {
             si.pos++;
         }
 
-        if(childs.size() == 0) {
+        if(children.size() == 0) {
             si.unexpected();
         }
         
-        assert kind != ' ' || childs.size() == 1;
+        assert kind != ' ' || children.size() == 1;
 
-        if(childs.size() == 1) {
-            return childs.get(0);
+        if(children.size() == 1) {
+            return children.get(0);
         }
 
         StateExpression[] childArray =
-                childs.toArray(new StateExpression[childs.size()]);
+                children.toArray(new StateExpression[children.size()]);
         
         if(kind == '^') {
             return new Xor(childArray);
@@ -164,17 +164,17 @@ public abstract class StateExpression {
     boolean negate;
 
     static class AndOr extends StateExpression {
-        private final StateExpression[] childs;
+        private final StateExpression[] children;
         private final boolean kind;
-        public AndOr(char kind, StateExpression ... childs) {
+        public AndOr(char kind, StateExpression ... children) {
             assert kind == '|' || kind == '+';
-            this.childs = childs;
+            this.children = children;
             this.kind = kind == '|';
         }
 
         @Override
         public boolean evaluate(AnimationState as) {
-            for(StateExpression e : childs) {
+            for(StateExpression e : children) {
                 if(kind == e.evaluate(as)) {
                     return kind ^ negate;
                 }
@@ -184,15 +184,15 @@ public abstract class StateExpression {
     }
 
     static class Xor extends StateExpression {
-        private final StateExpression[] childs;
-        public Xor(StateExpression ... childs) {
-            this.childs = childs;
+        private final StateExpression[] children;
+        public Xor(StateExpression ... children) {
+            this.children = children;
         }
 
         @Override
         public boolean evaluate(AnimationState as) {
             boolean result = negate;
-            for(StateExpression e : childs) {
+            for(StateExpression e : children) {
                 result ^= e.evaluate(as);
             }
             return result;

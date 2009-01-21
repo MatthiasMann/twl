@@ -508,7 +508,7 @@ class ImageManager {
         }
         boolean lastRepeatsEndless = false;
         boolean hasWarned = false;
-        ArrayList<AnimatedImage.Element> childs = new ArrayList<AnimatedImage.Element>();
+        ArrayList<AnimatedImage.Element> children = new ArrayList<AnimatedImage.Element>();
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             if(lastRepeatsEndless && !hasWarned) {
@@ -517,20 +517,20 @@ class ImageManager {
             }
             String tagName = xpp.getName();
             AnimatedImage.Element e = parseAnimElement(xpp, tagName);
-            childs.add(e);
+            children.add(e);
             lastRepeatsEndless =
                     (e instanceof AnimatedImage.Repeat) &&
                     ((AnimatedImage.Repeat)e).repeatCount == 0;
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             xpp.nextTag();
         }
-        return new AnimatedImage.Repeat(childs.toArray(new AnimatedImage.Element[childs.size()]), repeatCount);
+        return new AnimatedImage.Repeat(children.toArray(new AnimatedImage.Element[children.size()]), repeatCount);
     }
 
     private Border getBorder(AnimatedImage.Element e) {
         if(e instanceof AnimatedImage.Repeat) {
             AnimatedImage.Repeat r = (AnimatedImage.Repeat)e;
-            for(AnimatedImage.Element c : r.childs) {
+            for(AnimatedImage.Element c : r.children) {
                 Border border = getBorder(c);
                 if(border != null) {
                     return border;

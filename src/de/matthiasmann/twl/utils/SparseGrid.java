@@ -62,7 +62,7 @@ public class SparseGrid {
                 if(pos == node.size) {
                     return null;
                 }
-                e = node.childs[pos];
+                e = node.children[pos];
             }while(--levels > 0);
 
             assert e != null;
@@ -133,7 +133,7 @@ public class SparseGrid {
             do {
                 node = (Node)e;
                 pos = node.findPos(startRow, startColumn, node.size-1);
-                e = node.childs[pos];
+                e = node.children[pos];
             }while(--levels > 0);
 
             assert e != null;
@@ -143,7 +143,7 @@ public class SparseGrid {
 
             do {
                 for(int size=node.size ; pos<size ; pos++) {
-                    e = node.childs[pos];
+                    e = node.children[pos];
                     if(e.row > endRow) {
                         return;
                     }
@@ -162,13 +162,13 @@ public class SparseGrid {
     }
 
     public void clear() {
-        Arrays.fill(root.childs, null);
+        Arrays.fill(root.children, null);
         root.size = 0;
     }
 
     private void maybeRemoveRoot() {
         while(numLevels > 1 && root.size == 1) {
-            root = (Node)root.childs[0];
+            root = (Node)root.children[0];
             root.prev = null;
             root.next = null;
             numLevels--;
@@ -177,22 +177,22 @@ public class SparseGrid {
 
     private void splitRoot() {
         Node newNode = root.split();
-        Node newRoot = new Node(root.childs.length);
-        newRoot.childs[0] = root;
-        newRoot.childs[1] = newNode;
+        Node newRoot = new Node(root.children.length);
+        newRoot.children[0] = root;
+        newRoot.children[1] = newNode;
         newRoot.size = 2;
         root = newRoot;
         numLevels++;
     }
 
     static class Node extends Entry {
-        final Entry[] childs;
+        final Entry[] children;
         int size;
         Node next;
         Node prev;
 
         public Node(int size) {
-            this.childs = new Entry[size];
+            this.children = new Entry[size];
         }
 
         boolean insert(Entry e, int levels) {
@@ -203,7 +203,7 @@ public class SparseGrid {
             for(;;) {
                 int pos = findPos(e.row, e.column, size-1);
                 assert pos < size;
-                Node node = (Node)childs[pos];
+                Node node = (Node)children[pos];
                 if(!node.insert(e, levels)) {
                     if(isFull()) {
                         return false;
@@ -220,11 +220,11 @@ public class SparseGrid {
         boolean insertLeaf(Entry e) {
             int pos = findPos(e.row, e.column, size);
             if(pos < size) {
-                Entry c = childs[pos];
+                Entry c = children[pos];
                 assert c.getClass() != Node.class;
                 int cmp = c.compare(e.row, e.column);
                 if(cmp == 0) {
-                    childs[pos] = e;
+                    children[pos] = e;
                     return true;
                 }
                 assert cmp > 0;
@@ -244,7 +244,7 @@ public class SparseGrid {
 
             int pos = findPos(row, column, size-1);
             assert pos < size;
-            Node node = (Node)childs[pos];
+            Node node = (Node)children[pos];
             Entry e = node.remove(row, column, levels);
             if(e != null) {
                 if(size > 1 && node.isBelowHalf()) {
@@ -261,7 +261,7 @@ public class SparseGrid {
                 return null;
             }
 
-            Entry c = childs[pos];
+            Entry c = children[pos];
             assert c.getClass() != Node.class;
             int cmp = c.compare(row, column);
             if(cmp == 0) {
@@ -275,7 +275,7 @@ public class SparseGrid {
             int low = 0;
             while(low < high) {
                 int mid = (low + high) / 2;
-                Entry e = childs[mid];
+                Entry e = children[mid];
                 int cmp = e.compare(row, column);
                 if(cmp > 0) {
                     high = mid;
@@ -291,14 +291,14 @@ public class SparseGrid {
         void insertRows(int row, int count, int levels) {
             if(--levels > 0) {
                 for(int i=0 ; i<size ; i++) {
-                    Node n = (Node)childs[i];
+                    Node n = (Node)children[i];
                     if(n.row >= row) {
                         n.insertRows(row, count, levels);
                     }
                 }
             } else {
                 for(int i=0 ; i<size ; i++) {
-                    Entry e = childs[i];
+                    Entry e = children[i];
                     if(e.row >= row) {
                         e.row += count;
                     }
@@ -310,12 +310,12 @@ public class SparseGrid {
         void insertColumns(int column, int count, int levels) {
             if(--levels > 0) {
                 for(int i=0 ; i<size ; i++) {
-                    Node n = (Node)childs[i];
+                    Node n = (Node)children[i];
                     n.insertColumns(column, count, levels);
                 }
             } else {
                 for(int i=0 ; i<size ; i++) {
-                    Entry e = childs[i];
+                    Entry e = children[i];
                     if(e.column >= column) {
                         e.column += count;
                     }
@@ -328,7 +328,7 @@ public class SparseGrid {
             if(--levels > 0) {
                 boolean needsMerging = false;
                 for(int i=size ; i-->0 ;) {
-                    Node n = (Node)childs[i];
+                    Node n = (Node)children[i];
                     if(n.row >= row) {
                         n.removeRows(row, count, levels);
                         needsMerging |= n.isBelowHalf();
@@ -342,7 +342,7 @@ public class SparseGrid {
                 }
             } else {
                 for(int i=size ; i-->0 ;) {
-                    Entry e = childs[i];
+                    Entry e = children[i];
                     if(e.row >= row) {
                         e.row -= count;
                         if(e.row < row) {
@@ -358,7 +358,7 @@ public class SparseGrid {
             if(--levels > 0) {
                 boolean needsMerging = false;
                 for(int i=size ; i-->0 ;) {
-                    Node n = (Node)childs[i];
+                    Node n = (Node)children[i];
                     n.removeColumns(column, count, levels);
                     needsMerging |= n.isBelowHalf();
                     if(n.size == 0) {
@@ -370,7 +370,7 @@ public class SparseGrid {
                 }
             } else {
                 for(int i=size ; i-->0 ;) {
-                    Entry e = childs[i];
+                    Entry e = children[i];
                     if(e.column >= column) {
                         e.column -= count;
                         if(e.column < column) {
@@ -383,8 +383,8 @@ public class SparseGrid {
         }
 
         void insertAt(int idx, Entry what) {
-            System.arraycopy(childs, idx, childs, idx+1, size-idx);
-            childs[idx] = what;
+            System.arraycopy(children, idx, children, idx+1, size-idx);
+            children[idx] = what;
             if(idx == size++) {
                 updateRowColumn();
             }
@@ -392,15 +392,15 @@ public class SparseGrid {
 
         void removeAt(int idx) {
             size--;
-            System.arraycopy(childs, idx+1, childs, idx, size-idx);
-            childs[size] = null;
+            System.arraycopy(children, idx+1, children, idx, size-idx);
+            children[size] = null;
             if(idx == size) {
                 updateRowColumn();
             }
         }
 
         void removeNodeAt(int idx) {
-            Node n = (Node)childs[idx];
+            Node n = (Node)children[idx];
             if(n.next != null) {
                 n.next.prev = n.prev;
             }
@@ -414,7 +414,7 @@ public class SparseGrid {
 
         void tryMerge() {
             for(int i=0 ; i<size && size>1 ; i++) {
-                Node n = (Node)childs[i];
+                Node n = (Node)children[i];
                 if(n.isBelowHalf()) {
                     tryMerge(i);
                 }
@@ -434,10 +434,10 @@ public class SparseGrid {
         }
 
         private void tryMerge2(int pos) {
-            Node n1 = (Node)childs[pos];
-            Node n2 = (Node)childs[pos+1];
-            if(n1.size + n2.size < childs.length) {
-                System.arraycopy(n2.childs, 0, n1.childs, n1.size, n2.size);
+            Node n1 = (Node)children[pos];
+            Node n2 = (Node)children[pos+1];
+            if(n1.size + n2.size < children.length) {
+                System.arraycopy(n2.children, 0, n1.children, n1.size, n2.size);
                 n1.size += n2.size;
                 n1.updateRowColumn();
                 removeNodeAt(pos+1);
@@ -445,20 +445,20 @@ public class SparseGrid {
         }
 
         private void tryMerge3(int pos) {
-            Node n0 = (Node)childs[pos-1];
-            Node n1 = (Node)childs[pos];
-            Node n2 = (Node)childs[pos+1];
-            int maxSize = childs.length;
+            Node n0 = (Node)children[pos-1];
+            Node n1 = (Node)children[pos];
+            Node n2 = (Node)children[pos+1];
+            int maxSize = children.length;
             if(n0.size + n1.size + n2.size < 2*maxSize) {
                 int s1l = n1.size / 2;
                 int s1h = n1.size - s1l;
                 if(n0.size + s1l < maxSize && n2.size + s1h < maxSize) {
-                    System.arraycopy(n1.childs, 0, n0.childs, n0.size, s1l);
+                    System.arraycopy(n1.children, 0, n0.children, n0.size, s1l);
                     n0.size += s1l;
                     n0.updateRowColumn();
 
-                    System.arraycopy(n1.childs, s1l, n1.childs, 0, s1h);
-                    System.arraycopy(n2.childs, 0, n1.childs, s1h, n2.size);
+                    System.arraycopy(n1.children, s1l, n1.children, 0, s1h);
+                    System.arraycopy(n2.children, 0, n1.children, s1h, n2.size);
                     n1.size = s1h + n2.size;
                     n1.updateRowColumn();
 
@@ -468,19 +468,19 @@ public class SparseGrid {
         }
 
         boolean isFull() {
-            return size == childs.length;
+            return size == children.length;
         }
 
         boolean isBelowHalf() {
-            return size*2 < childs.length;
+            return size*2 < children.length;
         }
 
         Node split() {
-            Node newNode = new Node(childs.length);
+            Node newNode = new Node(children.length);
             int size1 = size / 2;
             int size2 = size - size1;
-            System.arraycopy(this.childs, size1, newNode.childs, 0, size2);
-            Arrays.fill(this.childs, size1, this.size, null);
+            System.arraycopy(this.children, size1, newNode.children, 0, size2);
+            Arrays.fill(this.children, size1, this.size, null);
             newNode.size = size2;
             newNode.updateRowColumn();
             newNode.prev = this;
@@ -496,7 +496,7 @@ public class SparseGrid {
 
         void updateRowColumn() {
             if(size > 0) {
-                Entry e = childs[size-1];
+                Entry e = children[size-1];
                 this.row = e.row;
                 this.column = e.column;
             }

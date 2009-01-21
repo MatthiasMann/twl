@@ -71,12 +71,12 @@ public class PopupMenu extends PopupWindow {
     }
 
     @Override
-    public void removeAllChilds() {
-        for(int i=getNumChilds() ; i-->0 ;) {
+    public void removeAllChildren() {
+        for(int i=getNumChildren() ; i-->0 ;) {
             final Widget child = getChild(i);
             removeCallbackFromWidget(child);
         }
-        super.removeAllChilds();
+        super.removeAllChildren();
     }
 
     @Override
@@ -121,7 +121,7 @@ public class PopupMenu extends PopupWindow {
     protected void layout() {
         int minWidth = 0;
         int minHeight = 0;
-        for(int i=0 ; i<getNumChilds() ; i++) {
+        for(int i=0 ; i<getNumChildren() ; i++) {
             Widget child = getChild(i);
             minWidth = Math.max(minWidth, child.getWidth());
             minHeight += child.getHeight();
@@ -132,7 +132,7 @@ public class PopupMenu extends PopupWindow {
         }
         int x = getInnerX();
         int y = getInnerY();
-        for(int i=0 ; i<getNumChilds() ; i++) {
+        for(int i=0 ; i<getNumChildren() ; i++) {
             Widget child = getChild(i);
             int childHeight = child.getHeight();
             child.setSize(minWidth, childHeight);

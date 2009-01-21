@@ -114,8 +114,8 @@ public class TreeTable extends TableBase {
             if(row < 0) {
                 return ns.key.getChild(idx);
             }
-            assert ns.childs[idx] != null;
-            ns = ns.childs[idx];
+            assert ns.children[idx] != null;
+            ns = ns.children[idx];
         }
     }
 
@@ -207,11 +207,11 @@ public class TreeTable extends TableBase {
                 ns.childSizes.insert(idx, count);
                 assert ns.childSizes.size() == parent.getNumChildren();
             }
-            if(ns.childs != null) {
+            if(ns.children != null) {
                 NodeState[] newChilds = new NodeState[parent.getNumChildren()];
-                System.arraycopy(ns.childs, 0, newChilds, 0, idx);
-                System.arraycopy(ns.childs, idx, newChilds, idx+count, ns.childs.length - idx);
-                ns.childs = newChilds;
+                System.arraycopy(ns.children, 0, newChilds, 0, idx);
+                System.arraycopy(ns.children, idx, newChilds, idx+count, ns.children.length - idx);
+                ns.children = newChilds;
             }
             if(updateParentSizes(ns)) {
                 int row = getRowFromNode(parent.getChild(idx));
@@ -224,8 +224,8 @@ public class TreeTable extends TableBase {
     protected void recursiveRemove(NodeState ns) {
         if(ns != null) {
             HashEntry.remove(nodeStateTable, ns);
-            if(ns.childs != null) {
-                for(NodeState nsChild : ns.childs) {
+            if(ns.children != null) {
+                for(NodeState nsChild : ns.children) {
                     recursiveRemove(nsChild);
                 }
             }
@@ -246,18 +246,18 @@ public class TreeTable extends TableBase {
                 ns.childSizes.remove(idx, count);
                 assert ns.childSizes.size() == parent.getNumChildren();
             }
-            if(ns.childs != null) {
+            if(ns.children != null) {
                 for(int i=0 ; i<count ; i++) {
-                    recursiveRemove(ns.childs[idx+i]);
+                    recursiveRemove(ns.children[idx+i]);
                 }
                 int numChildren = parent.getNumChildren();
                 if(numChildren > 0) {
                     NodeState[] newChilds = new NodeState[numChildren];
-                    System.arraycopy(ns.childs, 0, newChilds, 0, idx);
-                    System.arraycopy(ns.childs, idx+count, newChilds, idx, newChilds.length - idx);
-                    ns.childs = newChilds;
+                    System.arraycopy(ns.children, 0, newChilds, 0, idx);
+                    System.arraycopy(ns.children, idx+count, newChilds, idx, newChilds.length - idx);
+                    ns.children = newChilds;
                 } else {
-                    ns.childs = null;
+                    ns.children = null;
                 }
             }
             if(updateParentSizes(ns)) {
@@ -312,7 +312,7 @@ public class TreeTable extends TableBase {
         final NodeState parent;
         boolean expanded;
         SizeSequence childSizes;
-        NodeState[] childs;
+        NodeState[] children;
         int level;
 
         public NodeState(TreeTableNode key, NodeState parent) {
@@ -321,10 +321,10 @@ public class TreeTable extends TableBase {
             this.level = (parent != null) ? parent.level + 1 : 0;
 
             if(parent != null) {
-                if(parent.childs == null) {
-                    parent.childs = new NodeState[parent.key.getNumChildren()];
+                if(parent.children == null) {
+                    parent.children = new NodeState[parent.key.getNumChildren()];
                 }
-                parent.childs[parent.key.getChildIndex(key)] = this;
+                parent.children[parent.key.getChildIndex(key)] = this;
             }
         }
 

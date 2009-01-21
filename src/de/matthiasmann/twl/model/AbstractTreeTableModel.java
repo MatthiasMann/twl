@@ -38,11 +38,11 @@ import java.util.ArrayList;
  */
 public abstract class AbstractTreeTableModel implements TreeTableModel {
 
-    private final ArrayList<TreeTableNode> childs;
+    private final ArrayList<TreeTableNode> children;
     private ChangeListener[] callbacks;
 
     public AbstractTreeTableModel() {
-        this.childs = new ArrayList<TreeTableNode>();
+        this.children = new ArrayList<TreeTableNode>();
     }
 
     public void addChangeListener(ChangeListener listener) {
@@ -66,16 +66,16 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     }
 
     public int getNumChildren() {
-        return childs.size();
+        return children.size();
     }
 
     public TreeTableNode getChild(int idx) {
-        return childs.get(idx);
+        return children.get(idx);
     }
 
     public int getChildIndex(TreeTableNode child) {
-        for(int i=0,n=childs.size() ; i<n ; i++) {
-            if(childs.get(i) == child) {
+        for(int i=0,n=children.size() ; i<n ; i++) {
+            if(children.get(i) == child) {
                 return i;
             }
         }
@@ -85,12 +85,12 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
     protected void insertChild(TreeTableNode node, int idx) {
         assert getChildIndex(node) < 0;
         assert node.getParent() == this;
-        childs.add(idx, node);
+        children.add(idx, node);
         fireNodesAdded(this, idx, 1);
     }
     
     protected void removeChild(int idx) {
-        childs.remove(idx);
+        children.remove(idx);
         fireNodesRemoved(this, idx, 1);
     }
 

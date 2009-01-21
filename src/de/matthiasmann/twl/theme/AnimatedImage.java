@@ -82,17 +82,17 @@ public class AnimatedImage implements Image, HasBorder {
     }
 
     static class Repeat extends Element {
-        final Element[] childs;
+        final Element[] children;
         final int repeatCount;
         final int singleDuration;
 
-        Repeat(Element[] childs, int repeatCount) {
-            this.childs = childs;
+        Repeat(Element[] children, int repeatCount) {
+            this.children = children;
             this.repeatCount = repeatCount;
             assert repeatCount >= 0;
-            assert childs.length > 0;
+            assert children.length > 0;
 
-            for(Element e : childs) {
+            for(Element e : children) {
                 duration += e.duration;
             }
             singleDuration = duration;
@@ -106,7 +106,7 @@ public class AnimatedImage implements Image, HasBorder {
         @Override
         int getHeight() {
             int tmp = 0;
-            for(Element e : childs) {
+            for(Element e : children) {
                 tmp = Math.max(tmp, e.getHeight());
             }
             return tmp;
@@ -115,14 +115,14 @@ public class AnimatedImage implements Image, HasBorder {
         @Override
         int getWidth() {
             int tmp = 0;
-            for(Element e : childs) {
+            for(Element e : children) {
                 tmp = Math.max(tmp, e.getWidth());
             }
             return tmp;
         }
 
         Img getFirstImg() {
-            return childs[0].getFirstImg();
+            return children[0].getFirstImg();
         }
 
         void render(int time, Img next, int x, int y, int width, int height, AnimatedImage ai, AnimationState as) {
@@ -135,11 +135,11 @@ public class AnimatedImage implements Image, HasBorder {
             }
 
             Element e = null;
-            for(int i=0 ; i<childs.length ; i++) {
-                e = childs[i];
+            for(int i=0 ; i<children.length ; i++) {
+                e = children[i];
                 if(time < e.duration) {
-                    if(i+1 < childs.length) {
-                        next = childs[i+1].getFirstImg();
+                    if(i+1 < children.length) {
+                        next = children[i+1].getFirstImg();
                     } else if(repeatCount == 0 || iteration < repeatCount) {
                         next = getFirstImg();
                     }

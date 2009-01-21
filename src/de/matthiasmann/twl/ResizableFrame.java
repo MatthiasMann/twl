@@ -309,8 +309,8 @@ public class ResizableFrame extends Widget {
             }
             setSize(width, height);
         }
-        
-        for(int i=0 ; i<getNumChilds() ; i++) {
+
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             if(!isFrameElement(child)) {
                 child.setPosition(getInnerX(), getInnerY());
@@ -414,7 +414,7 @@ public class ResizableFrame extends Widget {
     @Override
     public int getMinWidth() {
         int minWidth = super.getMinWidth();
-        for(int i=0 ; i<getNumChilds() ; i++) {
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             if(!isFrameElement(child)) {
                 minWidth = Math.max(minWidth, child.getMinWidth() + getBorderHorizontal());
@@ -429,7 +429,7 @@ public class ResizableFrame extends Widget {
     @Override
     public int getMinHeight() {
         int minHeight = super.getMinHeight();
-        for(int i=0 ; i<getNumChilds() ; i++) {
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             if(!isFrameElement(child)) {
                 minHeight = Math.max(minHeight, child.getMinHeight() + getBorderVertical());
@@ -441,7 +441,7 @@ public class ResizableFrame extends Widget {
     @Override
     public int getPreferedInnerWidth() {
         int prefWidth = 0;
-        for(int i=0 ; i<getNumChilds() ; i++) {
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             if(!isFrameElement(child)) {
                 prefWidth = Math.max(prefWidth, child.getPreferedWidth());
@@ -462,7 +462,7 @@ public class ResizableFrame extends Widget {
     @Override
     public int getPreferedInnerHeight() {
         int prefHeight = 0;
-        for(int i=0 ; i<getNumChilds() ; i++) {
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             if(!isFrameElement(child)) {
                 prefHeight = Math.max(prefHeight, child.getPreferedHeight());

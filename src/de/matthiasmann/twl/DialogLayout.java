@@ -297,7 +297,7 @@ public class DialogLayout extends Widget {
 
     /**
      * Creates a new parallel group.
-     * All childs in a parallel group share the same position and size of it's axis.
+     * All children in a parallel group share the same position and size of it's axis.
      *
      * @return the new parallel Group.
      */
@@ -307,9 +307,9 @@ public class DialogLayout extends Widget {
 
     /**
      * Creates a new sequential group.
-     * All childs in a sequential group are ordered with increasing coordinates
+     * All children in a sequential group are ordered with increasing coordinates
      * along it's axis in the order they are added to the group. The available
-     * size is distributed among the childs depending on their min/prefered/max
+     * size is distributed among the children depending on their min/prefered/max
      * sizes.
      * 
      * @return a new sequential Group.
@@ -325,8 +325,8 @@ public class DialogLayout extends Widget {
     }
 
     @Override
-    public void removeAllChilds() {
-        super.removeAllChilds();
+    public void removeAllChildren() {
+        super.removeAllChildren();
         widgetSprings.clear();
         if(horz != null) {
             horz.recheckWidgets();
@@ -623,7 +623,7 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Add a default gap between all childs except if the neighbour is already a Gap.
+         * Add a default gap between all children except if the neighbour is already a Gap.
          */
         public void addDefaultGap() {
             for(int i=0 ; i<springs.size() ; i++) {
@@ -699,7 +699,7 @@ public class DialogLayout extends Widget {
         }
         
         /**
-         * Add a default gap between all childs except if the neighbour is already a Gap.
+         * Add a default gap between all children except if the neighbour is already a Gap.
          */
         @Override
         public void addDefaultGap() {

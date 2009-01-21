@@ -189,7 +189,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 throw new IllegalArgumentException("cellRenderer already in use");
             }
             w.setVisible(false);
-            super.insertChild(w, super.getNumChilds());
+            super.insertChild(w, super.getNumChildren());
         } else if(!(cellRenderer instanceof CellWidgetCreator)) {
             throw new IllegalArgumentException("cellRenderer must be atleast a Widget or a CellWidgetCreator");
         }
@@ -414,7 +414,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected void insertCellWidget(int row, int col, Widget widget, CellWidgetCreator creator) {
         if(widget.getParent() != this) {
-            super.insertChild(widget, getNumChilds());
+            super.insertChild(widget, getNumChildren());
         }
 
         int x = getColumnStartPosition(col);
@@ -493,13 +493,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         for(CellRenderer cellRenderer : cellRenderers.getUniqueValues()) {
             Widget w = (Widget)cellRenderer;
             if(w.getParent() != this) {
-                super.insertChild(w, super.getNumChilds());
+                super.insertChild(w, super.getNumChildren());
             }
         }
     }
     
     protected void removeAllCellWidgets() {
-        super.removeAllChilds();
+        super.removeAllChildren();
         addAllCellRenderers();
     }
 

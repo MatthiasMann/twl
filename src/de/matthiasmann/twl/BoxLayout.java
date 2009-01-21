@@ -144,7 +144,7 @@ public class BoxLayout extends Widget {
         int y = getInnerY();
         int width = 0;
         int height = 0;
-        final int numChildren = getNumChilds();
+        final int numChildren = getNumChildren();
 
         // pass 1: get needed size and limit component size
         for(int idx=0 ; idx<numChildren ; idx++) {
@@ -168,7 +168,7 @@ public class BoxLayout extends Widget {
             x -= width - getInnerWidth();
         }
 
-        // pass 2: position childs
+        // pass 2: position children
         for(int idx=0 ; idx<numChildren ; idx++) {
             Widget child = getChild(idx);
             int yoff = 0;
@@ -203,7 +203,7 @@ public class BoxLayout extends Widget {
         int y = getInnerY();
         int width = 0;
         int height = 0;
-        final int numChildren = getNumChilds();
+        final int numChildren = getNumChildren();
 
         // pass 1: get needed size and limit component size
         for(int idx=0 ; idx<numChildren ; idx++) {
@@ -227,7 +227,7 @@ public class BoxLayout extends Widget {
             y -= height - getInnerHeight();
         }
 
-        // pass 2: position childs
+        // pass 2: position children
         for(int idx=0 ; idx<numChildren ; idx++) {
             Widget child = getChild(idx);
             int xoff = 0;
@@ -259,7 +259,7 @@ public class BoxLayout extends Widget {
 
     @Override
     protected void layout() {
-        if(getNumChilds() > 0) {
+        if(getNumChildren() > 0) {
             switch(direction) {
             case HORIZONTAL:
                 layoutHorizontal();

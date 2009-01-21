@@ -160,7 +160,7 @@ public class TextArea extends Widget {
 
     public void unregisterAllWidgets() {
         widgets.clear();
-        super.removeAllChilds();
+        super.removeAllChildren();
         forceRelayout();
     }
 
@@ -175,17 +175,17 @@ public class TextArea extends Widget {
 
     @Override
     public void insertChild(Widget child, int index) {
-        throw new UnsupportedOperationException("use setContent");
+        throw new UnsupportedOperationException("use registerWidget");
     }
 
     @Override
-    public void removeAllChilds() {
-        throw new UnsupportedOperationException("use setContent");
+    public void removeAllChildren() {
+        throw new UnsupportedOperationException("use registerWidget");
     }
 
     @Override
     public Widget removeChild(int index) {
-        throw new UnsupportedOperationException("use setContent");
+        throw new UnsupportedOperationException("use registerWidget");
     }
 
     @Override
@@ -318,7 +318,7 @@ public class TextArea extends Widget {
         }
         objLeft.clear();
         objRight.clear();
-        super.removeAllChilds();
+        super.removeAllChildren();
 
         curY = 0;
         curX = 0;
@@ -483,7 +483,7 @@ public class TextArea extends Widget {
             nextLine();
         }
 
-        super.insertChild(lw.widget, getNumChilds());
+        super.insertChild(lw.widget, getNumChildren());
         lw.valign = e.getVerticalAlignment();
         lw.widget.adjustSize();
         lw.width = lw.widget.getWidth();

@@ -398,7 +398,7 @@ public class Listbox extends Widget {
         case KEY_RELEASED:
             return true;
         }
-        // delegate to childs (listbox, displays, etc...)
+        // delegate to children (listbox, displays, etc...)
         if(super.handleEvent(evt)) {
             return true;
         }

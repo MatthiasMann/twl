@@ -101,7 +101,7 @@ public class ScrollPane extends Widget {
 
     public void setContent(Widget content) {
         if(this.content != null) {
-            contentArea.removeAllChilds();
+            contentArea.removeAllChildren();
             this.content = null;
         }
         if(content != null) {
@@ -225,7 +225,7 @@ public class ScrollPane extends Widget {
     }
 
     @Override
-    public void removeAllChilds() {
+    public void removeAllChildren() {
         throw new UnsupportedOperationException("use setContent");
     }
 

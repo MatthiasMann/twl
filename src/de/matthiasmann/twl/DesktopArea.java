@@ -45,17 +45,17 @@ public class DesktopArea extends Widget {
         if(child != null) {
             int fromIdx = getChildIndex(child);
             assert fromIdx >= 0;
-            int numChilds = getNumChilds();
-            if(fromIdx < numChilds - 1) {
-                moveChild(fromIdx, getNumChilds() - 1);
+            int numChildren = getNumChildren();
+            if(fromIdx < numChildren - 1) {
+                moveChild(fromIdx, numChildren - 1);
             }
         }
     }
 
     @Override
     protected void layout() {
-        // make sure that all childs are still inside
-        restrictChildsToInnerArea();
+        // make sure that all children are still inside
+        restrictChildrenToInnerArea();
     }
 
     @Override
@@ -64,7 +64,7 @@ public class DesktopArea extends Widget {
         invalidateLayout();
     }
 
-    protected void restrictChildsToInnerArea() {
+    protected void restrictChildrenToInnerArea() {
         final int top = getInnerY();
         final int left = getInnerX();
         final int right = getInnerRight();
@@ -72,7 +72,7 @@ public class DesktopArea extends Widget {
         final int width = Math.max(0, right-left);
         final int height = Math.max(0, bottom-top);
 
-        for(int i=0,n=getNumChilds() ; i<n ; i++) {
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget w = getChild(i);
             w.setSize(
                     Math.min(width, w.getWidth()),

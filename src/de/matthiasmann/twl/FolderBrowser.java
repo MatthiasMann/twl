@@ -210,7 +210,7 @@ public class FolderBrowser extends Widget {
     }
     
     private void rebuildCurrentFolderGroup() {
-        curFolderGroup.removeAllChilds();
+        curFolderGroup.removeAllChildren();
         recursiveAddFolder(currentFolder, null);
     }
 
@@ -218,7 +218,7 @@ public class FolderBrowser extends Widget {
         if(folder != null) {
             recursiveAddFolder(fsm.getParent(folder), folder);
         }
-        if(curFolderGroup.getNumChilds() > 0) {
+        if(curFolderGroup.getNumChildren() > 0) {
             Label l = new Label(fsm.getSeparator());
             l.setTheme("pathseparator");
             curFolderGroup.add(l);

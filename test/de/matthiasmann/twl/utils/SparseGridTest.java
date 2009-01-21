@@ -191,7 +191,7 @@ public class SparseGridTest {
             if(node.size > 0) {
                 SparseGrid.Node n = null;
                 for(int i=0 ; i<node.size ; i++) {
-                    n = (SparseGrid.Node)node.childs[i];
+                    n = (SparseGrid.Node)node.children[i];
                     assertSame(prev, n.prev);
                     if(prev != null) {
                         assertSame(n, prev.next);
@@ -206,9 +206,9 @@ public class SparseGridTest {
                         prev = getLast(node.prev);
                     }
                     for(int i=0 ; i<node.size ; i++) {
-                        n = (SparseGrid.Node)node.childs[i];
+                        n = (SparseGrid.Node)node.children[i];
                         if(i+1 < node.size) {
-                            next = (SparseGrid.Node)node.childs[i+1];
+                            next = (SparseGrid.Node)node.children[i+1];
                         } else {
                             next = getFirst(node.next);
                         }
@@ -220,13 +220,13 @@ public class SparseGridTest {
         }
         private SparseGrid.Node getLast(SparseGrid.Node node) {
             if(node != null && node.size > 0) {
-                return (SparseGrid.Node)node.childs[node.size-1];
+                return (SparseGrid.Node)node.children[node.size-1];
             }
             return null;
         }
         private SparseGrid.Node getFirst(SparseGrid.Node node) {
             if(node != null && node.size > 0) {
-                return (SparseGrid.Node)node.childs[0];
+                return (SparseGrid.Node)node.children[0];
             }
             return null;
         }

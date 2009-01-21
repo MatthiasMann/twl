@@ -38,7 +38,7 @@ import java.util.ArrayList;
 public abstract class AbstractTreeTableNode implements TreeTableNode {
 
     private final TreeTableNode parent;
-    private ArrayList<TreeTableNode> childs;
+    private ArrayList<TreeTableNode> children;
     private boolean leaf;
 
     protected AbstractTreeTableNode(TreeTableNode parent) {
@@ -58,17 +58,17 @@ public abstract class AbstractTreeTableNode implements TreeTableNode {
     }
 
     public int getNumChildren() {
-        return (childs != null) ? childs.size() : 0;
+        return (children != null) ? children.size() : 0;
     }
 
     public TreeTableNode getChild(int idx) {
-        return childs.get(idx);
+        return children.get(idx);
     }
 
     public int getChildIndex(TreeTableNode child) {
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                if(childs.get(i) == child) {
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                if(children.get(i) == child) {
                     return i;
                 }
             }
@@ -90,21 +90,21 @@ public abstract class AbstractTreeTableNode implements TreeTableNode {
     protected void insertChild(TreeTableNode node, int idx) {
         assert getChildIndex(node) < 0;
         assert node.getParent() == this;
-        if(childs == null) {
-            childs = new ArrayList<TreeTableNode>();
+        if(children == null) {
+            children = new ArrayList<TreeTableNode>();
         }
-        childs.add(idx, node);
+        children.add(idx, node);
         getTreeTableModel().fireNodesAdded(this, idx, 1);
     }
 
     protected void removeChild(int idx) {
-        childs.remove(idx);
+        children.remove(idx);
         getTreeTableModel().fireNodesRemoved(this, idx, 1);
     }
 
     protected void removeAllChildren() {
-        int count = childs.size();
-        childs.clear();
+        int count = children.size();
+        children.clear();
         getTreeTableModel().fireNodesRemoved(this, 0, count);
     }
 

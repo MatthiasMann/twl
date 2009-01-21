@@ -76,7 +76,7 @@ public class Widget {
     private short maxWidth;
     private short maxHeight;
 
-    private ArrayList<Widget> childs;
+    private ArrayList<Widget> children;
     private Widget lastChildMouseOver;
     private Widget lastMouseUpChild;
     private Widget focusChild;
@@ -108,7 +108,7 @@ public class Widget {
     }
     
     /**
-     * Checks whether this widget or atleast one of it's childs
+     * Checks whether this widget or atleast one of it's children
      * owns an open popup.
      * @return true if atleast own open popup is owned (indirectly) by this widget.
      */
@@ -292,7 +292,7 @@ public class Widget {
      * Changes the position of this widget.
      * Negative position is allowed.
      * 
-     * If position has changed then it updates the position of all childs
+     * If position has changed then it updates the position of all children
      * before calling positionChanged.
      * 
      * NOTE: Position is absolute in the widget's tree.
@@ -309,9 +309,9 @@ public class Widget {
             this.posX = x;
             this.posY = y;
             
-            if(childs != null) {
-                for(int i=0,n=childs.size() ; i<n ; i++) {
-                    adjustChildPosition(childs.get(i), deltaX, deltaY);
+            if(children != null) {
+                for(int i=0,n=children.size() ; i<n ; i++) {
+                    adjustChildPosition(children.get(i), deltaX, deltaY);
                 }
             }
             
@@ -417,9 +417,9 @@ public class Widget {
             this.borderBottom = (short)bottom;
             
             // first adjust child position
-            if(childs != null && (deltaLeft != 0 || deltaTop != 0)) {
-                for(int i=0,n=childs.size() ; i<n ; i++) {
-                    adjustChildPosition(childs.get(i), deltaLeft, deltaTop);
+            if(children != null && (deltaLeft != 0 || deltaTop != 0)) {
+                for(int i=0,n=children.size() ; i<n ; i++) {
+                    adjustChildPosition(children.get(i), deltaLeft, deltaTop);
                 }
             }
             
@@ -481,9 +481,9 @@ public class Widget {
 
     public int getPreferedInnerWidth() {
         int right = getInnerX();
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                Widget child = childs.get(i);
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                Widget child = children.get(i);
                 right = Math.max(right, child.getRight());
             }
         }
@@ -491,7 +491,7 @@ public class Widget {
     }
 
     /**
-     * Returns the prefered width based on it's childs and prefered inner width.
+     * Returns the prefered width based on it's children and prefered inner width.
      *
      * Subclasses can overwrite this method to compute the prefered size differently.
      *
@@ -508,9 +508,9 @@ public class Widget {
 
     public int getPreferedInnerHeight() {
         int bottom = getInnerY();
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                Widget child = childs.get(i);
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                Widget child = children.get(i);
                 bottom = Math.max(bottom, child.getBottom());
             }
         }
@@ -520,7 +520,7 @@ public class Widget {
     /**
      * Returns the prefered height.
      *
-     * This method determines the prefered height based on it's childs.
+     * This method determines the prefered height based on it's children.
      * Subclasses can overwrite this method to compute the prefered size differently.
      *
      * @return the prefered height.
@@ -601,9 +601,9 @@ public class Widget {
             // reset flag after calling layout() to prevent loops caused by childChangedSize(Widget)
             layoutInvalid = false;
         }
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                childs.get(i).validateLayout();
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                children.get(i).validateLayout();
             }
         }
     }
@@ -701,7 +701,7 @@ public class Widget {
     }
 
     /**
-     * Sets the overlay image that should be drawn after drawing the childs
+     * Sets the overlay image that should be drawn after drawing the children
      * @param overlay the new overlay image - can be null
      * @see #paintOverlay(de.matthiasmann.twl.GUI)
      */
@@ -718,12 +718,12 @@ public class Widget {
     }
 
     /**
-     * Returns the number of childs in this widget.
-     * @return the number of childs in this widget
+     * Returns the number of children in this widget.
+     * @return the number of children in this widget
      */
-    public final int getNumChilds() {
-        if(childs != null) {
-            return childs.size();
+    public final int getNumChildren() {
+        if(children != null) {
+            return children.size();
         }
         return 0;
     }
@@ -735,8 +735,8 @@ public class Widget {
      * @throws java.lang.IndexOutOfBoundsException if the index is invalid
      */
     public final Widget getChild(int index) throws IndexOutOfBoundsException {
-        if(childs != null) {
-            return childs.get(index);
+        if(children != null) {
+            return children.get(index);
         }
         throw new IndexOutOfBoundsException();
     }
@@ -748,7 +748,7 @@ public class Widget {
      * @throws java.lang.IllegalArgumentException if the child is already in a tree
      */
     public void add(Widget child) {
-        insertChild(child, getNumChilds());
+        insertChild(child, getNumChildren());
     }
     
     /**
@@ -772,13 +772,13 @@ public class Widget {
         if(child.parent != null) {
             throw new IllegalArgumentException("child widget already in tree");
         }
-        if(childs == null) {
-            childs = new ArrayList<Widget>();
+        if(children == null) {
+            children = new ArrayList<Widget>();
         }
-        if(index < 0 || index > childs.size()) {
+        if(index < 0 || index > children.size()) {
             throw new IndexOutOfBoundsException();
         }
-        childs.add(index, child);
+        children.add(index, child);
         child.parent = this;
         adjustChildPosition(child, posX + borderLeft, posY + borderTop);
         GUI gui = getGUI();
@@ -800,10 +800,10 @@ public class Widget {
      * @return the index of the child or -1 if it was not found
      */
     public final int getChildIndex(Widget child) {
-        if(childs != null) {
-            // can't use childs.indexOf(child) as this uses equals()
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                if(childs.get(i) == child) {
+        if(children != null) {
+            // can't use children.indexOf(child) as this uses equals()
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                if(children.get(i) == child) {
                     return i;
                 }
             }
@@ -838,8 +838,8 @@ public class Widget {
      * @see #invalidateLayout()
      */
     public Widget removeChild(int index) throws IndexOutOfBoundsException {
-        if(childs != null) {
-            Widget child = childs.remove(index);
+        if(children != null) {
+            Widget child = children.remove(index);
             unparentChild(child);
             if(lastChildMouseOver == child) {
                 lastChildMouseOver = null;
@@ -857,23 +857,23 @@ public class Widget {
     }
 
     /**
-     * Removes all childs of this widget.
-     * The position of the all removed childs is changed to the relative
+     * Removes all children of this widget.
+     * The position of the all removed children is changed to the relative
      * position to this widget.
-     * Calls invalidateLayout after removing all childs.
+     * Calls invalidateLayout after removing all children.
      * 
      * @see #invalidateLayout()
      */
-    public void removeAllChilds() {
-        if(childs != null) {
+    public void removeAllChildren() {
+        if(children != null) {
             focusChild = null;
             lastMouseUpChild = null;
             lastChildMouseOver = null;
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                Widget child = childs.get(i);
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                Widget child = children.get(i);
                 unparentChild(child);
             }
-            childs.clear(); // we expect that new childs will be added - so keep list
+            children.clear(); // we expect that new children will be added - so keep list
             invalidateLayout();
         }
         if(hasOpenPopup) {
@@ -887,9 +887,9 @@ public class Widget {
      * Clean up GL resources. When overwritten then super method must be called.
      */
     public void destroy() {
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                childs.get(i).destroy();
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                children.get(i).destroy();
             }
         }
     }
@@ -939,7 +939,7 @@ public class Widget {
             focusIdx = 0;
         }
 
-        return focusChilds(focusIdx+1, +1);
+        return focusChildren(focusIdx+1, +1);
     }
 
     public boolean focusPrevChild() {
@@ -954,15 +954,15 @@ public class Widget {
             focusIdx = focusList.size();
         }
 
-        return focusChilds(focusIdx-1, -1);
+        return focusChildren(focusIdx-1, -1);
     }
 
     public boolean focusFirstChild() {
-        return focusChilds(0, 1);
+        return focusChildren(0, 1);
     }
 
     public boolean focusLastChild() {
-        return focusChilds(-1, -1);
+        return focusChildren(-1, -1);
     }
 
     /**
@@ -1091,7 +1091,7 @@ public class Widget {
      * @return true if the widget handled this event
      */
     protected boolean handleEvent(Event evt) {
-        if(childs != null) {
+        if(children != null) {
             if(evt.isMouseEvent()) {
                 return handleMouseEvent(evt);
             } else if(evt.isKeyEvent()) {
@@ -1105,24 +1105,24 @@ public class Widget {
     
     /**
      * Moves the child at index from to index to. This will shift the position
-     * of all childs in between.
+     * of all children in between.
      * 
      * @param from the index of the child that should be moved
      * @param to the new index for the child at from
      * @throws java.lang.IndexOutOfBoundsException if from or to are invalid
      */
     protected void moveChild(int from, int to) {
-        if(childs == null) {
+        if(children == null) {
             throw new IndexOutOfBoundsException();
         }
-        if(to < 0 || to >= childs.size()) {
+        if(to < 0 || to >= children.size()) {
             throw new IndexOutOfBoundsException("to");
         }
-        if(from < 0 || from >= childs.size()) {
+        if(from < 0 || from >= children.size()) {
             throw new IndexOutOfBoundsException("from");
         }
-        Widget child = childs.remove(from);
-        childs.add(to, child);
+        Widget child = children.remove(from);
+        children.add(to, child);
     }
     
     /**
@@ -1271,7 +1271,7 @@ public class Widget {
     }
 
     /**
-     * Paints this widget and it's childs.
+     * Paints this widget and it's children.
      * A subclass should overwrite paintWidget() instead of this function.
      * 
      * The default implementation calls the following method in order:
@@ -1283,18 +1283,18 @@ public class Widget {
      * @param gui the GUI object
      * @see #paintBackground(de.matthiasmann.twl.GUI) 
      * @see #paintWidget(de.matthiasmann.twl.GUI)
-     * @see #paintChilds(de.matthiasmann.twl.GUI)
+     * @see #paintChildren(de.matthiasmann.twl.GUI)
      * @see #paintOverlay(de.matthiasmann.twl.GUI)
      */
     protected void paint(GUI gui) {
         paintBackground(gui);
         paintWidget(gui);
-        paintChilds(gui);
+        paintChildren(gui);
         paintOverlay(gui);
     }
     
     /**
-     * Called by paint() after painting the background and before painting all childs.
+     * Called by paint() after painting the background and before painting all children.
      * This should be overwritten instead of paint() if normal themeable
      * painting is desired by the subclass.
      * @param gui the GUI object - it's the same as getGUI()
@@ -1325,13 +1325,13 @@ public class Widget {
     }
 
     /**
-     * Paints all children in index order. Invisible childs are skipped.
+     * Paints all children in index order. Invisible children are skipped.
      * @param gui the GUI object
      */
-    protected void paintChilds(GUI gui) {
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                Widget child = childs.get(i);
+    protected void paintChildren(GUI gui) {
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                Widget child = children.get(i);
                 if(child.visible) {
                     child.drawWidget(gui);
                 }
@@ -1347,19 +1347,19 @@ public class Widget {
      */
     protected void paintChild(GUI gui, Widget child) {
         if(child.parent != this) {
-            throw new IllegalArgumentException("can only render direct childs");
+            throw new IllegalArgumentException("can only render direct children");
         }
         child.drawWidget(gui);
     }
 
     protected List<Widget> getKeyboardFocusOrder() {
-        if(childs == null) {
+        if(children == null) {
             return Collections.<Widget>emptyList();
         }
-        return Collections.unmodifiableList(childs);
+        return Collections.unmodifiableList(children);
     }
 
-    protected boolean focusChilds(int start, int dir) {
+    protected boolean focusChildren(int start, int dir) {
         List<Widget> focusList = getKeyboardFocusOrder();
         final int n = focusList.size();
         //System.out.println(this+" "+getThemePath()+" n="+n+" start="+start+" dir="+dir);
@@ -1397,8 +1397,8 @@ public class Widget {
      * @see #getY()
      */
     protected final Widget getChildAt(int x, int y) {
-        for(int i=childs.size(); i-->0 ;) {
-            Widget child = childs.get(i);
+        for(int i=children.size(); i-->0 ;) {
+            Widget child = children.get(i);
             if(child.visible && child.isInside(x, y)) {
                 return child;
             }
@@ -1433,17 +1433,17 @@ public class Widget {
             animState.setGUI(gui);
         }
         afterAddToGUI(gui);
-        if(childs != null) {
-            for(int i=childs.size() ; i-->0 ;) {
-                childs.get(i).recursivelyAddToGUI(gui);
+        if(children != null) {
+            for(int i=children.size() ; i-->0 ;) {
+                children.get(i).recursivelyAddToGUI(gui);
             }
         }
     }
 
     private void recursivelyRemoveFromGUI(GUI gui) {
-        if(childs != null) {
-            for(int i=childs.size() ; i-->0 ;) {
-                childs.get(i).recursivelyRemoveFromGUI(gui);
+        if(children != null) {
+            for(int i=children.size() ; i-->0 ;) {
+                children.get(i).recursivelyRemoveFromGUI(gui);
             }
         }
         focusChild = null;
@@ -1497,10 +1497,10 @@ public class Widget {
             setOpenPopup(gui, true);
             return;
         }
-        // 2) check childs (don't compute, just check the flag)
-        if(childs != null) {
-            for(int i=childs.size() ; i-->0 ;) {
-                if(childs.get(i).hasOpenPopup) {
+        // 2) check children (don't compute, just check the flag)
+        if(children != null) {
+            for(int i=children.size() ; i-->0 ;) {
+                if(children.get(i).hasOpenPopup) {
                     setOpenPopup(gui, true);
                     return;
                 }
@@ -1542,9 +1542,9 @@ public class Widget {
         
         final String themePath = getThemePath();
         if(themePath.length() == 0) {
-            if(childs != null) {
-                for(int i=0,n=childs.size() ; i<n ; i++) {
-                    childs.get(i).applyTheme(themeManager);
+            if(children != null) {
+                for(int i=0,n=children.size() ; i<n ; i++) {
+                    children.get(i).applyTheme(themeManager);
                 }
             }
             return;
@@ -1555,7 +1555,7 @@ public class Widget {
             if(theme.length() > 0) {
                 applyTheme(themeInfo);
             }
-            applyThemeToChilds(themeManager, themeInfo);
+            applyThemeToChildren(themeManager, themeInfo);
         }
     }
 
@@ -1576,13 +1576,13 @@ public class Widget {
             }
             applyTheme(themeInfo);
         }
-        applyThemeToChilds(themeManager, themeInfo);
+        applyThemeToChildren(themeManager, themeInfo);
     }
     
-    private void applyThemeToChilds(ThemeManager themeManager, ThemeInfo themeInfo) {
-        if(childs != null) {
-            for(int i=0,n=childs.size() ; i<n ; i++) {
-                Widget child = childs.get(i);
+    private void applyThemeToChildren(ThemeManager themeManager, ThemeInfo themeInfo) {
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                Widget child = children.get(i);
                 child.applyThemeImpl(themeManager, themeInfo);
             }
         }
@@ -1632,8 +1632,8 @@ public class Widget {
                 return false;
             }
         }
-        for(int i=childs.size(); i-->0 ;) {
-            Widget child = childs.get(i);
+        for(int i=children.size(); i-->0 ;) {
+            Widget child = children.get(i);
             if(child.visible && child.isMouseInside(evt)) {
                 // we send the real event only only if we can transfer the mouse "focus" to this child
                 if(setMouseOverChild(child, evt)) {
@@ -1670,8 +1670,8 @@ public class Widget {
     }
     
     private boolean handlePopupEvent(Event evt) {
-        for(int i=0,n=childs.size() ; i<n ; i++) {
-            childs.get(i).handleEvent(evt);
+        for(int i=0,n=children.size() ; i<n ; i++) {
+            children.get(i).handleEvent(evt);
         }
         return true;
     }

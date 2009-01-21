@@ -291,7 +291,7 @@ public class ThemeManager {
             if(parent == null) {
                 throw new XmlPullParserException("Can't merge on top level", xpp, null);
             }
-            ThemeInfoImpl tiPrev = parent.childs.get(themeName);
+            ThemeInfoImpl tiPrev = parent.children.get(themeName);
             if(tiPrev != null) {
                 ti.copy(tiPrev);
             }
@@ -318,7 +318,7 @@ public class ThemeManager {
                     parseThemeWildcardRef(xpp, ti);
                 } else {
                     ThemeInfoImpl tiChild = parseTheme(xpp, name, ti);
-                    ti.childs.put(name, tiChild);
+                    ti.children.put(name, tiChild);
                 }
             } else if("border".equals(tagName)) {
                 ref = xpp.getAttributeValue(null, "ref");

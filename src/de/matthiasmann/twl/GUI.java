@@ -139,9 +139,9 @@ public final class GUI extends Widget {
     }
     
     /**
-     * Applies the active theme to this widget and it's childs.
+     * Applies the active theme to this widget and it's children.
      * If a widget in the tree has an empty theme name then it
-     * is omitted from this process but it childs are still processed.
+     * is omitted from this process but it children are still processed.
      * 
      * @param themeManager the theme manager that should be used
      * @throws java.lang.NullPointerException if themeManager is null
@@ -234,17 +234,17 @@ public final class GUI extends Widget {
     }
 
     @Override
-    public void insertChild(Widget child, int index) throws IndexOutOfBoundsException {
+    public void insertChild(Widget child, int index) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void removeAllChilds() {
+    public void removeAllChildren() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Widget removeChild(int index) throws IndexOutOfBoundsException {
+    public Widget removeChild(int index) {
         throw new UnsupportedOperationException();
     }
 
@@ -545,14 +545,14 @@ public final class GUI extends Widget {
 
     @Override
     Widget getWidgetUnderMouse() {
-        return getChild(getNumChilds()-2).getWidgetUnderMouse();
+        return getChild(getNumChildren()-2).getWidgetUnderMouse();
     }
     
     private boolean sendEvent(Event.Type type) {
         popupEventOccured = false;
         event.type = type;
         event.dragEvent = type.isMouseEvent && dragActive;
-        Widget top = getChild(getNumChilds()-2);
+        Widget top = getChild(getNumChildren()-2);
         return top.handleEvent(event);
     }
 
@@ -564,7 +564,7 @@ public final class GUI extends Widget {
         }
         hideTooltip();
         sendEvent(Event.Type.POPUP_OPENED);
-        super.insertChild(popup, getNumChilds()-1);
+        super.insertChild(popup, getNumChildren()-1);
         popup.getOwner().setOpenPopup(this, true);
         super.requestKeyboardFocus(popup);
         popupEventOccured = true;
@@ -582,7 +582,7 @@ public final class GUI extends Widget {
     }
 
     boolean hasOpenPopups(Widget owner) {
-        for(int i=getNumChilds()-1 ; i-->1 ;) {
+        for(int i=getNumChildren()-1 ; i-->1 ;) {
             PopupWindow popup = (PopupWindow)getChild(i);
             if(popup.getOwner() == popup.getOwner()) {
                 return true;
@@ -592,7 +592,7 @@ public final class GUI extends Widget {
     }
     
     void closePopupFromWidgets(Widget widget) {
-        for(int i=getNumChilds()-1 ; i-->1 ;) {
+        for(int i=getNumChildren()-1 ; i-->1 ;) {
             PopupWindow popup = (PopupWindow)getChild(i);
             Widget owner = popup.getOwner();
             while(owner != null && owner != widget) {
@@ -624,7 +624,7 @@ public final class GUI extends Widget {
     @Override
     protected boolean requestKeyboardFocus(Widget child) {
         if(child != null) {
-            Widget top = getChild(getNumChilds()-2);
+            Widget top = getChild(getNumChildren()-2);
             if(child != top) {
                 return false;
             }
@@ -799,7 +799,7 @@ public final class GUI extends Widget {
 
         @Override
         protected void layout() {
-            for(int i=0,n=getNumChilds() ; i<n ; i++) {
+            for(int i=0,n=getNumChildren() ; i<n ; i++) {
                 Widget c = getChild(i);
                 c.setSize(getInnerWidth(), getInnerHeight());
                 c.setPosition(getInnerX(), getInnerY());

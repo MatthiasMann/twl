@@ -42,7 +42,7 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
 
     private final String name;
     final ThemeInfoImpl parent;
-    final HashMap<String, ThemeInfoImpl> childs;
+    final HashMap<String, ThemeInfoImpl> children;
     Border border;
     boolean maybeUsedFromWildcard;
     String wildcardImportPath;
@@ -51,14 +51,14 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
         super(manager);
         this.name = name;
         this.parent = parent;
-        this.childs = new HashMap<String, ThemeInfoImpl>();
+        this.children = new HashMap<String, ThemeInfoImpl>();
     }
 
     void copy(ThemeInfoImpl src) {
         if(src.border != null) {
             border = src.border;
         }
-        childs.putAll(src.childs);
+        children.putAll(src.children);
         params.putAll(src.params);
         wildcardImportPath = src.wildcardImportPath;
     }
@@ -72,7 +72,7 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
     }
 
     public ThemeInfo getChildTheme(String theme) {
-        ThemeInfo info = childs.get(theme);
+        ThemeInfo info = children.get(theme);
         if(info == null) {
             if(wildcardImportPath != null) {
                 info = manager.resolveWildcard(wildcardImportPath, theme);
