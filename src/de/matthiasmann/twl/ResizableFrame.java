@@ -290,7 +290,11 @@ public class ResizableFrame extends Widget {
         fadeDuration = Math.max(1, duration);
         getAnimationState().resetAnimationTime(STATE_FADE);
     }
-    
+
+    protected boolean isFrameElement(Widget widget) {
+        return widget == titleWidget || widget == closeButton || widget == resizeHandle;
+    }
+
     @Override
     protected void layout() {
         int minWidth = getMinWidth();
@@ -308,7 +312,7 @@ public class ResizableFrame extends Widget {
         
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            if(child != titleWidget) {
+            if(!isFrameElement(child)) {
                 child.setPosition(getInnerX(), getInnerY());
                 child.setSize(getInnerWidth(), getInnerHeight());
             }
@@ -412,7 +416,9 @@ public class ResizableFrame extends Widget {
         int minWidth = super.getMinWidth();
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            minWidth = Math.max(minWidth, child.getMinWidth() + getBorderHorizontal());
+            if(!isFrameElement(child)) {
+                minWidth = Math.max(minWidth, child.getMinWidth() + getBorderHorizontal());
+            }
         }
         if(hasTitleBar() && titleAreaRight < 0) {
             minWidth = Math.max(minWidth, titleWidget.getPreferedWidth() + titleAreaLeft - titleAreaRight);
@@ -425,17 +431,21 @@ public class ResizableFrame extends Widget {
         int minHeight = super.getMinHeight();
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            minHeight = Math.max(minHeight, child.getMinHeight() + getBorderVertical());
+            if(!isFrameElement(child)) {
+                minHeight = Math.max(minHeight, child.getMinHeight() + getBorderVertical());
+            }
         }
         return minHeight;
     }
 
     @Override
     public int getPreferedInnerWidth() {
-        int prefWidth = super.getPreferedInnerWidth();
+        int prefWidth = 0;
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            prefWidth = Math.max(prefWidth, child.getPreferedWidth());
+            if(!isFrameElement(child)) {
+                prefWidth = Math.max(prefWidth, child.getPreferedWidth());
+            }
         }
         return prefWidth;
     }
@@ -451,10 +461,12 @@ public class ResizableFrame extends Widget {
 
     @Override
     public int getPreferedInnerHeight() {
-        int prefHeight = super.getPreferedInnerHeight();
+        int prefHeight = 0;
         for(int i=0 ; i<getNumChilds() ; i++) {
             Widget child = getChild(i);
-            prefHeight = Math.max(prefHeight, child.getPreferedHeight());
+            if(!isFrameElement(child)) {
+                prefHeight = Math.max(prefHeight, child.getPreferedHeight());
+            }
         }
         return prefHeight;
     }
