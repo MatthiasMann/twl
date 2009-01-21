@@ -30,7 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.BooleanModel;
-import de.matthiasmann.twl.model.TableModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
@@ -38,6 +37,7 @@ import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
 
 /**
+ * A Tree+Table widget.
  *
  * @author Matthias Mann
  */
@@ -60,10 +60,6 @@ public class TreeTable extends TableBase {
         this();
         setModel(model);
         modelAllChanged();
-    }
-
-    public void setModel(TableModel model) {
-        throw new UnsupportedOperationException();
     }
 
     public void setModel(TreeTableModel model) {
