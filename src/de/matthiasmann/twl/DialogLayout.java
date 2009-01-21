@@ -41,9 +41,40 @@ import java.util.HashSet;
  */
 public class DialogLayout extends Widget {
 
+    /**
+     * Symbolic constant to refer to "small gap".
+     * @see #getSmallGap()
+     * @see Group#addGap(int)
+     * @see Group#addGap(int, int, int)
+     */
     public static final int SMALL_GAP   = -1;
+
+    /**
+     * Symbolic constant to refer to "medium gap".
+     * @see #getMediumGap()
+     * @see Group#addGap(int)
+     * @see Group#addGap(int, int, int)
+     */
     public static final int MEDIUM_GAP  = -2;
+
+    /**
+     * Symbolic constant to refer to "large gap".
+     * @see #getLargeGap()
+     * @see Group#addGap(int)
+     * @see Group#addGap(int, int, int)
+     */
     public static final int LARGE_GAP   = -3;
+
+    /**
+     * Symbolic constant to refer to "default gap".
+     * The default gap is added (when enabled) between widgets.
+     *
+     * @see #getDefaultGap()
+     * @see #setAddDefaultGaps(boolean)
+     * @see #isAddDefaultGaps()
+     * @see Group#addGap(int)
+     * @see Group#addGap(int, int, int)
+     */
     public static final int DEFAULT_GAP = -4;
 
     protected Dimension smallGap;
@@ -519,12 +550,16 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds a generic gap
+         * Adds a generic gap. Can use symbolic gap names.
          *
-         * @param min the minimum size in pixels
-         * @param pref the prefered size in pixels
-         * @param max the maximum size in pixels
+         * @param min the minimum size in pixels or a symbolic constant
+         * @param pref the prefered size in pixels or a symbolic constant
+         * @param max the maximum size in pixels or a symbolic constant
          * @return this Group
+         * @see DialogLayout#SMALL_GAP
+         * @see DialogLayout#MEDIUM_GAP
+         * @see DialogLayout#LARGE_GAP
+         * @see DialogLayout#DEFAULT_GAP
          */
         public Group addGap(int min, int pref, int max) {
             addSpring(new GapSpring(min, pref, max, false));
@@ -532,10 +567,14 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds a fixed sized gap
+         * Adds a fixed sized gap. Can use symbolic gap names.
          *
-         * @param size the size in pixels
+         * @param size the size in pixels or a symbolic constant
          * @return this Group
+         * @see DialogLayout#SMALL_GAP
+         * @see DialogLayout#MEDIUM_GAP
+         * @see DialogLayout#LARGE_GAP
+         * @see DialogLayout#DEFAULT_GAP
          */
         public Group addGap(int size) {
             addSpring(new GapSpring(size, size, size, false));
@@ -543,7 +582,23 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds a flexible gap with no minimum size
+         * Adds a gap with minimum size. Can use symbolic gap names.
+         *
+         * @param minSize the minimum size in pixels or a symbolic constant
+         * @return this Group
+         * @see DialogLayout#SMALL_GAP
+         * @see DialogLayout#MEDIUM_GAP
+         * @see DialogLayout#LARGE_GAP
+         * @see DialogLayout#DEFAULT_GAP
+         */
+        public Group addMinGap(int minSize) {
+            addSpring(new GapSpring(minSize, minSize, Short.MAX_VALUE, false));
+            return this;
+        }
+
+        /**
+         * Adds a flexible gap with no minimum size.
+         *
          * @return this Group
          */
         public Group addGap() {
