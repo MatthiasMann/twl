@@ -359,43 +359,67 @@ public class TreeTable extends TableBase {
         }
     }
 
-    static class TreeLeafCellRenderer extends TextWidget implements CellRenderer {
+    static int getLevel(TreeTableNode node) {
+        int level = -1;
+        while(node != null) {
+            level++;
+            node = node.getParent();
+        }
+        return level;
+    }
+
+    class TreeLeafCellRenderer implements CellRenderer {
         protected int treeIndent;
         protected int level;
         protected Dimension treeButtonSize = new Dimension(5, 5);
+        protected CellRenderer subRenderer;
 
         public TreeLeafCellRenderer() {
             setClip(true);
-        }
-        
-        @Override
-        protected int computeTextX() {
-            return super.computeTextX() + level * treeIndent + treeButtonSize.getX();
-        }
-
-        public void setCellData(int row, int column, Object data) {
-            TreeTableNode node = (TreeTableNode)data;
-            Object colData = node.getData(column);
-            setText(String.valueOf(colData));
-            level = getLevel(node);
         }
 
         public void setThemeParameters(ParameterMap themeParams) {
             treeIndent = themeParams.getParameter("treeIndent", 10);
             treeButtonSize = themeParams.getParameterValue("treeButtonSize", true, Dimension.class);
         }
+        
+        public void setCellData(int row, int column, Object data) {
+            TreeTableNode node = (TreeTableNode)data;
+            Object colData = node.getData(column);
+            level = getLevel(node);
+            setSubRenderer(colData);
+        }
 
-        private static int getLevel(TreeTableNode node) {
-            int level = -1;
-            while(node != null) {
-                level++;
-                node = node.getParent();
+        protected void setSubRenderer(Object colData) {
+            subRenderer = getCellRenderer(colData);
+            if(subRenderer != null) {
+                subRenderer.setCellData(level, numColumns, colData);
             }
-            return level;
+        }
+
+        public int getColumnSpan() {
+            return (subRenderer != null) ? subRenderer.getColumnSpan() : 1;
+        }
+
+        public int getPreferedHeight() {
+            if(subRenderer != null) {
+                return Math.max(treeButtonSize.getY(), subRenderer.getPreferedHeight());
+            }
+            return treeButtonSize.getY();
+        }
+
+        public Widget getCellRenderWidget(int x, int y, int width, int height) {
+            if(subRenderer != null) {
+                int indent = level * treeIndent + treeButtonSize.getX();
+                Widget widget = subRenderer.getCellRenderWidget(
+                        x + indent, y, Math.max(0, width-indent), height);
+                return widget;
+            }
+            return null;
         }
     }
 
-    static class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CachableCellWidgetCreator {
+    class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CachableCellWidgetCreator {
         public Widget updateWidget(int row, int column, Object data, Widget existingWidget) {
             ToggleButton tb = (ToggleButton)existingWidget;
             if(tb == null) {
@@ -416,7 +440,7 @@ public class TreeTable extends TableBase {
         public void setCellData(int row, int column, Object data) {
             NodeState node = (NodeState)data;
             Object colData = node.key.getData(column);
-            setText(String.valueOf(colData));
+            setSubRenderer(colData);
             level = node.level;
         }
 

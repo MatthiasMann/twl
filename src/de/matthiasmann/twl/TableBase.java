@@ -45,9 +45,16 @@ import java.util.ArrayList;
 public abstract class TableBase extends Widget implements ScrollPane.Scrollable {
 
     public interface CellRenderer {
-        public void setCellData(int row, int column, Object data);
-        public int getPreferedHeight();
+        /**
+         * Called when the CellRenderer is registered and a theme is applied.
+         * @param themeParams the theme parameter object - shared for all CellRenderer
+         */
         public void setThemeParameters(ParameterMap themeParams);
+        
+        public void setCellData(int row, int column, Object data);
+        public int getColumnSpan();
+        public int getPreferedHeight();
+        public Widget getCellRenderWidget(int x, int y, int width, int height);
     }
 
     public interface CellWidgetCreator extends CellRenderer {
@@ -183,16 +190,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         if(dataClass == null) {
             throw new NullPointerException("dataClass");
         }
-        if(cellRenderer instanceof Widget) {
-            Widget w = (Widget)cellRenderer;
-            if(w.getParent() != null) {
-                throw new IllegalArgumentException("cellRenderer already in use");
-            }
-            w.setVisible(false);
-            super.insertChild(w, super.getNumChildren());
-        } else if(!(cellRenderer instanceof CellWidgetCreator)) {
-            throw new IllegalArgumentException("cellRenderer must be atleast a Widget or a CellWidgetCreator");
-        }
         cellRenderers.put(dataClass, cellRenderer);
 
         if(cellRenderer instanceof CellWidgetCreator) {
@@ -311,7 +308,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             }
         }
 
-        final int startX = innerX + getColumnStartPosition(firstVisibleColumn) - scrollPosX;
+        final int offsetX = innerX - scrollPosX;
         final int offsetY = innerY - scrollPosY;
 
         int rowStartPos = getRowStartPosition(firstVisibleRow);
@@ -321,19 +318,33 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             final int curRowHeight = rowEndPos - rowStartPos;
             final TreeTableNode rowNode = getNodeFromRow(row);
 
-            int curX = startX;
-            for(int col=firstVisibleColumn ; col<=lastVisibleColumn ; col++) {
-                final int curColWidth = getColumnWidth(col);
-
+            int colStartPos = getColumnStartPosition(firstVisibleColumn);
+            for(int col=firstVisibleColumn ; col<=lastVisibleColumn ;) {
+                int colEndPos = getColumnEndPosition(col);
                 final CellRenderer cellRenderer = getCellRenderer(row, col, rowNode);
-                if(cellRenderer instanceof Widget) {
-                    Widget cellRendererWidget = (Widget)cellRenderer;
-                    cellRendererWidget.setPosition(curX, curY);
-                    cellRendererWidget.setSize(curColWidth, curRowHeight);
-                    paintChild(gui, cellRendererWidget);
+
+                int curX = offsetX + colStartPos;
+                int colSpan = 1;
+
+                if(cellRenderer != null) {
+                    colSpan = cellRenderer.getColumnSpan();
+                    if(colSpan > 1) {
+                        colEndPos = getColumnEndPosition(Math.max(numColumns-1, col+colSpan-1));
+                    }
+
+                    Widget cellRendererWidget = cellRenderer.getCellRenderWidget(
+                            curX, curY, colEndPos - colStartPos, curRowHeight);
+
+                    if(cellRendererWidget != null) {
+                        if(cellRendererWidget.getParent() != this) {
+                            insertCellRenderer(cellRendererWidget);
+                        }
+                        paintChild(gui, cellRendererWidget);
+                    }
                 }
-                
-                curX += curColWidth + colDivWidth;
+
+                col += Math.max(1, colSpan);
+                colStartPos = colEndPos;
             }
 
             curY += curRowHeight;
@@ -345,6 +356,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 curY += rowDivHeight;
             }
         }
+    }
+
+    protected void insertCellRenderer(Widget widget) {
+        int posX = widget.getX();
+        int posY = widget.getY();
+        widget.setVisible(false);
+        super.insertChild(widget, super.getNumChildren());
+        widget.setPosition(posX, posY);
     }
 
     protected abstract TreeTableNode getNodeFromRow(int row);
@@ -376,6 +395,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             CellRenderer cellRenderer = getCellRenderer(row, column, rowNode);
             if(cellRenderer != null) {
                 height = Math.max(height, cellRenderer.getPreferedHeight());
+                column += Math.max(cellRenderer.getColumnSpan() - 1, 0);
             }
         }
         return height;
@@ -489,18 +509,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         updateAllCellWidgets = false;
     }
 
-    protected void addAllCellRenderers() {
-        for(CellRenderer cellRenderer : cellRenderers.getUniqueValues()) {
-            Widget w = (Widget)cellRenderer;
-            if(w.getParent() != this) {
-                super.insertChild(w, super.getNumChildren());
-            }
-        }
-    }
-    
     protected void removeAllCellWidgets() {
         super.removeAllChildren();
-        addAllCellRenderers();
     }
 
     protected void modelAllChanged() {
@@ -710,17 +720,27 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
-    static class StringCellRenderer extends TextWidget implements CellRenderer {
+    public static class StringCellRenderer extends TextWidget implements CellRenderer {
         public StringCellRenderer() {
             setCache(false);
             setClip(true);
+        }
+
+        public void setThemeParameters(ParameterMap themeParams) {
         }
 
         public void setCellData(int row, int column, Object data) {
             setText((data == null) ? "null" : data.toString());
         }
 
-        public void setThemeParameters(ParameterMap themeParams) {
+        public int getColumnSpan() {
+            return 1;
+        }
+
+        public Widget getCellRenderWidget(int x, int y, int width, int height) {
+            setPosition(x, y);
+            setSize(width, height);
+            return this;
         }
     }
 }
