@@ -228,11 +228,14 @@ public class TextArea extends Widget {
     protected void layout() {
         int targetWidth = computeSize(getMinWidth(), getWidth(), getMaxWidth());
         targetWidth -= getBorderHorizontal();
+
+        //System.out.println(this+" minWidth="+getMinWidth()+" width="+getWidth()+" maxWidth="+getMaxWidth());
         
         // only recompute the layout when it has changed
         if(lastWidth != targetWidth) {
             this.lastWidth = targetWidth;
             this.inLayoutCode = true;
+            int lastCurY = curY;
 
             try {
                 clearLayout();
@@ -253,13 +256,15 @@ public class TextArea extends Widget {
                         layout.get(i).adjustWidget();
                     }
                 }
-
-                //setInnerSize(lastWidth, curY);
-                invalidateParentLayout();
             } finally {
                 inLayoutCode = false;
                 objLeft.clear();
                 objRight.clear();
+            }
+
+            if(lastCurY != curY) {
+                // call outside of inLayoutCode range
+                invalidateParentLayout();
             }
         }
     }
