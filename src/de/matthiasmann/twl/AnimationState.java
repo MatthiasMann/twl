@@ -62,7 +62,6 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
      *
      * @param stateName the state name.
      * @return time since last state change is ms.
-     * @see #getAnimationTime()
      */
     public int getAnimationTime(String stateName) {
         State state = HashEntry.get(stateTable, stateName);

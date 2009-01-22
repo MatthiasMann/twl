@@ -30,7 +30,6 @@
 package de.matthiasmann.twl.model;
 
 import de.matthiasmann.twl.utils.CallbackSupport;
-import de.matthiasmann.twl.*;
 
 /**
  * A class to manage callbacks.
@@ -55,7 +54,6 @@ public class HasCallback {
     /**
      * Removes a callback from the list.
      * @param callback the callback that should be removed
-     * @return true if the callback was removed
      */
     public void removeCallback(Runnable callback) {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback, Runnable.class);

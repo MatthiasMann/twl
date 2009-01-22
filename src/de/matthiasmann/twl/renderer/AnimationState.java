@@ -41,7 +41,6 @@ public interface AnimationState {
      * 
      * @param state the state name.
      * @return time since last state change is ms.
-     * @see #getAnimationTime()
      */
     public int getAnimationTime(String state);
 

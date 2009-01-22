@@ -34,7 +34,7 @@ package de.matthiasmann.twl;
  * Measures the time required to render a specified number of
  * frames (default 100) using System.nanoTime.
  *
- * @see System.nanoTime()
+ * @see System#nanoTime()
  * @author Matthias Mann
  */
 public class FPSCounter extends Label {

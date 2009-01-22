@@ -54,7 +54,7 @@ public interface GraphLineModel {
      * Returns the value of the desired point.
      * @param idx The index of the point. Will be &gt;= 0 and &lt; getNumPoints()
      * @return the value of the desired point.
-     * @see getNumPoints
+     * @see #getNumPoints()
      */
     public float getPoint(int idx);
 
