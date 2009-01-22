@@ -364,7 +364,8 @@ public class ThemeManager {
             ParserUtil.checkNameNotEmpty(name, xpp);
             return Collections.singletonMap(name, value);
         } catch (NumberFormatException ex) {
-            throw new XmlPullParserException("unable to parse value", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "unable to parse value", xpp, ex).initCause(ex));
         }
     }
 
@@ -478,7 +479,8 @@ public class ThemeManager {
             }
             throw new XmlPullParserException("Unknown type \"" + tagName + "\" specified", xpp, null);
         } catch (NumberFormatException ex) {
-            throw new XmlPullParserException("unable to parse value", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "unable to parse value", xpp, ex).initCause(ex));
         }
     }
     

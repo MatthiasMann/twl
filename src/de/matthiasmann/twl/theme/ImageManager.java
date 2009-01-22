@@ -150,7 +150,8 @@ class ImageManager {
                 texture.themeLoadingDone();
             }
         } catch (Exception ex) {
-            throw new XmlPullParserException("Unable to load texture: " + fileName, xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Unable to load texture: " + fileName, xpp, ex).initCause(ex));
         }
     }
 
@@ -191,7 +192,8 @@ class ImageManager {
                 condition.negate ^= negate;
                 return condition;
             } catch(ParseException ex) {
-                throw new XmlPullParserException("Unable to parse condition", xpp, ex);
+                throw (XmlPullParserException)(new XmlPullParserException(
+                        "Unable to parse condition", xpp, ex).initCause(ex));
             }
         }
         return null;
@@ -339,7 +341,8 @@ class ImageManager {
             off[3] = width;
             return off;
         } catch(NumberFormatException ex) {
-            throw new XmlPullParserException("Unable to parse", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Unable to parse", xpp, ex).initCause(ex));
         }
     }
 
@@ -377,7 +380,8 @@ class ImageManager {
             return image;
         } catch(IllegalArgumentException ex) {
             ex.printStackTrace();
-            throw new XmlPullParserException("Invalid value", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Invalid value", xpp, ex).initCause(ex));
         }
     }
 
@@ -557,7 +561,8 @@ class ImageManager {
             params.tintColor = null;
             return image;
         } catch(IllegalArgumentException ex) {
-            throw new XmlPullParserException("Unable to parse", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Unable to parse", xpp, ex).initCause(ex));
         }
     }
 

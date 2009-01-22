@@ -116,7 +116,8 @@ public class ParserUtil {
         try {
             return Integer.parseInt(getAttributeNotNull(xpp, attribName));
         } catch(NumberFormatException ex) {
-            throw new XmlPullParserException(ex.getMessage(), xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    ex.getMessage(), xpp, ex).initCause(ex));
         }
     }
 
@@ -128,7 +129,8 @@ public class ParserUtil {
             }
             return Integer.parseInt(value);
         } catch(NumberFormatException ex) {
-            throw new XmlPullParserException(ex.getMessage(), xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    ex.getMessage(), xpp, ex).initCause(ex));
         }
     }
     
@@ -157,7 +159,8 @@ public class ParserUtil {
                 throw new XmlPullParserException("Unsupported border format", xpp, null);
             }
         } catch (NumberFormatException ex) {
-            throw new XmlPullParserException("Unable to parse border size", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Unable to parse border size", xpp, ex).initCause(ex));
         }
     }
 
@@ -177,7 +180,8 @@ public class ParserUtil {
             }
             return color;
         } catch(NumberFormatException ex) {
-            throw new XmlPullParserException("unable to parse color code", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "unable to parse color code", xpp, ex).initCause(ex));
         }
     }
     
@@ -202,7 +206,8 @@ public class ParserUtil {
             String value = getAttributeNotNull(xpp, attribute);
             return parseIntArray(value);
         } catch(NumberFormatException ex) {
-            throw new XmlPullParserException("Unable to parse", xpp, ex);
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Unable to parse", xpp, ex).initCause(ex));
         }
     }
 
