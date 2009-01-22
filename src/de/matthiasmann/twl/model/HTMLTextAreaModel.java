@@ -33,6 +33,7 @@ import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.utils.ParameterStringParser;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -214,10 +215,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         String style = xpp.getAttributeValue(null, "style");
         if(style != null) {
            finishText();
-           for(String attrib : style.split(";")) {
-               attrib = attrib.trim();
+           ParameterStringParser psp = new ParameterStringParser(style, ';', ':');
+           psp.setTrim(true);
+           while(psp.next()) {
                try {
-                   if(parseCSSAttribute(newStyle, attrib)) {
+                   if(parseCSSAttribute(newStyle, psp.getKey(), psp.getValue())) {
                        newStyle.changed = true;
                    }
                } catch (IllegalArgumentException ex) {
@@ -229,44 +231,38 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         styleStack.add(newStyle);
     }
 
-    private boolean parseCSSAttribute(StyleInfo style, String attrib) {
-        int keyIdx = attrib.indexOf(':');
-        if(keyIdx > 0) {
-            String key = attrib.substring(0, keyIdx).trim();
-            String value = attrib.substring(keyIdx + 1).trim();
-
-            if("margin-left".equals(key)) {
-                style.marginLeft = parsePXValue(value);
+    private boolean parseCSSAttribute(StyleInfo style, String key, String value) {
+        if("margin-left".equals(key)) {
+            style.marginLeft = parsePXValue(value);
+            return true;
+        }
+        if("margin-right".equals(key)) {
+            style.marginRight = parsePXValue(value);
+            return true;
+        }
+        if("text-indent".equals(key)) {
+            style.textIndent = parsePXValue(value);
+            return true;
+        }
+        if("color".equals(key)) {
+            Color color = Color.parserColor(value);
+            if(color != null) {
+                style.color = color;
                 return true;
             }
-            if("margin-right".equals(key)) {
-                style.marginRight = parsePXValue(value);
+        }
+        if("text-align".equals(key)) {
+            HAlignment alignment = HALIGN.get(value);
+            if(alignment != null) {
+                style.halignment = alignment;
                 return true;
             }
-            if("text-indent".equals(key)) {
-                style.textIndent = parsePXValue(value);
+        }
+        if("vertical-align".equals(key)) {
+            VAlignment alignment = VALIGN.get(value);
+            if(alignment != null) {
+                style.valignment = alignment;
                 return true;
-            }
-            if("color".equals(key)) {
-                Color color = Color.parserColor(value);
-                if(color != null) {
-                    style.color = color;
-                    return true;
-                }
-            }
-            if("text-align".equals(key)) {
-                HAlignment alignment = HALIGN.get(value);
-                if(alignment != null) {
-                    style.halignment = alignment;
-                    return true;
-                }
-            }
-            if("vertical-align".equals(key)) {
-                VAlignment alignment = VALIGN.get(value);
-                if(alignment != null) {
-                    style.valignment = alignment;
-                    return true;
-                }
             }
         }
         return false;
