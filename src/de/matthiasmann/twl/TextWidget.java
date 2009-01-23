@@ -116,6 +116,10 @@ public class TextWidget extends Widget {
         return numTextLines > 1;
     }
 
+    public int getNumTextLines() {
+        return numTextLines;
+    }
+    
     public Alignment getAlignment() {
         return alignment;
     }

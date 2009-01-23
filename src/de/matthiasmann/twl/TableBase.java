@@ -30,6 +30,7 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.TreeTableNode;
+import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
@@ -111,8 +112,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.cellWidgetContainer.setClip(true);
 
         super.insertChild(cellWidgetContainer, 0);
-
-        registerCellRenderer(String.class, stringCellRenderer);
         setCanAcceptKeyboardFocus(true);
     }
 
@@ -225,6 +224,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
         applyThemeTableBase(themeInfo);
+        modelAllChanged();
     }
 
     protected void applyThemeTableBase(ThemeInfo themeInfo) {
@@ -241,6 +241,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         for(CellRenderer cellRenderer : cellRenderers.getUniqueValues()) {
             cellRenderer.setThemeParameters(cellRendererParameters);
         }
+        stringCellRenderer.setThemeParameters(cellRendererParameters);
     }
 
     @Override
@@ -792,14 +793,22 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
 
         public void setThemeParameters(ParameterMap themeParams) {
+            setFont(themeParams.getFont("font"));
         }
 
         public void setCellData(int row, int column, Object data) {
-            setText((data == null) ? "null" : data.toString());
+            setText(String.valueOf(data));
         }
 
         public int getColumnSpan() {
             return 1;
+        }
+
+        @Override
+        public int getPreferedHeight() {
+            Font font = getFont();
+            int lineHeight = (font != null) ? font.getLineHeight() : 0;
+            return getBorderVertical() + lineHeight * Math.max(1, getNumTextLines());
         }
 
         public Widget getCellRenderWidget(int x, int y, int width, int height) {
