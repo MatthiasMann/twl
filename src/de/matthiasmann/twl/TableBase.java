@@ -58,8 +58,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     public interface CellWidgetCreator extends CellRenderer {
-        public Widget updateWidget(int row, int column, Object data, Widget existingWidget);
-        public void positionWidget(int row, int column, Object data, Widget widget, int x, int y, int w, int h);
+        public Widget updateWidget(Widget existingWidget);
+        public void positionWidget(Widget widget, int x, int y, int w, int h);
     }
 
     public interface CachableCellWidgetCreator extends CellWidgetCreator {
@@ -211,10 +211,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
-        applyThemeTable(themeInfo);
+        applyThemeTableBase(themeInfo);
     }
 
-    protected void applyThemeTable(ThemeInfo themeInfo) {
+    protected void applyThemeTableBase(ThemeInfo themeInfo) {
         this.imageRowDivider = themeInfo.getImage("rowDivider");
         this.imageColumnDivider = themeInfo.getImage("columnDivider");
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
@@ -432,64 +432,71 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
-    protected void insertCellWidget(int row, int col, Widget widget, CellWidgetCreator creator) {
-        if(widget.getParent() != this) {
-            super.insertChild(widget, getNumChildren());
+    void insertCellWidget(int row, int column, WidgetEntry widgetEntry) {
+        CellWidgetCreator cwc = (CellWidgetCreator)getCellRenderer(row, column, null);
+        Widget widget = widgetEntry.widget;
+
+        if(widget == null && widgetEntry.cache != null) {
+            widget = widgetEntry.cache.get();
+            widget = cwc.updateWidget(widget);
+            widgetEntry.widget = widget;
         }
+        
+        if(widget != null) {
+            if(widget.getParent() != this) {
+                super.insertChild(widget, getNumChildren());
+            }
 
-        int x = getColumnStartPosition(col);
-        int w = getColumnEndPosition(col) - x;
-        int y = getRowStartPosition(row);
-        int h = getRowEndPosition(row) - y;
+            int x = getColumnStartPosition(column);
+            int w = getColumnEndPosition(column) - x;
+            int y = getRowStartPosition(row);
+            int h = getRowEndPosition(row) - y;
 
-        creator.positionWidget(row, col,
-                getCellData(row, col, null), widget,
-                x + getInnerX() - scrollPosX,
-                y + getInnerY() - scrollPosY,
-                w, h);
+            cwc.positionWidget(widget,
+                    x + getInnerX() - scrollPosX,
+                    y + getInnerY() - scrollPosY,
+                    w, h);
+        }
     }
 
-    protected void updateCellWidget(int row, int col) {
-        WidgetEntry we = (WidgetEntry)widgetGrid.get(row, col);
+    protected void updateCellWidget(int row, int column) {
+        WidgetEntry we = (WidgetEntry)widgetGrid.get(row, column);
         Widget oldWidget = (we != null) ? we.widget : null;
         Widget newWidget = null;
 
-        final Object data = getCellData(row, col, null);
-        CellWidgetCreator cellWidgetCreator = null;
-        if(data != null) {
-            CellRenderer cellRenderer = getCellRenderer(data);
-            if(cellRenderer instanceof CellWidgetCreator) {
-                cellWidgetCreator = (CellWidgetCreator)cellRenderer;
-                if(we != null && we.creator != cellWidgetCreator) {
-                    // the cellWidgetCreator has changed for this cell
-                    // discard the old widget
-                    oldWidget = null;
+        TreeTableNode rowNode = getNodeFromRow(row);
+        CellRenderer cellRenderer = getCellRenderer(row, column, rowNode);
+        if(cellRenderer instanceof CellWidgetCreator) {
+            CellWidgetCreator cellWidgetCreator = (CellWidgetCreator)cellRenderer;
+            if(we != null && we.creator != cellWidgetCreator) {
+                // the cellWidgetCreator has changed for this cell
+                // discard the old widget
+                oldWidget = null;
+            }
+            if(cellWidgetCreator instanceof CachableCellWidgetCreator) {
+                CachableCellWidgetCreator ccwc = (CachableCellWidgetCreator)cellWidgetCreator;
+                if(we == null) {
+                    we = new WidgetEntry();
+                    widgetGrid.set(row, column, we);
                 }
-                if(cellWidgetCreator instanceof CachableCellWidgetCreator) {
-                    CachableCellWidgetCreator ccwc = (CachableCellWidgetCreator)cellWidgetCreator;
+                we.creator = cellWidgetCreator;
+                we.cache = getWidgetCache(ccwc.getCacheTag(row, column));
+            } else {
+                newWidget = cellWidgetCreator.updateWidget(oldWidget);
+                if(newWidget != null) {
                     if(we == null) {
                         we = new WidgetEntry();
-                        widgetGrid.set(row, col, we);
+                        widgetGrid.set(row, column, we);
                     }
+                    we.widget = newWidget;
                     we.creator = cellWidgetCreator;
-                    we.cache = getWidgetCache(ccwc.getCacheTag(row, col));
-                } else {
-                    newWidget = cellWidgetCreator.updateWidget(row, col, data, oldWidget);
-                    if(newWidget != null) {
-                        if(we == null) {
-                            we = new WidgetEntry();
-                            widgetGrid.set(row, col, we);
-                        }
-                        we.widget = newWidget;
-                        we.creator = cellWidgetCreator;
-                        we.cache = null;
-                    }
+                    we.cache = null;
                 }
             }
         }
 
         if(newWidget == null && we != null && we.cache == null) {
-            widgetGrid.remove(row, col);
+            widgetGrid.remove(row, column);
         }
         
         if(oldWidget != null && newWidget != oldWidget) {
@@ -679,17 +686,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     class InsertCellWidgets implements SparseGrid.GridFunction {
         public void apply(int row, int column, Entry e) {
-            WidgetEntry widgetEntry = (WidgetEntry)e;
-            Widget widget = widgetEntry.widget;
-            if(widget == null && widgetEntry.cache != null) {
-                widget = widgetEntry.cache.get();
-                widget = widgetEntry.creator.updateWidget(row, column,
-                        getCellData(row, column, null), widget);
-                widgetEntry.widget = widget;
-            }
-            if(widget != null) {
-                insertCellWidget(row, column, widgetEntry.widget, widgetEntry.creator);
-            }
+            insertCellWidget(row, column, (WidgetEntry)e);
         }
     }
 

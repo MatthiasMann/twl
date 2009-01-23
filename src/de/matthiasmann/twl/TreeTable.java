@@ -44,6 +44,8 @@ import de.matthiasmann.twl.utils.SizeSequence;
 public class TreeTable extends TableBase {
 
     private final ModelChangeListener modelChangeListener;
+    private final TreeLeafCellRenderer leafRenderer;
+    private final TreeNodeCellRenderer nodeRenderer;
 
     private NodeState[] nodeStateTable;
     private TreeTableModel model;
@@ -52,8 +54,9 @@ public class TreeTable extends TableBase {
     public TreeTable() {
         modelChangeListener = new ModelChangeListener();
         nodeStateTable = new NodeState[64];
-        super.registerCellRenderer(TreeTableNode.class, new TreeLeafCellRenderer());
-        super.registerCellRenderer(NodeState.class, new TreeNodeCellRenderer());
+        leafRenderer = new TreeLeafCellRenderer();
+        nodeRenderer = new TreeNodeCellRenderer();
+        hasCellWidgetCreators = true;
     }
 
     public TreeTable(TreeTableModel model) {
@@ -71,6 +74,7 @@ public class TreeTable extends TableBase {
         if(this.model != null) {
             this.model.addChangeListener(modelChangeListener);
             this.rootNodeState = createNodeState(model);
+            this.rootNodeState.level = -1;
             this.rootNodeState.expanded = true;
             this.rootNodeState.initChildSizes();
             this.numRows = getNumRows();
@@ -82,6 +86,17 @@ public class TreeTable extends TableBase {
         }
         invalidateLayout();
         invalidateParentLayout();
+    }
+
+    @Override
+    protected void applyTheme(ThemeInfo themeInfo) {
+        super.applyTheme(themeInfo);
+        applyThemeTreeTable(themeInfo);
+    }
+
+    protected void applyThemeTreeTable(ThemeInfo themeInfo) {
+        leafRenderer.setThemeParameters(cellRendererParameters);
+        nodeRenderer.setThemeParameters(cellRendererParameters);
     }
 
     public int getRowFromNode(TreeTableNode node) {
@@ -177,13 +192,25 @@ public class TreeTable extends TableBase {
         if(node == null) {
             node = getNodeFromRow(row);
         }
-        if(column == 0) {
-            if(node.isLeaf()) {
-                return node;
-            }
-            return getOrCreateNodeState(node);
-        }
         return node.getData(column);
+    }
+
+    @Override
+    protected CellRenderer getCellRenderer(int row, int col, TreeTableNode node) {
+        if(node == null) {
+            node = getNodeFromRow(row);
+        }
+        if(col == 0) {
+            Object data = node.getData(col);
+            if(node.isLeaf()) {
+                leafRenderer.setCellData(row, col, data, node);
+                return leafRenderer;
+            }
+            NodeState nodeState = getOrCreateNodeState(node);
+            nodeRenderer.setCellData(row, col, data, nodeState);
+            return nodeRenderer;
+        }
+        return super.getCellRenderer(row, col, node);
     }
 
     private boolean updateParentSizes(NodeState ns) {
@@ -360,7 +387,7 @@ public class TreeTable extends TableBase {
     }
 
     static int getLevel(TreeTableNode node) {
-        int level = -1;
+        int level = -2;
         while(node != null) {
             level++;
             node = node.getParent();
@@ -384,10 +411,12 @@ public class TreeTable extends TableBase {
         }
         
         public void setCellData(int row, int column, Object data) {
-            TreeTableNode node = (TreeTableNode)data;
-            Object colData = node.getData(column);
+            throw new UnsupportedOperationException("Don't call this method");
+        }
+
+        public void setCellData(int row, int column, Object data, TreeTableNode node) {
             level = getLevel(node);
-            setSubRenderer(colData);
+            setSubRenderer(data);
         }
 
         protected void setSubRenderer(Object colData) {
@@ -420,28 +449,28 @@ public class TreeTable extends TableBase {
     }
 
     class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CachableCellWidgetCreator {
-        public Widget updateWidget(int row, int column, Object data, Widget existingWidget) {
+        private NodeState nodeState;
+
+        public Widget updateWidget(Widget existingWidget) {
             ToggleButton tb = (ToggleButton)existingWidget;
             if(tb == null) {
                 tb = new ToggleButton();
                 tb.setTheme("treeButton");
             }
-            ((ToggleButtonModel)tb.getModel()).setModel((NodeState)data);
+            ((ToggleButtonModel)tb.getModel()).setModel(nodeState);
             return tb;
         }
 
-        public void positionWidget(int row, int column, Object data, Widget widget, int x, int y, int w, int h) {
-            int indent = ((NodeState)data).level * treeIndent;
+        public void positionWidget(Widget widget, int x, int y, int w, int h) {
+            int indent = level * treeIndent;
             widget.setPosition(x + indent, y + (h-treeButtonSize.getY())/2);
             widget.setSize(treeButtonSize.getX(), treeButtonSize.getY());
         }
 
-        @Override
-        public void setCellData(int row, int column, Object data) {
-            NodeState node = (NodeState)data;
-            Object colData = node.key.getData(column);
-            setSubRenderer(colData);
-            level = node.level;
+        public void setCellData(int row, int column, Object data, NodeState nodeState) {
+            this.nodeState = nodeState;
+            setSubRenderer(data);
+            level = nodeState.level;
         }
 
         public String getCacheTag(int row, int column) {
