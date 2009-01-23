@@ -331,65 +331,70 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         final int innerWidth = getInnerWidth();
         final int innerHeight = getInnerHeight() - columnHeaderHeight;
 
-        int colDivWidth = 0;
-        if(imageColumnDivider != null) {
-            colDivWidth = imageColumnDivider.getWidth();
+        gui.clipEnter(innerX, innerY, innerWidth, innerHeight);
+        try {
+            int colDivWidth = 0;
+            if(imageColumnDivider != null) {
+                colDivWidth = imageColumnDivider.getWidth();
 
-            int curX = innerX;
-            for(int col=firstVisibleColumn ; col<=lastVisibleColumn ; col++) {
-                curX += getColumnWidth(col);
-                imageColumnDivider.draw(getAnimationState(), curX, innerY, colDivWidth, innerHeight);
-                curX += colDivWidth;
+                int curX = innerX;
+                for(int col=firstVisibleColumn ; col<=lastVisibleColumn ; col++) {
+                    curX += getColumnWidth(col);
+                    imageColumnDivider.draw(getAnimationState(), curX, innerY, colDivWidth, innerHeight);
+                    curX += colDivWidth;
+                }
             }
-        }
 
-        final int offsetX = innerX - scrollPosX;
-        final int offsetY = innerY - scrollPosY;
+            final int offsetX = innerX - scrollPosX;
+            final int offsetY = innerY - scrollPosY;
 
-        int rowStartPos = getRowStartPosition(firstVisibleRow);
-        int curY = rowStartPos + offsetY;
-        for(int row=firstVisibleRow ; row<=lastVisibleRow ; row++) {
-            final int rowEndPos = getRowEndPosition(row);
-            final int curRowHeight = rowEndPos - rowStartPos;
-            final TreeTableNode rowNode = getNodeFromRow(row);
+            int rowStartPos = getRowStartPosition(firstVisibleRow);
+            int curY = rowStartPos + offsetY;
+            for(int row=firstVisibleRow ; row<=lastVisibleRow ; row++) {
+                final int rowEndPos = getRowEndPosition(row);
+                final int curRowHeight = rowEndPos - rowStartPos;
+                final TreeTableNode rowNode = getNodeFromRow(row);
 
-            int colStartPos = getColumnStartPosition(firstVisibleColumn);
-            for(int col=firstVisibleColumn ; col<=lastVisibleColumn ;) {
-                int colEndPos = getColumnEndPosition(col);
-                final CellRenderer cellRenderer = getCellRenderer(row, col, rowNode);
+                int colStartPos = getColumnStartPosition(firstVisibleColumn);
+                for(int col=firstVisibleColumn ; col<=lastVisibleColumn ;) {
+                    int colEndPos = getColumnEndPosition(col);
+                    final CellRenderer cellRenderer = getCellRenderer(row, col, rowNode);
 
-                int curX = offsetX + colStartPos;
-                int colSpan = 1;
+                    int curX = offsetX + colStartPos;
+                    int colSpan = 1;
 
-                if(cellRenderer != null) {
-                    colSpan = cellRenderer.getColumnSpan();
-                    if(colSpan > 1) {
-                        colEndPos = getColumnEndPosition(Math.max(numColumns-1, col+colSpan-1));
-                    }
-
-                    Widget cellRendererWidget = cellRenderer.getCellRenderWidget(
-                            curX, curY, colEndPos - colStartPos, curRowHeight);
-
-                    if(cellRendererWidget != null) {
-                        if(cellRendererWidget.getParent() != this) {
-                            insertCellRenderer(cellRendererWidget);
+                    if(cellRenderer != null) {
+                        colSpan = cellRenderer.getColumnSpan();
+                        if(colSpan > 1) {
+                            colEndPos = getColumnEndPosition(Math.max(numColumns-1, col+colSpan-1));
                         }
-                        paintChild(gui, cellRendererWidget);
+
+                        Widget cellRendererWidget = cellRenderer.getCellRenderWidget(
+                                curX, curY, colEndPos - colStartPos, curRowHeight);
+
+                        if(cellRendererWidget != null) {
+                            if(cellRendererWidget.getParent() != this) {
+                                insertCellRenderer(cellRendererWidget);
+                            }
+                            paintChild(gui, cellRendererWidget);
+                        }
                     }
+
+                    col += Math.max(1, colSpan);
+                    colStartPos = colEndPos;
                 }
 
-                col += Math.max(1, colSpan);
-                colStartPos = colEndPos;
-            }
+                curY += curRowHeight;
+                rowStartPos = rowEndPos;
 
-            curY += curRowHeight;
-            rowStartPos = rowEndPos;
-
-            if(imageRowDivider != null) {
-                int rowDivHeight = imageRowDivider.getHeight();
-                imageRowDivider.draw(getAnimationState(), innerX, curY, innerWidth, rowDivHeight);
-                curY += rowDivHeight;
+                if(imageRowDivider != null) {
+                    int rowDivHeight = imageRowDivider.getHeight();
+                    imageRowDivider.draw(getAnimationState(), innerX, curY, innerWidth, rowDivHeight);
+                    curY += rowDivHeight;
+                }
             }
+        } finally {
+            gui.clipLeave();
         }
     }
 
