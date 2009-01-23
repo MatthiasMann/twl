@@ -171,6 +171,7 @@ public class TextArea extends Widget {
         images = themeInfo.getParameterMap("images");
         defaultFont = themeInfo.getFont("font");
         textColor = themeInfo.getParameter("textColor", Color.WHITE);
+        forceRelayout();
     }
 
     @Override
