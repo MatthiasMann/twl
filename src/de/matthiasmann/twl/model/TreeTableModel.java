@@ -60,10 +60,14 @@ public interface TreeTableModel extends TreeTableNode {
          * @param count the number of removed column. Must be >= 1.
          */
         public void columnDeleted(int idx, int count);
+
+        public void columnHeaderChanged(int column);
     }
 
     public int getNumColumns();
 
+    public String getColumnHeaderText(int column);
+    
     public void addChangeListener(ChangeListener listener);
 
     public void removeChangeListener(ChangeListener listener);

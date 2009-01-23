@@ -69,6 +69,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
     private final InsertCellWidgets insertCellWidgetsFunction;
+    private final Widget cellWidgetContainer;
     
     protected final TypeMapping<CellRenderer> cellRenderers;
     protected final SparseGrid widgetGrid;
@@ -76,10 +77,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected SizeSequence rowModel;
     protected boolean hasCellWidgetCreators;
     protected WidgetCache[] widgetCacheTable;
+    protected Button[] columnHeaders;
 
     protected Image imageRowDivider;
     protected Image imageColumnDivider;
     protected ParameterMap cellRendererParameters;
+    protected int columnHeaderHeight;
 
     protected int numRows;
     protected int numColumns;
@@ -103,6 +106,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.removeCellWidgetsFunction = new RemoveCellWidgets();
         this.insertCellWidgetsFunction = new InsertCellWidgets();
         this.columnModel = new SizeSequence();
+        this.cellWidgetContainer = new Widget();
+        this.cellWidgetContainer.setTheme("");
+        this.cellWidgetContainer.setClip(true);
+
+        super.insertChild(cellWidgetContainer, 0);
 
         registerCellRenderer(String.class, stringCellRenderer);
         setCanAcceptKeyboardFocus(true);
@@ -177,6 +185,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     @Override
+    public int getMinHeight() {
+        return Math.max(super.getMinHeight(), columnHeaderHeight);
+    }
+
+    @Override
     public int getPreferedInnerWidth() {
         return (numColumns > 0) ? getColumnEndPosition(numColumns-1) : 0;
     }
@@ -219,6 +232,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.imageColumnDivider = themeInfo.getImage("columnDivider");
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
         this.columnWidth = themeInfo.getParameter("columnWidth", 256);
+        this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
         this.cellRendererParameters = themeInfo.getParameterMap("cellRendererParameters");
         autoSizeAllRows = true;
         invalidateParentLayout();
@@ -248,8 +262,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     @Override
     protected void layout() {
         final int innerWidth = getInnerWidth();
-        final int innerHeight = getInnerHeight();
+        final int innerHeight = Math.max(0, getInnerHeight() - columnHeaderHeight);
 
+        cellWidgetContainer.setPosition(getInnerX(), getInnerY() + columnHeaderHeight);
+        cellWidgetContainer.setSize(innerWidth, innerHeight);
+        
         if(autoSizeAllRows) {
             autoSizeAllRows();
         }
@@ -287,14 +304,31 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         firstVisibleColumn = startColumn;
         lastVisibleRow = endRow;
         lastVisibleColumn = endColumn;
+
+        if(numColumns > 0) {
+            final int offsetX = getInnerX() - scrollPosX;
+            int colStartPos = getColumnStartPosition(0);
+            for(int i=0 ; i<numColumns ; i++) {
+                int colEndPos = getColumnEndPosition(i);
+                Widget w = columnHeaders[i];
+                if(w != null) {
+                    if(w.getParent() != this) {
+                        super.insertChild(w, super.getNumChildren());
+                    }
+                    w.setPosition(offsetX + colStartPos, getInnerY());
+                    w.setSize(colEndPos - colStartPos, columnHeaderHeight);
+                }
+                colStartPos = colEndPos;
+            }
+        }
     }
 
     @Override
     protected void paintWidget(GUI gui) {
         final int innerX = getInnerX();
-        final int innerY = getInnerY();
+        final int innerY = getInnerY() + columnHeaderHeight;
         final int innerWidth = getInnerWidth();
-        final int innerHeight = getInnerHeight();
+        final int innerHeight = getInnerHeight() - columnHeaderHeight;
 
         int colDivWidth = 0;
         if(imageColumnDivider != null) {
@@ -426,9 +460,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
     
     protected void removeCellWidget(Widget widget) {
-        int idx = super.getChildIndex(widget);
+        int idx = cellWidgetContainer.getChildIndex(widget);
         if(idx >= 0) {
-            super.removeChild(idx);
+            cellWidgetContainer.removeChild(idx);
         }
     }
 
@@ -443,8 +477,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
         
         if(widget != null) {
-            if(widget.getParent() != this) {
-                super.insertChild(widget, getNumChildren());
+            if(widget.getParent() != cellWidgetContainer) {
+                cellWidgetContainer.insertChild(widget, cellWidgetContainer.getNumChildren());
             }
 
             int x = getColumnStartPosition(column);
@@ -454,7 +488,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
             cwc.positionWidget(widget,
                     x + getInnerX() - scrollPosX,
-                    y + getInnerY() - scrollPosY,
+                    y + getInnerY() - scrollPosY + columnHeaderHeight,
                     w, h);
         }
     }
@@ -517,7 +551,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void removeAllCellWidgets() {
-        super.removeAllChildren();
+        cellWidgetContainer.removeAllChildren();
+    }
+
+    protected Button createColumnHeader(int column) {
+        Button btn = new Button();
+        btn.setTheme("columnHeader");
+        return btn;
     }
 
     protected void modelAllChanged() {
@@ -527,7 +567,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
 
         widgetCacheTable = null;
-        
+
+        columnHeaders = new Button[numColumns];
+        for(int i=0 ; i<numColumns ; i++) {
+            columnHeaders[i] = createColumnHeader(i);
+        }
+
         columnModel.setDefaultValue(columnWidth);
         columnModel.initializeAll(numColumns);
         if(rowModel != null) {
@@ -617,6 +662,16 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected void modelColumnsInserted(int column, int count) {
         columnModel.insert(column, count);
+
+        Button[] newColumnHeaders = new Button[numColumns];
+        System.arraycopy(columnHeaders, 0, newColumnHeaders, 0, column);
+        System.arraycopy(columnHeaders, column, newColumnHeaders, column+count,
+                numColumns - (column+count));
+        for(int i=0 ; i<count ; i++) {
+            newColumnHeaders[column+i] = createColumnHeader(column+i);
+        }
+        columnHeaders = newColumnHeaders;
+        
         if(!widgetGrid.isEmpty() || hasCellWidgetCreators) {
             removeAllCellWidgets();
             widgetGrid.insertColumns(column, count);
@@ -653,6 +708,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             widgetGrid.iterate(0, column, numRows, column+count-1, removeCellWidgetsFunction);
             widgetGrid.removeColumns(column, count);
         }
+
+        for(int i=0 ; i<count ; i++) {
+            int idx = super.getChildIndex(columnHeaders[column+i]);
+            if(idx >= 0) {
+                super.removeChild(idx);
+            }
+        }
+
+        Button[] newColumnHeaders = new Button[numColumns];
+        System.arraycopy(columnHeaders, 0, newColumnHeaders, 0, column);
+        System.arraycopy(columnHeaders, column+count, newColumnHeaders, column, numColumns - count);
+        columnHeaders = newColumnHeaders;
+        
         invalidateLayout();
         invalidateParentLayout();
     }

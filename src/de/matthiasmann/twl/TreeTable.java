@@ -299,6 +299,13 @@ public class TreeTable extends TableBase {
         }
         return ns.expanded;
     }
+
+    @Override
+    protected Button createColumnHeader(int column) {
+        Button columnHeader = super.createColumnHeader(column);
+        columnHeader.setText(model.getColumnHeaderText(column));
+        return columnHeader;
+    }
     
     protected void modelNodesChanged(TreeTableNode parent, int idx, int count) {
         NodeState ns = HashEntry.get(nodeStateTable, parent);
@@ -313,6 +320,10 @@ public class TreeTable extends TableBase {
             }
             modelRowsChanged(rowsStart, rowsEnd - rowsStart);
         }
+    }
+
+    protected void modelColumnHeaderChanged(int column) {
+        columnHeaders[column].setText(model.getColumnHeaderText(column));
     }
 
     protected class ModelChangeListener implements TreeTableModel.ChangeListener {
@@ -332,6 +343,9 @@ public class TreeTable extends TableBase {
         public void columnDeleted(int idx, int count) {
             numColumns = model.getNumColumns();
             modelColumnsDeleted(idx, count);
+        }
+        public void columnHeaderChanged(int column) {
+            modelColumnHeaderChanged(column);
         }
     }
 
