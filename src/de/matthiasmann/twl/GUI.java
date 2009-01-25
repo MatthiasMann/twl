@@ -135,7 +135,7 @@ public final class GUI extends Widget {
         super.insertChild(rootPane, 0);
         super.insertChild(tooltipWindow, 1);
         
-        resyncTimerAfterPuase();
+        resyncTimerAfterPause();
     }
     
     /**
@@ -293,8 +293,13 @@ public final class GUI extends Widget {
         draw();
         setCursor();
     }
-    
-    public void resyncTimerAfterPuase() {
+
+    /**
+     * when calls to updateTime where stoped then this method should be called
+     * before calling updateTime again to prevent a large delta jump.
+     * This allows the UI timer to be suspended.
+     */
+    public void resyncTimerAfterPause() {
         this.curTime = getTimeMillis();
         this.deltaTime = 0;
     }
