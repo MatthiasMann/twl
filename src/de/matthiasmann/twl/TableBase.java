@@ -30,7 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.TreeTableNode;
-import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
@@ -48,13 +47,59 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public interface CellRenderer {
         /**
          * Called when the CellRenderer is registered and a theme is applied.
-         * @param themeParams the theme parameter object - shared for all CellRenderer
+         * @param themeInfo the theme object
          */
-        public void setThemeParameters(ParameterMap themeParams);
-        
+        public void applyTheme(ThemeInfo themeInfo);
+
+        /**
+         * The theme name for this CellRenderer. Must be relative to the Table.
+         * @return the theme name.
+         */
+        public String getTheme();
+
+        /**
+         * This method sets the row, column and the cell data.
+         * It is called before any other cell related method is called.
+         * @param row the table row
+         * @param column the table column
+         * @param data the cell data
+         */
         public void setCellData(int row, int column, Object data);
+
+        /**
+         * Returns how many columns this cell spans. Must be >= 1.
+         * Is called after setCellData.
+         * @return the column span.
+         * @see #setCellData(int, int, java.lang.Object)
+         */
         public int getColumnSpan();
+
+        /**
+         * Returns the prefered cell height in variable row height mode.
+         * It is not called at all in fixed row height mode.
+         * @return the prefered cell height
+         * @see #setCellData(int, int, java.lang.Object)
+         * @see TableBase#setVaribleRowHeight(boolean)
+         */
         public int getPreferedHeight();
+
+        /**
+         * Returns the widget used to render the cell or null if no rendering
+         * should happen. This widget should not be added to any widget. It
+         * will be managed by the Table.
+         * TableBase uses a stamping approch for cell rendering. This method
+         * must not create a new widget each time.
+         *
+         * This method is responsible to call setPosition and setSize on the
+         * returned widget.
+         *
+         * @param x the left edge of the cell
+         * @param y the top edge of the cell
+         * @param width the width of the cell
+         * @param height the height of the cell
+         * @return the widget used for cell rendering or null.
+         * @see #setCellData(int, int, java.lang.Object)
+         */
         public Widget getCellRenderWidget(int x, int y, int width, int height);
     }
 
@@ -82,7 +127,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected Image imageRowDivider;
     protected Image imageColumnDivider;
-    protected ParameterMap cellRendererParameters;
+    protected ThemeInfo tableBaseThemeInfo;
     protected int columnHeaderHeight;
 
     protected int numRows;
@@ -209,8 +254,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
 
         // only call it when we already have a theme
-        if(cellRendererParameters != null) {
-            cellRenderer.setThemeParameters(cellRendererParameters);
+        if(tableBaseThemeInfo != null) {
+            applyCellRendererTheme(cellRenderer);
         }
     }
 
@@ -228,20 +273,29 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void applyThemeTableBase(ThemeInfo themeInfo) {
+        this.tableBaseThemeInfo = themeInfo;
         this.imageRowDivider = themeInfo.getImage("rowDivider");
         this.imageColumnDivider = themeInfo.getImage("columnDivider");
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
         this.columnWidth = themeInfo.getParameter("columnWidth", 256);
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
-        this.cellRendererParameters = themeInfo.getParameterMap("cellRendererParameters");
         autoSizeAllRows = true;
         invalidateParentLayout();
         invalidateLayout();
 
         for(CellRenderer cellRenderer : cellRenderers.getUniqueValues()) {
-            cellRenderer.setThemeParameters(cellRendererParameters);
+            applyCellRendererTheme(cellRenderer);
         }
-        stringCellRenderer.setThemeParameters(cellRendererParameters);
+        applyCellRendererTheme(stringCellRenderer);
+    }
+
+    protected void applyCellRendererTheme(CellRenderer cellRenderer) {
+        String childThemeName = cellRenderer.getTheme();
+        assert !isAbsoluteTheme(childThemeName);
+        ThemeInfo childTheme = tableBaseThemeInfo.getChildTheme(childThemeName);
+        if(childTheme != null) {
+            cellRenderer.applyTheme(childTheme);
+        }
     }
 
     @Override
@@ -797,8 +851,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             setClip(true);
         }
 
-        public void setThemeParameters(ParameterMap themeParams) {
-            setFont(themeParams.getFont("font"));
+        @Override
+        public void applyTheme(ThemeInfo themeInfo) {
+            super.applyTheme(themeInfo);
         }
 
         public void setCellData(int row, int column, Object data) {
@@ -807,13 +862,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
         public int getColumnSpan() {
             return 1;
-        }
-
-        @Override
-        public int getPreferedHeight() {
-            Font font = getFont();
-            int lineHeight = (font != null) ? font.getLineHeight() : 0;
-            return getBorderVertical() + lineHeight * Math.max(1, getNumTextLines());
         }
 
         public Widget getCellRenderWidget(int x, int y, int width, int height) {

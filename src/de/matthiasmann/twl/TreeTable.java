@@ -95,8 +95,8 @@ public class TreeTable extends TableBase {
     }
 
     protected void applyThemeTreeTable(ThemeInfo themeInfo) {
-        leafRenderer.setThemeParameters(cellRendererParameters);
-        nodeRenderer.setThemeParameters(cellRendererParameters);
+        applyCellRendererTheme(leafRenderer);
+        applyCellRendererTheme(nodeRenderer);
     }
 
     public int getRowFromNode(TreeTableNode node) {
@@ -419,9 +419,13 @@ public class TreeTable extends TableBase {
             setClip(true);
         }
 
-        public void setThemeParameters(ParameterMap themeParams) {
-            treeIndent = themeParams.getParameter("treeIndent", 10);
-            treeButtonSize = themeParams.getParameterValue("treeButtonSize", true, Dimension.class);
+        public void applyTheme(ThemeInfo themeInfo) {
+            treeIndent = themeInfo.getParameter("treeIndent", 10);
+            treeButtonSize = themeInfo.getParameterValue("treeButtonSize", true, Dimension.class);
+        }
+
+        public String getTheme() {
+            return getClass().getSimpleName();
         }
         
         public void setCellData(int row, int column, Object data) {
