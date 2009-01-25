@@ -388,8 +388,6 @@ public final class GUI extends Widget {
      */
     public final void handleMouse(int mouseX, int mouseY, int button, boolean pressed) {
         mouseEventTime = curTime;
-        event.mouseX = mouseX;
-        event.mouseY = mouseY;
         event.mouseButton = button;
         
         int prevButtonState = event.modifier;
@@ -407,7 +405,16 @@ public final class GUI extends Widget {
         }
         event.setModifier(buttonMask, pressed);
         boolean wasPressed = (prevButtonState & buttonMask) != 0;
-        
+
+        // don't send new mouse coords when still in drag area
+        if(dragActive || prevButtonState == 0) {
+            event.mouseX = mouseX;
+            event.mouseY = mouseY;
+        } else {
+            event.mouseX = mouseDownX;
+            event.mouseY = mouseDownY;
+        }
+
         if(!isInside(mouseX, mouseY)) {
             pressed = false;
             mouseClicked = false;
@@ -420,15 +427,16 @@ public final class GUI extends Widget {
             sendEvent(Event.Type.MOUSE_ENTERED);
         }
         if(mouseX != mouseLastX || mouseY != mouseLastY) {
-            if(prevButtonState != 0 && !dragActive &&
-                (Math.abs(mouseX - mouseDownX) > DRAG_DIST ||
-                Math.abs(mouseY - mouseDownY) > DRAG_DIST)) {
-                dragActive = true;
-                mouseClicked = false;
-            }
-            
             mouseLastX = mouseX;
             mouseLastY = mouseY;
+
+            if(prevButtonState != 0 && !dragActive) {
+                if(Math.abs(mouseX - mouseDownX) > DRAG_DIST ||
+                    Math.abs(mouseY - mouseDownY) > DRAG_DIST) {
+                    dragActive = true;
+                    mouseClicked = false;
+                }
+            }
             
             if(dragActive) {
                 sendEvent(Event.Type.MOUSE_DRAGED);
