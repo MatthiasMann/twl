@@ -103,11 +103,13 @@ public class SizeSequence {
         return getPosition(index+1) - getPosition(index);
     }
 
-    public void setSize(int index, int size) {
+    public boolean setSize(int index, int size) {
         int delta = size - getSize(index);
         if(delta != 0) {
             adjustSize(index, delta);
+            return true;
         }
+        return false;
     }
 
     protected void adjustSize(int index, int delta) {

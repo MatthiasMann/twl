@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
 import de.matthiasmann.twl.utils.SparseGrid;
@@ -132,6 +133,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected Image imageColumnDivider;
     protected ThemeInfo tableBaseThemeInfo;
     protected int columnHeaderHeight;
+    protected int columnDividerDragableDistance;
+    protected MouseCursor columnResizeCursor;
+    protected MouseCursor normalCursor;
 
     protected int numRows;
     protected int numColumns;
@@ -231,6 +235,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return columnModel.getPosition(column + 1);
     }
 
+    public void setColumnWidth(int column, int width) {
+        width = Math.max(2*columnDividerDragableDistance+1, width);
+        if(columnModel.setSize(column, width)) {
+            invalidateLayout();
+        }
+    }
+
     @Override
     public int getMinHeight() {
         return Math.max(super.getMinHeight(), columnHeaderHeight);
@@ -282,6 +293,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
         this.columnWidth = themeInfo.getParameter("columnWidth", 256);
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
+        this.columnDividerDragableDistance = themeInfo.getParameter("columnDividerDragableDistance", 3);
+        
         autoSizeAllRows = true;
         invalidateParentLayout();
         invalidateLayout();
@@ -292,6 +305,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         applyCellRendererTheme(stringCellRenderer);
     }
 
+    @Override
+    protected void applyThemeMouseCursor(ThemeInfo themeInfo) {
+        this.columnResizeCursor = themeInfo.getMouseCursor("columnResizeCursor");
+        this.normalCursor = themeInfo.getMouseCursor("mouseCursor");
+    }
+    
     protected void applyCellRendererTheme(CellRenderer cellRenderer) {
         String childThemeName = cellRenderer.getTheme();
         assert !isAbsoluteTheme(childThemeName);
@@ -316,6 +335,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         // ignore
     }
 
+    protected int getOffsetX() {
+        return getInnerX() - scrollPosX;
+    }
+
+    protected int getOffsetY() {
+        return getInnerY() - scrollPosY + columnHeaderHeight;
+    }
 
     @Override
     protected void layout() {
@@ -364,7 +390,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         lastVisibleColumn = endColumn;
 
         if(numColumns > 0) {
-            final int offsetX = getInnerX() - scrollPosX;
+            final int offsetX = getOffsetX();
             int colStartPos = getColumnStartPosition(0);
             for(int i=0 ; i<numColumns ; i++) {
                 int colEndPos = getColumnEndPosition(i);
@@ -373,8 +399,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     if(w.getParent() != this) {
                         super.insertChild(w, super.getNumChildren());
                     }
-                    w.setPosition(offsetX + colStartPos, getInnerY());
-                    w.setSize(colEndPos - colStartPos, columnHeaderHeight);
+                    w.setPosition(offsetX + colStartPos +
+                            columnDividerDragableDistance, getInnerY());
+                    w.setSize(Math.max(0, colEndPos - colStartPos -
+                            2*columnDividerDragableDistance), columnHeaderHeight);
                     AnimationState animationState = w.getAnimationState();
                     animationState.setAnimationState(STATE_FIRST_COLUMNHEADER, i == 0);
                     animationState.setAnimationState(STATE_LAST_COLUMNHEADER, i == numColumns-1);
@@ -405,8 +433,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 }
             }
 
-            final int offsetX = innerX - scrollPosX;
-            final int offsetY = innerY - scrollPosY;
+            final int offsetX = getOffsetX();
+            final int offsetY = getOffsetY();
 
             int rowStartPos = getRowStartPosition(firstVisibleRow);
             int curY = rowStartPos + offsetY;
@@ -552,10 +580,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             int y = getRowStartPosition(row);
             int h = getRowEndPosition(row) - y;
 
-            cwc.positionWidget(widget,
-                    x + getInnerX() - scrollPosX,
-                    y + getInnerY() - scrollPosY + columnHeaderHeight,
-                    w, h);
+            cwc.positionWidget(widget, x + getOffsetX(), y + getOffsetY(), w, h);
         }
     }
 
@@ -625,6 +650,79 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         btn.setTheme("columnHeader");
         return btn;
     }
+    
+    private void removeColumnHeaders(int column, int count) throws IndexOutOfBoundsException {
+        for(int i = 0 ; i < count ; i++) {
+            int idx = super.getChildIndex(columnHeaders[column + i]);
+            if(idx >= 0) {
+                super.removeChild(idx);
+            }
+        }
+    }
+
+    protected boolean isMouseInColumnHeader(int y) {
+        y -= getInnerY();
+        return y >= 0 && y < columnHeaderHeight;
+    }
+
+    protected int getColumnSeparatorUnderMouse(int x) {
+        x -= getOffsetX();
+        x += columnDividerDragableDistance;
+        int col = columnModel.getIndex(x);
+        int dist = x - columnModel.getPosition(col);
+        if(dist < 2*columnDividerDragableDistance) {
+            return col - 1;
+        }
+        return -1;
+    }
+
+    @Override
+    protected boolean handleEvent(Event evt) {
+        if(evt.isMouseEvent()) {
+            return handleMouseEvent(evt);
+        }
+        return super.handleEvent(evt);
+    }
+
+    protected boolean dragActive;
+    protected int dragColumn;
+    protected int dragStartX;
+
+    protected boolean handleMouseEvent(Event evt) {
+        if(dragActive) {
+            if(dragColumn >= 0) {
+                setColumnWidth(dragColumn, evt.getMouseX() - dragStartX);
+            }
+            if(evt.isMouseDragEnd()) {
+                dragActive = false;
+            }
+            return true;
+        }
+
+        if(super.handleEvent(evt)) {
+            return true;
+        }
+
+        boolean inHeader = isMouseInColumnHeader(evt.getMouseY());
+        if(inHeader) {
+            int column = getColumnSeparatorUnderMouse(evt.getMouseX());
+            if(column >= 0) {
+                setMouseCursor(columnResizeCursor);
+
+                if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
+                    dragColumn = column;
+                    dragStartX = evt.getMouseX() - getColumnWidth(column);
+                }
+                if(evt.isMouseDragEvent()) {
+                    dragActive = true;
+                }
+                return true;
+            }
+        }
+
+        setMouseCursor(normalCursor);
+        return false;
+    }
 
     protected void modelAllChanged() {
         if(!widgetGrid.isEmpty()) {
@@ -633,6 +731,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
 
         widgetCacheTable = null;
+
+        if(columnHeaders != null) {
+            removeColumnHeaders(0, columnHeaders.length);
+        }
 
         columnHeaders = new Button[numColumns];
         for(int i=0 ; i<numColumns ; i++) {
@@ -775,12 +877,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             widgetGrid.removeColumns(column, count);
         }
 
-        for(int i=0 ; i<count ; i++) {
-            int idx = super.getChildIndex(columnHeaders[column+i]);
-            if(idx >= 0) {
-                super.removeChild(idx);
-            }
-        }
+        removeColumnHeaders(column, count);
 
         Button[] newColumnHeaders = new Button[numColumns];
         System.arraycopy(columnHeaders, 0, newColumnHeaders, 0, column);
