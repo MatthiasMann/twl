@@ -112,6 +112,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         public String getCacheTag(int row, int column);
     }
 
+    public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
+    public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
+
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
     private final InsertCellWidgets insertCellWidgetsFunction;
@@ -372,6 +375,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     }
                     w.setPosition(offsetX + colStartPos, getInnerY());
                     w.setSize(colEndPos - colStartPos, columnHeaderHeight);
+                    AnimationState animationState = w.getAnimationState();
+                    animationState.setAnimationState(STATE_FIRST_COLUMNHEADER, i == 0);
+                    animationState.setAnimationState(STATE_LAST_COLUMNHEADER, i == numColumns-1);
                 }
                 colStartPos = colEndPos;
             }
