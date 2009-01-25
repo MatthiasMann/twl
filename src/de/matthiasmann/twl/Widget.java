@@ -1559,7 +1559,14 @@ public class Widget {
         }
     }
 
-    private static boolean isAbsoluteTheme(String theme) {
+    /**
+     * Checks if the given theme name is absolute or relative to it's parent.
+     * An absolute theme name starts with a '/'.
+     * 
+     * @param theme the theme name or path.
+     * @return true if the theme is absolute.
+     */
+    public static boolean isAbsoluteTheme(String theme) {
         return theme.length() > 1 && theme.charAt(0) == '/';
     }
 
