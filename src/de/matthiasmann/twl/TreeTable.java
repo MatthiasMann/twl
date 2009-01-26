@@ -300,13 +300,6 @@ public class TreeTable extends TableBase {
         }
         return ns.expanded;
     }
-
-    @Override
-    protected Button createColumnHeader(int column) {
-        Button columnHeader = super.createColumnHeader(column);
-        columnHeader.setText(model.getColumnHeaderText(column));
-        return columnHeader;
-    }
     
     protected void modelNodesChanged(TreeTableNode parent, int idx, int count) {
         NodeState ns = HashEntry.get(nodeStateTable, parent);
