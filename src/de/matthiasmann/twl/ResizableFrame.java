@@ -385,7 +385,6 @@ public class ResizableFrame extends Widget {
                     getTitleX(resizeHandleX),
                     getTitleY(resizeHandleY));
             resizeHandle.setVisible(hasResizeHandle);
-            resizeHandle.setMouseCursor(cursors[resizeHandleDragMode.ordinal()]);
         } else {
             resizeHandleDragMode = DragMode.NONE;
         }
