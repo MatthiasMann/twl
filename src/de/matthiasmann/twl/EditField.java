@@ -326,6 +326,18 @@ public class EditField extends Widget {
                 return true;
             }
             break;
+
+        case MOUSE_CLICKED:
+            if(evt.getMouseClickCount() == 2) {
+                int newPos = textRenderer.getCursorPosFromMouse(evt.getMouseX());
+                selectWordFromMouse(newPos);
+                return true;
+            }
+            if(evt.getMouseClickCount() == 3) {
+                selectAll();
+                return true;
+            }
+            break;
         }
         
         if(super.handleEvent(evt)) {
@@ -410,6 +422,22 @@ public class EditField extends Widget {
 
             this.cursorPos = pos;
             scrollToCursor(false);
+        }
+    }
+
+    protected void selectAll() {
+        selectionStart = 0;
+        selectionEnd = editBuffer.length();
+    }
+
+    protected void selectWordFromMouse(int index) {
+        selectionStart = index;
+        selectionEnd = index;
+        while(selectionStart > 0 && !Character.isWhitespace(editBuffer.charAt(selectionStart-1))) {
+            selectionStart--;
+        }
+        while(selectionEnd < editBuffer.length() && !Character.isWhitespace(editBuffer.charAt(selectionEnd))) {
+            selectionEnd++;
         }
     }
 
