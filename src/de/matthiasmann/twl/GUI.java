@@ -430,6 +430,7 @@ public final class GUI extends Widget {
             wasInside = true;
             sendMouseEvent(Event.Type.MOUSE_ENTERED, null);
         }
+        
         if(mouseX != mouseLastX || mouseY != mouseLastY) {
             mouseLastX = mouseX;
             mouseLastY = mouseY;
@@ -451,32 +452,39 @@ public final class GUI extends Widget {
                 sendMouseEvent(Event.Type.MOUSE_MOVED, null);
             }
         }
+
         if(buttonMask != 0 && pressed != wasPressed) {
-            if(dragButton < 0) {
-                dragButton = button;
-            }
             if(pressed) {
-                lastMouseDownWidget = sendMouseEvent(Event.Type.MOUSE_BTNDOWN, null);
-            } else {
+                if(dragButton < 0) {
+                    mouseDownX = mouseX;
+                    mouseDownY = mouseY;
+                    dragButton = button;
+                    lastMouseDownWidget = sendMouseEvent(Event.Type.MOUSE_BTNDOWN, null);
+                } else if(lastMouseDownWidget != null) {
+                    // if another button is pressed while one button is already
+                    // pressed then route the second button to the widget which
+                    // received the first press
+                    sendMouseEvent(Event.Type.MOUSE_BTNDOWN, lastMouseDownWidget);
+                }
+            } else if(dragButton >= 0) {
                 // send MOUSE_BTNUP only to the widget which received the MOUSE_BTNDOWN
                 if(lastMouseDownWidget != null) {
                     sendMouseEvent(Event.Type.MOUSE_BTNUP, lastMouseDownWidget);
                 }
             }
+
             if(button == Event.MOUSE_LBUTTON && !popupEventOccured) {
-                if(pressed) {
-                    mouseDownX = mouseX;
-                    mouseDownY = mouseY;
-                } else if(!dragActive) {
-                    if(mouseClickCount == 0 || lastMouseClickWidget != lastMouseDownWidget) {
+                if(!pressed && !dragActive) {
+                    if(mouseClickCount == 0 ||
+                            curTime - mouseClickedTime > DBLCLICK_TIME ||
+                            lastMouseClickWidget != lastMouseDownWidget) {
                         mouseClickedX = mouseX;
                         mouseClickedY = mouseY;
                         lastMouseClickWidget = lastMouseDownWidget;
                         mouseClickCount = 0;
                         mouseClickedTime = curTime;
                     }
-                    if(curTime - mouseClickedTime < DBLCLICK_TIME &&
-                            Math.abs(mouseX - mouseClickedX) < DRAG_DIST &&
+                    if(Math.abs(mouseX - mouseClickedX) < DRAG_DIST &&
                             Math.abs(mouseY - mouseClickedY) < DRAG_DIST) {
                         // ensure same click target as first
                         event.mouseX = mouseClickedX;
@@ -492,6 +500,7 @@ public final class GUI extends Widget {
                 }
             }
         }
+
         if(event.isMouseDragEnd()) {
             dragActive = false;
             dragButton = -1;
@@ -901,7 +910,7 @@ public final class GUI extends Widget {
 
         @Override
         public boolean isMouseDragEnd() {
-            return (modifier & (MODIFIER_LBUTTON|MODIFIER_MBUTTON|MODIFIER_RBUTTON)) == 0;
+            return (modifier & MODIFIER_BUTTON) == 0;
         }
 
         @Override
