@@ -112,13 +112,12 @@ public class Button extends TextWidget {
     }
 
     @Override
-    protected CharSequence getText() {
+    public String getText() {
         return text;
     }
 
-    @Override
-    protected void setText(CharSequence text) {
-        this.text = text.toString();
+    public void setText(String text) {
+        this.text = text;
         updateText();
     }
 
