@@ -419,26 +419,26 @@ public class Scrollbar extends Widget {
     }
 
     @Override
-    public int getPreferedWidth() {
+    public int getPreferredWidth() {
         return getMinWidth();
     }
 
     @Override
-    public int getPreferedHeight() {
+    public int getPreferredHeight() {
         return getMinHeight();
     }
     
     @Override
     protected void layout() {
         if(orientation == Orientation.HORIZONTAL) {
-            btnUpLeft.setSize(btnUpLeft.getPreferedWidth(), getHeight());
+            btnUpLeft.setSize(btnUpLeft.getPreferredWidth(), getHeight());
             btnUpLeft.setPosition(getX(), getY());
-            btnDownRight.setSize(btnUpLeft.getPreferedWidth(), getHeight());
+            btnDownRight.setSize(btnUpLeft.getPreferredWidth(), getHeight());
             btnDownRight.setPosition(getX() + getWidth() - btnDownRight.getWidth(), getY());
         } else {
-            btnUpLeft.setSize(getWidth(), btnUpLeft.getPreferedHeight());
+            btnUpLeft.setSize(getWidth(), btnUpLeft.getPreferredHeight());
             btnUpLeft.setPosition(getX(), getY());
-            btnDownRight.setSize(getWidth(), btnDownRight.getPreferedHeight());
+            btnDownRight.setSize(getWidth(), btnDownRight.getPreferredHeight());
             btnDownRight.setPosition(getX(), getY() + getHeight() - btnDownRight.getHeight());
         }
         setThumbPos();
@@ -455,7 +455,7 @@ public class Scrollbar extends Widget {
     private void setThumbPos() {
         int delta = maxValue - minValue;
         if(orientation == Orientation.HORIZONTAL) {
-            int thumbWidth = thumb.getPreferedWidth();
+            int thumbWidth = thumb.getPreferredWidth();
             if(scaleThumb) {
                 long availArea = Math.max(1, getWidth() - btnUpLeft.getWidth() - btnDownRight.getWidth());
                 thumbWidth = (int)Math.max(thumbWidth, availArea * pageSize / (pageSize + delta + 1));
@@ -468,7 +468,7 @@ public class Scrollbar extends Widget {
             }
             thumb.setPosition(xpos, getY());
         } else {
-            int thumbHeight = thumb.getPreferedHeight();
+            int thumbHeight = thumb.getPreferredHeight();
             if(scaleThumb) {
                 long availArea = Math.max(1, getHeight() - btnUpLeft.getHeight() - btnDownRight.getHeight());
                 thumbHeight = (int)Math.max(thumbHeight, availArea * pageSize / (pageSize + delta + 1));

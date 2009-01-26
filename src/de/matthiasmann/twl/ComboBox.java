@@ -148,7 +148,7 @@ public class ComboBox extends Widget {
         if(popup.openPopup()) {
             int popupHeight = computeSize(
                     popup.getMinHeight(), 
-                    popup.getPreferedHeight(),
+                    popup.getPreferredHeight(),
                     popup.getMaxHeight());
             if(getBottom() + popupHeight > popup.getParent().getInnerHeight() &&
                     getY() - popupHeight > popup.getParent().getInnerY()) {
@@ -201,13 +201,13 @@ public class ComboBox extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
-        return label.getPreferedWidth() + button.getPreferedWidth();
+    public int getPreferredInnerWidth() {
+        return label.getPreferredWidth() + button.getPreferredWidth();
     }
 
     @Override
-    public int getPreferedInnerHeight() {
-        return Math.max(label.getPreferedHeight(), button.getPreferedHeight());
+    public int getPreferredInnerHeight() {
+        return Math.max(label.getPreferredHeight(), button.getPreferredHeight());
     }
 
     @Override
@@ -227,7 +227,7 @@ public class ComboBox extends Widget {
 
     @Override
     protected void layout() {
-        int btnWidth = button.getPreferedWidth();
+        int btnWidth = button.getPreferredWidth();
         int innerHeight = getInnerHeight();
         button.setPosition(getInnerRight() - btnWidth, getInnerY());
         button.setSize(btnWidth, innerHeight);
@@ -251,8 +251,8 @@ public class ComboBox extends Widget {
         }
 
         @Override
-        public int getPreferedInnerHeight() {
-            int prefHeight = super.getPreferedInnerHeight();
+        public int getPreferredInnerHeight() {
+            int prefHeight = super.getPreferredInnerHeight();
             if(getFont() != null) {
                 prefHeight = Math.max(prefHeight, getFont().getLineHeight());
             }

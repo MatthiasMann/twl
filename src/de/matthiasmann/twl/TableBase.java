@@ -76,13 +76,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         public int getColumnSpan();
 
         /**
-         * Returns the prefered cell height in variable row height mode.
+         * Returns the preferred cell height in variable row height mode.
          * It is not called at all in fixed row height mode.
-         * @return the prefered cell height
+         * @return the preferred cell height
          * @see #setCellData(int, int, java.lang.Object)
          * @see TableBase#setVaribleRowHeight(boolean)
          */
-        public int getPreferedHeight();
+        public int getPreferredHeight();
 
         /**
          * Returns the widget used to render the cell or null if no rendering
@@ -248,12 +248,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     @Override
-    public int getPreferedInnerWidth() {
+    public int getPreferredInnerWidth() {
         return (numColumns > 0) ? getColumnEndPosition(numColumns-1) : 0;
     }
 
     @Override
-    public int getPreferedInnerHeight() {
+    public int getPreferredInnerHeight() {
         return (numRows > 0) ? getRowEndPosition(numRows-1) : 0;
     }
 
@@ -522,7 +522,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         for(int column = 0; column < numColumns; column++) {
             CellRenderer cellRenderer = getCellRenderer(row, column, rowNode);
             if(cellRenderer != null) {
-                height = Math.max(height, cellRenderer.getPreferedHeight());
+                height = Math.max(height, cellRenderer.getPreferredHeight());
                 column += Math.max(cellRenderer.getColumnSpan() - 1, 0);
             }
         }

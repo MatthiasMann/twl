@@ -230,21 +230,21 @@ public class DialogLayout extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
+    public int getPreferredInnerWidth() {
         if(horz != null) {
             prepare();
             return horz.getPrefSize(AXIS_X);
         }
-        return super.getPreferedInnerWidth();
+        return super.getPreferredInnerWidth();
     }
 
     @Override
-    public int getPreferedInnerHeight() {
+    public int getPreferredInnerHeight() {
         if(vert != null) {
             prepare();
             return vert.getPrefSize(AXIS_Y);
         }
-        return super.getPreferedInnerHeight();
+        return super.getPreferredInnerHeight();
     }
 
     @Override
@@ -309,7 +309,7 @@ public class DialogLayout extends Widget {
      * Creates a new sequential group.
      * All children in a sequential group are ordered with increasing coordinates
      * along it's axis in the order they are added to the group. The available
-     * size is distributed among the children depending on their min/prefered/max
+     * size is distributed among the children depending on their min/preferred/max
      * sizes.
      * 
      * @return a new sequential Group.
@@ -384,8 +384,8 @@ public class DialogLayout extends Widget {
             this.y = w.getY();
             this.width = w.getWidth();
             this.height = w.getHeight();
-            this.prefWidth = computeSize(w.getMinWidth(), w.getPreferedWidth(), w.getMaxWidth());
-            this.prefHeight = computeSize(w.getMinHeight(), w.getPreferedHeight(), w.getMaxHeight());
+            this.prefWidth = computeSize(w.getMinWidth(), w.getPreferredWidth(), w.getMaxWidth());
+            this.prefHeight = computeSize(w.getMinHeight(), w.getPreferredHeight(), w.getMaxHeight());
         }
 
         @Override
@@ -553,7 +553,7 @@ public class DialogLayout extends Widget {
          * Adds a generic gap. Can use symbolic gap names.
          *
          * @param min the minimum size in pixels or a symbolic constant
-         * @param pref the prefered size in pixels or a symbolic constant
+         * @param pref the preferred size in pixels or a symbolic constant
          * @param max the maximum size in pixels or a symbolic constant
          * @return this Group
          * @see DialogLayout#SMALL_GAP

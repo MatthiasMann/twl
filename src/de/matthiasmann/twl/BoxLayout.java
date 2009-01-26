@@ -177,17 +177,17 @@ public class BoxLayout extends Widget {
     }
 
     @Override
-    public int getPreferedInnerHeight() {
+    public int getPreferredInnerHeight() {
         int height = 0;
         switch(direction) {
         case HORIZONTAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                height = Math.max(height, getChild(i).getPreferedHeight());
+                height = Math.max(height, getChild(i).getPreferredHeight());
             }
             break;
         case VERTICAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int prefChildHeight = getChild(i).getPreferedHeight();
+                int prefChildHeight = getChild(i).getPreferredHeight();
                 if(maxComponentSize != NOT_SET && prefChildHeight > maxComponentSize) {
                     prefChildHeight = maxComponentSize;
                 }
@@ -199,12 +199,12 @@ public class BoxLayout extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
+    public int getPreferredInnerWidth() {
         int width = 0;
         switch(direction) {
         case HORIZONTAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int prefChildWidth = getChild(i).getPreferedWidth();
+                int prefChildWidth = getChild(i).getPreferredWidth();
                 if(maxComponentSize != NOT_SET && prefChildWidth > maxComponentSize) {
                     prefChildWidth = maxComponentSize;
                 }
@@ -213,7 +213,7 @@ public class BoxLayout extends Widget {
             break;
         case VERTICAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                width = Math.max(width, getChild(i).getPreferedWidth());
+                width = Math.max(width, getChild(i).getPreferredWidth());
             }
             break;
         }

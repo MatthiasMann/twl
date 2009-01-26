@@ -128,8 +128,8 @@ public class ProgressBar extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
-        int prefWidth = super.getPreferedInnerWidth();
+    public int getPreferredInnerWidth() {
+        int prefWidth = super.getPreferredInnerWidth();
         if(progressImage != null) {
             prefWidth = Math.max(prefWidth, progressImage.getWidth());
         }
@@ -137,8 +137,8 @@ public class ProgressBar extends Widget {
     }
 
     @Override
-    public int getPreferedInnerHeight() {
-        int prefHeight = super.getPreferedInnerHeight();
+    public int getPreferredInnerHeight() {
+        int prefHeight = super.getPreferredInnerHeight();
         if(progressImage != null) {
             prefHeight = Math.max(prefHeight, progressImage.getHeight());
         }

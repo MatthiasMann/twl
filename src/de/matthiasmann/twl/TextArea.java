@@ -190,23 +190,23 @@ public class TextArea extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
+    public int getPreferredInnerWidth() {
         return getInnerWidth();
     }
 
     @Override
-    public int getPreferedInnerHeight() {
+    public int getPreferredInnerHeight() {
         validateLayout();
         return curY;
     }
     
     @Override
-    public int getPreferedWidth() {
+    public int getPreferredWidth() {
         int maxWidth = getMaxWidth();
         if(maxWidth > 0) {
             return maxWidth;
         }
-        return computeSize(getMinWidth(), super.getPreferedWidth(), maxWidth);
+        return computeSize(getMinWidth(), super.getPreferredWidth(), maxWidth);
     }
 
     @Override

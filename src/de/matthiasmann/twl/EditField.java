@@ -235,12 +235,12 @@ public class EditField extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
+    public int getPreferredInnerWidth() {
         return computeInnerWidth();
     }
 
     @Override
-    public int getPreferedInnerHeight() {
+    public int getPreferredInnerHeight() {
         return computeInnerHeight();
     }
 

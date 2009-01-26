@@ -479,7 +479,7 @@ public class Widget {
         minHeight = (short)Math.min(height, Short.MAX_VALUE);
     }
 
-    public int getPreferedInnerWidth() {
+    public int getPreferredInnerWidth() {
         int right = getInnerX();
         if(children != null) {
             for(int i=0,n=children.size() ; i<n ; i++) {
@@ -491,14 +491,14 @@ public class Widget {
     }
 
     /**
-     * Returns the prefered width based on it's children and prefered inner width.
+     * Returns the preferred width based on it's children and preferred inner width.
      *
-     * Subclasses can overwrite this method to compute the prefered size differently.
+     * Subclasses can overwrite this method to compute the preferred size differently.
      *
-     * @return the prefered width.
+     * @return the preferred width.
      */
-    public int getPreferedWidth() {
-        int prefWidth = borderLeft + borderRight + getPreferedInnerWidth();
+    public int getPreferredWidth() {
+        int prefWidth = borderLeft + borderRight + getPreferredInnerWidth();
         Image bg = getBackground();
         if(bg != null) {
             prefWidth = Math.max(prefWidth, bg.getWidth());
@@ -506,7 +506,7 @@ public class Widget {
         return Math.max(minWidth, prefWidth);
     }
 
-    public int getPreferedInnerHeight() {
+    public int getPreferredInnerHeight() {
         int bottom = getInnerY();
         if(children != null) {
             for(int i=0,n=children.size() ; i<n ; i++) {
@@ -518,15 +518,15 @@ public class Widget {
     }
 
     /**
-     * Returns the prefered height.
+     * Returns the preferred height.
      *
-     * This method determines the prefered height based on it's children.
-     * Subclasses can overwrite this method to compute the prefered size differently.
+     * This method determines the preferred height based on it's children.
+     * Subclasses can overwrite this method to compute the preferred size differently.
      *
-     * @return the prefered height.
+     * @return the preferred height.
      */
-    public int getPreferedHeight() {
-        int prefHeight = borderTop + borderBottom + getPreferedInnerHeight();
+    public int getPreferredHeight() {
+        int prefHeight = borderTop + borderBottom + getPreferredInnerHeight();
         Image bg = getBackground();
         if(bg != null) {
             prefHeight = Math.max(prefHeight, bg.getHeight());
@@ -555,18 +555,18 @@ public class Widget {
     }
 
     /**
-     * Auto adjust the size of this widget based on it's prefered size.
+     * Auto adjust the size of this widget based on it's preferred size.
      * 
      * Subclasses can provide more functionality
      */
     public void adjustSize() {
         /*
         System.out.println(this+" minSize="+getMinWidth()+","+getMinHeight()+
-                " prefSize="+getPreferedWidth()+","+getPreferedHeight()+
+                " prefSize="+getPreferredWidth()+","+getPreferredHeight()+
                 " maxSize="+getMaxWidth()+","+getMaxHeight());
          * */
-        setSize(computeSize(getMinWidth(), getPreferedWidth(), getMaxWidth()),
-                computeSize(getMinHeight(), getPreferedHeight(), getMaxHeight()));
+        setSize(computeSize(getMinWidth(), getPreferredWidth(), getMaxWidth()),
+                computeSize(getMinHeight(), getPreferredHeight(), getMaxHeight()));
         validateLayout();
     }
 

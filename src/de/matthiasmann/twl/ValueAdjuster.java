@@ -143,21 +143,21 @@ public abstract class ValueAdjuster extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
-        int prefWidth = super.getPreferedInnerWidth();
+    public int getPreferredInnerWidth() {
+        int prefWidth = super.getPreferredInnerWidth();
         prefWidth = Math.max(prefWidth,
-                decButton.getPreferedWidth() +
-                Math.max(width, label.getPreferedWidth()) +
-                incButton.getPreferedWidth());
+                decButton.getPreferredWidth() +
+                Math.max(width, label.getPreferredWidth()) +
+                incButton.getPreferredWidth());
         return prefWidth;
     }
 
     @Override
-    public int getPreferedInnerHeight() {
-        int prefHeight = super.getPreferedInnerHeight();
-        prefHeight = Math.max(prefHeight, decButton.getPreferedHeight());
-        prefHeight = Math.max(prefHeight, label.getPreferedHeight());
-        prefHeight = Math.max(prefHeight, incButton.getPreferedHeight());
+    public int getPreferredInnerHeight() {
+        int prefHeight = super.getPreferredInnerHeight();
+        prefHeight = Math.max(prefHeight, decButton.getPreferredHeight());
+        prefHeight = Math.max(prefHeight, label.getPreferredHeight());
+        prefHeight = Math.max(prefHeight, incButton.getPreferredHeight());
         return prefHeight;
     }
 
@@ -184,9 +184,9 @@ public abstract class ValueAdjuster extends Widget {
         int height = getInnerHeight();
         int y = getInnerY();
         decButton.setPosition(getInnerX(), y);
-        decButton.setSize(decButton.getPreferedWidth(), height);
-        incButton.setPosition(getInnerRight() - incButton.getPreferedWidth(), y);
-        incButton.setSize(incButton.getPreferedWidth(), height);
+        decButton.setSize(decButton.getPreferredWidth(), height);
+        incButton.setPosition(getInnerRight() - incButton.getPreferredWidth(), y);
+        incButton.setSize(incButton.getPreferredWidth(), height);
         int labelX = decButton.getRight();
         int labelWidth = Math.max(0, incButton.getX() - labelX);
         label.setSize(labelWidth, height);

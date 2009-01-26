@@ -216,8 +216,8 @@ public class TextWidget extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
-        int prefWidth = super.getPreferedInnerWidth();
+    public int getPreferredInnerWidth() {
+        int prefWidth = super.getPreferredInnerWidth();
         if(hasText() && font != null) {
             prefWidth = Math.max(prefWidth, computeTextWidth());
         }
@@ -225,8 +225,8 @@ public class TextWidget extends Widget {
     }
 
     @Override
-    public int getPreferedInnerHeight() {
-        int prefHeight = super.getPreferedInnerHeight();
+    public int getPreferredInnerHeight() {
+        int prefHeight = super.getPreferredInnerHeight();
         if(hasText() && font != null) {
             prefHeight = Math.max(prefHeight, computeTextHeight());
         }

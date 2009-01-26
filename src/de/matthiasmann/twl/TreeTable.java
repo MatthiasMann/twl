@@ -448,9 +448,9 @@ public class TreeTable extends TableBase {
             return (subRenderer != null) ? subRenderer.getColumnSpan() : 1;
         }
 
-        public int getPreferedHeight() {
+        public int getPreferredHeight() {
             if(subRenderer != null) {
-                return Math.max(treeButtonSize.getY(), subRenderer.getPreferedHeight());
+                return Math.max(treeButtonSize.getY(), subRenderer.getPreferredHeight());
             }
             return treeButtonSize.getY();
         }

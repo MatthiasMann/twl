@@ -424,13 +424,13 @@ public class Listbox extends Widget {
     }
 
     @Override
-    public int getPreferedInnerWidth() {
-        return Math.max(super.getPreferedInnerWidth(), scrollbar.getPreferedWidth());
+    public int getPreferredInnerWidth() {
+        return Math.max(super.getPreferredInnerWidth(), scrollbar.getPreferredWidth());
     }
 
     @Override
-    public int getPreferedInnerHeight() {
-        return Math.max(getNumRows() * getCellHeight(), scrollbar.getPreferedHeight());
+    public int getPreferredInnerHeight() {
+        return Math.max(getNumRows() * getCellHeight(), scrollbar.getPreferredHeight());
     }
 
     @Override
@@ -480,7 +480,7 @@ public class Listbox extends Widget {
 
     @Override
     protected void layout() {
-        scrollbar.setSize(scrollbar.getPreferedWidth(), getInnerHeight());
+        scrollbar.setSize(scrollbar.getPreferredWidth(), getInnerHeight());
         scrollbar.setPosition(getInnerRight() - scrollbar.getWidth(), getInnerY());
         
         int numRows = Math.max(1, getInnerHeight() / cellHeight);
