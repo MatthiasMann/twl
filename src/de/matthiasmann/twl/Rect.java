@@ -82,7 +82,7 @@ public class Rect {
     }
 
     public int getY() {
-        return y1;
+        return y0;
     }
 
     public int getRight() {
