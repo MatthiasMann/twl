@@ -1643,12 +1643,13 @@ public class Widget {
         return null;
     }
     
-    boolean routePopupEvent(Event evt) {
+    void routePopupEvent(Event evt) {
         handleEvent(evt);
-        for(int i=0,n=children.size() ; i<n ; i++) {
-            children.get(i).routePopupEvent(evt);
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                children.get(i).routePopupEvent(evt);
+            }
         }
-        return true;
     }
 
     private boolean handleKeyEvent(Event evt) {
