@@ -239,6 +239,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         width = Math.max(2*columnDividerDragableDistance+1, width);
         if(columnModel.setSize(column, width)) {
             invalidateLayout();
+            invalidateParentLayout();
         }
     }
 
