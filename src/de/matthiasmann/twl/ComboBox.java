@@ -146,16 +146,17 @@ public class ComboBox extends Widget {
     
     protected void openPopup() {
         if(popup.openPopup()) {
-            int popupHeight = computeSize(
-                    popup.getMinHeight(), 
+            int minHeight = popup.getMinHeight();
+            int popupHeight = computeSize(minHeight,
                     popup.getPreferredHeight(),
                     popup.getMaxHeight());
-            if(getBottom() + popupHeight > popup.getParent().getInnerHeight() &&
-                    getY() - popupHeight > popup.getParent().getInnerY()) {
-                popup.setPosition(getX(), getY() - popupHeight);
+            int popupMaxBottom = popup.getParent().getInnerBottom();
+            if(getBottom() + minHeight > popupMaxBottom) {
+                popup.setPosition(getX(), popupMaxBottom - minHeight);
             } else {
                 popup.setPosition(getX(), getBottom());
             }
+            popupHeight = Math.min(popupHeight, popupMaxBottom - popup.getY());
             popup.setSize(getWidth(), popupHeight);
             listbox.setSize(popup.getInnerWidth(), popup.getInnerHeight());
             listbox.requestKeyboardFocus();
