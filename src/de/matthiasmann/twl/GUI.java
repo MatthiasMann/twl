@@ -87,6 +87,7 @@ public final class GUI extends Widget {
     private long keyEventTime;
     private int keyRepeatDelay;
     private boolean popupEventOccured;
+    private Widget lastMouseEventWidget;
     
     private int mouseIdleTime = 60;
     private boolean mouseIdleState;
@@ -424,7 +425,7 @@ public final class GUI extends Widget {
             }
         } else if(!wasInside) {
             wasInside = true;
-            sendEvent(Event.Type.MOUSE_ENTERED);
+            sendMouseEvent(Event.Type.MOUSE_ENTERED);
         }
         if(mouseX != mouseLastX || mouseY != mouseLastY) {
             mouseLastX = mouseX;
@@ -439,16 +440,16 @@ public final class GUI extends Widget {
             }
             
             if(dragActive) {
-                sendEvent(Event.Type.MOUSE_DRAGED);
+                sendMouseEvent(Event.Type.MOUSE_DRAGED);
             } else if(prevButtonState == 0) {
-                sendEvent(Event.Type.MOUSE_MOVED);
+                sendMouseEvent(Event.Type.MOUSE_MOVED);
             }
         }
         if(buttonMask != 0 && pressed != wasPressed) {
             if(dragButton < 0) {
                 dragButton = button;
             }
-            sendEvent(pressed ? Event.Type.MOUSE_BTNDOWN : Event.Type.MOUSE_BTNUP);
+            sendMouseEvent(pressed ? Event.Type.MOUSE_BTNDOWN : Event.Type.MOUSE_BTNUP);
             if(button == Event.MOUSE_LBUTTON && !popupEventOccured) {
                 if(pressed) {
                     mouseDownX = mouseX;
@@ -461,14 +462,14 @@ public final class GUI extends Widget {
                         // ensure same click target as first
                         event.mouseX = mouseClickedX;
                         event.mouseY = mouseClickedY;
-                        sendEvent(Event.Type.MOUSE_DOUBLE_CLICKED);
+                        sendMouseEvent(Event.Type.MOUSE_DOUBLE_CLICKED);
                         mouseClicked = false;
                     } else {
                         mouseClicked = true;
                         mouseClickedTime = curTime;
                         mouseClickedX = mouseX;
                         mouseClickedY = mouseY;
-                        sendEvent(Event.Type.MOUSE_CLICKED);
+                        sendMouseEvent(Event.Type.MOUSE_CLICKED);
                     }
                 }
             }
@@ -556,17 +557,52 @@ public final class GUI extends Widget {
         }
     }
 
-    @Override
-    Widget getWidgetUnderMouse() {
-        return getChild(getNumChildren()-2).getWidgetUnderMouse();
+    private Widget getTopPane() {
+        // don't use potential overwritten methods
+        return super.getChild(super.getNumChildren()-2);
     }
     
-    private boolean sendEvent(Event.Type type) {
+    @Override
+    Widget getWidgetUnderMouse() {
+        return getTopPane().getWidgetUnderMouse();
+    }
+
+    private void sendMouseEvent(Event.Type type) {
+        assert type.isMouseEvent;
         popupEventOccured = false;
         event.type = type;
-        event.dragEvent = type.isMouseEvent && dragActive;
-        Widget top = getChild(getNumChildren()-2);
-        return top.handleEvent(event);
+        event.dragEvent = dragActive;
+
+        if(dragActive) {
+            if(lastMouseEventWidget != null) {
+                lastMouseEventWidget.handleEvent(event);
+                if(event.isMouseDragEnd()) {
+                    lastMouseEventWidget = null;
+                }
+            }
+        } else if(type == Event.Type.MOUSE_CLICKED) {
+            if(lastMouseEventWidget != null) {
+                lastMouseEventWidget.handleEvent(event);
+            }
+        } else {
+            lastMouseEventWidget = getTopPane().routeMouseEvent(event);
+        }
+    }
+
+    private void sendEvent(Event.Type type) {
+        assert !type.isMouseEvent;
+        popupEventOccured = false;
+        event.type = type;
+        event.dragEvent = false;
+        getTopPane().handleEvent(event);
+    }
+
+    private void sendPopupEvent(Event.Type type) {
+        assert type == Event.Type.POPUP_OPENED || type == Event.Type.POPUP_CLOSED;
+        popupEventOccured = false;
+        event.type = type;
+        event.dragEvent = false;
+        getTopPane().routePopupEvent(event);
     }
 
     void openPopup(PopupWindow popup) {
@@ -576,7 +612,7 @@ public final class GUI extends Widget {
             throw new IllegalArgumentException("popup must not be added anywhere");
         }
         hideTooltip();
-        sendEvent(Event.Type.POPUP_OPENED);
+        sendPopupEvent(Event.Type.POPUP_OPENED);
         super.insertChild(popup, getNumChildren()-1);
         popup.getOwner().setOpenPopup(this, true);
         super.requestKeyboardFocus(popup);
@@ -590,7 +626,7 @@ public final class GUI extends Widget {
         }
         requestKeyboardFocus(null);
         popup.getOwner().recalcOpenPopups(this);
-        sendEvent(Event.Type.POPUP_CLOSED);
+        sendPopupEvent(Event.Type.POPUP_CLOSED);
         popupEventOccured = true;
     }
 
@@ -637,8 +673,7 @@ public final class GUI extends Widget {
     @Override
     protected boolean requestKeyboardFocus(Widget child) {
         if(child != null) {
-            Widget top = getChild(getNumChildren()-2);
-            if(child != top) {
+            if(child != getTopPane()) {
                 return false;
             }
         }

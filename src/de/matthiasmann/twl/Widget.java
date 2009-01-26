@@ -78,7 +78,6 @@ public class Widget {
 
     private ArrayList<Widget> children;
     private Widget lastChildMouseOver;
-    private Widget lastMouseUpChild;
     private Widget focusChild;
     private MouseCursor mouseCursor;
 
@@ -847,9 +846,6 @@ public class Widget {
             if(focusChild == child) {
                 focusChild = null;
             }
-            if(lastMouseUpChild == child) {
-                lastMouseUpChild = null;
-            }
             childRemoved(child);
             return child;
         }
@@ -867,7 +863,6 @@ public class Widget {
     public void removeAllChildren() {
         if(children != null) {
             focusChild = null;
-            lastMouseUpChild = null;
             lastChildMouseOver = null;
             for(int i=0,n=children.size() ; i<n ; i++) {
                 Widget child = children.get(i);
@@ -1083,21 +1078,20 @@ public class Widget {
     
     /**
      * Called when an event occured that this widget could be interrested in.
-     * The default implementation handles delegation to child widgets and
-     * the keyboard focus. If no child wants the event then this method
-     * returns false.
-     * 
+     *
+     * The default implementation handles only keyboard events and delegates
+     * them to child widget which has keyboard focus.
+     * If focusKey handling is enabled then this widget cycles the keyboard
+     * focus through it's childs.
+     *
      * @param evt The event - do not store this object - it may be reused
      * @return true if the widget handled this event
+     * @see #setFocusKeyEnabled(boolean)
      */
     protected boolean handleEvent(Event evt) {
         if(children != null) {
-            if(evt.isMouseEvent()) {
-                return handleMouseEvent(evt);
-            } else if(evt.isKeyEvent()) {
+            if(evt.isKeyEvent()) {
                 return handleKeyEvent(evt);
-            } else {
-                return handlePopupEvent(evt);
             }
         }
         return false;
@@ -1473,9 +1467,6 @@ public class Widget {
         if(lastChildMouseOver == child) {
             lastChildMouseOver = null;
         }
-        if(lastMouseUpChild == child) {
-            lastMouseUpChild = null;
-        }
     }
     
     final void setOpenPopup(GUI gui, boolean hasOpenPopup) {
@@ -1613,55 +1604,24 @@ public class Widget {
         return sb.append(theme);
     }
 
-    private boolean handleMouseEvent(Event evt) {
-        if(evt.getType() == Event.Type.MOUSE_CLICKED || evt.getType() == Event.Type.MOUSE_DOUBLE_CLICKED) {
-            if(lastMouseUpChild != null) {
-                return lastMouseUpChild.handleEvent(evt);
-            }
-            return false;
-        }
-        lastMouseUpChild = null;
-        if(evt.isMouseDragEvent()) {
-            if(evt.isMouseDragEnd() && lastChildMouseOver != null) {
-                // drag event can only go to current mouse over child
-                lastMouseUpChild = lastChildMouseOver;
-                boolean result = lastChildMouseOver.handleEvent(evt);
-                if(lastChildMouseOver != null && lastChildMouseOver.isMouseInside(evt)) {
-                    return result;
-                }
-                // mouse moved outside - replace event with mouse moved
-                evt = evt.createSubEvent(Event.Type.MOUSE_MOVED);
-            } else {
-                // drag event can only go to current mouse over child
-                if(lastChildMouseOver != null && lastChildMouseOver.handleEvent(evt)) {
-                    return true;
-                }
-                return false;
-            }
-        }
-        for(int i=children.size(); i-->0 ;) {
-            Widget child = children.get(i);
-            if(child.visible && child.isMouseInside(evt)) {
-                // we send the real event only only if we can transfer the mouse "focus" to this child
-                if(setMouseOverChild(child, evt)) {
-                    if(evt.getType() == Event.Type.MOUSE_ENTERED ||
-                            evt.getType() == Event.Type.MOUSE_EXITED) {
-                        return true;
-                    }
-                    boolean result = child.handleEvent(evt);
-                    if(result) {
-                        if(!evt.isMouseDragEvent() && evt.getType() == Event.Type.MOUSE_BTNDOWN) {
-                            if(child.canAcceptKeyboardFocus()) {
-                                child.requestKeyboardFocus();
-                            }
-                        } else if(evt.getType() == Event.Type.MOUSE_BTNUP) {
-                            lastMouseUpChild = child;
+    Widget routeMouseEvent(Event evt) {
+        assert !evt.isMouseDragEvent();
+        if(children != null) {
+            for(int i=children.size(); i-->0 ;) {
+                Widget child = children.get(i);
+                if(child.visible && child.isMouseInside(evt)) {
+                    // we send the real event only only if we can transfer the mouse "focus" to this child
+                    Widget result = setMouseOverChild(child, evt);
+                    if(result != null) {
+                        if(evt.getType() == Event.Type.MOUSE_ENTERED ||
+                                evt.getType() == Event.Type.MOUSE_EXITED) {
+                            return result;
                         }
+                        return result.routeMouseEvent(evt);
                     }
-                    return result;
+                    // found a widget - but it doesn't want mouse events
+                    // so assumes it's "invisible" for the mouse
                 }
-                // found a widget - but it doesn't want mouse events
-                // so assumes it's "invisible" for the mouse
             }
         }
         if(evt.getType() == Event.Type.MOUSE_BTNDOWN && canAcceptKeyboardFocus()) {
@@ -1671,14 +1631,18 @@ public class Widget {
                 requestKeyboardFocus(null);
             }
         }
-        // by default a widget is "transparent"
+        // no child has mouse over
         setMouseOverChild(null, evt);
-        return false;
+        if(handleEvent(evt)) {
+            return this;
+        }
+        return null;
     }
     
-    private boolean handlePopupEvent(Event evt) {
+    boolean routePopupEvent(Event evt) {
+        handleEvent(evt);
         for(int i=0,n=children.size() ; i<n ; i++) {
-            children.get(i).handleEvent(evt);
+            children.get(i).routePopupEvent(evt);
         }
         return true;
     }
@@ -1708,20 +1672,22 @@ public class Widget {
         }
     }
 
-    private boolean setMouseOverChild(Widget child, Event evt) {
+    private Widget setMouseOverChild(Widget child, Event evt) {
         if (lastChildMouseOver != child) {
-            if (child != null) {
-                if(!child.handleEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED))) {
-                    // this widget doesn't want mouse events
-                    return false;
+            Widget result = null;
+            if(child != null) {
+                result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));
+                if(result == null) {
+                    // this child widget doesn't want mouse events
+                    return null;
                 }
             }
             if (lastChildMouseOver != null) {
-                lastChildMouseOver.handleEvent(evt.createSubEvent(Event.Type.MOUSE_EXITED));
+                lastChildMouseOver.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_EXITED));
             }
             lastChildMouseOver = child;
         }
-        return true;
+        return child;
     }
 
     void collectLayoutLoop(ArrayList<Widget> result) {

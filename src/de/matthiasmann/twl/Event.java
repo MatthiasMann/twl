@@ -103,7 +103,7 @@ public abstract class Event {
     public abstract Event createSubEvent(Type newType);
     
     /**
-     * see org.lwjgl.input.Keyboard
+     * @see org.lwjgl.input.Keyboard
      * @return the key code
      */
     public abstract int getKeyCode();

@@ -363,9 +363,9 @@ public class ResizableFrame extends Widget {
 
     protected void layoutResizeHandle() {
         if(hasResizeHandle && resizeHandle == null) {
-            resizeHandle = new Label(getAnimationState());
+            resizeHandle = new Widget(getAnimationState());
             resizeHandle.setTheme("resizeHandle");
-            add(resizeHandle);
+            super.insertChild(resizeHandle, 0);
         }
         if(resizeHandle != null) {
             if(resizeHandleX > 0) {

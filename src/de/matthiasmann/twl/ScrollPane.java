@@ -386,7 +386,7 @@ public class ScrollPane extends Widget {
             }
             break;
         }
-        return evt.isMouseEvent();
+        return false;
     }
 
     @Override
