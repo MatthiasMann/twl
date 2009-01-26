@@ -42,7 +42,6 @@ public abstract class Event {
         MOUSE_BTNDOWN(true, false),
         MOUSE_BTNUP(true, false),
         MOUSE_CLICKED(true, false),
-        MOUSE_DOUBLE_CLICKED(true, false),
         MOUSE_DRAGED(true, false),
         MOUSE_EXITED(true, false),
         MOUSE_WHEEL(true, false),
@@ -69,13 +68,47 @@ public abstract class Event {
     public static final int MODIFIER_LBUTTON = 64;
     public static final int MODIFIER_RBUTTON = 128;
     public static final int MODIFIER_MBUTTON = 256;
-    
+
+    /**
+     * One of the shift keys is pressed
+     * @see #getModifiers()
+     */
     public static final int MODIFIER_SHIFT = MODIFIER_LSHIFT | MODIFIER_RSHIFT;
+
+    /**
+     * One of the meta keys (ALT on Windows) is pressed
+     * @see #getModifiers()
+     */
     public static final int MODIFIER_META = MODIFIER_LMETA | MODIFIER_RMETA;
+
+    /**
+     * One of the control keys is pressed
+     * @see #getModifiers()
+     */
     public static final int MODIFIER_CTRL = MODIFIER_LCTRL | MODIFIER_RCTRL;
-    
+
+    /**
+     * One of the mouse buttons is pressed
+     * @see #getModifiers()
+     */
+    public static final int MODIFIER_BUTTON = MODIFIER_LBUTTON | MODIFIER_MBUTTON | MODIFIER_RBUTTON;
+
+    /**
+     * Left mouse button - this is the primary mouse button
+     * @see #getMouseButton()
+     */
     public static final int MOUSE_LBUTTON = 0;
+
+    /**
+     * Right mouse button - this is for context menus
+     * @see #getMouseButton()
+     */
     public static final int MOUSE_RBUTTON = 1;
+
+    /**
+     * Middle mouse button
+     * @see #getMouseButton()
+     */
     public static final int MOUSE_MBUTTON = 2;
     
     public abstract Type getType();
@@ -95,11 +128,32 @@ public abstract class Event {
     public abstract int getMouseX();
     
     public abstract int getMouseY();
-    
+
+    /**
+     * The mouse button. Only valid for MOUSE_BTNDOWN or MOUSE_BTNUP events
+     * @return the mouse button
+     * @see Type#MOUSE_BTNDOWN
+     * @see Type#MOUSE_BTNUP
+     * @see #MOUSE_LBUTTON
+     * @see #MOUSE_RBUTTON
+     * @see #MOUSE_MBUTTON
+     */
     public abstract int getMouseButton();
-    
+
+    /**
+     * The mouse wheel delta. Only valid for MOUSE_WHEEL events
+     * @return the mouse wheel delta
+     * @see Type#MOUSE_WHEEL
+     */
     public abstract int getMouseWheelDelta();
     
+    /**
+     * The mouse click count. Only valid for MOUSE_CLICKED events
+     * @return the mouse click count
+     * @see Type#MOUSE_CLICKED
+     */
+    public abstract int getMouseClickCount();
+
     public abstract Event createSubEvent(Type newType);
     
     /**

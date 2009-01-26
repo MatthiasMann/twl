@@ -171,9 +171,7 @@ public class Label extends TextWidget {
     public boolean handleEvent(Event evt) {
         if(evt.isMouseEvent()) {
             if(evt.getType() == Event.Type.MOUSE_CLICKED) {
-                handleClick(false);
-            } else if(evt.getType() == Event.Type.MOUSE_DOUBLE_CLICKED) {
-                handleClick(true);
+                handleClick(evt.getMouseClickCount() > 1);
             }
             return evt.getType() != Event.Type.MOUSE_WHEEL;
         }

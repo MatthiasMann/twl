@@ -74,7 +74,7 @@ public final class GUI extends Widget {
     final EventImpl event;
     private boolean wasInside;
     private boolean dragActive;
-    private boolean mouseClicked;
+    private int mouseClickCount;
     private int dragButton;
     private int mouseDownX;
     private int mouseDownY;
@@ -87,7 +87,8 @@ public final class GUI extends Widget {
     private long keyEventTime;
     private int keyRepeatDelay;
     private boolean popupEventOccured;
-    private Widget lastMouseEventWidget;
+    private Widget lastMouseDownWidget;
+    private Widget lastMouseClickWidget;
     
     private int mouseIdleTime = 60;
     private boolean mouseIdleState;
@@ -390,8 +391,10 @@ public final class GUI extends Widget {
     public final void handleMouse(int mouseX, int mouseY, int button, boolean pressed) {
         mouseEventTime = curTime;
         event.mouseButton = button;
+
+        // only the previously pressed mouse button
+        int prevButtonState = event.modifier & Event.MODIFIER_BUTTON;
         
-        int prevButtonState = event.modifier;
         int buttonMask = 0;
         switch (button) {
         case Event.MOUSE_LBUTTON:
@@ -418,14 +421,14 @@ public final class GUI extends Widget {
 
         if(!isInside(mouseX, mouseY)) {
             pressed = false;
-            mouseClicked = false;
+            mouseClickCount = 0;
             if(wasInside) {
-                sendEvent(Event.Type.MOUSE_EXITED);
+                sendMouseEvent(Event.Type.MOUSE_EXITED, null);
                 wasInside = false;
             }
         } else if(!wasInside) {
             wasInside = true;
-            sendMouseEvent(Event.Type.MOUSE_ENTERED);
+            sendMouseEvent(Event.Type.MOUSE_ENTERED, null);
         }
         if(mouseX != mouseLastX || mouseY != mouseLastY) {
             mouseLastX = mouseX;
@@ -435,41 +438,56 @@ public final class GUI extends Widget {
                 if(Math.abs(mouseX - mouseDownX) > DRAG_DIST ||
                     Math.abs(mouseY - mouseDownY) > DRAG_DIST) {
                     dragActive = true;
-                    mouseClicked = false;
+                    mouseClickCount = 0;
                 }
             }
             
             if(dragActive) {
-                sendMouseEvent(Event.Type.MOUSE_DRAGED);
+                // send MOUSE_DRAGGED only to the widget which received the MOUSE_BTNDOWN
+                if(lastMouseDownWidget != null) {
+                    sendMouseEvent(Event.Type.MOUSE_DRAGED, lastMouseDownWidget);
+                }
             } else if(prevButtonState == 0) {
-                sendMouseEvent(Event.Type.MOUSE_MOVED);
+                sendMouseEvent(Event.Type.MOUSE_MOVED, null);
             }
         }
         if(buttonMask != 0 && pressed != wasPressed) {
             if(dragButton < 0) {
                 dragButton = button;
             }
-            sendMouseEvent(pressed ? Event.Type.MOUSE_BTNDOWN : Event.Type.MOUSE_BTNUP);
+            if(pressed) {
+                lastMouseDownWidget = sendMouseEvent(Event.Type.MOUSE_BTNDOWN, null);
+            } else {
+                // send MOUSE_BTNUP only to the widget which received the MOUSE_BTNDOWN
+                if(lastMouseDownWidget != null) {
+                    sendMouseEvent(Event.Type.MOUSE_BTNUP, lastMouseDownWidget);
+                }
+            }
             if(button == Event.MOUSE_LBUTTON && !popupEventOccured) {
                 if(pressed) {
                     mouseDownX = mouseX;
                     mouseDownY = mouseY;
                 } else if(!dragActive) {
-                    if(mouseClicked &&
+                    if(mouseClickCount == 0 || lastMouseClickWidget != lastMouseDownWidget) {
+                        mouseClickedX = mouseX;
+                        mouseClickedY = mouseY;
+                        lastMouseClickWidget = lastMouseDownWidget;
+                        mouseClickCount = 0;
+                        mouseClickedTime = curTime;
+                    }
+                    if(curTime - mouseClickedTime < DBLCLICK_TIME &&
                             Math.abs(mouseX - mouseClickedX) < DRAG_DIST &&
-                            Math.abs(mouseY - mouseClickedY) < DRAG_DIST &&
-                            curTime - mouseClickedTime < DBLCLICK_TIME) {
+                            Math.abs(mouseY - mouseClickedY) < DRAG_DIST) {
                         // ensure same click target as first
                         event.mouseX = mouseClickedX;
                         event.mouseY = mouseClickedY;
-                        sendMouseEvent(Event.Type.MOUSE_DOUBLE_CLICKED);
-                        mouseClicked = false;
-                    } else {
-                        mouseClicked = true;
+                        event.mouseClickCount = ++mouseClickCount;
                         mouseClickedTime = curTime;
-                        mouseClickedX = mouseX;
-                        mouseClickedY = mouseY;
-                        sendMouseEvent(Event.Type.MOUSE_CLICKED);
+                        if(lastMouseClickWidget != null) {
+                            sendMouseEvent(Event.Type.MOUSE_CLICKED, lastMouseClickWidget);
+                        }
+                    } else {
+                        lastMouseClickWidget = null;
                     }
                 }
             }
@@ -567,25 +585,18 @@ public final class GUI extends Widget {
         return getTopPane().getWidgetUnderMouse();
     }
 
-    private void sendMouseEvent(Event.Type type) {
+    private Widget sendMouseEvent(Event.Type type, Widget target) {
         assert type.isMouseEvent;
         popupEventOccured = false;
         event.type = type;
         event.dragEvent = dragActive;
 
-        if(dragActive) {
-            if(lastMouseEventWidget != null) {
-                lastMouseEventWidget.handleEvent(event);
-                if(event.isMouseDragEnd()) {
-                    lastMouseEventWidget = null;
-                }
-            }
-        } else if(type == Event.Type.MOUSE_CLICKED) {
-            if(lastMouseEventWidget != null) {
-                lastMouseEventWidget.handleEvent(event);
-            }
+        if(target != null) {
+            target.handleEvent(event);
+            return target;
         } else {
-            lastMouseEventWidget = getTopPane().routeMouseEvent(event);
+            assert !dragActive;
+            return getTopPane().routeMouseEvent(event);
         }
     }
 
@@ -870,6 +881,7 @@ public final class GUI extends Widget {
         int mouseY;
         int mouseWheelDelta;
         int mouseButton;
+        int mouseClickCount;
         boolean dragEvent;
         boolean keyRepeated;
         char keyChar;
@@ -913,6 +925,11 @@ public final class GUI extends Widget {
         }
 
         @Override
+        public int getMouseClickCount() {
+            return mouseClickCount;
+        }
+
+        @Override
         public char getKeyChar() {
             return keyChar;
         }
@@ -942,6 +959,7 @@ public final class GUI extends Widget {
             subEvent.mouseY = mouseY;
             subEvent.mouseButton = mouseButton;
             subEvent.mouseWheelDelta = mouseWheelDelta;
+            subEvent.mouseClickCount = mouseClickCount;
             subEvent.dragEvent = dragEvent;
             subEvent.keyRepeated = keyRepeated;
             subEvent.keyChar = keyChar;
