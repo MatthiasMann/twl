@@ -362,10 +362,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         final int scrollEndX = scrollPosX + innerWidth;
         final int scrollEndY = scrollPosY + innerHeight;
 
-        int startRow = getRowFromPosition(scrollPosY);
-        int startColumn = getColumnFromPosition(scrollPosX);
-        int endRow = getRowFromPosition(scrollEndY);
-        int endColumn = getColumnFromPosition(scrollEndX);
+        int startRow = Math.max(0, getRowFromPosition(scrollPosY));
+        int startColumn = Math.max(0, getColumnFromPosition(scrollPosX));
+        int endRow = Math.min(numRows-1, Math.max(startRow, getRowFromPosition(scrollEndY)));
+        int endColumn = Math.min(numColumns-1, Math.max(startColumn, getColumnFromPosition(scrollEndX)));
 
         if(endRow+1 < numRows && getRowEndPosition(endRow) < scrollEndY) {
             endRow++;
