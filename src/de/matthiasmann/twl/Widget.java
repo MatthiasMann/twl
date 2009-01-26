@@ -1617,7 +1617,11 @@ public class Widget {
                                 evt.getType() == Event.Type.MOUSE_EXITED) {
                             return result;
                         }
-                        return result.routeMouseEvent(evt);
+                        result = result.routeMouseEvent(evt);
+                        if(result != null) {
+                            return result;
+                        }
+                        // widget no longer wants mouse events
                     }
                     // found a widget - but it doesn't want mouse events
                     // so assumes it's "invisible" for the mouse
