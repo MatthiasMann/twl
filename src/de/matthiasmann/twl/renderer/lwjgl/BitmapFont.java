@@ -265,10 +265,6 @@ public class BitmapFont implements Font {
                 width += g.xadvance;
             }
         }
-        if(lastGlyph != null) {
-            width -= lastGlyph.xadvance;
-            width += lastGlyph.xoffset + lastGlyph.width;
-        }
         return width;
     }
 
