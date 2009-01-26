@@ -36,7 +36,7 @@ import java.util.ArrayList;
  *
  * @author Matthias Mann
  */
-public abstract class AbstractTreeTableModel implements TreeTableModel {
+public abstract class AbstractTreeTableModel extends AbstractTableColumnHeaderModel implements TreeTableModel {
 
     private final ArrayList<TreeTableNode> children;
     private ChangeListener[] callbacks;
@@ -130,6 +130,14 @@ public abstract class AbstractTreeTableModel implements TreeTableModel {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
                 cl.columnDeleted(idx, count);
+            }
+        }
+    }
+
+    protected void fireColumnHeaderChanged(int column) {
+        if(callbacks != null) {
+            for(ChangeListener cl : callbacks) {
+                cl.columnHeaderChanged(column);
             }
         }
     }

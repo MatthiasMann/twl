@@ -59,6 +59,7 @@ public class Table extends TableBase {
         if(this.model != null) {
             this.model.removeChangeListener(modelChangeListener);
         }
+        this.columnHeaderModel = model;
         this.model = model;
         if(this.model != null) {
             numRows = model.getNumRows();
@@ -100,6 +101,9 @@ public class Table extends TableBase {
         public void columnInserted(int idx, int count) {
             numColumns = model.getNumColumns();
             modelColumnsInserted(count, count);
+        }
+        public void columnHeaderChanged(int column) {
+            modelColumnHeaderChanged(column);
         }
         public void cellChanged(int row, int column) {
             modelCellChanged(row, column);

@@ -69,6 +69,7 @@ public class TreeTable extends TableBase {
         if(this.model != null) {
             this.model.removeChangeListener(modelChangeListener);
         }
+        this.columnHeaderModel = model;
         this.model = model;
         this.nodeStateTable = new NodeState[64];
         if(this.model != null) {
@@ -320,10 +321,6 @@ public class TreeTable extends TableBase {
             }
             modelRowsChanged(rowsStart, rowsEnd - rowsStart);
         }
-    }
-
-    protected void modelColumnHeaderChanged(int column) {
-        columnHeaders[column].setText(model.getColumnHeaderText(column));
     }
 
     protected class ModelChangeListener implements TreeTableModel.ChangeListener {

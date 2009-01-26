@@ -33,17 +33,16 @@ package de.matthiasmann.twl.model;
  *
  * @author Matthias Mann
  */
-public interface TreeTableModel extends TableColumnHeaderModel, TreeTableNode {
+public abstract class AbstractTableColumnHeaderModel implements TableColumnHeaderModel {
 
-    public interface ChangeListener extends ColumnHeaderChangeListener {
-        public void nodesAdded(TreeTableNode parent, int idx, int count);
+    private static final String[] EMPTY_STATE_ARRAY = {};
 
-        public void nodesRemoved(TreeTableNode parent, int idx, int count);
-
-        public void nodesChanged(TreeTableNode parent, int idx, int count);
+    public String[] getColumnHeaderStates() {
+        return EMPTY_STATE_ARRAY;
     }
-    
-    public void addChangeListener(ChangeListener listener);
 
-    public void removeChangeListener(ChangeListener listener);
+    public boolean getColumnHeaderState(int column, int stateIdx) {
+        return false;
+    }
+
 }

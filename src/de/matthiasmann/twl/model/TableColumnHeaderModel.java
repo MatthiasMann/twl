@@ -33,55 +33,59 @@ package de.matthiasmann.twl.model;
  *
  * @author Matthias Mann
  */
-public interface TableModel extends TableColumnHeaderModel {
+public interface TableColumnHeaderModel {
 
-    public interface ChangeListener extends ColumnHeaderChangeListener {
+    public interface ColumnHeaderChangeListener {
         /**
-         * New rows have been inserted. The existing rows starting at idx
+         * New columns have been inserted. The existing columns starting at idx
          * have been shifted. The range idx to idx+count-1 (inclusive) are new.
          *
-         * @param idx the first new row
-         * @param count the number of inserted rows. Must be >= 1.
+         * @param idx the first new column
+         * @param count the number of inserted columns. Must be >= 1.
          */
-        public void rowsInserted(int idx, int count);
+        public void columnInserted(int idx, int count);
 
         /**
-         * Rows that were at the range idx to idx+count-1 (inclusive) have been removed.
-         * Rows starting at idx+count have been shifted to idx.
+         * Columns that were at the range idx to idx+count-1 (inclusive) have been removed.
+         * Columns starting at idx+count have been shifted to idx.
          *
-         * @param idx the first removed row
-         * @param count the number of removed rows. Must be >= 1.
+         * @param idx the first removed column
+         * @param count the number of removed columns. Must be >= 1.
          */
-        public void rowsDeleted(int idx, int count);
+        public void columnDeleted(int idx, int count);
 
         /**
-         * Rows in the range idx to idx+count-1 (inclusive) have been changed.
+         * A column header has changed it's text or state
          *
-         * @param idx the first changed row
-         * @param count the number of changed rows. Must be >= 1.
+         * @param column the column index
          */
-        public void rowsChanged(int idx, int count);
-
-        /**
-         * The specified cell has changed
-         * @param row the row of the cell
-         * @param column the column of the cell
-         */
-        public void cellChanged(int row, int column);
-
-        /**
-         * The complete table was recreated. There is no known relation between
-         * old and new rows or columns. Also the number of rows and or columns
-         * has changed.
-         */
-        public void allChanged();
+        public void columnHeaderChanged(int column);
     }
 
-    public int getNumRows();
+    public int getNumColumns();
 
-    public Object getCell(int row, int column);
+    /**
+     * A array of state names for column headers. This array should not change.
+     *
+     * @return A string array specifying column header states.
+     * @see de.matthiasmann.twl.renderer.AnimationState
+     */
+    public String[] getColumnHeaderStates();
 
-    public void addChangeListener(ChangeListener listener);
+    /**
+     * The text of the specified column header.
+     * @param column the column index
+     * @return the column header test
+     */
+    public String getColumnHeaderText(int column);
 
-    public void removeChangeListener(ChangeListener listener);
+    /**
+     * Returns the value of the specified column header and state.
+     *
+     * @param column the column index
+     * @param stateIdx the state index into the getColumnHeaderStates() array.
+     * @return the value of the state
+     * @see #getColumnHeaderStates()
+     */
+    public boolean getColumnHeaderState(int column, int stateIdx);
 }

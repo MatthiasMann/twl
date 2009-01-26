@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.TableColumnHeaderModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
@@ -124,6 +125,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected final TypeMapping<CellRenderer> cellRenderers;
     protected final SparseGrid widgetGrid;
     protected final SizeSequence columnModel;
+    protected TableColumnHeaderModel columnHeaderModel;
     protected SizeSequence rowModel;
     protected boolean hasCellWidgetCreators;
     protected WidgetCache[] widgetCacheTable;
@@ -530,9 +532,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return height;
     }
 
-    protected void autoSizeRow(int row) {
+    protected boolean autoSizeRow(int row) {
         int height = computeRowHeight(row);
-        rowModel.setSize(row, height);
+        return rowModel.setSize(row, height);
     }
 
     protected void autoSizeAllRows() {
@@ -651,6 +653,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         btn.setTheme("columnHeader");
         return btn;
     }
+
+    protected void updateColumnHeader(int column) {
+        Button columnHeader = columnHeaders[column];
+        columnHeader.setText(columnHeaderModel.getColumnHeaderText(column));
+        String[] states = columnHeaderModel.getColumnHeaderStates();
+        if(states.length > 0) {
+            AnimationState animationState = columnHeader.getAnimationState();
+            for(int i=0 ; i<states.length ; i++) {
+                animationState.setAnimationState(states[i],
+                        columnHeaderModel.getColumnHeaderState(column, i));
+            }
+        }
+    }
     
     private void removeColumnHeaders(int column, int count) throws IndexOutOfBoundsException {
         for(int i = 0 ; i < count ; i++) {
@@ -740,6 +755,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         columnHeaders = new Button[numColumns];
         for(int i=0 ; i<numColumns ; i++) {
             columnHeaders[i] = createColumnHeader(i);
+            updateColumnHeader(i);
         }
 
         columnModel.setDefaultValue(columnWidth);
@@ -755,7 +771,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected void modelRowChanged(int row) {
         if(rowModel != null) {
-            autoSizeRow(row);
+            if(autoSizeRow(row)) {
+                invalidateParentLayout();
+            }
         }
         for(int col=0 ; col<numColumns ; col++) {
             updateCellWidget(row, col);
@@ -764,15 +782,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelRowsChanged(int idx, int count) {
+        boolean rowHeightChanged = false;
         for(int i=0 ; i<count ; i++) {
             if(rowModel != null) {
-                autoSizeRow(idx+i);
+                rowHeightChanged |= autoSizeRow(idx+i);
             }
             for(int col=0 ; col<numColumns ; col++) {
                 updateCellWidget(idx+i, col);
             }
         }
         invalidateLayout();
+        if(rowHeightChanged) {
+            invalidateParentLayout();
+        }
     }
 
     protected void modelCellChanged(int row, int column) {
@@ -887,6 +909,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         
         invalidateLayout();
         invalidateParentLayout();
+    }
+
+    protected void modelColumnHeaderChanged(int column) {
+        updateColumnHeader(column);
     }
 
     class RowSizeSequence extends SizeSequence {

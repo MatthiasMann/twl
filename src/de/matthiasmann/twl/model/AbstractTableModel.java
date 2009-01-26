@@ -35,7 +35,7 @@ import de.matthiasmann.twl.utils.CallbackSupport;
  *
  * @author Matthias Mann
  */
-public abstract class AbstractTableModel implements TableModel {
+public abstract class AbstractTableModel extends AbstractTableColumnHeaderModel implements TableModel {
 
     private ChangeListener[] callbacks;
 
@@ -83,6 +83,14 @@ public abstract class AbstractTableModel implements TableModel {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
                 cl.columnDeleted(idx, count);
+            }
+        }
+    }
+
+    protected void fireColumnHeaderChanged(int column) {
+        if(callbacks != null) {
+            for(ChangeListener cl : callbacks) {
+                cl.columnHeaderChanged(column);
             }
         }
     }
