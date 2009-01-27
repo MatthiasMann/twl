@@ -1611,13 +1611,15 @@ public class Widget {
                 Widget child = children.get(i);
                 if(child.visible && child.isMouseInside(evt)) {
                     // we send the real event only only if we can transfer the mouse "focus" to this child
-                    Widget result = setMouseOverChild(child, evt);
-                    if(result != null) {
+                    if(setMouseOverChild(child, evt)) {
                         if(evt.getType() == Event.Type.MOUSE_ENTERED ||
                                 evt.getType() == Event.Type.MOUSE_EXITED) {
-                            return result;
+                            return child;
                         }
-                        result = result.routeMouseEvent(evt);
+                        if(evt.getType() == Event.Type.MOUSE_BTNDOWN && canAcceptKeyboardFocus()) {
+                            requestKeyboardFocus(child);
+                        }
+                        Widget result = child.routeMouseEvent(evt);
                         if(result != null) {
                             return result;
                         }
@@ -1677,14 +1679,14 @@ public class Widget {
         }
     }
 
-    private Widget setMouseOverChild(Widget child, Event evt) {
+    private boolean setMouseOverChild(Widget child, Event evt) {
         if (lastChildMouseOver != child) {
             Widget result = null;
             if(child != null) {
                 result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));
                 if(result == null) {
                     // this child widget doesn't want mouse events
-                    return null;
+                    return false;
                 }
             }
             if (lastChildMouseOver != null) {
@@ -1692,7 +1694,7 @@ public class Widget {
             }
             lastChildMouseOver = child;
         }
-        return child;
+        return true;
     }
 
     void collectLayoutLoop(ArrayList<Widget> result) {
