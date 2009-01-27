@@ -553,6 +553,9 @@ public final class GUI extends Widget {
                 keyRepeatDelay = KEYREPEAT_INTERVAL_DELAY;
                 event.keyRepeated = true;
                 sendEvent(Event.Type.KEY_PRESSED);  // refire last key event
+                if(event.keyChar != Keyboard.CHAR_NONE) {
+                    sendEvent(Event.Type.CHAR_TYPED);
+                }
             }
         }
     }
