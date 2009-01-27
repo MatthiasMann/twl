@@ -527,6 +527,16 @@ public class EditField extends Widget {
         }
     }
 
+    @Override
+    protected void paintOverlay(GUI gui) {
+        if(cursorImage != null && hasKeyboardFocus()) {
+            int xpos = textRenderer.lastTextX + textRenderer.computeRelativeCursorPositionX(cursorPos);
+            cursorImage.draw(getAnimationState(), xpos, textRenderer.computeTextY(),
+                    cursorImage.getWidth(), textRenderer.getFont().getLineHeight());
+        }
+        super.paintOverlay(gui);
+    }
+
     protected class ModelChangeListener implements Runnable {
         public void run() {
             modelChanged();
@@ -542,10 +552,9 @@ public class EditField extends Widget {
 
         @Override
         protected void paintWidget(GUI gui) {
-            final boolean hasKeyboardFocus = getParent().hasKeyboardFocus();
             boolean paintText = true;
             lastTextX = computeTextX();
-            if(hasSelection() && hasKeyboardFocus) {
+            if(hasSelection() && getParent().hasKeyboardFocus()) {
                 if(selectionImage != null) {
                     int xpos0 = lastTextX + computeRelativeCursorPositionX(selectionStart);
                     int xpos1 = lastTextX + computeRelativeCursorPositionX(selectionEnd);
@@ -559,11 +568,6 @@ public class EditField extends Widget {
             }
             if(paintText) {
                 paintLabelText(getTextColor());
-            }
-            if(hasKeyboardFocus && cursorImage != null) {
-                int xpos = lastTextX + computeRelativeCursorPositionX(cursorPos);
-                cursorImage.draw(getAnimationState(), xpos, computeTextY(),
-                        cursorImage.getWidth(), getFont().getLineHeight());
             }
         }
 
