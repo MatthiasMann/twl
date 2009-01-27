@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.StringModel;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.renderer.Font;
@@ -49,6 +50,8 @@ public class EditField extends Widget {
     private final StringBuilder editBuffer;
     private TextRenderer textRenderer;
     private PasswordMasker passwordMasking;
+    private Runnable modelChangeListener;
+    private StringModel model;
 
     private int cursorPos;
     private int scrollPos;
@@ -119,6 +122,24 @@ public class EditField extends Widget {
         if(passwordMasking != null) {
             passwordMasking = new PasswordMasker(editBuffer, passwordChar);
             updateText();
+        }
+    }
+
+    public StringModel getModel() {
+        return model;
+    }
+
+    public void setModel(StringModel model) {
+        if(this.model != null) {
+            this.model.removeCallback(modelChangeListener);
+        }
+        this.model = model;
+        if(this.model != null) {
+            if(modelChangeListener == null) {
+                modelChangeListener = new ModelChangeListener();
+            }
+            this.model.addCallback(modelChangeListener);
+            modelChanged();
         }
     }
 
@@ -386,6 +407,9 @@ public class EditField extends Widget {
     }
 
     private void updateText() {
+        if(model != null) {
+            model.setValue(getText());
+        }
         textRenderer.setText(passwordMasking != null ? passwordMasking : editBuffer);
         scrollToCursor(false);
         doCallback(Keyboard.KEY_NONE);
@@ -494,6 +518,19 @@ public class EditField extends Widget {
         editBuffer.delete(selectionStart, selectionEnd);
         selectionEnd = selectionStart;
         setCursorPos(selectionStart, false);
+    }
+
+    protected void modelChanged() {
+        String modelText = model.getValue();
+        if(editBuffer.length() != modelText.length() || !getText().equals(modelText)) {
+            setText(modelText);
+        }
+    }
+
+    protected class ModelChangeListener implements Runnable {
+        public void run() {
+            modelChanged();
+        }
     }
 
     protected class TextRenderer extends TextWidget {
