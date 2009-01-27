@@ -31,7 +31,7 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.Dimension;
-import de.matthiasmann.twl.Listbox;
+import de.matthiasmann.twl.ListBox;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.PositionAnimatedPanel;
@@ -174,7 +174,7 @@ public class ThemeManager {
     }
     
     protected void insertDefaultConstants() {
-        insertConstant("SINGLE_COLUMN", Listbox.SINGLE_COLUMN);
+        insertConstant("SINGLE_COLUMN", ListBox.SINGLE_COLUMN);
     }
 
     private static final Class[] XPP_CLASS = {XmlPullParser.class};

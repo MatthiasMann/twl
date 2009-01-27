@@ -44,7 +44,7 @@ public class ComboBox extends Widget {
     private final ComboboxLabel label;
     private final Button button;
     private final PopupWindow popup;
-    private final Listbox listbox;
+    private final ListBox listbox;
 
     private Runnable[] selectionChangedListeners;
     
@@ -57,18 +57,18 @@ public class ComboBox extends Widget {
         this.label = new ComboboxLabel(getAnimationState());
         this.button = new Button(getAnimationState());
         this.popup = new PopupWindow(this);
-        this.listbox = new Listbox() {
+        this.listbox = new ListBox() {
             @Override
-            protected ListboxDisplay createDisplay() {
-                return new ListboxLabel() {
+            protected ListBoxDisplay createDisplay() {
+                return new ListBoxLabel() {
                     @Override
-                    protected boolean handleListboxEvent(Event evt) {
+                    protected boolean handleListBoxEvent(Event evt) {
                         if(evt.getType() == Event.Type.MOUSE_CLICKED) {
-                            doListboxCallback(CallbackReason.MOUSE_CLICK);
+                            doListBoxCallback(CallbackReason.MOUSE_CLICK);
                             return true;
                         }
                         if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
-                            doListboxCallback(CallbackReason.SET_SELECTED);
+                            doListBoxCallback(CallbackReason.SET_SELECTED);
                             return true;
                         }
                         return false;
@@ -88,8 +88,8 @@ public class ComboBox extends Widget {
             }
         });
         
-        listbox.addCallback(new CallbackWithReason<Listbox.CallbackReason>() {
-            public void callback(Listbox.CallbackReason reason) {
+        listbox.addCallback(new CallbackWithReason<ListBox.CallbackReason>() {
+            public void callback(ListBox.CallbackReason reason) {
                 switch (reason) {
                 case KEYBOARD_RETURN:
                 case MOUSE_CLICK:
@@ -173,7 +173,7 @@ public class ComboBox extends Widget {
 
     protected void updateLabel() {
         int selected = getSelected();
-        if(selected == Listbox.NO_SELECTION) {
+        if(selected == ListBox.NO_SELECTION) {
             label.setText("");
         } else {
             label.setText(getModel().getEntry(selected).toString());

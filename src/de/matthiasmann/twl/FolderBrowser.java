@@ -46,7 +46,7 @@ import org.lwjgl.input.Keyboard;
 public class FolderBrowser extends Widget {
 
     private final FileSystemModel fsm;
-    private final Listbox listbox;
+    private final ListBox listbox;
     private final FolderModel model;
     private final BoxLayout curFolderGroup;
     private Runnable[] selectionChangedCallbacks;
@@ -66,7 +66,7 @@ public class FolderBrowser extends Widget {
         
         this.fsm = fsm;
         this.model = new FolderModel();
-        this.listbox = new Listbox(model);
+        this.listbox = new ListBox(model);
         this.curFolderGroup = new BoxLayout();
         
         curFolderGroup.setTheme("currentpathbox");
@@ -75,10 +75,10 @@ public class FolderBrowser extends Widget {
         curFolderGroup.setClip(true);
         curFolderGroup.setAlignment(Alignment.BOTTOM);
         
-        listbox.addCallback(new CallbackWithReason<Listbox.CallbackReason>() {
+        listbox.addCallback(new CallbackWithReason<ListBox.CallbackReason>() {
             private Object lastSelection;
-            public void callback(Listbox.CallbackReason reason) {
-                if(listbox.getSelected() != Listbox.NO_SELECTION) {
+            public void callback(ListBox.CallbackReason reason) {
+                if(listbox.getSelected() != ListBox.NO_SELECTION) {
                     if(reason.actionRequested()) {
                         setCurrentFolder(model.getFolder(listbox.getSelected()));
                     }
@@ -143,7 +143,7 @@ public class FolderBrowser extends Widget {
             }
             
             currentFolder = folder;
-            listbox.setSelected(Listbox.NO_SELECTION);
+            listbox.setSelected(ListBox.NO_SELECTION);
 
             rebuildCurrentFolderGroup();
 
@@ -169,7 +169,7 @@ public class FolderBrowser extends Widget {
      * @return a folder or null if nothing is selected
      */
     public Object getSelectedFolder() {
-        if(listbox.getSelected() != Listbox.NO_SELECTION) {
+        if(listbox.getSelected() != ListBox.NO_SELECTION) {
             return model.getFolder(listbox.getSelected());
         }
         return null;
@@ -178,7 +178,7 @@ public class FolderBrowser extends Widget {
     public boolean selectFolder(Object current) {
         int idx = model.findFolder(current);
         listbox.setSelected(idx);
-        return idx != Listbox.NO_SELECTION;
+        return idx != ListBox.NO_SELECTION;
     }
 
     public void addSelectionChangedCallback(Runnable cb) {
@@ -309,7 +309,7 @@ public class FolderBrowser extends Widget {
         
         public int findFolder(Object folder) {
             int idx = fsm.find(folders, folder);
-            return (idx < 0) ? Listbox.NO_SELECTION : idx;
+            return (idx < 0) ? ListBox.NO_SELECTION : idx;
         }
     }
 

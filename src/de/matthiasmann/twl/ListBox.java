@@ -39,7 +39,7 @@ import org.lwjgl.input.Keyboard;
  *
  * @author Matthias Mann
  */
-public class Listbox extends Widget {
+public class ListBox extends Widget {
 
     public static final int NO_SELECTION = -1;
     public static final int DEFAULT_CELL_HEIGHT = 20;
@@ -63,11 +63,11 @@ public class Listbox extends Widget {
         }
     };
     
-    private static final ListboxDisplay EMPTY_LABELS[] = {};
+    private static final ListBoxDisplay EMPTY_LABELS[] = {};
     
     private final ChangeListener modelCallback;
     private final Scrollbar scrollbar;
-    private ListboxDisplay[] labels;
+    private ListBoxDisplay[] labels;
     private ListModel model;
     private int cellHeight = DEFAULT_CELL_HEIGHT;
     private int cellWidth = SINGLE_COLUMN;
@@ -81,7 +81,7 @@ public class Listbox extends Widget {
     private boolean needUpdate;
     private CallbackWithReason[] callbacks;
     
-    public Listbox() {
+    public ListBox() {
         modelCallback = new ChangeListenerImpl();
         scrollbar = new Scrollbar();
         labels = EMPTY_LABELS;
@@ -98,7 +98,7 @@ public class Listbox extends Widget {
         setCanAcceptKeyboardFocus(true);
     }
 
-    public Listbox(ListModel model) {
+    public ListBox(ListModel model) {
         this();
         setModel(model);
     }
@@ -408,7 +408,7 @@ public class Listbox extends Widget {
 
     @Override
     protected void childChangedSize(Widget child) {
-        if(!(child instanceof ListboxDisplay)) {
+        if(!(child instanceof ListBoxDisplay)) {
             super.childChangedSize(child);
         }
     }
@@ -464,7 +464,7 @@ public class Listbox extends Widget {
         boolean hasFocus = hasKeyboardFocus();
 
         for(int i=0 ; i<labels.length ; i++) {
-            ListboxDisplay label = labels[i];
+            ListBoxDisplay label = labels[i];
             int cell = i + firstVisible;
             if(cell < numEntries) {
                 label.setData(model.getEntry(cell));
@@ -505,14 +505,14 @@ public class Listbox extends Widget {
             removeChild(labels[i].getWidget());
         }
 
-        ListboxLabel[] newLabels = new ListboxLabel[visibleCells];
+        ListBoxLabel[] newLabels = new ListBoxLabel[visibleCells];
         System.arraycopy(labels, 0, newLabels, 0, Math.min(visibleCells, labels.length));
         labels = newLabels;
         
         for(int i = curVisible; i < visibleCells; i++) {
             final int cellOffset = i;
-            ListboxDisplay lbd = createDisplay();
-            lbd.addListboxCallback(new CallbackWithReason<CallbackReason>() {
+            ListBoxDisplay lbd = createDisplay();
+            lbd.addListBoxCallback(new CallbackWithReason<CallbackReason>() {
                 public void callback(CallbackReason reason) {
                     int cell = getFirstVisible() + cellOffset;
                     if(cell < getNumEntries()) {
@@ -556,17 +556,17 @@ public class Listbox extends Widget {
         }
     }
     
-    protected ListboxDisplay createDisplay() {
-        return new ListboxLabel();
+    protected ListBoxDisplay createDisplay() {
+        return new ListBoxLabel();
     }
     
-    protected static class ListboxLabel extends TextWidget implements ListboxDisplay {
+    protected static class ListBoxLabel extends TextWidget implements ListBoxDisplay {
         public static final String STATE_SELECTED = "selected";
 
         private boolean selected;
         private CallbackWithReason[] callbacks;
 
-        public ListboxLabel() {
+        public ListBoxLabel() {
             setClip(true);
             setTheme();
         }
@@ -604,26 +604,26 @@ public class Listbox extends Widget {
             return this;
         }
 
-        public void addListboxCallback(CallbackWithReason<Listbox.CallbackReason> cb) {
+        public void addListBoxCallback(CallbackWithReason<ListBox.CallbackReason> cb) {
             callbacks = CallbackSupport.addCallbackToList(callbacks, cb, CallbackWithReason.class);
         }
 
-        public void removeListboxCallback(CallbackWithReason<Listbox.CallbackReason> cb) {
+        public void removeListBoxCallback(CallbackWithReason<ListBox.CallbackReason> cb) {
             callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
         }
 
         @SuppressWarnings("unchecked")
-        protected void doListboxCallback(Listbox.CallbackReason reason) {
+        protected void doListBoxCallback(ListBox.CallbackReason reason) {
             if(callbacks != null) {
                 for(CallbackWithReason cb : callbacks) {
-                    ((CallbackWithReason<Listbox.CallbackReason>)cb).callback(reason);
+                    ((CallbackWithReason<ListBox.CallbackReason>)cb).callback(reason);
                 }
             }
         }
 
-        protected boolean handleListboxEvent(Event evt) {
+        protected boolean handleListBoxEvent(Event evt) {
             if(evt.getType() == Event.Type.MOUSE_BTNDOWN && !selected) {
-                doListboxCallback((evt.getMouseClickCount() > 1)
+                doListBoxCallback((evt.getMouseClickCount() > 1)
                         ? CallbackReason.MOUSE_DOUBLE_CLICK
                         : CallbackReason.MOUSE_CLICK);
                 return true;
@@ -634,7 +634,7 @@ public class Listbox extends Widget {
         @Override
         protected boolean handleEvent(Event evt) {
             if(!evt.isMouseDragEvent()) {
-                if(handleListboxEvent(evt)) {
+                if(handleListBoxEvent(evt)) {
                     return true;
                 }
             }

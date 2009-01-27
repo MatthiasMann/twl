@@ -35,7 +35,7 @@ package de.matthiasmann.twl;
  *
  * @author Matthias Mann
  */
-public interface ListboxDisplay {
+public interface ListBoxDisplay {
 
     public boolean isSelected();
 
@@ -51,8 +51,8 @@ public interface ListboxDisplay {
 
     public Widget getWidget();
     
-    public void addListboxCallback(CallbackWithReason<Listbox.CallbackReason> cb);
+    public void addListBoxCallback(CallbackWithReason<ListBox.CallbackReason> cb);
     
-    public void removeListboxCallback(CallbackWithReason<Listbox.CallbackReason> cb);
+    public void removeListBoxCallback(CallbackWithReason<ListBox.CallbackReason> cb);
     
 }
