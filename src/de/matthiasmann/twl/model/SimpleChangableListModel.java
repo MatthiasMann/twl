@@ -100,6 +100,10 @@ public class SimpleChangableListModel<T> extends SimpleListModel<T> {
         return result;
     }
 
+    public int findElement(Object element) {
+        return content.indexOf(element);
+    }
+    
     public void clear() {
         content.clear();
         fireAllChanged();
