@@ -536,7 +536,7 @@ public final class GUI extends Widget {
         } else {
             keyRepeatDelay = NO_REPEAT;
         }
-        if(event.keyChar != Keyboard.CHAR_NONE) {
+        if(pressed && event.keyChar != Keyboard.CHAR_NONE) {
             sendEvent(Event.Type.CHAR_TYPED);
         }
     }
