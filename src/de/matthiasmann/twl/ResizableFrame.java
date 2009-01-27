@@ -41,6 +41,20 @@ import de.matthiasmann.twl.renderer.Renderer;
 public class ResizableFrame extends Widget {
 
     public static final String STATE_FADE = "fade";
+
+    public enum ResizableAxis {
+        NONE(false, false),
+        HORIZONTAL(true, false),
+        VERTICAL(false, true),
+        BOTH(true, true);
+
+        final boolean allowX;
+        final boolean allowY;
+        private ResizableAxis(boolean allowX, boolean allowY) {
+            this.allowX = allowX;
+            this.allowY = allowY;
+        }
+    };
     
     private enum DragMode {
         NONE("mouseCursor"),
@@ -63,6 +77,7 @@ public class ResizableFrame extends Widget {
     private String title;
     
     private final MouseCursor[] cursors;
+    private ResizableAxis resizableAxis = ResizableAxis.BOTH;
     private DragMode dragMode = DragMode.NONE;
     private int dragStartX;
     private int dragStartY;
@@ -116,6 +131,17 @@ public class ResizableFrame extends Widget {
         if(titleWidget != null) {
             titleWidget.setText(title);
         }
+    }
+
+    public ResizableAxis getResizableAxis() {
+        return resizableAxis;
+    }
+
+    public void setResizableAxis(ResizableAxis resizableAxis) {
+        if(resizableAxis == null) {
+            throw new NullPointerException("resizableAxis");
+        }
+        this.resizableAxis = resizableAxis;
     }
 
     public boolean hasTitleBar() {
@@ -532,10 +558,24 @@ public class ResizableFrame extends Widget {
         if(closeButton != null && closeButton.isVisible() && closeButton.isInside(mx, my)) {
             return DragMode.NONE;
         }
+
+        if(resizableAxis == ResizableAxis.NONE) {
+            return DragMode.NONE;
+        }
+        
         if(resizeHandle != null && resizeHandle.isVisible() && resizeHandle.isInside(mx, my)) {
             return resizeHandleDragMode;
         }
 
+        if(!resizableAxis.allowX) {
+            left = false;
+            right = false;
+        }
+        if(!resizableAxis.allowY) {
+            top = false;
+            bot = false;
+        }
+        
         if(left) {
             if(top) {
                 return DragMode.CORNER_TL;
