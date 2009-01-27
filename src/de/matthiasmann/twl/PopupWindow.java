@@ -67,6 +67,7 @@ public class PopupWindow extends Widget {
         if(gui != null) {
             // owner's hasOpenPopups flag is handled by GUI
             gui.openPopup(this);
+            focusFirstChild();
             return true;
         }
         return false;

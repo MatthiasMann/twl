@@ -159,7 +159,6 @@ public class ComboBox extends Widget {
             popupHeight = Math.min(popupHeight, popupMaxBottom - popup.getY());
             popup.setSize(getWidth(), popupHeight);
             listbox.setSize(popup.getInnerWidth(), popup.getInnerHeight());
-            listbox.requestKeyboardFocus();
             listbox.scrollToSelected();
         }
     }

@@ -648,6 +648,7 @@ public final class GUI extends Widget {
         popup.getOwner().recalcOpenPopups(this);
         sendPopupEvent(Event.Type.POPUP_CLOSED);
         popupEventOccured = true;
+        popup.getOwner().requestKeyboardFocus();
     }
 
     boolean hasOpenPopups(Widget owner) {
