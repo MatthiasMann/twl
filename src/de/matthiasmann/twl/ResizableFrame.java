@@ -142,6 +142,9 @@ public class ResizableFrame extends Widget {
             throw new NullPointerException("resizableAxis");
         }
         this.resizableAxis = resizableAxis;
+        if(resizeHandle != null) {
+            layoutResizeHandle();
+        }
     }
 
     public boolean hasTitleBar() {
@@ -176,6 +179,15 @@ public class ResizableFrame extends Widget {
         } else if(super.isVisible()) {
             fadeToHide(fadeDurationHide);
         }
+    }
+
+    /**
+     * Sets the visibility without triggering a fade
+     * @param visible the new visibility flag
+     * @see Widget#setVisible(boolean)
+     */
+    public void setHardVisible(boolean visible) {
+        super.setVisible(visible);
     }
 
     protected void applyThemeResizableFrame(ThemeInfo themeInfo) {
@@ -261,7 +273,7 @@ public class ResizableFrame extends Widget {
         if(time >= fadeDuration) {
             fadeActive = false;
             if(currentTint[3] <= ZERO_EPSILON) {
-                super.setVisible(false);
+                setHardVisible(false);
             }
             // disable tinted rendering if we have full WHITE as tint
             hasTint =
@@ -304,7 +316,7 @@ public class ResizableFrame extends Widget {
         // currentTint[8..11] contain the destination color
         // if destination alpha is > 0 then make frame visible
         if(currentTint[11] >= ZERO_EPSILON) {
-            super.setVisible(true);
+            setHardVisible(true);
         }
         // convert destination into deltas
         for(int i=0 ; i<4 ; i++) {
@@ -410,7 +422,8 @@ public class ResizableFrame extends Widget {
             resizeHandle.setPosition(
                     getTitleX(resizeHandleX),
                     getTitleY(resizeHandleY));
-            resizeHandle.setVisible(hasResizeHandle);
+            resizeHandle.setVisible(hasResizeHandle &&
+                    resizableAxis == ResizableAxis.BOTH);
         } else {
             resizeHandleDragMode = DragMode.NONE;
         }
