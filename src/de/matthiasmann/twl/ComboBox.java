@@ -195,6 +195,10 @@ public class ComboBox extends Widget {
                 // let the listbox handle this :)
                 listbox.handleEvent(evt);
                 return true;
+            case Keyboard.KEY_SPACE:
+            case Keyboard.KEY_RETURN:
+                openPopup();
+                return true;
             }
         }
         return false;
