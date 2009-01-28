@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2009, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -35,8 +35,6 @@ package de.matthiasmann.twl;
  */
 public class BoxLayout extends Widget {
 
-    public static final int NOT_SET = -1;
-    
     public enum Direction {
         HORIZONTAL,
         VERTICAL
@@ -44,9 +42,7 @@ public class BoxLayout extends Widget {
     
     private Direction direction;
     private int spacing;
-    private boolean autoSize = true;
     private boolean scroll;
-    private int maxComponentSize = NOT_SET;
     private Alignment alignment = Alignment.TOP;
     
     public BoxLayout() {
@@ -68,17 +64,6 @@ public class BoxLayout extends Widget {
         }
     }
 
-    public boolean isAutoSize() {
-        return autoSize;
-    }
-
-    public void setAutoSize(boolean autoSize) {
-        if(this.autoSize != autoSize) {
-            this.autoSize = autoSize;
-            invalidateLayout();
-        }
-    }
-
     public boolean isScroll() {
         return scroll;
     }
@@ -86,20 +71,6 @@ public class BoxLayout extends Widget {
     public void setScroll(boolean scroll) {
         if(this.scroll != scroll) {
             this.scroll = scroll;
-            invalidateLayout();
-        }
-    }
-
-    public int getMaxComponentSize() {
-        return maxComponentSize;
-    }
-
-    public void setMaxComponentSize(int maxComponentSize) {
-        if(maxComponentSize < 0 && maxComponentSize != NOT_SET) {
-            throw new IllegalArgumentException("maxComponentSize");
-        }
-        if(this.maxComponentSize != maxComponentSize) {
-            this.maxComponentSize = maxComponentSize;
             invalidateLayout();
         }
     }
@@ -133,91 +104,33 @@ public class BoxLayout extends Widget {
     }
 
     @Override
-    public int getMinHeight() {
-        int height = 0;
-        switch(direction) {
-        case HORIZONTAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                height = Math.max(height, getChild(i).getMinHeight());
-            }
-            break;
-        case VERTICAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int minChildHeight = getChild(i).getMinHeight();
-                if(maxComponentSize != NOT_SET && minChildHeight > maxComponentSize) {
-                    minChildHeight = maxComponentSize;
-                }
-                height += minChildHeight;
-            }
-            break;
-        }
-        return Math.max(super.getMinHeight(), height + getBorderVertical());
-    }
-
-    @Override
     public int getMinWidth() {
-        int width = 0;
-        switch(direction) {
-        case HORIZONTAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int minChildWidth = getChild(i).getMinWidth();
-                if(maxComponentSize != NOT_SET && minChildWidth > maxComponentSize) {
-                    minChildWidth = maxComponentSize;
-                }
-                width += minChildWidth;
-            }
-            break;
-        case VERTICAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                width = Math.max(width, getChild(i).getMinWidth());
-            }
-            break;
-        }
-        return Math.max(super.getMinWidth(), width + getBorderHorizontal());
+        int minWidth = (direction == Direction.HORIZONTAL)
+                ? computeMinWidthHorizontal(this, spacing)
+                : computeMinWidthVertical(this);
+        return Math.max(super.getMinWidth(), minWidth + getBorderHorizontal());
     }
 
     @Override
-    public int getPreferredInnerHeight() {
-        int height = 0;
-        switch(direction) {
-        case HORIZONTAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                height = Math.max(height, getPrefChildHeight(getChild(i)));
-            }
-            break;
-        case VERTICAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int prefChildHeight = getPrefChildHeight(getChild(i));
-                if(maxComponentSize != NOT_SET && prefChildHeight > maxComponentSize) {
-                    prefChildHeight = maxComponentSize;
-                }
-                height += prefChildHeight;
-            }
-            break;
-        }
-        return height;
+    public int getMinHeight() {
+        int minHeight = (direction == Direction.HORIZONTAL)
+                ? computeMinHeightHorizontal(this)
+                : computeMinHeightVertical(this, spacing);
+        return Math.max(super.getMinHeight(), minHeight + getBorderVertical());
     }
 
     @Override
     public int getPreferredInnerWidth() {
-        int width = 0;
-        switch(direction) {
-        case HORIZONTAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int prefChildWidth = getPrefChildWidth(getChild(i));
-                if(maxComponentSize != NOT_SET && prefChildWidth > maxComponentSize) {
-                    prefChildWidth = maxComponentSize;
-                }
-                width += prefChildWidth;
-            }
-            break;
-        case VERTICAL:
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                width = Math.max(width, getPrefChildWidth(getChild(i)));
-            }
-            break;
-        }
-        return width;
+        return (direction == Direction.HORIZONTAL)
+                ? computePreferredWidthHorizontal(this, spacing)
+                : computePreferredWidthVertical(this);
+    }
+
+    @Override
+    public int getPreferredInnerHeight() {
+        return (direction == Direction.HORIZONTAL)
+                ? computePreferredHeightHorizontal(this)
+                : computePreferredHeightVertical(this, spacing);
     }
 
     @Override
@@ -227,132 +140,128 @@ public class BoxLayout extends Widget {
         setAlignment(themeInfo.getParameter("alignment", Alignment.TOP));
     }
 
-    private int getPrefChildWidth(Widget child) {
-        return computeSize(child.getMinWidth(), child.getPreferredWidth(), child.getMaxWidth());
+    public static int computeMinWidthHorizontal(Widget container, int spacing) {
+        final int n = container.getNumChildren();
+        int minWidth = Math.max(0, n-1) * spacing;
+        for(int i=0 ; i<n ; i++) {
+            minWidth += container.getChild(i).getMinWidth();
+        }
+        return minWidth;
     }
 
-    private int getPrefChildHeight(Widget child) {
-        return computeSize(child.getMinHeight(), child.getPreferredHeight(), child.getMaxHeight());
+    public static int computeMinHeightHorizontal(Widget container) {
+        final int n = container.getNumChildren();
+        int minHeight = 0;
+        for(int i=0 ; i<n ; i++) {
+            minHeight = Math.max(minHeight, container.getChild(i).getMinHeight());
+        }
+        return minHeight;
     }
 
-    protected void layoutHorizontal() {
-        int x = getInnerX();
-        int y = getInnerY();
-        int width = 0;
-        int height = 0;
-        final int numChildren = getNumChildren();
+    public static int computePreferredWidthHorizontal(Widget container, int spacing) {
+        final int n = container.getNumChildren();
+        int prefWidth = Math.max(0, n-1) * spacing;
+        for(int i=0 ; i<n ; i++) {
+            prefWidth += getPrefChildWidth(container.getChild(i));
+        }
+        return prefWidth;
+    }
 
-        // pass 1: get needed size and limit component size
+    public static int computePreferredHeightHorizontal(Widget container) {
+        final int n = container.getNumChildren();
+        int prefHeight = 0;
+        for(int i=0 ; i<n ; i++) {
+            prefHeight = Math.max(prefHeight, getPrefChildHeight(container.getChild(i)));
+        }
+        return prefHeight;
+    }
+    
+    public static int computeMinWidthVertical(Widget container) {
+        final int n = container.getNumChildren();
+        int minWidth = 0;
+        for(int i=0 ; i<n ; i++) {
+            minWidth = Math.max(minWidth, container.getChild(i).getMinWidth());
+        }
+        return minWidth;
+    }
+
+    public static int computeMinHeightVertical(Widget container, int spacing) {
+        final int n = container.getNumChildren();
+        int minHeight = Math.max(0, n-1) * spacing;
+        for(int i=0 ; i<n ; i++) {
+            minHeight += container.getChild(i).getMinHeight();
+        }
+        return minHeight;
+    }
+
+    public static int computePreferredWidthVertical(Widget container) {
+        final int n = container.getNumChildren();
+        int prefWidth = 0;
+        for(int i=0 ; i<n ; i++) {
+            prefWidth = Math.max(prefWidth, getPrefChildWidth(container.getChild(i)));
+        }
+        return prefWidth;
+    }
+
+    public static int computePreferredHeightVertical(Widget container, int spacing) {
+        final int n = container.getNumChildren();
+        int prefHeight = Math.max(0, n-1) * spacing;
+        for(int i=0 ; i<n ; i++) {
+            prefHeight += getPrefChildHeight(container.getChild(i));
+        }
+        return prefHeight;
+    }
+    
+    public static void layoutHorizontal(Widget container, int spacing, Alignment alignment, boolean scroll) {
+        final int numChildren = container.getNumChildren();
+        final int height = container.getInnerHeight();
+        int x = container.getInnerX();
+        int y = container.getInnerY();
+
+        // 1: check if we need to scroll
+        if(scroll) {
+            int width = computePreferredWidthHorizontal(container, spacing);
+            if(width > container.getInnerWidth()) {
+                x -= width - container.getInnerWidth();
+            }
+        }
+
+        // 2: position children
         for(int idx=0 ; idx<numChildren ; idx++) {
-            Widget child = getChild(idx);
+            Widget child = container.getChild(idx);
             int childWidth = getPrefChildWidth(child);
-            int childHeight = getPrefChildHeight(child);
-
-            if(maxComponentSize != NOT_SET && childWidth > maxComponentSize) {
-                child.setClip(true);// activate clip because we reduce it's size
-                childWidth = maxComponentSize;
-            }
-
+            int childHeight = (alignment == Alignment.FILL) ? height : getPrefChildHeight(child);
+            int yoff = (height - childHeight) * alignment.vpos / 2;
             child.setSize(childWidth, childHeight);
-            x += childWidth + spacing;
-            height = Math.max(height, child.getHeight());
-        }
-
-        width = x - spacing - getInnerX();
-        x = getInnerX();
-
-        if(!autoSize && scroll && width > getInnerWidth()) {
-            x -= width - getInnerWidth();
-        }
-
-        // pass 2: position children
-        for(int idx=0 ; idx<numChildren ; idx++) {
-            Widget child = getChild(idx);
-            int yoff = 0;
-            switch (alignment) {
-            case LEFT:
-            case CENTER:
-            case RIGHT:
-                yoff = (height - child.getHeight())/2;
-                break;
-            case BOTTOMLEFT:
-            case BOTTOM:
-            case BOTTOMRIGHT:
-                yoff = height - child.getHeight();
-                break;
-            default:
-                break;
-            }
             child.setPosition(x, y + yoff);
-            int childWidth = child.getWidth();
-            if(maxComponentSize > NOT_SET && childWidth > maxComponentSize) {
-                childWidth = maxComponentSize;
-            }
             x += childWidth + spacing;
         }
-
-        width = x - spacing - getInnerX();
-        setInnerSize(autoSize ? width : getInnerWidth(), height);
     }
 
-    protected void layoutVertical() {
-        int x = getInnerX();
-        int y = getInnerY();
-        int width = 0;
-        int height = 0;
-        final int numChildren = getNumChildren();
+    public static void layoutVertical(Widget container, int spacing, Alignment alignment, boolean scroll) {
+        final int numChildren = container.getNumChildren();
+        final int width = container.getInnerWidth();
+        int x = container.getInnerX();
+        int y = container.getInnerY();
 
-        // pass 1: get needed size and limit component size
+        // 1: check if we need to scroll
+        if(scroll) {
+            int height = computePreferredHeightVertical(container, spacing);
+            if(height > container.getInnerHeight()) {
+                x -= height - container.getInnerHeight();
+            }
+        }
+
+        // 2: position children
         for(int idx=0 ; idx<numChildren ; idx++) {
-            Widget child = getChild(idx);
-            int childWidth = getPrefChildWidth(child);
+            Widget child = container.getChild(idx);
+            int childWidth = (alignment == Alignment.FILL) ? width : getPrefChildWidth(child);
             int childHeight = getPrefChildHeight(child);
-
-            if(maxComponentSize != NOT_SET && childHeight > maxComponentSize) {
-                child.setClip(true);// activate clip because we reduce it's size
-                childHeight = maxComponentSize;
-            }
-            
+            int xoff = (width - childWidth) * alignment.hpos / 2;
             child.setSize(childWidth, childHeight);
-            y += childHeight + spacing;
-            width = Math.max(width, child.getWidth());
-        }
-
-        height = y - spacing - getInnerY();
-        y = getInnerY();
-
-        if(!autoSize && scroll && height > getInnerHeight()) {
-            y -= height - getInnerHeight();
-        }
-
-        // pass 2: position children
-        for(int idx=0 ; idx<numChildren ; idx++) {
-            Widget child = getChild(idx);
-            int xoff = 0;
-            switch (alignment) {
-            case TOP:
-            case CENTER:
-            case BOTTOM:
-                xoff = (width - child.getWidth())/2;
-                break;
-            case TOPRIGHT:
-            case RIGHT:
-            case BOTTOMRIGHT:
-                xoff = width - child.getWidth();
-                break;
-            default:
-                break;
-            }
             child.setPosition(x + xoff, y);
-            int childHeight = child.getHeight();
-            if(maxComponentSize > NOT_SET && childHeight > maxComponentSize) {
-                childHeight = maxComponentSize;
-            }
             y += childHeight + spacing;
         }
-
-        height = y - spacing - getInnerY();
-        setInnerSize(width, autoSize ? height : getInnerHeight());
     }
 
     @Override
@@ -360,17 +269,25 @@ public class BoxLayout extends Widget {
         if(getNumChildren() > 0) {
             switch(direction) {
             case HORIZONTAL:
-                layoutHorizontal();
+                layoutHorizontal(this, spacing, alignment, scroll);
                 break;
                 
             case VERTICAL:
-                layoutVertical();
+                layoutVertical(this, spacing, alignment, scroll);
                 break;
                 
             default:
                 throw new IllegalStateException(direction.toString());
             }
         }
+    }
+
+    private static int getPrefChildWidth(Widget child) {
+        return computeSize(child.getMinWidth(), child.getPreferredWidth(), child.getMaxWidth());
+    }
+
+    private static int getPrefChildHeight(Widget child) {
+        return computeSize(child.getMinHeight(), child.getPreferredHeight(), child.getMaxHeight());
     }
 
 }

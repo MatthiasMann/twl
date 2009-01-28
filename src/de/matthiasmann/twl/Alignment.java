@@ -43,7 +43,8 @@ public enum Alignment {
     TOPLEFT(HAlignment.LEFT,0,0),
     TOPRIGHT(HAlignment.RIGHT,2,0),
     BOTTOMLEFT(HAlignment.LEFT,0,2),
-    BOTTOMRIGHT(HAlignment.RIGHT,2,2);
+    BOTTOMRIGHT(HAlignment.RIGHT,2,2),
+    FILL(HAlignment.CENTER,1,1);
     
     final HAlignment fontHAlignment;
     final byte hpos;

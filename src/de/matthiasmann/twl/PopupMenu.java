@@ -107,41 +107,18 @@ public class PopupMenu extends PopupWindow {
     }
 
     @Override
-    public int getPreferredInnerHeight() {
-        int height = 0;
-        for(int i=0,n=getNumChildren() ; i<n ; i++) {
-            Widget child = getChild(i);
-            height += getPrefChildHeight(child);
-        }
-        return height;
+    public int getPreferredInnerWidth() {
+        return BoxLayout.computePreferredWidthVertical(this);
     }
 
     @Override
-    public int getPreferredInnerWidth() {
-        int width = 0;
-        for(int i=0,n=getNumChildren() ; i<n ; i++) {
-            Widget child = getChild(i);
-            width = Math.max(width, child.getPreferredWidth());
-        }
-        return width;
+    public int getPreferredInnerHeight() {
+        return BoxLayout.computePreferredHeightVertical(this, 0);
     }
 
     @Override
     protected void layout() {
-        int x = getInnerX();
-        int y = getInnerY();
-        int w = getInnerWidth();
-        for(int i=0,n=getNumChildren() ; i<n ; i++) {
-            Widget child = getChild(i);
-            int childHeight = getPrefChildHeight(child);
-            child.setSize(w, childHeight);
-            child.setPosition(x, y);
-            y += childHeight;
-        }
-    }
-
-    private int getPrefChildHeight(Widget child) {
-        return computeSize(child.getMinHeight(), child.getPreferredHeight(), child.getMaxHeight());
+        BoxLayout.layoutVertical(this, 0, Alignment.FILL, false);
     }
     
     void closeAllPopupMenus() {

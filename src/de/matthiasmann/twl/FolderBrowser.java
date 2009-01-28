@@ -70,7 +70,6 @@ public class FolderBrowser extends Widget {
         this.curFolderGroup = new BoxLayout();
         
         curFolderGroup.setTheme("currentpathbox");
-        curFolderGroup.setAutoSize(false);
         curFolderGroup.setScroll(true);
         curFolderGroup.setClip(true);
         curFolderGroup.setAlignment(Alignment.BOTTOM);
@@ -248,7 +247,7 @@ public class FolderBrowser extends Widget {
     protected void layout() {
         curFolderGroup.setPosition(getInnerX(), getInnerY());
         curFolderGroup.setSize(getInnerWidth(), curFolderGroup.getHeight());
-        curFolderGroup.setMaxComponentSize(getInnerWidth()*9/10);
+        //curFolderGroup.setMaxComponentSize(getInnerWidth()*9/10);
         listbox.setPosition(getInnerX(), curFolderGroup.getBottom());
         listbox.setSize(getInnerWidth(), Math.max(0, getInnerBottom() - listbox.getY()));
     }
