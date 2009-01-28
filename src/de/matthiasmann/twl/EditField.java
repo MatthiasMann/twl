@@ -147,6 +147,8 @@ public class EditField extends Widget {
         text = TextUtil.limitStringLength(text, maxTextLength);
         editBuffer.replace(0, editBuffer.length(), text);
         cursorPos = editBuffer.length();
+        selectionStart = 0;
+        selectionEnd = 0;
         updateText();
         scrollToCursor(true);
     }
