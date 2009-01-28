@@ -50,7 +50,7 @@ public class PopupMenu extends PopupWindow {
     public boolean showPopup(int x, int y) {
         setPosition(x, y);
         if(openPopup()) {
-            layout();
+            adjustSize();
             return true;
         }
         return false;
@@ -89,18 +89,7 @@ public class PopupMenu extends PopupWindow {
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
-        adjustSize();
-        //layout();
-    }
-
-    @Override
-    protected void sizeChanged() {
-        //layout();
-    }
-
-    @Override
-    protected void borderChanged() {
-        //layout();
+        invalidateLayout();
     }
 
     @Override
@@ -118,28 +107,41 @@ public class PopupMenu extends PopupWindow {
     }
 
     @Override
-    protected void layout() {
-        int minWidth = 0;
-        int minHeight = 0;
-        for(int i=0 ; i<getNumChildren() ; i++) {
+    public int getPreferredInnerHeight() {
+        int height = 0;
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
-            minWidth = Math.max(minWidth, child.getWidth());
-            minHeight += child.getHeight();
+            height += getPrefChildHeight(child);
         }
-        if(getBackground() != null) {
-            minWidth = Math.max(minWidth, getBackground().getWidth());
-            minHeight = Math.max(minHeight, getBackground().getHeight());
+        return height;
+    }
+
+    @Override
+    public int getPreferredInnerWidth() {
+        int width = 0;
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            width = Math.max(width, child.getPreferredWidth());
         }
+        return width;
+    }
+
+    @Override
+    protected void layout() {
         int x = getInnerX();
         int y = getInnerY();
-        for(int i=0 ; i<getNumChildren() ; i++) {
+        int w = getInnerWidth();
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
-            int childHeight = child.getHeight();
-            child.setSize(minWidth, childHeight);
+            int childHeight = getPrefChildHeight(child);
+            child.setSize(w, childHeight);
             child.setPosition(x, y);
             y += childHeight;
         }
-        setInnerSize(minWidth, y - getInnerY());
+    }
+
+    private int getPrefChildHeight(Widget child) {
+        return computeSize(child.getMinHeight(), child.getPreferredHeight(), child.getMaxHeight());
     }
     
     void closeAllPopupMenus() {
