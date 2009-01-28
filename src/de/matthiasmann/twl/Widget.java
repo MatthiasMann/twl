@@ -1414,7 +1414,7 @@ public class Widget {
             assert(gui != null);
             gui.closePopupFromWidgets(child);
         }
-        recursivelyChildFocusLost(this);
+        recursivelyChildFocusLost(child);
         if(gui != null) {
             child.recursivelyRemoveFromGUI(gui);
         }
