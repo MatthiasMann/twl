@@ -42,6 +42,7 @@ public class PopupWindow extends Widget {
     private final Widget owner;
 
     private boolean closeOnClickedOutside = true;
+    private boolean closeOnEscape = true;
     
     public PopupWindow(Widget owner) {
         if(owner == null) {
@@ -60,6 +61,14 @@ public class PopupWindow extends Widget {
 
     public void setCloseOnClickedOutside(boolean closeOnClickedOutside) {
         this.closeOnClickedOutside = closeOnClickedOutside;
+    }
+
+    public boolean isCloseOnEscape() {
+        return closeOnEscape;
+    }
+
+    public void setCloseOnEscape(boolean closeOnEscape) {
+        this.closeOnEscape = closeOnEscape;
     }
 
     public boolean openPopup() {
@@ -125,32 +134,21 @@ public class PopupWindow extends Widget {
         }
     }
     
-    /**
-     * All events for this popup are handled by this method. Widget's handleEvent
-     * method is final and must not be called by supclasses of PopupWindow.
-     *
-     * @param evt The event
-     * @return true if the event was handled
-     */
-    protected boolean handlePopupEvent(Event evt) {
-        return super.handleEvent(evt);
-    }
-    
     @Override
     protected final boolean handleEvent(Event evt) {
-        if(evt.isMouseDragEvent()) {
-            return handlePopupEvent(evt);
+        if(super.handleEvent(evt)) {
+            return true;
         }
         if(evt.getType() == Event.Type.MOUSE_CLICKED &&
                 !isInside(evt.getMouseX(), evt.getMouseY())) {
             mouseClickedOutside(evt);
             return true;
         }
-        if(!handlePopupEvent(evt)) {
-            if(evt.getType() == Event.Type.KEY_PRESSED &&
-                    evt.getKeyCode() == Keyboard.KEY_ESCAPE) {
-                requestPopupClose();
-            }
+        if(closeOnEscape &&
+                evt.getType() == Event.Type.KEY_PRESSED &&
+                evt.getKeyCode() == Keyboard.KEY_ESCAPE) {
+            requestPopupClose();
+            return true;
         }
         // eat all events
         return true;
