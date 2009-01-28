@@ -514,7 +514,8 @@ public final class GUI extends Widget {
      */
     public final void handleMouseWheel(int wheelDelta) {
         event.mouseWheelDelta = wheelDelta;
-        sendEvent(Event.Type.MOUSE_WHEEL);
+        sendMouseEvent(Event.Type.MOUSE_WHEEL,
+                dragActive ? lastMouseDownWidget : null);
     }
     
     public final void handleKey(int keyCode, char keyChar, boolean pressed) {
