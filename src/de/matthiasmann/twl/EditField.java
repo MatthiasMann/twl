@@ -195,6 +195,25 @@ public class EditField extends Widget {
         } else {
             text = getText();
         }
+        if(isPasswordMasking()) {
+            text = TextUtil.createString(passwordChar, text.length());
+        }
+        Clipboard.setClipboard(text);
+    }
+
+    public void cutToClipboard() {
+        String text;
+        if(hasSelection()) {
+            text = getSelectedText();
+            deleteSelection();
+            updateText();
+        } else {
+            text = getText();
+            setText("");
+        }
+        if(isPasswordMasking()) {
+            text = TextUtil.createString(passwordChar, text.length());
+        }
         Clipboard.setClipboard(text);
     }
 
@@ -378,17 +397,17 @@ public class EditField extends Widget {
     }
 
     protected PopupMenu createPopupMenu() {
+        Button btnCut = new Button("cut");
+        btnCut.addCallback(new Runnable() {
+            public void run() {
+                cutToClipboard();
+            }
+        });
+
         Button btnCopy = new Button("copy");
         btnCopy.addCallback(new Runnable() {
             public void run() {
                 copyToClipboard();
-            }
-        });
-
-        Button btnClear = new Button("clear");
-        btnClear.addCallback(new Runnable() {
-            public void run() {
-                setText("");
             }
         });
 
@@ -399,10 +418,19 @@ public class EditField extends Widget {
             }
         });
 
+        Button btnClear = new Button("clear");
+        btnClear.addCallback(new Runnable() {
+            public void run() {
+                setText("");
+            }
+        });
+
         PopupMenu menu = new PopupMenu(this);
+        menu.add(btnCut);
         menu.add(btnCopy);
-        menu.add(btnClear);
         menu.add(btnPaste);
+        menu.addSpacer();
+        menu.add(btnClear);
         return menu;
     }
 
@@ -527,9 +555,13 @@ public class EditField extends Widget {
         }
     }
 
+    protected boolean hasFocusOrPopup() {
+        return hasKeyboardFocus() || hasOpenPopups();
+    }
+    
     @Override
     protected void paintOverlay(GUI gui) {
-        if(cursorImage != null && hasKeyboardFocus()) {
+        if(cursorImage != null && hasFocusOrPopup()) {
             int xpos = textRenderer.lastTextX + textRenderer.computeRelativeCursorPositionX(cursorPos);
             cursorImage.draw(getAnimationState(), xpos, textRenderer.computeTextY(),
                     cursorImage.getWidth(), textRenderer.getFont().getLineHeight());
@@ -554,7 +586,7 @@ public class EditField extends Widget {
         protected void paintWidget(GUI gui) {
             boolean paintText = true;
             lastTextX = computeTextX();
-            if(hasSelection() && getParent().hasKeyboardFocus()) {
+            if(hasSelection() && hasFocusOrPopup()) {
                 if(selectionImage != null) {
                     int xpos0 = lastTextX + computeRelativeCursorPositionX(selectionStart);
                     int xpos1 = lastTextX + computeRelativeCursorPositionX(selectionEnd);

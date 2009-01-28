@@ -102,4 +102,12 @@ public class TextUtil {
         }
         return n;
     }
+
+    public static String createString(char ch, int len) {
+        char[] buf = new char[len];
+        for(int i=0 ; i<len ; i++) {
+            buf[i] = ch;
+        }
+        return new String(buf);
+    }
 }
