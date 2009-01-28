@@ -176,24 +176,35 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
         int drawnY = repeatCountY * this.height;
         int restWidth = width - drawnX;
         int restHeight = height - drawnY;
-        if(restWidth > 0) {
-            drawClipped(x + drawnX, y, restWidth, this.height, 1, repeatCountY);
-        }
-        if(restHeight > 0) {
-            drawClipped(x, y + drawnY, this.width, restHeight, repeatCountX, 1);
-            if(restWidth > 0) {
-                drawClipped(x + drawnX, y + drawnY, restWidth, restHeight, 1, 1);
+        if(restWidth > 0 || restHeight > 0) {
+            GL11.glBegin(GL11.GL_QUADS);
+            if(restWidth > 0 && repeatCountY > 0) {
+                drawClipped(x + drawnX, y, restWidth, this.height, 1, repeatCountY);
             }
+            if(restHeight > 0) {
+                if(repeatCountX > 0) {
+                    drawClipped(x, y + drawnY, this.width, restHeight, repeatCountX, 1);
+                }
+                if(restWidth > 0) {
+                    drawClipped(x + drawnX, y + drawnY, restWidth, restHeight, 1, 1);
+                }
+            }
+            GL11.glEnd();
         }
     }
 
     private void drawClipped(int x, int y, int width, int height, int repeatCountX, int repeatCountY) {
         float ctx0 = tx0;
-        float ctx1 = ctx0 + width / (float)texture.getTexWidth();
         float cty0 = ty0;
-        float cty1 = cty0 + height / (float)texture.getTexHeight();
+        float ctx1 = tx1;
+        float cty1 = ty1;
+        if(this.width > 1) {
+            ctx1 = ctx0 + width / (float)texture.getTexWidth();
+        }
+        if(this.height > 1) {
+            cty1 = cty0 + height / (float)texture.getTexHeight();
+        }
 
-        GL11.glBegin(GL11.GL_QUADS);
         while(repeatCountY-- > 0) {
             int y1 = y + height;
             int x0 = x;
@@ -207,7 +218,6 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
             }
             y = y1;
         }
-        GL11.glEnd();
     }
 
     private void createRepeatCache() {
