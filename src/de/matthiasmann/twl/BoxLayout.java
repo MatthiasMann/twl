@@ -182,12 +182,12 @@ public class BoxLayout extends Widget {
         switch(direction) {
         case HORIZONTAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                height = Math.max(height, getChild(i).getPreferredHeight());
+                height = Math.max(height, getPrefChildHeight(getChild(i)));
             }
             break;
         case VERTICAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int prefChildHeight = getChild(i).getPreferredHeight();
+                int prefChildHeight = getPrefChildHeight(getChild(i));
                 if(maxComponentSize != NOT_SET && prefChildHeight > maxComponentSize) {
                     prefChildHeight = maxComponentSize;
                 }
@@ -204,7 +204,7 @@ public class BoxLayout extends Widget {
         switch(direction) {
         case HORIZONTAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                int prefChildWidth = getChild(i).getPreferredWidth();
+                int prefChildWidth = getPrefChildWidth(getChild(i));
                 if(maxComponentSize != NOT_SET && prefChildWidth > maxComponentSize) {
                     prefChildWidth = maxComponentSize;
                 }
@@ -213,7 +213,7 @@ public class BoxLayout extends Widget {
             break;
         case VERTICAL:
             for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                width = Math.max(width, getChild(i).getPreferredWidth());
+                width = Math.max(width, getPrefChildWidth(getChild(i)));
             }
             break;
         }
@@ -227,6 +227,14 @@ public class BoxLayout extends Widget {
         setAlignment(themeInfo.getParameter("alignment", Alignment.TOP));
     }
 
+    private int getPrefChildWidth(Widget child) {
+        return computeSize(child.getMinWidth(), child.getPreferredWidth(), child.getMaxWidth());
+    }
+
+    private int getPrefChildHeight(Widget child) {
+        return computeSize(child.getMinHeight(), child.getPreferredHeight(), child.getMaxHeight());
+    }
+
     protected void layoutHorizontal() {
         int x = getInnerX();
         int y = getInnerY();
@@ -237,14 +245,15 @@ public class BoxLayout extends Widget {
         // pass 1: get needed size and limit component size
         for(int idx=0 ; idx<numChildren ; idx++) {
             Widget child = getChild(idx);
-            int childWidth = child.getWidth();
-            int childHeight = child.getHeight();
+            int childWidth = getPrefChildWidth(child);
+            int childHeight = getPrefChildHeight(child);
 
             if(maxComponentSize != NOT_SET && childWidth > maxComponentSize) {
-                child.setSize(maxComponentSize, childHeight);
                 child.setClip(true);// activate clip because we reduce it's size
-                childWidth = maxComponentSize;  // don't ask child to prevent layout bugs
+                childWidth = maxComponentSize;
             }
+
+            child.setSize(childWidth, childHeight);
             x += childWidth + spacing;
             height = Math.max(height, child.getHeight());
         }
@@ -296,14 +305,15 @@ public class BoxLayout extends Widget {
         // pass 1: get needed size and limit component size
         for(int idx=0 ; idx<numChildren ; idx++) {
             Widget child = getChild(idx);
-            int childWidth = child.getWidth();
-            int childHeight = child.getHeight();
+            int childWidth = getPrefChildWidth(child);
+            int childHeight = getPrefChildHeight(child);
 
             if(maxComponentSize != NOT_SET && childHeight > maxComponentSize) {
-                child.setSize(childWidth, maxComponentSize);
                 child.setClip(true);// activate clip because we reduce it's size
-                childHeight = maxComponentSize;  // don't ask child to prevent layout bugs
+                childHeight = maxComponentSize;
             }
+            
+            child.setSize(childWidth, childHeight);
             y += childHeight + spacing;
             width = Math.max(width, child.getWidth());
         }
