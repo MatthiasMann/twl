@@ -386,7 +386,7 @@ public class ScrollPane extends Widget {
             }
             break;
         }
-        return false;
+        return evt.isMouseEvent() && contentArea.isMouseInside(evt);
     }
 
     @Override
