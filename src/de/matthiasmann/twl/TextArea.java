@@ -69,7 +69,9 @@ public class TextArea extends Widget {
     private int marginRight;
     private int lineStartX;
     private int lineWidth;
+    private int fontLineHeight;
     private boolean inParagraph;
+    private boolean wasAutoBreak;
     private boolean inLayoutCode;
     private TextAreaModel.HAlignment textAlignment;
     private int lastWidth;
@@ -251,7 +253,7 @@ public class TextArea extends Widget {
                         }
                     }
                     // finish the last line
-                    nextLine();
+                    nextLine(false);
 
                     for(int i=0,n=layout.size() ; i<n ; i++) {
                         layout.get(i).adjustWidget();
@@ -331,7 +333,9 @@ public class TextArea extends Widget {
         marginLeft = 0;
         marginRight = 0;
         lineStartIdx = 0;
+        fontLineHeight = 0;
         inParagraph = false;
+        wasAutoBreak = false;
         textAlignment = TextAreaModel.HAlignment.LEFT;
         layout.clear();
         computeMargin();
@@ -370,10 +374,16 @@ public class TextArea extends Widget {
         return lineStartIdx == layout.size();
     }
 
-    private boolean nextLine() {
+    private boolean nextLine(boolean force) {
         if(isAtStartOfLine()) {
+            if(!wasAutoBreak && force) {
+                curY += fontLineHeight;
+                wasAutoBreak = false;
+                return true;
+            }
             return false;
         }
+        wasAutoBreak = !force;
         int lineHeight = 0;
         for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
             LElement le = layout.get(idx);
@@ -486,7 +496,7 @@ public class TextArea extends Widget {
     private void layout(TextAreaModel.Element e, LWidget lw) {
         final TextAreaModel.HAlignment align = e.getHorizontalAlignment();
         if(align != TextAreaModel.HAlignment.INLINE) {
-            nextLine();
+            nextLine(false);
         }
 
         super.insertChild(lw.widget, getNumChildren());
@@ -511,18 +521,18 @@ public class TextArea extends Widget {
 
         case CENTER:
             lw.x = lineStartX + (lineWidth - lw.width) / 2;
-            nextLine();
+            nextLine(false);
             break;
 
         case BLOCK:
             lw.x = lineStartX;
             lw.width = lineWidth;
-            nextLine();
+            nextLine(false);
             break;
 
         case INLINE:
             if(getRemaining() < lw.width && !isAtStartOfLine()) {
-                nextLine();
+                nextLine(false);
             }
             lw.x = curX;
             curX += lw.width;
@@ -554,9 +564,10 @@ public class TextArea extends Widget {
         if(color == null) {
             color = textColor;
         }
+        fontLineHeight = font.getLineHeight();
 
         if(te.isParagraphStart()) {
-            nextLine();
+            nextLine(false);
             inParagraph = true;
         }
 
@@ -575,13 +586,13 @@ public class TextArea extends Widget {
             
             if(end < text.length() && text.charAt(end) == '\n') {
                 end++;
-                nextLine();
+                nextLine(true);
             }
             idx = end;
         }
 
         if(te.isParagraphEnd()) {
-            nextLine();
+            nextLine(false);
             curY += font.getLineHeight();
             inParagraph = false;
         }
@@ -634,7 +645,7 @@ public class TextArea extends Widget {
             // if we found no word that fits
             if(end == idx) {
                 // we may need a new line
-                if(textAlignment != TextAreaModel.HAlignment.BLOCK && nextLine()) {
+                if(textAlignment != TextAreaModel.HAlignment.BLOCK && nextLine(false)) {
                     continue;
                 }
                 // or we already are at the start of a line
@@ -651,7 +662,7 @@ public class TextArea extends Widget {
             if(idx < end) {
                 LText lt = new LText(font, text, idx, end, color, te.getVerticalAlignment());
                 if(textAlignment == TextAreaModel.HAlignment.BLOCK && getRemaining() < lt.width) {
-                    nextLine();
+                    nextLine(false);
                 }
                 
                 lt.x = curX;
