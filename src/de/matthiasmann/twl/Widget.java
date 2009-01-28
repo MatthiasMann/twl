@@ -1637,8 +1637,10 @@ public class Widget {
                 requestKeyboardFocus(null);
             }
         }
-        // no child has mouse over
-        setMouseOverChild(null, evt);
+        if(evt.getType() != Event.Type.MOUSE_WHEEL) {
+            // no child has mouse over
+            setMouseOverChild(null, evt);
+        }
         if(handleEvent(evt)) {
             return this;
         }
