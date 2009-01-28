@@ -639,7 +639,6 @@ public final class GUI extends Widget {
         sendPopupEvent(Event.Type.POPUP_OPENED);
         super.insertChild(popup, getNumChildren()-1);
         popup.getOwner().setOpenPopup(this, true);
-        super.requestKeyboardFocus(popup);
         popupEventOccured = true;
     }
     
@@ -648,11 +647,10 @@ public final class GUI extends Widget {
         if(idx > 0) {
             super.removeChild(idx);
         }
-        requestKeyboardFocus(null);
         popup.getOwner().recalcOpenPopups(this);
         sendPopupEvent(Event.Type.POPUP_CLOSED);
         popupEventOccured = true;
-        popup.getOwner().requestKeyboardFocus();
+        requestKeyboardFocus(getTopPane());
     }
 
     boolean hasOpenPopups(Widget owner) {
