@@ -741,10 +741,14 @@ public class Widget {
     }
 
     /**
-     * Adds a new child at the end of this widget
+     * Adds a new child at the end of this widget.
+     * This call is equal to <code>insertChild(child, getNumChildren())</code>
+     *
      * @param child the child that should be added
      * @throws java.lang.NullPointerException if child is null
      * @throws java.lang.IllegalArgumentException if the child is already in a tree
+     * @see #insertChild(de.matthiasmann.twl.Widget, int)
+     * @see #getNumChildren()
      */
     public void add(Widget child) {
         insertChild(child, getNumChildren());
