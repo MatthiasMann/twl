@@ -37,10 +37,12 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.PositionAnimatedPanel;
 import de.matthiasmann.twl.ThemeInfo;
 import de.matthiasmann.twl.renderer.Renderer;
+import de.matthiasmann.twl.utils.AbstractMathInterpreter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -251,7 +253,7 @@ public class ThemeManager {
                     }
                     xpp.nextTag();
                 } else if("constantDef".equals(tagName)) {
-                    insertConstant(name, parseParam(xpp));
+                    insertConstant(name, parseParam(xpp, null));
                 } else {
                     throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
                 }
@@ -311,7 +313,7 @@ public class ThemeManager {
             final String tagName = xpp.getName();
             final String name = xpp.getAttributeValue(null, "name");
             if("param".equals(tagName)) {
-                Map<String, ?> entries = parseParam(xpp);
+                Map<String, ?> entries = parseParam(xpp, ti);
                 ti.params.putAll(entries);
             } else if("theme".equals(tagName)) {
                 if(name.length() == 0) {
@@ -348,13 +350,13 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, ?> parseParam(XmlPullParser xpp) throws XmlPullParserException, IOException {
+    private Map<String, ?> parseParam(XmlPullParser xpp, ParameterMapImpl env) throws XmlPullParserException, IOException {
         try {
             xpp.require(XmlPullParser.START_TAG, null, "param");
             String name = xpp.getAttributeValue(null, "name");
             xpp.nextTag();
             String tagName = xpp.getName();
-            Object value = parseValue(xpp, tagName, name);
+            Object value = parseValue(xpp, tagName, name, env);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             xpp.nextTag();
             xpp.require(XmlPullParser.END_TAG, null, "param");
@@ -369,12 +371,12 @@ public class ThemeManager {
         }
     }
 
-    private ParameterListImpl parseList(XmlPullParser xpp) throws XmlPullParserException, IOException {
+    private ParameterListImpl parseList(XmlPullParser xpp, ParameterMapImpl env) throws XmlPullParserException, IOException {
         ParameterListImpl result = new ParameterListImpl(this);
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Object obj = parseValue(xpp, tagName, null);
+            Object obj = parseValue(xpp, tagName, null, env);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.params.add(obj);
             xpp.nextTag();
@@ -382,12 +384,12 @@ public class ThemeManager {
         return result;
     }
     
-    private ParameterMapImpl parseMap(XmlPullParser xpp) throws XmlPullParserException, IOException, NumberFormatException {
+    private ParameterMapImpl parseMap(XmlPullParser xpp, ParameterMapImpl env) throws XmlPullParserException, IOException, NumberFormatException {
         ParameterMapImpl result = new ParameterMapImpl(this);
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Map<String, ?> params = parseParam(xpp);
+            Map<String, ?> params = parseParam(xpp, env);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.addParameters(params);
             xpp.nextTag();
@@ -396,13 +398,14 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Object parseValue(XmlPullParser xpp, String tagName, String wildcardName) throws XmlPullParserException, IOException, NumberFormatException {
+    private Object parseValue(XmlPullParser xpp, String tagName, String wildcardName,
+            ParameterMapImpl env) throws XmlPullParserException, IOException, NumberFormatException {
         try {
             if("list".equals(tagName)) {
-                return parseList(xpp);
+                return parseList(xpp, env);
             }
             if("map".equals(tagName)) {
-                return parseMap(xpp);
+                return parseMap(xpp, env);
             }
 
             String enumType = xpp.getAttributeValue(null, "type");
@@ -420,6 +423,12 @@ public class ThemeManager {
                 } else {
                     return Integer.parseInt(value);
                 }
+            }
+            if("imath".equals(tagName)) {
+                return parseMath(xpp, value, env).intValue();
+            }
+            if("fmath".equals(tagName)) {
+                return parseMath(xpp, value, env).floatValue();
             }
             if("string".equals(tagName)) {
                 return value;
@@ -483,7 +492,40 @@ public class ThemeManager {
                     "unable to parse value", xpp, ex).initCause(ex));
         }
     }
-    
+
+    private Number parseMath(XmlPullParser xpp, String str, final ParameterMapImpl env) throws XmlPullParserException {
+        AbstractMathInterpreter ami = new AbstractMathInterpreter() {
+            public void accessVariable(String name) {
+                if(env != null) {
+                    Object obj = env.getParameterValue(name, false);
+                    if(obj != null) {
+                        push(obj);
+                        return;
+                    }
+                }
+                throw new IllegalArgumentException("variable not found: " + name);
+            }
+            @Override
+            protected Object accessField(Object obj, String field) {
+                if(obj instanceof ParameterMapImpl) {
+                    Object result = ((ParameterMapImpl)obj).getParameterValue(field, false);
+                    if(result == null) {
+                        throw new IllegalArgumentException("field not found: " + field);
+                    }
+                    return result;
+                }
+                return super.accessField(obj, field);
+            }
+
+        };
+        try {
+            return ami.execute(str);
+        } catch(ParseException ex) {
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "unable to evaluate", xpp, ex).initCause(ex));
+        }
+    }
+
     ThemeInfo resolveWildcard(String base, String name) {
         assert(base.length() == 0 || base.endsWith("."));
         String fullPath = base.concat(name);

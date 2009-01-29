@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl.utils;
 
+import java.beans.BeanInfo;
+import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Array;
 import java.text.ParseException;
@@ -51,6 +53,9 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
     public AbstractMathInterpreter() {
         this.stack = new ArrayList<Object>();
         this.functions = new HashMap<String, Function>();
+
+        registerFunction("min", new FunctionMin());
+        registerFunction("max", new FunctionMax());
     }
 
     public void registerFunction(String name, Function function) {
@@ -165,22 +170,28 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
         if(obj == null) {
             throw new IllegalStateException("null pointer");
         }
-        Object result;
+        Object result = accessField(obj, field);
+        push(result);
+    }
+
+    protected Object accessField(Object obj, String field) {
         try {
             if(obj.getClass().isArray()) {
                 if("length".equals(field)) {
-                    result = Array.getLength(obj);
-                } else {
-                    throw new IllegalStateException("unknown field");
+                    return Array.getLength(obj);
                 }
             } else {
-                PropertyDescriptor pd = new PropertyDescriptor(field, obj.getClass());
-                result = pd.getReadMethod().invoke(obj);
+                BeanInfo beanInfo = Introspector.getBeanInfo(obj.getClass());
+                for(PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
+                    if(pd.getName().equals(field)) {
+                        return pd.getReadMethod().invoke(obj);
+                    }
+                }
             }
         } catch(Exception ex) {
-            throw new IllegalStateException("unknown field", ex);
         }
-        push(result);
+        throw new IllegalStateException("unknown field '"+field+
+                    "' of class '"+obj.getClass()+"'");
     }
 
     public void callFunction(String name, int args) {
@@ -198,4 +209,65 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
     protected static boolean isFloat(Number n) {
         return !(n instanceof Integer);
     }
+
+    public abstract static class NumberFunction implements Function {
+        protected abstract Object execute(int ... values);
+        protected abstract Object execute(float ... values);
+
+        public Object execute(Object... args) {
+            for(Object o : args) {
+                if(!(o instanceof Integer)) {
+                    float[] values = new float[args.length];
+                    for(int i=0 ; i<values.length ; i++) {
+                        values[i] = ((Number)args[i]).floatValue();
+                    }
+                    return execute(values);
+                }
+            }
+            int[] values = new int[args.length];
+            for(int i=0 ; i<values.length ; i++) {
+                values[i] = ((Number)args[i]).intValue();
+            }
+            return execute(values);
+        }
+    }
+
+    static class FunctionMin extends NumberFunction {
+        @Override
+        protected Object execute(int... values) {
+            int result = values[0];
+            for(int i=1 ; i<values.length ; i++) {
+                result = Math.min(result, values[i]);
+            }
+            return result;
+        }
+        @Override
+        protected Object execute(float... values) {
+            float result = values[0];
+            for(int i=1 ; i<values.length ; i++) {
+                result = Math.min(result, values[i]);
+            }
+            return result;
+        }
+    }
+
+    static class FunctionMax extends NumberFunction {
+        @Override
+        protected Object execute(int... values) {
+            int result = values[0];
+            for(int i=1 ; i<values.length ; i++) {
+                result = Math.max(result, values[i]);
+            }
+            return result;
+        }
+        @Override
+        protected Object execute(float... values) {
+            float result = values[0];
+            for(int i=1 ; i<values.length ; i++) {
+                result = Math.max(result, values[i]);
+            }
+            return result;
+        }
+    }
+
 }

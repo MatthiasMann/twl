@@ -202,7 +202,7 @@
     ref             CDATA #IMPLIED
     border          CDATA #IMPLIED>
 
-<!ELEMENT param (color|enum|string|font|int|float|bool|dimension|constant|image|cursor|list|map)>
+<!ELEMENT param (color|enum|string|font|int|float|imath|fmath|bool|dimension|constant|image|cursor|list|map)>
 <!ATTLIST param
     name            CDATA #REQUIRED>
 
@@ -212,6 +212,8 @@
 <!ELEMENT font (#PCDATA)>
 <!ELEMENT int (#PCDATA)>
 <!ELEMENT float (#PCDATA)>
+<!ELEMENT imath (#PCDATA)>
+<!ELEMENT fmath (#PCDATA)>
 <!ELEMENT bool (#PCDATA)>
 <!ATTLIST enum
     type            CDATA #IMPLIED>
