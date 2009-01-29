@@ -152,13 +152,20 @@ class ParameterMapImpl implements ParameterMap {
     }
 
     public <T> T getParameterValue(String name, boolean warnIfNotPresent, Class<T> clazz) {
+        return getParameterValue(name, warnIfNotPresent, clazz, null);
+    }
+
+    public <T> T getParameterValue(String name, boolean warnIfNotPresent, Class<T> clazz, T defaultValue) {
         Object value = getParameterValue(name, warnIfNotPresent);
-        if(value != null && !clazz.isInstance(value)) {
-            wrongParameterType(name, clazz, value.getClass());
-            return null;
+        if(!clazz.isInstance(value)) {
+            if(value != null) {
+                wrongParameterType(name, clazz, value.getClass());
+            }
+            return defaultValue;
         }
         return clazz.cast(value);
     }
+
 
     protected void wrongParameterType(String paramName, Class expectedType, Class foundType) {
         logger.warning("Parameter \"" + paramName + "\" is a " +

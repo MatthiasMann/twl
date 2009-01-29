@@ -113,4 +113,15 @@ public interface ParameterMap {
      * @return the parameter value or null if the type does not match
      */
     public <T> T getParameterValue(String name, boolean warnIfNotPresent, Class<T> clazz);
+
+    /**
+     * Retrieves a parameter and ensures that it has the desired type.
+     * @param <T> The desired return type generic
+     * @param name the parameter name
+     * @param warnIfNotPresent if true a warning is generated if the parameter was not found or has wrong type
+     * @param clazz the required data type
+     * @param defaultValue the default value
+     * @return the parameter value or the defaultValue if the type does not match
+     */
+    public <T> T getParameterValue(String name, boolean warnIfNotPresent, Class<T> clazz, T defaultValue);
 }
