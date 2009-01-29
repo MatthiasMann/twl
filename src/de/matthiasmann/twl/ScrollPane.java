@@ -58,6 +58,8 @@ public class ScrollPane extends Widget {
     private DraggableButton dragButton;
     private Widget content;
     private Fixed fixed = Fixed.NONE;
+    private int hscrollbarOffsetY;
+    private int vscrollbarOffsetX;
 
     public ScrollPane() {
         this(null);
@@ -243,6 +245,8 @@ public class ScrollPane extends Widget {
     }
 
     protected void applyThemeScrollPane(ThemeInfo themeInfo) {
+        hscrollbarOffsetY = themeInfo.getParameter("hscrollbarOffsetY", 0);
+        vscrollbarOffsetX = themeInfo.getParameter("vscrollbarOffsetX", 0);
         boolean hasDragButton = themeInfo.getParameter("hasDragButton", false);
         if(hasDragButton && dragButton == null) {
             dragButton = new DraggableButton();
@@ -262,13 +266,12 @@ public class ScrollPane extends Widget {
                 }
             });
             super.insertChild(dragButton, 3);
-            invalidateLayout();
         } else if(!hasDragButton && dragButton != null) {
             assert super.getChild(3) == dragButton;
             super.removeChild(3);
             dragButton = null;
-            // no need to invalidate layout - button is already removed
         }
+        invalidateLayout();
     }
 
     @Override
@@ -335,12 +338,12 @@ public class ScrollPane extends Widget {
             }
             scrollbarH.setVisible(visibleH);
             scrollbarH.setSize(availWidth, getInnerHeight() - availHeight);
-            scrollbarH.setPosition(getInnerX(), getInnerY() + availHeight);
+            scrollbarH.setPosition(getInnerX(), getInnerY() + availHeight + hscrollbarOffsetY);
             scrollbarH.setPageSize(Math.max(1, availWidth));
             scrollbarH.setStepSize(Math.max(1, availWidth / 10));
             scrollbarV.setVisible(visibleV);
             scrollbarV.setSize(getInnerWidth() - availWidth, availHeight);
-            scrollbarV.setPosition(getInnerX() + availWidth, getInnerY());
+            scrollbarV.setPosition(getInnerX() + availWidth + vscrollbarOffsetX, getInnerY());
             scrollbarV.setPageSize(Math.max(1, availHeight));
             scrollbarV.setStepSize(Math.max(1, availHeight / 10));
 
