@@ -906,7 +906,7 @@ public class Widget {
      * @return true if keyboard focus was transfered to this widget.
      */
     public boolean requestKeyboardFocus() {
-        if(parent != null) {
+        if(parent != null && visible) {
             if(parent.focusChild == this) {
                 return true;
             }
