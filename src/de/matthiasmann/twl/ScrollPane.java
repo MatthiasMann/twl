@@ -277,8 +277,10 @@ public class ScrollPane extends Widget {
     @Override
     protected void layout() {
         if(content != null) {
-            int availWidth = getInnerWidth();
-            int availHeight = getInnerHeight();
+            int innerWidth = getInnerWidth();
+            int innerHeight = getInnerHeight();
+            int availWidth = innerWidth;
+            int availHeight = innerHeight;
             int requiredWidth;
             int requiredHeight;
             boolean repeat;
@@ -312,8 +314,8 @@ public class ScrollPane extends Widget {
                         if(scrollbarH.getMaxValue() > 0) {
                             repeat |= !visibleH;
                             visibleH = true;
-                            availHeight = Math.max(0, getInnerHeight() -
-                                    scrollbarH.getPreferredHeight() + hscrollbarOffsetY);
+                            innerHeight = getInnerHeight() + hscrollbarOffsetY;
+                            availHeight = Math.max(0, innerHeight - scrollbarH.getPreferredHeight());
                         }
                     } else {
                         scrollbarH.setMinMaxValue(0, 0);
@@ -325,8 +327,8 @@ public class ScrollPane extends Widget {
                         if(scrollbarV.getMaxValue() > 0) {
                             repeat |= !visibleV;
                             visibleV = true;
-                            availWidth = Math.max(0, getInnerWidth() -
-                                    scrollbarV.getPreferredWidth() + vscrollbarOffsetX);
+                            innerWidth = getInnerWidth() + vscrollbarOffsetX;
+                            availWidth = Math.max(0, innerWidth - scrollbarV.getPreferredWidth());
                         }
                     } else {
                         scrollbarV.setMinMaxValue(0, 0);
@@ -339,19 +341,19 @@ public class ScrollPane extends Widget {
                 invalidateParentLayout();
             }
             scrollbarH.setVisible(visibleH);
-            scrollbarH.setSize(availWidth, getInnerHeight() - availHeight);
+            scrollbarH.setSize(availWidth, innerHeight - availHeight);
             scrollbarH.setPosition(getInnerX(), getInnerY() + availHeight);
             scrollbarH.setPageSize(Math.max(1, availWidth));
             scrollbarH.setStepSize(Math.max(1, availWidth / 10));
             scrollbarV.setVisible(visibleV);
-            scrollbarV.setSize(getInnerWidth() - availWidth, availHeight);
+            scrollbarV.setSize(innerWidth - availWidth, availHeight);
             scrollbarV.setPosition(getInnerX() + availWidth, getInnerY());
             scrollbarV.setPageSize(Math.max(1, availHeight));
             scrollbarV.setStepSize(Math.max(1, availHeight / 10));
 
             if(dragButton != null) {
                 dragButton.setVisible(visibleH && visibleV);
-                dragButton.setSize(getInnerWidth() - availWidth, getInnerHeight() - availHeight);
+                dragButton.setSize(innerWidth - availWidth, innerHeight - availHeight);
                 dragButton.setPosition(getInnerX() + availWidth, getInnerY() + availHeight);
             }
             
