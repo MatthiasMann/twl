@@ -45,6 +45,7 @@ import org.lwjgl.input.Keyboard;
 public class Widget {
 
     public static final String STATE_KEYBOARD_FOCUS = "keyboardFocus";
+    public static final String STATE_HAS_OPEN_POPUPS = "hasOpenPopups";
     
     private static final int FOCUS_KEY = Keyboard.KEY_TAB;
     
@@ -1476,6 +1477,9 @@ public class Widget {
     final void setOpenPopup(GUI gui, boolean hasOpenPopup) {
         if(this.hasOpenPopup != hasOpenPopup) {
             this.hasOpenPopup = hasOpenPopup;
+            if(!sharedAnimState) {
+                getAnimationState().setAnimationState(STATE_HAS_OPEN_POPUPS, hasOpenPopup);
+            }
             if(parent != null) {
                 if(hasOpenPopup) {
                     parent.setOpenPopup(gui, true);
