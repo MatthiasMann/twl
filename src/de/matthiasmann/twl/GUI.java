@@ -355,6 +355,7 @@ public final class GUI extends Widget {
         synchronized(invokeLaterQueue) {
             if(!invokeLaterQueue.isEmpty()) {
                 runnables = invokeLaterQueue.toArray(new Runnable[invokeLaterQueue.size()]);
+                invokeLaterQueue.clear();
             }
         }
         if(runnables != null) {
