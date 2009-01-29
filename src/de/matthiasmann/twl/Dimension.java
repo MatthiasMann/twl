@@ -35,6 +35,8 @@ package de.matthiasmann.twl;
  */
 public class Dimension {
 
+    public static final Dimension ZERO = new Dimension(0, 0);
+    
     private final int x;
     private final int y;
 
