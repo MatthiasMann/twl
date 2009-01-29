@@ -199,10 +199,10 @@ public class DialogLayout extends Widget {
     }
 
     protected void applyThemeDialogLayout(ThemeInfo themeInfo) {
-        setSmallGap(themeInfo.getParameterValue("smallGap", true, Dimension.class));
-        setMediumGap(themeInfo.getParameterValue("mediumGap", true, Dimension.class));
-        setLargeGap(themeInfo.getParameterValue("largeGap", true, Dimension.class));
-        setDefaultGap(themeInfo.getParameterValue("defaultGap", true, Dimension.class));
+        setSmallGap(themeInfo.getParameterValue("smallGap", true, Dimension.class, Dimension.ZERO));
+        setMediumGap(themeInfo.getParameterValue("mediumGap", true, Dimension.class, Dimension.ZERO));
+        setLargeGap(themeInfo.getParameterValue("largeGap", true, Dimension.class, Dimension.ZERO));
+        setDefaultGap(themeInfo.getParameterValue("defaultGap", true, Dimension.class, Dimension.ZERO));
     }
 
     @Override

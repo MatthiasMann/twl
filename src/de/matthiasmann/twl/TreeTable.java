@@ -411,7 +411,7 @@ public class TreeTable extends TableBase {
 
         public void applyTheme(ThemeInfo themeInfo) {
             treeIndent = themeInfo.getParameter("treeIndent", 10);
-            treeButtonSize = themeInfo.getParameterValue("treeButtonSize", true, Dimension.class);
+            treeButtonSize = themeInfo.getParameterValue("treeButtonSize", true, Dimension.class, Dimension.ZERO);
         }
 
         public String getTheme() {
