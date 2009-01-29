@@ -102,6 +102,7 @@ public final class GUI extends Widget {
     private Widget tooltipOwner;
     
     private final ArrayList<TimerImpl> activeTimers;
+    private final ArrayList<Runnable> invokeLaterQueue;
     
     public GUI(Renderer renderer) {
         this(new Widget(), renderer);
@@ -129,6 +130,7 @@ public final class GUI extends Widget {
         this.tooltipWindow.setVisible(false);
         
         this.activeTimers = new ArrayList<TimerImpl>();
+        this.invokeLaterQueue = new ArrayList<Runnable>();
         
         setTheme("");
         setFocusKeyEnabled(false);
@@ -190,6 +192,21 @@ public final class GUI extends Widget {
 
     public long getCurrentTime() {
         return curTime;
+    }
+
+    /**
+     * Queues a Runnable to be executed in the GUI main loop.
+     * This method is thread safe.
+     * 
+     * @param r the Runnable to execute
+     */
+    public void invokeLater(Runnable r) {
+        if(r == null) {
+            throw new NullPointerException();
+        }
+        synchronized(invokeLaterQueue) {
+            invokeLaterQueue.add(r);
+        }
     }
     
     public boolean requestToolTip(Widget widget, int x, int y,
@@ -291,6 +308,7 @@ public final class GUI extends Widget {
         handleKeyboardInputLWJGL();
         handleMouseInputLWJGL();
         updateTimers();
+        invokeRunables();
         validateLayout();
         draw();
         setCursor();
@@ -330,6 +348,24 @@ public final class GUI extends Widget {
             }
         }
         deltaTime = 0;
+    }
+
+    public void invokeRunables() {
+        Runnable[] runnables = null;
+        synchronized(invokeLaterQueue) {
+            if(!invokeLaterQueue.isEmpty()) {
+                runnables = invokeLaterQueue.toArray(new Runnable[invokeLaterQueue.size()]);
+            }
+        }
+        if(runnables != null) {
+            for(Runnable r : runnables) {
+                try {
+                    r.run();
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        }
     }
     
     public void draw() {
