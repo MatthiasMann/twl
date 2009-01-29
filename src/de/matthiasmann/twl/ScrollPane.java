@@ -312,7 +312,8 @@ public class ScrollPane extends Widget {
                         if(scrollbarH.getMaxValue() > 0) {
                             repeat |= !visibleH;
                             visibleH = true;
-                            availHeight = Math.max(0, getInnerHeight() - scrollbarH.getPreferredHeight());
+                            availHeight = Math.max(0, getInnerHeight() -
+                                    scrollbarH.getPreferredHeight() + hscrollbarOffsetY);
                         }
                     } else {
                         scrollbarH.setMinMaxValue(0, 0);
@@ -324,7 +325,8 @@ public class ScrollPane extends Widget {
                         if(scrollbarV.getMaxValue() > 0) {
                             repeat |= !visibleV;
                             visibleV = true;
-                            availWidth = Math.max(0, getInnerWidth() - scrollbarV.getPreferredWidth());
+                            availWidth = Math.max(0, getInnerWidth() -
+                                    scrollbarV.getPreferredWidth() + vscrollbarOffsetX);
                         }
                     } else {
                         scrollbarV.setMinMaxValue(0, 0);
@@ -338,12 +340,12 @@ public class ScrollPane extends Widget {
             }
             scrollbarH.setVisible(visibleH);
             scrollbarH.setSize(availWidth, getInnerHeight() - availHeight);
-            scrollbarH.setPosition(getInnerX(), getInnerY() + availHeight + hscrollbarOffsetY);
+            scrollbarH.setPosition(getInnerX(), getInnerY() + availHeight);
             scrollbarH.setPageSize(Math.max(1, availWidth));
             scrollbarH.setStepSize(Math.max(1, availWidth / 10));
             scrollbarV.setVisible(visibleV);
             scrollbarV.setSize(getInnerWidth() - availWidth, availHeight);
-            scrollbarV.setPosition(getInnerX() + availWidth + vscrollbarOffsetX, getInnerY());
+            scrollbarV.setPosition(getInnerX() + availWidth, getInnerY());
             scrollbarV.setPageSize(Math.max(1, availHeight));
             scrollbarV.setStepSize(Math.max(1, availHeight / 10));
 
