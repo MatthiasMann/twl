@@ -39,6 +39,8 @@ public class ScrollPane extends Widget {
 
     public static final String STATE_DOWNARROW_ARMED = "downArrowArmed";
     public static final String STATE_RIGHTARROW_ARMED = "rightArrowArmed";
+    public static final String STATE_HORIZONTAL_SCROLLBAR_VISIBLE = "horizontalScrollbarVisible";
+    public static final String STATE_VERTICAL_SCROLLBAR_VISIBLE = "verticalScrollbarVisible";
 
     public enum Fixed {
         NONE,
@@ -356,6 +358,11 @@ public class ScrollPane extends Widget {
             } else {
                 content.setSize(requiredWidth, requiredHeight);
             }
+
+            AnimationState animationState = getAnimationState();
+            animationState.setAnimationState(STATE_HORIZONTAL_SCROLLBAR_VISIBLE, visibleH);
+            animationState.setAnimationState(STATE_VERTICAL_SCROLLBAR_VISIBLE, visibleV);
+
             scrollContent();
         } else {
             scrollbarH.setVisible(false);
