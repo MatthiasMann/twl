@@ -72,7 +72,9 @@ class StateSelectImage implements Image, HasBorder {
                 break;
             }
         }
-        images[idx].draw(as, x, y, width, height);
+        if(idx < images.length) {
+            images[idx].draw(as, x, y, width, height);
+        }
     }
 
     public Border getBorder() {
