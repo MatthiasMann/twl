@@ -307,6 +307,10 @@ public class ResizableFrame extends Widget {
             currentTint = new float[12];
             // we start with WHITE tint color
             Color.WHITE.getFloats(currentTint, 0);
+            if(!super.isVisible()) {
+                // we start with TRANSPARENT when hidden
+                currentTint[3] = 0f;
+            }
         }
         // get current tint as start value
         System.arraycopy(currentTint, 0, currentTint, 4, 4);
