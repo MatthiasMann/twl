@@ -456,16 +456,18 @@ public final class GUI extends Widget {
             event.mouseY = mouseDownY;
         }
 
-        if(!isInside(mouseX, mouseY)) {
-            pressed = false;
-            mouseClickCount = 0;
-            if(wasInside) {
-                sendMouseEvent(Event.Type.MOUSE_EXITED, null);
-                wasInside = false;
+        if(!dragActive) {
+            if(!isInside(mouseX, mouseY)) {
+                pressed = false;
+                mouseClickCount = 0;
+                if(wasInside) {
+                    sendMouseEvent(Event.Type.MOUSE_EXITED, null);
+                    wasInside = false;
+                }
+            } else if(!wasInside) {
+                wasInside = true;
+                sendMouseEvent(Event.Type.MOUSE_ENTERED, null);
             }
-        } else if(!wasInside) {
-            wasInside = true;
-            sendMouseEvent(Event.Type.MOUSE_ENTERED, null);
         }
         
         if(mouseX != mouseLastX || mouseY != mouseLastY) {
