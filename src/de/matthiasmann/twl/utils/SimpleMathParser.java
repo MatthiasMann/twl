@@ -59,15 +59,27 @@ public class SimpleMathParser {
     }
 
     public static void interpret(String str, Interpreter interpreter) throws ParseException {
-        new SimpleMathParser(str, interpreter).parse();
+        new SimpleMathParser(str, interpreter).parse(false);
     }
 
-    private void parse() throws ParseException {
+    public static int interpretArray(String str, Interpreter interpreter) throws ParseException {
+        return new SimpleMathParser(str, interpreter).parse(true);
+    }
+
+    private int parse(boolean allowArray) throws ParseException {
         try {
-            parseAddSub();
-            int ch = peek();
-            if(ch != -1) {
-                unexpected(ch);
+            int count = 0;
+            for(;;) {
+                count++;
+                parseAddSub();
+                int ch = peek();
+                if(ch == -1) {
+                    return count;
+                }
+                if(ch != ',' || !allowArray) {
+                    unexpected(ch);
+                }
+                pos++;
             }
         } catch (ParseException ex) {
             throw ex;
@@ -147,8 +159,6 @@ public class SimpleMathParser {
             pos++;
             parseAddSub();
             expect(')');
-        } else {
-            unexpected(ch);
         }
     }
 
@@ -176,10 +186,22 @@ public class SimpleMathParser {
         final int len = str.length();
         int start = pos;
         Number n;
-        if(str.charAt(pos) == '+') {
+        switch(str.charAt(pos)) {
+        case '+':
+            // skip
             start = ++pos;
-        } else if(str.charAt(pos) == '-') {
+            break;
+        case '-':
+            // include
             pos++;
+            break;
+        case '0':
+            if(pos+1 < len && str.charAt(pos+1) == 'x') {
+                pos += 2;
+                parseHexInt();
+                return;
+            }
+            break;
         }
         while(pos < len && Character.isDigit(str.charAt(pos))) {
             pos++;
@@ -197,6 +219,21 @@ public class SimpleMathParser {
             n = Integer.valueOf(str.substring(start, pos));
         }
         interpreter.loadConst(n);
+    }
+
+    private void parseHexInt() throws ParseException {
+        final int len = str.length();
+        int start = pos;
+        while(pos < len && "0123456789abcdefABCDEF".indexOf(str.charAt(pos)) >= 0) {
+            pos++;
+        }
+        if(pos - start > 8) {
+            throw new ParseException("number to large at " + pos, pos);
+        }
+        if(pos == start) {
+            unexpected(peek());
+        }
+        interpreter.loadConst((int)Long.parseLong(str.substring(start, pos), 16));
     }
     
     private boolean skipSpaces() {

@@ -197,12 +197,12 @@
     merge           (true|false) #IMPLIED
     allowWildcard   (true|false) #IMPLIED>
 
-<!ELEMENT border EMPTY>
+<!ELEMENT border (#PCDATA)>
 <!ATTLIST border
     ref             CDATA #IMPLIED
     border          CDATA #IMPLIED>
 
-<!ELEMENT param (color|enum|string|font|int|float|imath|fmath|bool|dimension|constant|image|cursor|list|map)>
+<!ELEMENT param (color|enum|string|font|int|float|bool|border|dimension|constant|image|cursor|list|map)>
 <!ATTLIST param
     name            CDATA #REQUIRED>
 
@@ -212,11 +212,10 @@
 <!ELEMENT font (#PCDATA)>
 <!ELEMENT int (#PCDATA)>
 <!ELEMENT float (#PCDATA)>
-<!ELEMENT imath (#PCDATA)>
-<!ELEMENT fmath (#PCDATA)>
 <!ELEMENT bool (#PCDATA)>
 <!ATTLIST enum
     type            CDATA #IMPLIED>
+<!-- <!ELEMENT border (#PCDATA)> -->
 <!ELEMENT dimension (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>
 <!ELEMENT image (#PCDATA)>

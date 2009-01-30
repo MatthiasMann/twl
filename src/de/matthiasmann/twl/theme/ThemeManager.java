@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Alignment;
+import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Dimension;
 import de.matthiasmann.twl.ListBox;
 import de.matthiasmann.twl.renderer.Font;
@@ -74,11 +75,12 @@ public class ThemeManager {
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
     private final HashMap<String, Object> constants;
+    private final MathInterpreter mathInterpreter;
     private Font defaultFont;
     private Font firstFont;
 
-    ParameterMapImpl emptyMap;
-    ParameterListImpl emptyList;
+    final ParameterMapImpl emptyMap;
+    final ParameterListImpl emptyList;
     
     private ThemeManager(Renderer renderer) throws XmlPullParserException, IOException {
         this.renderer = renderer;
@@ -88,6 +90,7 @@ public class ThemeManager {
         this.constants = new HashMap<String, Object>();
         this.emptyMap = new ParameterMapImpl(this);
         this.emptyList = new ParameterListImpl(this);
+        this.mathInterpreter = new MathInterpreter();
 
         insertDefaultConstants();
     }
@@ -253,7 +256,7 @@ public class ThemeManager {
                     }
                     xpp.nextTag();
                 } else if("constantDef".equals(tagName)) {
-                    insertConstant(name, parseParam(xpp, null));
+                    insertConstant(name, parseParam(xpp));
                 } else {
                     throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
                 }
@@ -289,74 +292,79 @@ public class ThemeManager {
             throw new XmlPullParserException("name must not contain '.' or '*'", xpp, null);
         }
         ThemeInfoImpl ti = new ThemeInfoImpl(this, themeName, parent);
-        if(ParserUtil.parseBoolFromAttribute(xpp, "merge", false)) {
-            if(parent == null) {
-                throw new XmlPullParserException("Can't merge on top level", xpp, null);
-            }
-            ThemeInfoImpl tiPrev = parent.children.get(themeName);
-            if(tiPrev != null) {
-                ti.copy(tiPrev);
-            }
-        }
-        String ref = xpp.getAttributeValue(null, "ref");
-        if(ref != null) {
-            ThemeInfoImpl tiRef = (ThemeInfoImpl)findThemeInfo(ref);
-            if(tiRef == null) {
-                throw new XmlPullParserException("referenced theme info not found: " + ref, xpp, null);
-            }
-            ti.copy(tiRef);
-        }
-        ti.maybeUsedFromWildcard = ParserUtil.parseBoolFromAttribute(xpp, "allowWildcard", false);
-        xpp.nextTag();
-        while(xpp.getEventType() != XmlPullParser.END_TAG) {
-            xpp.require(XmlPullParser.START_TAG, null, null);
-            final String tagName = xpp.getName();
-            final String name = xpp.getAttributeValue(null, "name");
-            if("param".equals(tagName)) {
-                Map<String, ?> entries = parseParam(xpp, ti);
-                ti.params.putAll(entries);
-            } else if("theme".equals(tagName)) {
-                if(name.length() == 0) {
-                    parseThemeWildcardRef(xpp, ti);
-                } else {
-                    ThemeInfoImpl tiChild = parseTheme(xpp, name, ti);
-                    ti.children.put(name, tiChild);
+        mathInterpreter.setEnv(ti);
+        try {
+            if(ParserUtil.parseBoolFromAttribute(xpp, "merge", false)) {
+                if(parent == null) {
+                    throw new XmlPullParserException("Can't merge on top level", xpp, null);
                 }
-            } else if("border".equals(tagName)) {
-                ref = xpp.getAttributeValue(null, "ref");
-                if(ref != null) {
-                    Image img = ti.getImage(ref);
-                    if(img == null) {
-                        throw new XmlPullParserException("image \""+ref+"\" not found", xpp, null);
-                    }
-                    if(!(img instanceof HasBorder)) {
-                        throw new XmlPullParserException("image \""+ref+"\" has no border", xpp, null);
-                    }
-                    ti.border = ((HasBorder)img).getBorder();
-                } else {
-                    ti.border = ParserUtil.parseBorderFromAttribute(xpp, "border");
-                    if(ti.border == null) {
-                        throw new XmlPullParserException("missing border parameters", xpp, null);
-                    }
+                ThemeInfoImpl tiPrev = parent.children.get(themeName);
+                if(tiPrev != null) {
+                    ti.copy(tiPrev);
                 }
-                xpp.nextTag();
-            } else {
-                throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
             }
-            xpp.require(XmlPullParser.END_TAG, null, tagName);
+            String ref = xpp.getAttributeValue(null, "ref");
+            if(ref != null) {
+                ThemeInfoImpl tiRef = (ThemeInfoImpl)findThemeInfo(ref);
+                if(tiRef == null) {
+                    throw new XmlPullParserException("referenced theme info not found: " + ref, xpp, null);
+                }
+                ti.copy(tiRef);
+            }
+            ti.maybeUsedFromWildcard = ParserUtil.parseBoolFromAttribute(xpp, "allowWildcard", false);
             xpp.nextTag();
+            while(xpp.getEventType() != XmlPullParser.END_TAG) {
+                xpp.require(XmlPullParser.START_TAG, null, null);
+                final String tagName = xpp.getName();
+                final String name = xpp.getAttributeValue(null, "name");
+                if("param".equals(tagName)) {
+                    Map<String, ?> entries = parseParam(xpp);
+                    ti.params.putAll(entries);
+                } else if("theme".equals(tagName)) {
+                    if(name.length() == 0) {
+                        parseThemeWildcardRef(xpp, ti);
+                    } else {
+                        ThemeInfoImpl tiChild = parseTheme(xpp, name, ti);
+                        ti.children.put(name, tiChild);
+                    }
+                } else if("border".equals(tagName)) {
+                    ref = xpp.getAttributeValue(null, "ref");
+                    if(ref != null) {
+                        Image img = ti.getImage(ref);
+                        if(img == null) {
+                            throw new XmlPullParserException("image \""+ref+"\" not found", xpp, null);
+                        }
+                        if(!(img instanceof HasBorder)) {
+                            throw new XmlPullParserException("image \""+ref+"\" has no border", xpp, null);
+                        }
+                        ti.border = ((HasBorder)img).getBorder();
+                    } else {
+                        ti.border = ParserUtil.parseBorderFromAttribute(xpp, "border");
+                        if(ti.border == null) {
+                            throw new XmlPullParserException("missing border parameters", xpp, null);
+                        }
+                    }
+                    xpp.nextTag();
+                } else {
+                    throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
+                }
+                xpp.require(XmlPullParser.END_TAG, null, tagName);
+                xpp.nextTag();
+            }
+        } finally {
+            mathInterpreter.setEnv(null);
         }
         return ti;
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, ?> parseParam(XmlPullParser xpp, ParameterMapImpl env) throws XmlPullParserException, IOException {
+    private Map<String, ?> parseParam(XmlPullParser xpp) throws XmlPullParserException, IOException {
         try {
             xpp.require(XmlPullParser.START_TAG, null, "param");
             String name = xpp.getAttributeValue(null, "name");
             xpp.nextTag();
             String tagName = xpp.getName();
-            Object value = parseValue(xpp, tagName, name, env);
+            Object value = parseValue(xpp, tagName, name);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             xpp.nextTag();
             xpp.require(XmlPullParser.END_TAG, null, "param");
@@ -371,12 +379,12 @@ public class ThemeManager {
         }
     }
 
-    private ParameterListImpl parseList(XmlPullParser xpp, ParameterMapImpl env) throws XmlPullParserException, IOException {
+    private ParameterListImpl parseList(XmlPullParser xpp) throws XmlPullParserException, IOException {
         ParameterListImpl result = new ParameterListImpl(this);
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Object obj = parseValue(xpp, tagName, null, env);
+            Object obj = parseValue(xpp, tagName, null);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.params.add(obj);
             xpp.nextTag();
@@ -384,12 +392,12 @@ public class ThemeManager {
         return result;
     }
     
-    private ParameterMapImpl parseMap(XmlPullParser xpp, ParameterMapImpl env) throws XmlPullParserException, IOException, NumberFormatException {
+    private ParameterMapImpl parseMap(XmlPullParser xpp) throws XmlPullParserException, IOException, NumberFormatException {
         ParameterMapImpl result = new ParameterMapImpl(this);
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Map<String, ?> params = parseParam(xpp, env);
+            Map<String, ?> params = parseParam(xpp);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.addParameters(params);
             xpp.nextTag();
@@ -398,14 +406,13 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Object parseValue(XmlPullParser xpp, String tagName, String wildcardName,
-            ParameterMapImpl env) throws XmlPullParserException, IOException, NumberFormatException {
+    private Object parseValue(XmlPullParser xpp, String tagName, String wildcardName) throws XmlPullParserException, IOException, NumberFormatException {
         try {
             if("list".equals(tagName)) {
-                return parseList(xpp, env);
+                return parseList(xpp);
             }
             if("map".equals(tagName)) {
-                return parseMap(xpp, env);
+                return parseMap(xpp);
             }
 
             String enumType = xpp.getAttributeValue(null, "type");
@@ -415,20 +422,10 @@ public class ThemeManager {
                 return ParserUtil.parseColor(xpp, value);
             }
             if("float".equals(tagName)) {
-                return Float.valueOf(value);
+                return parseMath(xpp, value).floatValue();
             }
             if("int".equals(tagName)) {
-                if(value.startsWith("0x")) {
-                    return Integer.parseInt(value.substring(2), 16);
-                } else {
-                    return Integer.parseInt(value);
-                }
-            }
-            if("imath".equals(tagName)) {
-                return parseMath(xpp, value, env).intValue();
-            }
-            if("fmath".equals(tagName)) {
-                return parseMath(xpp, value, env).floatValue();
+                return parseMath(xpp, value).intValue();
             }
             if("string".equals(tagName)) {
                 return value;
@@ -453,10 +450,29 @@ public class ThemeManager {
             if("bool".equals(tagName)) {
                 return ParserUtil.parseBool(xpp, value);
             }
+            if("border".equals(tagName)) {
+                int[] tmp = parseIntArray(xpp, value);
+                switch(tmp.length) {
+                case 1:
+                    return new Border(tmp[0]);
+                case 2:
+                    return new Border(tmp[0], tmp[1]);
+                case 4:
+                    return new Border(tmp[0], tmp[1], tmp[2], tmp[3]);
+                default:
+                    throw new XmlPullParserException("expected 1, 2 (H,V) or 4 (T,L,B,R) values", xpp, null);
+                }
+            }
             if("dimension".equals(tagName)) {
-                int[] tmp = new int[2];
-                ParserUtil.parseIntArray(value, tmp, 0, 2);
-                return new Dimension(tmp[0], tmp[1]);
+                int[] tmp = parseIntArray(xpp, value);
+                switch(tmp.length) {
+                case 1:
+                    return new Dimension(tmp[0], tmp[0]);
+                case 2:
+                    return new Dimension(tmp[0], tmp[1]);
+                default:
+                    throw new XmlPullParserException("expected 1 or 2 (X,Y) values", xpp, null);
+                }
             }
             if("constant".equals(tagName)) {
                 Object result = constants.get(value);
@@ -493,33 +509,18 @@ public class ThemeManager {
         }
     }
 
-    private Number parseMath(XmlPullParser xpp, String str, final ParameterMapImpl env) throws XmlPullParserException {
-        AbstractMathInterpreter ami = new AbstractMathInterpreter() {
-            public void accessVariable(String name) {
-                if(env != null) {
-                    Object obj = env.getParameterValue(name, false);
-                    if(obj != null) {
-                        push(obj);
-                        return;
-                    }
-                }
-                throw new IllegalArgumentException("variable not found: " + name);
-            }
-            @Override
-            protected Object accessField(Object obj, String field) {
-                if(obj instanceof ParameterMapImpl) {
-                    Object result = ((ParameterMapImpl)obj).getParameterValue(field, false);
-                    if(result == null) {
-                        throw new IllegalArgumentException("field not found: " + field);
-                    }
-                    return result;
-                }
-                return super.accessField(obj, field);
-            }
-
-        };
+    private Number parseMath(XmlPullParser xpp, String str) throws XmlPullParserException {
         try {
-            return ami.execute(str);
+            return mathInterpreter.execute(str);
+        } catch(ParseException ex) {
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "unable to evaluate", xpp, ex).initCause(ex));
+        }
+    }
+
+    private int[] parseIntArray(XmlPullParser xpp, String str) throws XmlPullParserException {
+        try {
+            return mathInterpreter.executeIntArray(str);
         } catch(ParseException ex) {
             throw (XmlPullParserException)(new XmlPullParserException(
                     "unable to evaluate", xpp, ex).initCause(ex));
@@ -534,5 +535,48 @@ public class ThemeManager {
             return info;
         }
         return null;
+    }
+
+    class MathInterpreter extends AbstractMathInterpreter {
+        private ParameterMapImpl env;
+
+        public void setEnv(ParameterMapImpl env) {
+            this.env = env;
+        }
+
+        public void accessVariable(String name) {
+            if(env != null) {
+                Object obj = env.getParameterValue(name, false);
+                if(obj != null) {
+                    push(obj);
+                    return;
+                }
+            }
+            Object obj = constants.get(name);
+            if(obj != null) {
+                push(obj);
+                return;
+            }
+            throw new IllegalArgumentException("variable not found: " + name);
+        }
+
+        @Override
+        protected Object accessField(Object obj, String field) {
+            if(obj instanceof ParameterMapImpl) {
+                Object result = ((ParameterMapImpl)obj).getParameterValue(field, false);
+                if(result == null) {
+                    throw new IllegalArgumentException("field not found: " + field);
+                }
+                return result;
+            }
+            if((obj instanceof Image) && "border".equals(field)) {
+                Border border = null;
+                if(obj instanceof HasBorder) {
+                    border = ((HasBorder)obj).getBorder();
+                }
+                return (border != null) ? border : Border.ZERO;
+            }
+            return super.accessField(obj, field);
+        }
     }
 }

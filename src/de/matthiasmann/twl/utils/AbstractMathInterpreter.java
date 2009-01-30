@@ -73,6 +73,19 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
         }
         return popNumber();
     }
+
+    public int[] executeIntArray(String str) throws ParseException {
+        stack.clear();
+        int count = SimpleMathParser.interpretArray(str, this);
+        if(stack.size() != count) {
+            throw new IllegalStateException("Expected " + count + " return values on the stack");
+        }
+        int[] result = new int[count];
+        for(int i=count ; i-->0 ;) {
+            result[i] = popNumber().intValue();
+        }
+        return result;
+    }
     
     protected void push(Object obj) {
         stack.add(obj);
