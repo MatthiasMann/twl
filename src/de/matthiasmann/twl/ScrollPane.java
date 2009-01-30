@@ -58,8 +58,8 @@ public class ScrollPane extends Widget {
     private DraggableButton dragButton;
     private Widget content;
     private Fixed fixed = Fixed.NONE;
-    private Dimension hscrollbarOffset;
-    private Dimension vscrollbarOffset;
+    private Dimension hscrollbarOffset = Dimension.ZERO;
+    private Dimension vscrollbarOffset = Dimension.ZERO;
 
     public ScrollPane() {
         this(null);
