@@ -266,7 +266,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     @Override
     public int getPreferredInnerHeight() {
-        return (numRows > 0) ? getRowEndPosition(numRows-1) : 0;
+        return columnHeaderHeight + 
+                ((numRows > 0) ? getRowEndPosition(numRows-1) : 0);
     }
 
     public void registerCellRenderer(Class<?> dataClass, CellRenderer cellRenderer) {
