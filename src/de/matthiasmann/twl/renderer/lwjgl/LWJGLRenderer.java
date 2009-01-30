@@ -319,6 +319,13 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         GL11.glVertex2f(x1 + dx + dy, y1 + dy - dx);
     }
 
+    protected void getTintedColor(Color color, float[] result) {
+        result[0] = tintState.r*(color.getR()&255);
+        result[1] = tintState.g*(color.getG()&255);
+        result[2] = tintState.b*(color.getB()&255);
+        result[3] = tintState.a*(color.getA()&255);
+    }
+
     static class TintState {
         private static final float ONE_OVER_255 = 1f / 255f;
 
