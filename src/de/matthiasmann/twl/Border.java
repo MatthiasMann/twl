@@ -35,6 +35,8 @@ package de.matthiasmann.twl;
  */
 public class Border {
 
+    public static final Border ZERO = new Border(0);
+    
     private final int top;
     private final int left;
     private final int bottom;
