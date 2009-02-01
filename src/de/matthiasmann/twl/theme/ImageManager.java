@@ -35,6 +35,7 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
+import de.matthiasmann.twl.utils.StateExpression;
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;

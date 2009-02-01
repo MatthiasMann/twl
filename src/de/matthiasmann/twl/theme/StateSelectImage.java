@@ -33,6 +33,7 @@ import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.utils.StateExpression;
 
 /**
  *
