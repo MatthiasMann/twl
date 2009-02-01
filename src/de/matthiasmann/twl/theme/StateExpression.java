@@ -42,8 +42,10 @@ public abstract class StateExpression {
 
     public abstract boolean evaluate(AnimationState as);
 
-    public static StateExpression parse(String exp) throws ParseException {
-        return parse(new StringIterator(exp));
+    public static StateExpression parse(String exp, boolean negate) throws ParseException {
+        StateExpression expr = parse(new StringIterator(exp));
+        expr.negate ^= negate;
+        return expr;
     }
 
     private static StateExpression parse(StringIterator si) throws ParseException {
@@ -161,7 +163,7 @@ public abstract class StateExpression {
         }
     }
 
-    boolean negate;
+    protected boolean negate;
 
     static class AndOr extends StateExpression {
         private final StateExpression[] children;

@@ -188,9 +188,7 @@ class ImageManager {
         }
         if(expression != null) {
             try {
-                StateExpression condition = StateExpression.parse(expression);
-                condition.negate ^= negate;
-                return condition;
+                return StateExpression.parse(expression, negate);
             } catch(ParseException ex) {
                 throw (XmlPullParserException)(new XmlPullParserException(
                         "Unable to parse condition", xpp, ex).initCause(ex));
