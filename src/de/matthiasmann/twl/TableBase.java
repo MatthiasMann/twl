@@ -99,10 +99,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
          * @param y the top edge of the cell
          * @param width the width of the cell
          * @param height the height of the cell
+         * @param isSelected the selected state of this cell
          * @return the widget used for cell rendering or null.
          * @see #setCellData(int, int, java.lang.Object)
          */
-        public Widget getCellRenderWidget(int x, int y, int width, int height);
+        public Widget getCellRenderWidget(int x, int y, int width, int height, boolean isSelected);
     }
 
     public interface CellWidgetCreator extends CellRenderer {
@@ -116,6 +117,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
     public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
+    public static final String STATE_ROW_SELECTED = "rowSelected";
+    public static final String STATE_SELECTED = "selected";
 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
@@ -131,8 +134,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected WidgetCache[] widgetCacheTable;
     protected ColumnHeader[] columnHeaders;
 
-    protected Image imageRowDivider;
     protected Image imageColumnDivider;
+    protected Image imageRowBackground;
     protected ThemeInfo tableBaseThemeInfo;
     protected int columnHeaderHeight;
     protected int columnDividerDragableDistance;
@@ -313,8 +316,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected void applyThemeTableBase(ThemeInfo themeInfo) {
         this.tableBaseThemeInfo = themeInfo;
-        this.imageRowDivider = themeInfo.getImage("rowDivider");
         this.imageColumnDivider = themeInfo.getImage("columnDivider");
+        this.imageRowBackground = themeInfo.getImage("rowBackground");
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
         this.defaultColumnWidth = themeInfo.getParameter("columnHeaderWidth", 256);
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
@@ -444,31 +447,42 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         final int innerY = getInnerY() + columnHeaderHeight;
         final int innerWidth = getInnerWidth();
         final int innerHeight = getInnerHeight() - columnHeaderHeight;
+        final int offsetX = getOffsetX();
+        final int offsetY = getOffsetY();
 
         gui.clipEnter(innerX, innerY, innerWidth, innerHeight);
         try {
-            int colDivWidth = 0;
-            if(imageColumnDivider != null) {
-                colDivWidth = imageColumnDivider.getWidth();
+            final AnimationState animState = getAnimationState();
 
-                int curX = innerX;
-                for(int col=firstVisibleColumn ; col<=lastVisibleColumn ; col++) {
-                    curX += getColumnWidth(col);
-                    imageColumnDivider.draw(getAnimationState(), curX, innerY, colDivWidth, innerHeight);
-                    curX += colDivWidth;
+            if(imageRowBackground != null) {
+                int rowStartPos = getRowStartPosition(firstVisibleRow);
+                for(int row=firstVisibleRow ; row<=lastVisibleRow ; row++) {
+                    final int rowEndPos = getRowEndPosition(row);
+                    final int curRowHeight = rowEndPos - rowStartPos;
+                    final int curY = offsetY + rowStartPos;
+
+                    animState.setAnimationState(STATE_ROW_SELECTED, isRowSelected(row, null));
+                    imageRowBackground.draw( animState, innerX, curY, innerWidth,curRowHeight);
                 }
             }
 
-            final int offsetX = getOffsetX();
-            final int offsetY = getOffsetY();
+            if(imageColumnDivider != null) {
+                animState.setAnimationState(STATE_ROW_SELECTED, false);
+                for(int col=firstVisibleColumn ; col<=lastVisibleColumn ; col++) {
+                    int colEndPos = getColumnEndPosition(col);
+                    int curX = offsetX + colEndPos;
+                    imageColumnDivider.draw( animState, curX,innerY, 1, innerHeight);
+                }
+            }
 
             int rowStartPos = getRowStartPosition(firstVisibleRow);
-            int curY = rowStartPos + offsetY;
             for(int row=firstVisibleRow ; row<=lastVisibleRow ; row++) {
                 final int rowEndPos = getRowEndPosition(row);
                 final int curRowHeight = rowEndPos - rowStartPos;
+                final int curY = offsetY + rowStartPos;
                 final TreeTableNode rowNode = getNodeFromRow(row);
-
+                final boolean isSelected = isRowSelected(row, rowNode);
+                
                 int colStartPos = getColumnStartPosition(firstVisibleColumn);
                 for(int col=firstVisibleColumn ; col<=lastVisibleColumn ;) {
                     int colEndPos = getColumnEndPosition(col);
@@ -484,7 +498,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                         }
 
                         Widget cellRendererWidget = cellRenderer.getCellRenderWidget(
-                                curX, curY, colEndPos - colStartPos, curRowHeight);
+                                curX, curY, colEndPos - colStartPos, curRowHeight, isSelected);
 
                         if(cellRendererWidget != null) {
                             if(cellRendererWidget.getParent() != this) {
@@ -498,14 +512,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     colStartPos = colEndPos;
                 }
 
-                curY += curRowHeight;
                 rowStartPos = rowEndPos;
-
-                if(imageRowDivider != null) {
-                    int rowDivHeight = imageRowDivider.getHeight();
-                    imageRowDivider.draw(getAnimationState(), innerX, curY, innerWidth, rowDivHeight);
-                    curY += rowDivHeight;
-                }
             }
         } finally {
             gui.clipLeave();
@@ -522,6 +529,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected abstract TreeTableNode getNodeFromRow(int row);
     protected abstract Object getCellData(int row, int column, TreeTableNode node);
+    protected abstract boolean isRowSelected(int row, TreeTableNode node);
 
     protected CellRenderer getCellRenderer(Object data) {
         Class<? extends Object> dataClass = data.getClass();
@@ -1053,9 +1061,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             return 1;
         }
 
-        public Widget getCellRenderWidget(int x, int y, int width, int height) {
+        public Widget getCellRenderWidget(int x, int y, int width, int height, boolean isSelected) {
             setPosition(x, y);
             setSize(width, height);
+            getAnimationState().setAnimationState(STATE_SELECTED, isSelected);
             return this;
         }
     }

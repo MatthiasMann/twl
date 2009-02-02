@@ -197,6 +197,11 @@ public class TreeTable extends TableBase {
     }
 
     @Override
+    protected boolean isRowSelected(int row, TreeTableNode node) {
+        return false;   // TODO: implement selection
+    }
+
+    @Override
     protected CellRenderer getCellRenderer(int row, int col, TreeTableNode node) {
         if(node == null) {
             node = getNodeFromRow(row);
@@ -445,11 +450,11 @@ public class TreeTable extends TableBase {
             return treeButtonSize.getY();
         }
 
-        public Widget getCellRenderWidget(int x, int y, int width, int height) {
+        public Widget getCellRenderWidget(int x, int y, int width, int height, boolean isSelected) {
             if(subRenderer != null) {
                 int indent = level * treeIndent + treeButtonSize.getX();
                 Widget widget = subRenderer.getCellRenderWidget(
-                        x + indent, y, Math.max(0, width-indent), height);
+                        x + indent, y, Math.max(0, width-indent), height, isSelected);
                 return widget;
             }
             return null;
