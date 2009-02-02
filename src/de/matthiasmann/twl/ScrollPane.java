@@ -353,20 +353,20 @@ public class ScrollPane extends Widget {
             }
 
             scrollbarH.setVisible(visibleH);
-            scrollbarH.setSize(scrollbarVX - scrollbarHX, innerHeight - scrollbarHY);
+            scrollbarH.setSize(Math.max(0, scrollbarVX - scrollbarHX), Math.max(0, innerHeight - scrollbarHY));
             scrollbarH.setPosition(getInnerX() + scrollbarHX, getInnerY() + scrollbarHY);
             scrollbarH.setPageSize(Math.max(1, availWidth));
             scrollbarH.setStepSize(Math.max(1, availWidth / 10));
             
             scrollbarV.setVisible(visibleV);
-            scrollbarV.setSize(innerWidth - scrollbarVX, scrollbarHY - scrollbarVY);
+            scrollbarV.setSize(Math.max(0, innerWidth - scrollbarVX), Math.max(0, scrollbarHY - scrollbarVY));
             scrollbarV.setPosition(getInnerX() + scrollbarVX, getInnerY() + scrollbarVY);
             scrollbarV.setPageSize(Math.max(1, availHeight));
             scrollbarV.setStepSize(Math.max(1, availHeight / 10));
 
             if(dragButton != null) {
                 dragButton.setVisible(visibleH && visibleV);
-                dragButton.setSize(innerWidth - scrollbarVX, innerHeight - scrollbarHY);
+                dragButton.setSize(Math.max(0, innerWidth - scrollbarVX), Math.max(0, innerHeight - scrollbarHY));
                 dragButton.setPosition(getInnerX() + scrollbarVX, getInnerY() + scrollbarHY);
             }
             
