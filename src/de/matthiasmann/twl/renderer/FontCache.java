@@ -29,10 +29,9 @@
  */
 package de.matthiasmann.twl.renderer;
 
-import de.matthiasmann.twl.Color;
-
 /**
  * A cached text block interface
+ * 
  * @author Matthias Mann
  */
 public interface FontCache extends Resource {
@@ -51,10 +50,11 @@ public interface FontCache extends Resource {
     
     /**
      * Draw the cached text block at the given coordinates with the given color
+     * @param as A time source for animation - may be null
      * @param x the left coordinate
      * @param y the top coordinate
      * @param color the color for drawing the text
      */
-    public void draw(int x, int y, Color color);
+    public void draw(AnimationState as, int x, int y);
     
 }

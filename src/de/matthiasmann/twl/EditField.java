@@ -43,6 +43,8 @@ import org.lwjgl.input.Keyboard;
  */
 public class EditField extends Widget {
 
+    public static final String STATE_ERROR = "error";
+    
     public interface Callback {
         public void callback(int key);
     }
@@ -62,9 +64,6 @@ public class EditField extends Widget {
     private int desiredWidthinCharacters = 5;
     private Image cursorImage;
     private Image selectionImage;
-    private Color errorColor;
-    private Color normalColor;
-    private Color selectionColor;
     private char passwordChar;
     private Object errorMsg;
     private Callback[] callbacks;
@@ -232,9 +231,6 @@ public class EditField extends Widget {
         super.applyTheme(themeInfo);
         cursorImage = themeInfo.getImage("cursor");
         selectionImage = themeInfo.getImage("selection");
-        errorColor = themeInfo.getParameter("textColorError", Color.RED);
-        normalColor = themeInfo.getParameter("textColor", Color.WHITE);
-        selectionColor = themeInfo.getParameter("selectionColor", Color.WHITE);
         setPasswordChar((char)themeInfo.getParameter("passwordChar", '*'));
         setErrorMessage(errorMsg);  // update color
     }
@@ -287,11 +283,7 @@ public class EditField extends Widget {
     }
 
     public void setErrorMessage(Object errorMsg) {
-        if(errorMsg != null) {
-            textRenderer.setTextColor(errorColor);
-        } else {
-            textRenderer.setTextColor(normalColor);
-        }
+        getAnimationState().setAnimationState(STATE_ERROR, errorMsg != null);
         if(this.errorMsg != errorMsg) {
             this.errorMsg = errorMsg;
             GUI gui = getGUI();
@@ -586,7 +578,6 @@ public class EditField extends Widget {
 
         @Override
         protected void paintWidget(GUI gui) {
-            boolean paintText = true;
             lastTextX = computeTextX();
             if(hasSelection() && hasFocusOrPopup()) {
                 if(selectionImage != null) {
@@ -595,13 +586,9 @@ public class EditField extends Widget {
                     selectionImage.draw(getAnimationState(), xpos0, computeTextY(),
                             xpos1 - xpos0, getFont().getLineHeight());
                 }
-                if(selectionColor != null && !selectionColor.equals(getTextColor())) {
-                    paintWithSelection(selectionStart, selectionEnd, selectionColor);
-                    paintText = false;
-                }
-            }
-            if(paintText) {
-                paintLabelText(getTextColor());
+                paintWithSelection(getAnimationState(), selectionStart, selectionEnd);
+            } else {
+                paintLabelText(getAnimationState());
             }
         }
 

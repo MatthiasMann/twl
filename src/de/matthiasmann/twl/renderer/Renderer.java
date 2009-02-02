@@ -32,6 +32,8 @@ package de.matthiasmann.twl.renderer;
 import de.matthiasmann.twl.Rect;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * TWL Rendering interface
@@ -66,11 +68,13 @@ public interface Renderer {
     /**
      * Loads a font.
      * 
-     * @param url the URL of the font file
+     * @param baseUrl the base URL that can be used to load font data
+     * @param parameter font parameter
+     * @param conditionalParameter conditional font paramters - evaluate in order based on AnimationState
      * @return a Font object
      * @throws java.io.IOException if the font could not be loaded
      */
-    public Font loadFont(URL url) throws IOException;
+    public Font loadFont(URL baseUrl, Map<String, String> parameter, Collection<FontParameter> conditionalParameter) throws IOException;
     
     /**
      * Loads a texture. Textures are used to create images.

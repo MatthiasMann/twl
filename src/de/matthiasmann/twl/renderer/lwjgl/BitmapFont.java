@@ -30,9 +30,7 @@
 package de.matthiasmann.twl.renderer.lwjgl;
 
 import de.matthiasmann.twl.HAlignment;
-import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.utils.TextUtil;
-import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +45,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
  * 
  * @author Matthias Mann
  */
-public class BitmapFont implements Font {
+public class BitmapFont {
 
     private static final int LOG2_PAGE_SIZE = 9;
     private static final int PAGE_SIZE = 1 << LOG2_PAGE_SIZE;
@@ -242,10 +240,6 @@ public class BitmapFont implements Font {
         return null;
     }
     
-    public int computeTextWidth(CharSequence str) {
-        return computeTextWidth(str, 0, str.length());
-    }
-    
     public int computeTextWidth(CharSequence str, int start, int end) {
         int width = 0;
         Glyph lastGlyph = null;
@@ -289,23 +283,7 @@ public class BitmapFont implements Font {
         return index - start;
     }
     
-    public int drawText(int x, int y, CharSequence str, Color color) {
-        return drawText(x, y, str, color, 0, str.length());
-    }
-
-    public int drawText(int x, int y, CharSequence str, Color color, int start, int end) {
-        if(!prepare()) {
-            return 0;
-        }
-        renderer.tintState.setColor(color);
-        try {
-            return drawText(x, y, str, start, end);
-        } finally {
-            cleanup();
-        }
-    }
-    
-    private int drawText(int x, int y, CharSequence str, int start, int end) {
+    protected int drawText(int x, int y, CharSequence str, int start, int end) {
         int startX = x;
         Glyph lastGlyph = null;
         while(start < end) {
@@ -329,36 +307,24 @@ public class BitmapFont implements Font {
         return x - startX;
     }
     
-    public int drawMultiLineText(int x, int y, CharSequence str, Color color, int width, HAlignment align) {
-        renderer.tintState.setColor(color);
-        return drawMultiLineText(x, y, str, width, align);
-    }
-    
-    private int drawMultiLineText(int x, int y, CharSequence str, int width, HAlignment align) {
-        if(!prepare()) {
-            return 0;
-        }
-        try {
-            int start = 0;
-            int startY = y;
-            while(start < str.length()) {
-                int lineEnd = TextUtil.indexOf(str, '\n', start);
-                int xoff = 0;
-                if(align != HAlignment.LEFT) {
-                    int lineWidth = computeTextWidth(str, start, lineEnd);
-                    xoff = width - lineWidth;
-                    if(align == HAlignment.CENTER) {
-                        xoff /= 2;
-                    }
+    protected int drawMultiLineText(int x, int y, CharSequence str, int width, HAlignment align) {
+        int start = 0;
+        int startY = y;
+        while(start < str.length()) {
+            int lineEnd = TextUtil.indexOf(str, '\n', start);
+            int xoff = 0;
+            if(align != HAlignment.LEFT) {
+                int lineWidth = computeTextWidth(str, start, lineEnd);
+                xoff = width - lineWidth;
+                if(align == HAlignment.CENTER) {
+                    xoff /= 2;
                 }
-                drawText(x + xoff, y, str, start, lineEnd);
-                start = lineEnd + 1;
-                y += lineHeight;
             }
-            return y - startY;
-        } finally {
-            cleanup();
+            drawText(x + xoff, y, str, start, lineEnd);
+            start = lineEnd + 1;
+            y += lineHeight;
         }
+        return y - startY;
     }
     
     public int computeMultiLineTextWidth(CharSequence str) {
@@ -373,15 +339,17 @@ public class BitmapFont implements Font {
         return width;
     }
 
-    public FontCache cacheMultiLineText(FontCache prevCache, CharSequence str, int width, HAlignment align) {
-        LWJGLFontCache cache = (LWJGLFontCache)prevCache;
-        if(cache == null) {
-            cache = new LWJGLFontCache(renderer);
-        }
+    public FontCache cacheMultiLineText(LWJGLFontCache cache, CharSequence str, int width, HAlignment align) {
         if(cache.startCompile()) {
             int height = 0;
             try {
-                height = drawMultiLineText(0, 0, str, width, align);
+                if(prepare()) {
+                    try {
+                        height = drawMultiLineText(0, 0, str, width, align);
+                    } finally {
+                        cleanup();
+                    }
+                }
             } finally {
                 cache.endCompile(width, height);
             }
@@ -390,15 +358,7 @@ public class BitmapFont implements Font {
         return null;
     }
 
-    public FontCache cacheText(FontCache prevCache, CharSequence str) {
-        return cacheText(prevCache, str, 0, str.length());
-    }
-
-    public FontCache cacheText(FontCache prevCache, CharSequence str, int start, int end) {
-        LWJGLFontCache cache = (LWJGLFontCache)prevCache;
-        if(cache == null) {
-            cache = new LWJGLFontCache(renderer);
-        }
+    public FontCache cacheText(LWJGLFontCache cache, CharSequence str, int start, int end) {
         if(cache.startCompile()) {
             int width = 0;
             try {
@@ -417,7 +377,7 @@ public class BitmapFont implements Font {
         return null;
     }
 
-    private boolean prepare() {
+    protected boolean prepare() {
         if(texture.bind()) {
             GL11.glBegin(GL11.GL_QUADS);
             return true;
@@ -425,7 +385,7 @@ public class BitmapFont implements Font {
         return false;
     }
 
-    private void cleanup() {
+    protected void cleanup() {
         GL11.glEnd();
     }
     

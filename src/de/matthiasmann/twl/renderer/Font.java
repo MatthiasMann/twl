@@ -30,7 +30,6 @@
 
 package de.matthiasmann.twl.renderer;
 
-import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.HAlignment;
 
 /**
@@ -90,6 +89,7 @@ public interface Font extends Resource {
 
     /**
      * Draws multi line text - lines are spliited at '\n'
+     * @param as A time source for animation - may be null
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block
      * @param str the text to draw
@@ -98,20 +98,22 @@ public interface Font extends Resource {
      * @param align horizontal alignment for shorter lines
      * @return the height in pixels of the multi line text
      */
-    int drawMultiLineText(int x, int y, CharSequence str, Color color, int width, HAlignment align);
+    int drawMultiLineText(AnimationState as, int x, int y, CharSequence str, int width, HAlignment align);
 
     /**
      * Draws a single line text
+     * @param as A time source for animation - may be null
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block
      * @param str the text to draw
      * @param color the color to draw the text with
      * @return the width in pixels of the text
      */
-    int drawText(int x, int y, CharSequence str, Color color);
+    int drawText(AnimationState as, int x, int y, CharSequence str);
 
     /**
      * Draws a single line text
+     * @param as A time source for animation - may be null
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block
      * @param str the text to draw
@@ -120,7 +122,7 @@ public interface Font extends Resource {
      * @param end index after last character to draw in str
      * @return the width in pixels of the text
      */
-    int drawText(int x, int y, CharSequence str, Color color, int start, int end);
+    int drawText(AnimationState as, int x, int y, CharSequence str, int start, int end);
 
     /**
      * Caches a text for faster drawing

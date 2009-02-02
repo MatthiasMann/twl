@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2009, Matthias Mann
  *
  * All rights reserved.
  *
@@ -27,68 +27,37 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl.renderer.lwjgl;
+package de.matthiasmann.twl.renderer;
 
-import de.matthiasmann.twl.renderer.AnimationState;
-import de.matthiasmann.twl.renderer.FontCache;
-import org.lwjgl.opengl.GL11;
+import de.matthiasmann.twl.utils.StateExpression;
+import java.util.Map;
 
 /**
- * A font render cache - uses display lists
- * 
+ *
  * @author Matthias Mann
  */
-public class LWJGLFontCache implements FontCache {
+public class FontParameter {
 
-    private final LWJGLRenderer renderer;
-    private final LWJGLFont font;
-    private int id;
-    private int width;
-    private int height;
+    private final StateExpression condition;
+    private final Map<String, String> params;
 
-    LWJGLFontCache(LWJGLRenderer renderer, LWJGLFont font) {
-        this.renderer = renderer;
-        this.font = font;
-        this.id = GL11.glGenLists(1);
+    public FontParameter(StateExpression condition, Map<String, String> params) {
+        if(condition == null) {
+            throw new NullPointerException("condition");
+        }
+        if(params == null) {
+            throw new NullPointerException("params");
+        }
+        this.condition = condition;
+        this.params = params;
+    }
+
+    public StateExpression getCondition() {
+        return condition;
+    }
+
+    public Map<String, String> getParams() {
+        return params;
     }
     
-    public void draw(AnimationState as, int x, int y) {
-        if(id != 0) {
-            LWJGLFont.Params param = font.evalParam(as);
-            renderer.tintState.setColor(param.color);
-            GL11.glPushMatrix();
-            GL11.glTranslatef(x+param.offsetX, y+param.offsetY, 0f);
-            GL11.glCallList(id);
-            GL11.glPopMatrix();
-        }
-    }
-
-    public void destroy() {
-        if(id != 0) {
-            GL11.glDeleteLists(id, 1);
-            id = 0;
-        }
-    }
-
-    boolean startCompile() {
-        if(id != 0) {
-            GL11.glNewList(id, GL11.GL_COMPILE);
-            return true;
-        }
-        return false;
-    }
-    
-    void endCompile(int width, int height) {
-        GL11.glEndList();
-        this.width = width;
-        this.height = height;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public int getWidth() {
-        return width;
-    }
 }

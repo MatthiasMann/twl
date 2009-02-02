@@ -4,7 +4,7 @@
     SYSTEM ID  : http://www.matthiasmann.de/java/twl/theme.dtd
 -->
 
-<!ELEMENT themes (textures|fontFile|theme|constantDef|include)*>
+<!ELEMENT themes (textures|fontDef|theme|constantDef|include)*>
 
 <!ELEMENT textures (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage|cursor)*>
 <!ATTLIST textures
@@ -181,11 +181,6 @@
     hotSpotY        CDATA #IMPLIED
     ref             CDATA #IMPLIED>
 
-<!ELEMENT fontFile EMPTY>
-<!ATTLIST fontFile
-    name            CDATA #REQUIRED
-    filename        CDATA #REQUIRED>
-
 <!ELEMENT include EMPTY>
 <!ATTLIST include
     filename        CDATA #REQUIRED>
@@ -225,3 +220,13 @@
 <!ELEMENT constantDef (color|enum|string|font|int|float|bool|dimension|constant|list|map)>
 <!ATTLIST constantDef
     name            CDATA #REQUIRED>
+
+<!ELEMENT fontDef (fontParam)*>
+<!ATTLIST fontDef
+    name            CDATA #REQUIRED
+    default         (true|false) #IMPLIED>
+
+<!ELEMENT fontParam EMPTY>
+<!ATTLIST fontParam
+    if              CDATA #IMPLIED
+    unless          CDATA #IMPLIED>

@@ -38,7 +38,6 @@ import de.matthiasmann.twl.renderer.Texture;
 import de.matthiasmann.twl.utils.StateExpression;
 import java.io.IOException;
 import java.net.URL;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
@@ -181,25 +180,8 @@ class ImageManager {
         xpp.nextTag();
     }
 
-    private StateExpression parseCondition(XmlPullParser xpp) throws XmlPullParserException {
-        String expression = xpp.getAttributeValue(null, "if");
-        boolean negate = expression == null;
-        if(expression == null) {
-            expression = xpp.getAttributeValue(null, "unless");
-        }
-        if(expression != null) {
-            try {
-                return StateExpression.parse(expression, negate);
-            } catch(ParseException ex) {
-                throw (XmlPullParserException)(new XmlPullParserException(
-                        "Unable to parse condition", xpp, ex).initCause(ex));
-            }
-        }
-        return null;
-    }
-
     private Image parseImage(XmlPullParser xpp, String tagName) throws XmlPullParserException, IOException {
-        StateExpression condition = parseCondition(xpp);
+        StateExpression condition = ParserUtil.parseCondition(xpp);
         Image image = parseImageNoCond(xpp, tagName);
         if(condition != null) {
             image = new ConditionImage(image, getBorder(image, null), condition);
@@ -291,7 +273,7 @@ class ImageManager {
         xpp.nextTag();
         while(xpp.getEventType() != XmlPullParser.END_TAG) {
             xpp.require(XmlPullParser.START_TAG, null, null);
-            StateExpression cond = parseCondition(xpp);
+            StateExpression cond = ParserUtil.parseCondition(xpp);
             String tagName = xpp.getName();
             Image image = parseImageNoCond(xpp, tagName);
             stateImages.add(image);

@@ -31,6 +31,8 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.utils.StateExpression;
+import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
@@ -262,4 +264,30 @@ public class ParserUtil {
 
         return result;
     }
+
+    static Map<String, String> getAttributeMap(XmlPullParser xpp) {
+        HashMap<String, String> attribs = new HashMap<String, String>();
+        for(int i=0,n=xpp.getAttributeCount() ; i<n ; i++) {
+            attribs.put(xpp.getAttributeName(i), xpp.getAttributeValue(i));
+        }
+        return attribs;
+    }
+    
+    static StateExpression parseCondition(XmlPullParser xpp) throws XmlPullParserException {
+        String expression = xpp.getAttributeValue(null, "if");
+        boolean negate = expression == null;
+        if(expression == null) {
+            expression = xpp.getAttributeValue(null, "unless");
+        }
+        if(expression != null) {
+            try {
+                return StateExpression.parse(expression, negate);
+            } catch(ParseException ex) {
+                throw (XmlPullParserException)(new XmlPullParserException(
+                        "Unable to parse condition", xpp, ex).initCause(ex));
+            }
+        }
+        return null;
+    }
+
 }

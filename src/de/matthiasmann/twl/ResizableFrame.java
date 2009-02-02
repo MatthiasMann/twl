@@ -375,7 +375,7 @@ public class ResizableFrame extends Widget {
 
         if(titleAreaLeft != titleAreaRight && titleAreaTop != titleAreaBottom) {
             if(titleWidget == null) {
-                titleWidget = new TextWidget();
+                titleWidget = new TextWidget(getAnimationState());
                 titleWidget.setTheme("title");
                 titleWidget.setMouseCursor(cursors[DragMode.POSITION.ordinal()]);
                 titleWidget.setText(title);

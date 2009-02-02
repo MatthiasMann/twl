@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2009, Matthias Mann
  *
  * All rights reserved.
  *
@@ -41,6 +41,7 @@ import de.matthiasmann.twl.renderer.FontCache;
 public class TextWidget extends Widget {
 
     public static final String STATE_TEXT_CHANGED = "textChanged";
+    public static final String STATE_TEXT_SELECTION = "textSelection";
 
     private static final int NOT_CACHED = -1;
 
@@ -49,7 +50,6 @@ public class TextWidget extends Widget {
     private CharSequence text;
     private int cachedTextWidth = NOT_CACHED;
     private int numTextLines;
-    private Color textColor = Color.WHITE;
     private boolean useCache = true;
     private Alignment alignment = Alignment.TOPLEFT;
 
@@ -76,17 +76,6 @@ public class TextWidget extends Widget {
         if(useCache) {
             updateCache();
         }
-    }
-
-    public Color getTextColor() {
-        return textColor;
-    }
-
-    public void setTextColor(Color textColor) {
-        if(textColor == null) {
-            throw new NullPointerException("textColor");
-        }
-        this.textColor = textColor;
     }
 
     /**
@@ -147,7 +136,6 @@ public class TextWidget extends Widget {
 
     protected void applyThemeTextWidget(ThemeInfo themeInfo) {
         setFont(themeInfo.getFont("font"));
-        setTextColor(themeInfo.getParameter("textColor", Color.WHITE));
         setAlignment(themeInfo.getParameter("textAlignment", Alignment.TOPLEFT));
     }
     
@@ -186,32 +174,34 @@ public class TextWidget extends Widget {
 
     @Override
     protected void paintWidget(GUI gui) {
-        paintLabelText(textColor);
+        paintLabelText(getAnimationState());
     }
 
-    protected void paintLabelText(Color color) {
+    protected void paintLabelText(de.matthiasmann.twl.renderer.AnimationState animState) {
         if(hasText() && font != null) {
             int x = computeTextX();
             int y = computeTextY();
 
             if(cache != null) {
-                cache.draw(x, y, color);
+                cache.draw(animState, x, y);
             } else if(numTextLines > 1) {
-                font.drawMultiLineText(x, y, text, color, computeTextWidth(), alignment.fontHAlignment);
+                font.drawMultiLineText(animState, x, y, text, computeTextWidth(), alignment.fontHAlignment);
             } else {
-                font.drawText(x, y, text, color);
+                font.drawText(animState, x, y, text);
             }
         }
     }
 
-    protected void paintWithSelection(int start, int end, Color selColor) {
+    protected void paintWithSelection(AnimationState animState, int start, int end) {
         if(hasText() && font != null) {
             int x = computeTextX();
             int y = computeTextY();
 
-            x += font.drawText(x, y, text, textColor, 0, start);
-            x += font.drawText(x, y, text, selColor, start, end);
-            font.drawText(x, y, text, textColor, end, text.length());
+            x += font.drawText(animState, x, y, text, 0, start);
+            animState.setAnimationState(STATE_TEXT_SELECTION, true);
+            x += font.drawText(animState, x, y, text, start, end);
+            animState.setAnimationState(STATE_TEXT_SELECTION, false);
+            font.drawText(animState, x, y, text, end, text.length());
         }
     }
 

@@ -37,13 +37,16 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.PositionAnimatedPanel;
 import de.matthiasmann.twl.ThemeInfo;
+import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.utils.AbstractMathInterpreter;
+import de.matthiasmann.twl.utils.StateExpression;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -238,23 +241,22 @@ public class ThemeManager {
                         throw new XmlPullParserException("theme \"" + name + "\" already defined", xpp, null);
                     }
                     themes.put(name, parseTheme(xpp, name, null));
-                } else if("fontFile".equals(tagName)) {
+                } else if("fontDef".equals(tagName)) {
                     if(fonts.containsKey(name)) {
                         throw new XmlPullParserException("font \"" + name + "\" already defined", xpp, null);
                     }
-                    String fontFileName = ParserUtil.getAttributeNotNull(xpp, "filename");
-                    Font font = renderer.loadFont(new URL(baseURL, fontFileName));
+                    boolean makeDefault = ParserUtil.parseBoolFromAttribute(xpp, "default", false);
+                    Font font = parseFont(xpp, baseURL);
                     fonts.put(name, font);
                     if(firstFont == null) {
                         firstFont = font;
                     }
-                    if(ParserUtil.parseBoolFromAttribute(xpp, "default", false)) {
+                    if(makeDefault) {
                         if(defaultFont != null) {
                             throw new XmlPullParserException("default font already set", xpp, null);
                         }
                         defaultFont = font;
                     }
-                    xpp.nextTag();
                 } else if("constantDef".equals(tagName)) {
                     insertConstant(name, parseParam(xpp));
                 } else {
@@ -265,6 +267,29 @@ public class ThemeManager {
             xpp.nextTag();
         }
         xpp.require(XmlPullParser.END_TAG, null, "themes");
+    }
+
+    private Font parseFont(XmlPullParser xpp, URL baseURL) throws XmlPullParserException, IOException {
+        Map<String, String> params = ParserUtil.getAttributeMap(xpp);
+        ArrayList<FontParameter> fontParams = new ArrayList<FontParameter>();
+        params.remove("name");
+        params.remove("default");
+        xpp.nextTag();
+        while(xpp.getEventType() != XmlPullParser.END_TAG) {
+            xpp.require(XmlPullParser.START_TAG, null, "fontParam");
+            StateExpression cond = ParserUtil.parseCondition(xpp);
+            if(cond == null) {
+                throw new XmlPullParserException("Condition required", xpp, null);
+            }
+            Map<String, String> condParams = ParserUtil.getAttributeMap(xpp);
+            condParams.remove("if");
+            condParams.remove("unless");
+            fontParams.add(new FontParameter(cond, condParams));
+            xpp.nextTag();
+            xpp.require(XmlPullParser.END_TAG, null, "fontParam");
+            xpp.nextTag();
+        }
+        return renderer.loadFont(baseURL, params, fontParams);
     }
 
     private void parseThemeWildcardRef(XmlPullParser xpp, ThemeInfoImpl parent) throws IOException, XmlPullParserException {

@@ -568,7 +568,7 @@ public class ListBox extends Widget {
 
         public ListBoxLabel() {
             setClip(true);
-            setTheme();
+            setTheme("display");
         }
 
         public boolean isSelected() {
@@ -578,8 +578,6 @@ public class ListBox extends Widget {
         public void setSelected(boolean selected) {
             if(this.selected != selected) {
                 this.selected = selected;
-                setTheme();
-                reapplyTheme();
                 getAnimationState().setAnimationState(STATE_SELECTED, selected);
             }
         }
@@ -594,10 +592,6 @@ public class ListBox extends Widget {
 
         public void setData(Object data) {
             setText((data == null) ? "" : data.toString());
-        }
-
-        private void setTheme() {
-            setTheme(selected ? "display-selected" : "display");
         }
 
         public Widget getWidget() {

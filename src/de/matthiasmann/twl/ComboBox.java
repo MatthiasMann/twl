@@ -239,19 +239,11 @@ public class ComboBox extends Widget {
     }
     
     static class ComboboxLabel extends Label {
-        private Color focusedTextColor = Color.WHITE;
-        
         public ComboboxLabel(AnimationState animState) {
             super(animState);
             setAutoSize(false);
             setClip(true);
             setTheme("display");
-        }
-
-        @Override
-        protected void applyTheme(ThemeInfo themeInfo) {
-            super.applyTheme(themeInfo);
-            focusedTextColor = themeInfo.getParameter("focusedTextColor", Color.WHITE);
         }
 
         @Override
@@ -262,12 +254,5 @@ public class ComboBox extends Widget {
             }
             return prefHeight;
         }
-
-        @Override
-        protected void paintWidget(GUI gui) {
-            boolean focused = getAnimationState().getAnimationState(STATE_KEYBOARD_FOCUS);
-            paintLabelText(focused ? focusedTextColor : getTextColor());
-        }
-
     }
 }

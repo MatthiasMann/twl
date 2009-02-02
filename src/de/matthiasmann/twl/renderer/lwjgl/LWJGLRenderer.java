@@ -31,6 +31,7 @@ package de.matthiasmann.twl.renderer.lwjgl;
 
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.Rect;
+import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.LineRenderer;
@@ -42,7 +43,9 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -61,7 +64,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private static final Logger logger = Logger.getLogger(LWJGLRenderer.class.getName());
 
     private final IntBuffer ib16;
-    private final HashMap<URL, LWJGLTexture> cache;
+    private final HashMap<URL, LWJGLTexture> textureCache;
+    private final HashMap<URL, BitmapFont> fontCache;
 
     private int width;
     private int height;
@@ -77,7 +81,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
-        this.cache = new HashMap<URL, LWJGLTexture>();
+        this.textureCache = new HashMap<URL, LWJGLTexture>();
+        this.fontCache = new HashMap<URL, BitmapFont>();
         this.textureDLs = new ArrayList<Integer>();
         this.tintStateRoot = new TintState();
         this.tintState = tintStateRoot;
@@ -106,10 +111,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     }
     
     public void destroy() {
-        for(LWJGLTexture t : cache.values()) {
+        for(LWJGLTexture t : textureCache.values()) {
             t.destroy();
         }
-        cache.clear();
+        for(BitmapFont f : fontCache.values()) {
+            f.destroy();
+        }
+        textureCache.clear();
+        fontCache.clear();
         for(int id : textureDLs) {
             GL11.glDeleteLists(id, 1);
         }
@@ -164,8 +173,18 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return width;
     }
 
-    public Font loadFont(URL url) throws IOException {
-        return BitmapFont.loadFont(this, url);
+    public Font loadFont(URL baseUrl, Map<String, String> parameter, Collection<FontParameter> conditionalParameter) throws IOException {
+        String fileName = parameter.get("filename");
+        if(fileName == null) {
+            throw new IllegalArgumentException("filename parameter required");
+        }
+        URL url = new URL(baseUrl, fileName);
+        BitmapFont bmFont = fontCache.get(url);
+        if(bmFont == null) {
+            bmFont = BitmapFont.loadFont(this, url);
+            fontCache.put(url, bmFont);
+        }
+        return new LWJGLFont(this, bmFont, parameter, conditionalParameter);
     }
 
     public Texture loadTexture(URL url, String formatStr, String filterStr) throws IOException {
@@ -225,10 +244,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         if(textureUrl == null) {
             throw new NullPointerException("textureUrl");
         }
-        LWJGLTexture tex = cache.get(textureUrl);
+        LWJGLTexture tex = textureCache.get(textureUrl);
         if(tex == null) {
             tex = createTexture(textureUrl, fmt, filter);
-            cache.put(textureUrl, tex);
+            textureCache.put(textureUrl, tex);
         }
         return tex;
     }

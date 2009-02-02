@@ -57,7 +57,6 @@ public class TextArea extends Widget {
     private ParameterMap fonts;
     private ParameterMap images;
     private Font defaultFont;
-    private Color textColor;
 
     private final ArrayList<LElement> layout;
     private final ArrayList<LElement> objLeft;
@@ -172,7 +171,6 @@ public class TextArea extends Widget {
         fonts = themeInfo.getParameterMap("fonts");
         images = themeInfo.getParameterMap("images");
         defaultFont = themeInfo.getFont("font");
-        textColor = themeInfo.getParameter("textColor", Color.WHITE);
         forceRelayout();
     }
 
@@ -560,10 +558,6 @@ public class TextArea extends Widget {
             }
             font = defaultFont;
         }
-        Color color = te.getColor();
-        if(color == null) {
-            color = textColor;
-        }
         fontLineHeight = font.getLineHeight();
 
         if(te.isParagraphStart()) {
@@ -582,7 +576,7 @@ public class TextArea extends Widget {
         int idx = 0;
         while(idx < text.length()) {
             int end = TextUtil.indexOf(text, '\n', idx);
-            layoutText(te, font, color, text, idx, end);
+            layoutText(te, font, text, idx, end);
             
             if(end < text.length() && text.charAt(end) == '\n') {
                 end++;
@@ -605,7 +599,7 @@ public class TextArea extends Widget {
     }
 
     private void layoutText(TextAreaModel.TextElement te, Font font,
-            Color color, String text, int textStart, int textEnd) {
+            String text, int textStart, int textEnd) {
         // trim start
         while(textStart < textEnd && isSkip(text.charAt(textStart))) {
             textStart++;
@@ -660,7 +654,7 @@ public class TextArea extends Widget {
             }
 
             if(idx < end) {
-                LText lt = new LText(font, text, idx, end, color, te.getVerticalAlignment());
+                LText lt = new LText(font, text, idx, end, te.getVerticalAlignment());
                 if(textAlignment == TextAreaModel.HAlignment.BLOCK && getRemaining() < lt.width) {
                     nextLine(false);
                 }
@@ -702,21 +696,19 @@ public class TextArea extends Widget {
         void adjustWidget() {}
     }
 
-    static class LText extends LElement {
+    class LText extends LElement {
         Font font;
         String text;
-        Color color;
         int start;
         int end;
         FontCache cache;
 
         public LText(Font font, String text, int start, int end,
-                Color color, TextAreaModel.VAlignment valign) {
+                TextAreaModel.VAlignment valign) {
             this.font = font;
             this.text = text;
             this.start = start;
             this.end = end;
-            this.color = color;
             this.cache = font.cacheText(null, text, start, end);
             this.height = font.getLineHeight();
             this.valign = valign;
@@ -731,9 +723,9 @@ public class TextArea extends Widget {
         @Override
         void draw(int offX, int offY) {
             if(cache != null) {
-                cache.draw(x+offX, y+offY, color);
+                cache.draw(getAnimationState(), x+offX, y+offY);
             } else {
-                font.drawText(x+offX, y+offY, text, color);
+                font.drawText(getAnimationState(), x+offX, y+offY, text);
             }
         }
 
