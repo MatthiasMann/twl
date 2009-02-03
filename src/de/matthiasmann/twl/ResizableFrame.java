@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
 
@@ -85,9 +84,6 @@ public class ResizableFrame extends Widget {
     private int dragInitialTop;
     private int dragInitialRight;
     private int dragInitialBottom;
-
-    private Image backgroundActive;
-    private Image backgroundInactive;
 
     private Color fadeColorInactive;
     private int fadeDurationActivate;
@@ -222,13 +218,6 @@ public class ResizableFrame extends Widget {
                 (currentTint != null || !Color.WHITE.equals(fadeColorInactive))) {
             fadeTo(fadeColorInactive, 0);
         }
-    }
-
-    @Override
-    protected void applyThemeBackground(ThemeInfo themeInfo) {
-        backgroundActive = themeInfo.getImage("background-active");
-        backgroundInactive = themeInfo.getImage("background-inactive");
-        setBackground(hasKeyboardFocus() ? backgroundActive : backgroundInactive);
     }
 
     @Override
@@ -435,21 +424,13 @@ public class ResizableFrame extends Widget {
 
     @Override
     protected void keyboardFocusGained() {
-        if(getBackground() != backgroundActive) {
-            setBackground(backgroundActive);
-        }
         fadeTo(Color.WHITE, fadeDurationActivate);
     }
 
     @Override
     protected void keyboardFocusLost() {
-        if(!hasOpenPopups()) {
-            if(getBackground() != backgroundInactive) {
-                setBackground(backgroundInactive);
-            }
-            if(super.isVisible()) {
-                fadeTo(fadeColorInactive, fadeDurationDeactivate);
-            }
+        if(!hasOpenPopups() && super.isVisible()) {
+            fadeTo(fadeColorInactive, fadeDurationDeactivate);
         }
     }
 
