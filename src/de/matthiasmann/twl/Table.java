@@ -82,11 +82,6 @@ public class Table extends TableBase {
         return null;
     }
 
-    @Override
-    protected boolean isRowSelected(int row, TreeTableNode node) {
-        return false;   // TODO: implement selection
-    }
-
     class ModelChangeListener implements TableModel.ChangeListener {
         public void rowsInserted(int idx, int count) {
             numRows = model.getNumRows();

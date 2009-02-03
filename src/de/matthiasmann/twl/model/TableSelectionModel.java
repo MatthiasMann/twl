@@ -42,6 +42,15 @@ public interface TableSelectionModel {
     public void clearSelection();
 
     /**
+     * Sets the selection to the given interval (both indices inclusive).
+     * Single selection should use index1.
+     *
+     * @param index0 the start index of the interval.
+     * @param index1 the end index of the interval.
+     */
+    public void setSelection(int index0, int index1);
+    
+    /**
      * Adds the given interval (both indices inclusive) to the selection.
      * Single selection should use index1.
      *
@@ -68,7 +77,15 @@ public interface TableSelectionModel {
      */
     public void removeSelection(int index0, int index1);
 
-    public boolean isSelected(int row);
+    public int getLeadIndex();
+
+    public int getAnchorIndex();
+
+    public void setLeadIndex(int index);
+
+    public void setAnchorIndex(int index);
+
+    public boolean isSelected(int index);
 
     public boolean hasSelection();
     

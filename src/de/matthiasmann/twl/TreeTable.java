@@ -197,11 +197,6 @@ public class TreeTable extends TableBase {
     }
 
     @Override
-    protected boolean isRowSelected(int row, TreeTableNode node) {
-        return false;   // TODO: implement selection
-    }
-
-    @Override
     protected CellRenderer getCellRenderer(int row, int col, TreeTableNode node) {
         if(node == null) {
             node = getNodeFromRow(row);
