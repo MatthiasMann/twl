@@ -809,12 +809,22 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     @Override
     protected boolean handleEvent(Event evt) {
+        if(super.handleEvent(evt)) {
+            return true;
+        }
+
         if(evt.isMouseEvent()) {
             return handleMouseEvent(evt);
         } else if(evt.isKeyEvent()) {
-            return handleKeyEvent(evt);
+            if(handleKeyEvent(evt)) {
+                if(evt.getType() == Event.Type.KEY_PRESSED) {
+                    requestKeyboardFocus(null);
+                }
+                return true;
+            }
         }
-        return super.handleEvent(evt);
+        
+        return false;
     }
 
     protected boolean dragActive;
@@ -829,10 +839,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             if(evt.isMouseDragEnd()) {
                 dragActive = false;
             }
-            return true;
-        }
-
-        if(super.handleEvent(evt)) {
             return true;
         }
 
@@ -938,7 +944,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             break;
         }
         
-        return super.handleEvent(evt);
+        return false;
     }
 
     protected void handleCursorKey(int moveX, int moveY, boolean isShift, boolean isCtrl) {
