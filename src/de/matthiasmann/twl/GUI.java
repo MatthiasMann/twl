@@ -576,9 +576,6 @@ public final class GUI extends Widget {
         } else {
             keyRepeatDelay = NO_REPEAT;
         }
-        if(pressed && event.keyChar != Keyboard.CHAR_NONE) {
-            sendEvent(Event.Type.CHAR_TYPED);
-        }
     }
     
     /**
@@ -593,9 +590,6 @@ public final class GUI extends Widget {
                 keyRepeatDelay = KEYREPEAT_INTERVAL_DELAY;
                 event.keyRepeated = true;
                 sendEvent(Event.Type.KEY_PRESSED);  // refire last key event
-                if(event.keyChar != Keyboard.CHAR_NONE) {
-                    sendEvent(Event.Type.CHAR_TYPED);
-                }
             }
         }
     }
@@ -991,8 +985,13 @@ public final class GUI extends Widget {
         }
 
         @Override
+        public boolean hasKeyChar() {
+            return type == Type.KEY_PRESSED && keyChar != Keyboard.CHAR_NONE;
+        }
+
+        @Override
         public boolean isKeyRepeated() {
-            return keyRepeated;
+            return type == Type.KEY_PRESSED && keyRepeated;
         }
 
         @Override

@@ -47,7 +47,6 @@ public abstract class Event {
         MOUSE_WHEEL(true, false),
         KEY_PRESSED(false, true),
         KEY_RELEASED(false, true),
-        CHAR_TYPED(false, true),
         POPUP_OPENED(false, false),
         POPUP_CLOSED(false, false);
         
@@ -157,12 +156,25 @@ public abstract class Event {
     public abstract Event createSubEvent(Type newType);
     
     /**
+     * Returns the key code. Only valid for KEY_PRESSED or KEY_RELEASED events
      * @see org.lwjgl.input.Keyboard
      * @return the key code
      */
     public abstract int getKeyCode();
-    
+
+    /**
+     * Returns the key character. Only valid if hasKeyChar() returns true.
+     * @see #hasKeyChar()
+     * @return the key character
+     */
     public abstract char getKeyChar();
+
+    /**
+     * Checks if a character is available for theis KEY_PRESSED event
+     * @see #getKeyChar()
+     * @return true if a character is available
+     */
+    public abstract boolean hasKeyChar();
     
     public abstract boolean isKeyRepeated();
     

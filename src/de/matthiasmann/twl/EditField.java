@@ -315,10 +315,6 @@ public class EditField extends Widget {
         }
 
         switch (evt.getType()) {
-        case CHAR_TYPED:
-            insertChar(evt.getKeyChar());
-            return true;
-            
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
             case Keyboard.KEY_BACK:
@@ -343,6 +339,12 @@ public class EditField extends Widget {
             case Keyboard.KEY_RIGHT:
                 moveCursor(+1, selectPressed);
                 return true;
+            default:
+                if(evt.hasKeyChar()) {
+                    insertChar(evt.getKeyChar());
+                    return true;
+                }
+                break;
             }
             break;
 

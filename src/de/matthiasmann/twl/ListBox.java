@@ -347,15 +347,6 @@ public class ListBox extends Widget {
         case MOUSE_WHEEL:
             scrollbar.scroll(-evt.getMouseWheelDelta());
             return true;
-        case CHAR_TYPED:
-            if(isSearchChar(evt.getKeyChar())) {
-                int idx = findEntryByName(Character.toString(evt.getKeyChar()));
-                if(idx != NO_SELECTION) {
-                    setSelected(idx, true, CallbackReason.KEYBOARD);
-                }
-                return true;
-            }
-            break;
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
             case Keyboard.KEY_UP:
@@ -392,7 +383,14 @@ public class ListBox extends Widget {
                 setSelected(selected, false, CallbackReason.KEYBOARD_RETURN);
                 break;
             default:
-                return isSearchChar(evt.getKeyChar());
+                if(evt.hasKeyChar() && isSearchChar(evt.getKeyChar())) {
+                    int idx = findEntryByName(Character.toString(evt.getKeyChar()));
+                    if(idx != NO_SELECTION) {
+                        setSelected(idx, true, CallbackReason.KEYBOARD);
+                    }
+                    return true;
+                }
+                break;
             }
             return true;
         case KEY_RELEASED:
