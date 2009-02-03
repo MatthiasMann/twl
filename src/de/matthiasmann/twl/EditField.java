@@ -601,7 +601,7 @@ public class EditField extends Widget {
 
         @Override
         protected int computeTextX() {
-            if(getParent().hasKeyboardFocus()) {
+            if(hasFocusOrPopup()) {
                 return getInnerX() - scrollPos;
             } else {
                 return getInnerX();
