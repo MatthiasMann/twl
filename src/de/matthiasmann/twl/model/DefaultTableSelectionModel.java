@@ -195,10 +195,10 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
             }
         }
         if(leadIndex >= index) {
-            leadIndex += index;
+            leadIndex += count;
         }
         if(anchorIndex >= index) {
-            anchorIndex += index;
+            anchorIndex += count;
         }
     }
 
@@ -211,7 +211,6 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
                     value.clear(i);
                 }
             }
-            value.clear(maxIndex-count, maxIndex);
             minIndex = value.nextSetBit(0);
             if(minIndex < 0) {
                 minIndex = Integer.MAX_VALUE;
