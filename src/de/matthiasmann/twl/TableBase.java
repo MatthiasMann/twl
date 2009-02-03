@@ -323,10 +323,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
         this.columnDividerDragableDistance = themeInfo.getParameter("columnDividerDragableDistance", 3);
         
-        autoSizeAllRows = true;
-        invalidateParentLayout();
-        invalidateLayout();
-
         for(CellRenderer cellRenderer : cellRenderers.getUniqueValues()) {
             applyCellRendererTheme(cellRenderer);
         }
