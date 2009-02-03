@@ -60,11 +60,13 @@ public abstract class ValueAdjuster extends Widget {
         
         decButton.addCallback(new Runnable() {
             public void run() {
+                cancelEdit();
                 doDecrement();
             }
         });
         incButton.addCallback(new Runnable() {
             public void run() {
+                cancelEdit();
                 doIncrement();
             }
         });
