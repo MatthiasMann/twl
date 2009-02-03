@@ -166,7 +166,7 @@
     duration        CDATA #REQUIRED
     tint            CDATA #IMPLIED>
 
-<!ELEMENT repeat (repeat|image)+>
+<!ELEMENT repeat (repeat|frame)+>
 <!ATTLIST repeat
     count           CDATA #IMPLIED>
 
