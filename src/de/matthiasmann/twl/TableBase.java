@@ -121,6 +121,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
     public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
     public static final String STATE_ROW_SELECTED = "rowSelected";
+    public static final String STATE_LEAD_ROW = "leadRow";
     public static final String STATE_SELECTED = "selected";
 
     private final StringCellRenderer stringCellRenderer;
@@ -140,6 +141,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected Image imageColumnDivider;
     protected Image imageRowBackground;
+    protected Image imageRowOverlay;
     protected ThemeInfo tableBaseThemeInfo;
     protected int columnHeaderHeight;
     protected int columnDividerDragableDistance;
@@ -161,6 +163,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected int firstVisibleColumn;
     protected int lastVisibleRow;
     protected int lastVisibleColumn;
+    protected boolean firstRowPartialVisible;
     protected boolean lastRowPartialVisible;
 
     protected TableBase() {
@@ -323,6 +326,23 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         invalidateLayout();
     }
 
+    public void adjustScrollPosition(int row) {
+        checkRowIndex(row);
+        ScrollPane scrollPane = ScrollPane.getContainingScrollPane(this);
+        int numVisibleRows = getNumVisibleRows();
+        if(numVisibleRows >= 1 && scrollPane != null) {
+            if(row < firstVisibleRow || (row == firstVisibleRow && firstRowPartialVisible)) {
+                int pos = getRowStartPosition(row);
+                scrollPane.setScrollPositionY(pos);
+            } else if(row > lastVisibleRow || (row == lastVisibleRow && lastRowPartialVisible)) {
+                int innerHeight = Math.max(0, getInnerHeight() - columnHeaderHeight);
+                int pos = getRowEndPosition(row);
+                pos = Math.max(0, pos - innerHeight);
+                scrollPane.setScrollPositionY(pos);
+            }
+        }
+    }
+
     protected final void checkRowIndex(int row) {
         if(row < 0 || row >= numRows) {
             throw new IndexOutOfBoundsException("row");
@@ -345,7 +365,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected void applyThemeTableBase(ThemeInfo themeInfo) {
         this.tableBaseThemeInfo = themeInfo;
         this.imageColumnDivider = themeInfo.getImage("columnDivider");
-        this.imageRowBackground = themeInfo.getImage("rowBackground");
+        this.imageRowBackground = themeInfo.getImage("row.background");
+        this.imageRowOverlay = themeInfo.getImage("row.overlay");
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
         this.defaultColumnWidth = themeInfo.getParameter("columnHeaderWidth", 256);
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
@@ -421,15 +442,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         int endRow = Math.min(numRows-1, Math.max(startRow, getRowFromPosition(scrollEndY)));
         int endColumn = Math.min(numColumns-1, Math.max(startColumn, getColumnFromPosition(scrollEndX)));
 
-        if(endRow+1 < numRows && getRowEndPosition(endRow) < scrollEndY) {
-            endRow++;
-            lastRowPartialVisible = true;
-        } else {
-            lastRowPartialVisible = false;
-        }
-        if(endColumn+1 < numColumns && getColumnEndPosition(endColumn) < scrollEndX) {
-            endColumn++;
-        }
+        firstRowPartialVisible = getRowStartPosition(startRow) < scrollPosY;
+        lastRowPartialVisible = getRowEndPosition(endRow) > scrollEndY;
 
         if(!widgetGrid.isEmpty()) {
             if(startRow > firstVisibleRow) {
@@ -480,19 +494,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         gui.clipEnter(innerX, innerY, innerWidth, innerHeight);
         try {
             final AnimationState animState = getAnimationState();
+            final int leadIndex = (selectionModel != null) ? selectionModel.getLeadIndex() : -1;
 
             if(imageRowBackground != null) {
-                int rowStartPos = getRowStartPosition(firstVisibleRow);
-                for(int row=firstVisibleRow ; row<=lastVisibleRow ; row++) {
-                    final int rowEndPos = getRowEndPosition(row);
-                    final int curRowHeight = rowEndPos - rowStartPos;
-                    final int curY = offsetY + rowStartPos;
-
-                    animState.setAnimationState(STATE_ROW_SELECTED, isRowSelected(row));
-                    imageRowBackground.draw(animState, innerX, curY, innerWidth,curRowHeight);
-
-                    rowStartPos = rowEndPos;
-                }
+                paintRowImage(imageRowBackground, leadIndex);
             }
 
             if(imageColumnDivider != null) {
@@ -543,8 +548,32 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
                 rowStartPos = rowEndPos;
             }
+
+            if(imageRowOverlay != null) {
+                paintRowImage(imageRowOverlay, leadIndex);
+            }
         } finally {
             gui.clipLeave();
+        }
+    }
+
+    private void paintRowImage(Image img, int leadIndex) {
+        final AnimationState animState = getAnimationState();
+        final int x = getOffsetX();
+        final int width = columnModel.getEndPosition();
+        final int offsetY = getOffsetY();
+        
+        int rowStartPos = getRowStartPosition(firstVisibleRow);
+        for(int row=firstVisibleRow ; row<=lastVisibleRow ; row++) {
+            final int rowEndPos = getRowEndPosition(row);
+            final int curRowHeight = rowEndPos - rowStartPos;
+            final int curY = offsetY + rowStartPos;
+
+            animState.setAnimationState(STATE_ROW_SELECTED, isRowSelected(row));
+            animState.setAnimationState(STATE_LEAD_ROW, row == leadIndex);
+            img.draw(animState, x, curY, width, curRowHeight);
+
+            rowStartPos = rowEndPos;
         }
     }
 
@@ -839,55 +868,95 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected boolean handleKeyEvent(Event evt) {
+        boolean isShift = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
+        boolean isCtrl = (evt.getModifiers() & Event.MODIFIER_CTRL) != 0;
+        
         switch (evt.getType()) {
-            case KEY_PRESSED:
-                boolean isShift = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
-                boolean isCtrl = (evt.getModifiers() & Event.MODIFIER_CTRL) != 0;
-                switch (evt.getKeyCode()) {
-                    case Keyboard.KEY_UP:
-                        handleCursorKey(0, -1, isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_DOWN:
-                        handleCursorKey(0, +1, isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_LEFT:
-                        handleCursorKey(-1, 0, isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_RIGHT:
-                        handleCursorKey(+1, 0, isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_PERIOD:
-                        handleCursorKey(0, -Math.max(1, getNumVisibleRows()), isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_NEXT:
-                        handleCursorKey(0, +Math.max(1, getNumVisibleRows()), isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_HOME:
-                        handleCursorKey(-numColumns-1, -numRows-1, isShift, isCtrl);
-                        return true;
-                    case Keyboard.KEY_END:
-                        handleCursorKey(+numColumns+1, +numRows+1, isShift, isCtrl);
-                        return true;
+        case KEY_PRESSED:
+            switch (evt.getKeyCode()) {
+            case Keyboard.KEY_UP:
+                handleCursorKey(0, -1, isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_DOWN:
+                handleCursorKey(0, +1, isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_LEFT:
+                handleCursorKey(-1, 0, isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_RIGHT:
+                handleCursorKey(+1, 0, isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_PERIOD:
+                handleCursorKey(0, -Math.max(1, getNumVisibleRows()), isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_NEXT:
+                handleCursorKey(0, +Math.max(1, getNumVisibleRows()), isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_HOME:
+                handleCursorKey(-numColumns-1, -numRows-1, isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_END:
+                handleCursorKey(+numColumns+1, +numRows+1, isShift, isCtrl);
+                return true;
+            case Keyboard.KEY_A:
+                if(isCtrl && selectionModel != null) {
+                    if(numRows > 0) {
+                        selectionModel.setSelection(0, numRows-1);
+                    }
+                    return true;
                 }
                 break;
-            case KEY_RELEASED:
-                switch (evt.getKeyCode()) {
-                    case Keyboard.KEY_UP:
-                    case Keyboard.KEY_DOWN:
-                    case Keyboard.KEY_LEFT:
-                    case Keyboard.KEY_RIGHT:
-                    case Keyboard.KEY_PERIOD:
-                    case Keyboard.KEY_NEXT:
-                    case Keyboard.KEY_HOME:
-                    case Keyboard.KEY_END:
-                        return true;
+            case Keyboard.KEY_SPACE:
+                if(isCtrl && selectionModel != null) {
+                    int leadIndex = selectionModel.getLeadIndex();
+                    if(leadIndex >= 0) {
+                        selectionModel.invertSelection(leadIndex, leadIndex);
+                    }
+                    return true;
                 }
                 break;
+            }
+            break;
+        case KEY_RELEASED:
+            switch (evt.getKeyCode()) {
+            case Keyboard.KEY_UP:
+            case Keyboard.KEY_DOWN:
+            case Keyboard.KEY_LEFT:
+            case Keyboard.KEY_RIGHT:
+            case Keyboard.KEY_PERIOD:
+            case Keyboard.KEY_NEXT:
+            case Keyboard.KEY_HOME:
+            case Keyboard.KEY_END:
+                return true;
+            case Keyboard.KEY_A:
+            case Keyboard.KEY_SPACE:
+                if(isCtrl && selectionModel != null) {
+                    return true;
+                }
+                break;
+            }
+            break;
         }
+        
         return super.handleEvent(evt);
     }
 
     protected void handleCursorKey(int moveX, int moveY, boolean isShift, boolean isCtrl) {
+        if(selectionModel != null && numRows > 0) {
+            int leadIndex = Math.max(0, selectionModel.getLeadIndex());
+            int anchorIndex = Math.max(0, selectionModel.getAnchorIndex());
+            int index = Math.max(0, Math.min(numRows-1, leadIndex + moveY));
+
+            adjustScrollPosition(index);
+
+            if(isCtrl) {
+                selectionModel.setLeadIndex(index);
+            } else if(isShift) {
+                selectionModel.setSelection(anchorIndex, index);
+            } else {
+                selectionModel.setSelection(index, index);
+            }
+        }
     }
 
     protected void handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
@@ -897,6 +966,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     selectionModel.clearSelection();
                 }
             } else {
+                adjustScrollPosition(row);
                 int anchorIndex = selectionModel.getAnchorIndex();
                 boolean anchorSelected;
                 if(anchorIndex == -1) {
