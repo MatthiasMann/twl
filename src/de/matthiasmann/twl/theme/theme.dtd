@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
     PUBLIC ID  : -//www.matthiasmann.de//TWL-Theme//EN
-    SYSTEM ID  : http://hg.l33tlabs.org/twl/file/tip/src/de/matthiasmann/twl/theme/theme.dtd
+    SYSTEM ID  : http://hg.l33tlabs.org/twl/raw-file/tip/src/de/matthiasmann/twl/theme/theme.dtd
 -->
 
 <!ELEMENT themes (textures|fontDef|theme|constantDef|include)*>
