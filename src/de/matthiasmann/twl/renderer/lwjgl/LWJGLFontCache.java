@@ -54,10 +54,10 @@ public class LWJGLFontCache implements FontCache {
     
     public void draw(AnimationState as, int x, int y) {
         if(id != 0) {
-            LWJGLFont.Params param = font.evalParam(as);
-            renderer.tintState.setColor(param.color);
+            LWJGLFont.FontState fontState = font.evalFontState(as);
+            renderer.tintState.setColor(fontState.color);
             GL11.glPushMatrix();
-            GL11.glTranslatef(x+param.offsetX, y+param.offsetY, 0f);
+            GL11.glTranslatef(x+fontState.offsetX, y+fontState.offsetY, 0f);
             GL11.glCallList(id);
             GL11.glPopMatrix();
         }

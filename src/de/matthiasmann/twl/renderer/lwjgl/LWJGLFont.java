@@ -49,27 +49,31 @@ public class LWJGLFont implements Font {
 
     private final LWJGLRenderer renderer;
     private final BitmapFont font;
-    private final Params[] params;
+    private final FontState[] fontStates;
 
     LWJGLFont(LWJGLRenderer renderer, BitmapFont font, Map<String, String> params, Collection<FontParameter> condParams) {
         this.renderer = renderer;
         this.font = font;
 
-        ArrayList<Params> paramsTemp = new ArrayList<Params>();
+        ArrayList<FontState> states = new ArrayList<FontState>();
         for(FontParameter p : condParams) {
             HashMap<String, String> effective = new HashMap<String, String>(params);
             effective.putAll(p.getParams());
-            paramsTemp.add(evalParam(p.getCondition(), effective));
+            states.add(createFontState(p.getCondition(), effective));
         }
-        paramsTemp.add(evalParam(null, params));
-        this.params = paramsTemp.toArray(new Params[paramsTemp.size()]);
+        states.add(createFontState(null, params));
+        this.fontStates = states.toArray(new FontState[states.size()]);
     }
 
-    private Params evalParam(StateExpression cond, Map<String, String> params) {
+    private FontState createFontState(StateExpression cond, Map<String, String> params) {
+        String colorStr = params.get("color");
+        if(colorStr == null) {
+            throw new IllegalArgumentException("color needs to be defined");
+        }
         int offsetX = parseInt(params.get("offsetX"), 0);
         int offsetY = parseInt(params.get("offsetY"), 0);
-        Color color = Color.parserColor(params.get("color"));
-        Params p = new Params(cond, color, offsetX, offsetY);
+        Color color = Color.parserColor(colorStr);
+        FontState p = new FontState(cond, color, offsetX, offsetY);
         return p;
     }
 
@@ -80,14 +84,14 @@ public class LWJGLFont implements Font {
         return Integer.parseInt(valueStr);
     }
 
-    Params evalParam(AnimationState as) {
+    FontState evalFontState(AnimationState as) {
         int i = 0;
-        for(int n=params.length-1 ; i<n ; i++) {
-            if(params[i].condition.evaluate(as)) {
+        for(int n=fontStates.length-1 ; i<n ; i++) {
+            if(fontStates[i].condition.evaluate(as)) {
                 break;
             }
         }
-        return params[i];
+        return fontStates[i];
     }
 
     public int drawText(AnimationState as, int x, int y, CharSequence str) {
@@ -95,26 +99,26 @@ public class LWJGLFont implements Font {
     }
 
     public int drawText(AnimationState as, int x, int y, CharSequence str, int start, int end) {
-        Params param = evalParam(as);
+        FontState fontState = evalFontState(as);
         if(!font.prepare()) {
             return 0;
         }
         try {
-            renderer.tintState.setColor(param.color);
-            return font.drawText(x+param.offsetX, y+param.offsetY, str, start, end);
+            renderer.tintState.setColor(fontState.color);
+            return font.drawText(x+fontState.offsetX, y+fontState.offsetY, str, start, end);
         } finally {
             font.cleanup();
         }
     }
 
     public int drawMultiLineText(AnimationState as, int x, int y, CharSequence str, int width, HAlignment align) {
-        Params param = evalParam(as);
+        FontState fontState = evalFontState(as);
         if(!font.prepare()) {
             return 0;
         }
         try {
-            renderer.tintState.setColor(param.color);
-            return font.drawMultiLineText(x+param.offsetX, y+param.offsetY, str, width, align);
+            renderer.tintState.setColor(fontState.color);
+            return font.drawMultiLineText(x+fontState.offsetX, y+fontState.offsetY, str, width, align);
         } finally {
             font.cleanup();
         }
@@ -172,13 +176,13 @@ public class LWJGLFont implements Font {
         font.destroy();
     }
     
-    static class Params {
+    static class FontState {
         final StateExpression condition;
         final Color color;
         final int offsetX;
         final int offsetY;
 
-        public Params(StateExpression condition, Color color, int offsetX, int offsetY) {
+        public FontState(StateExpression condition, Color color, int offsetX, int offsetY) {
             this.condition = condition;
             this.color = color;
             this.offsetX = offsetX;
