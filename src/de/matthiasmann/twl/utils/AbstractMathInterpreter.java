@@ -105,7 +105,10 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
                 boolean match = true;
                 for(int i=0 ; i<count ; i++) {
                     Class<?> param = params[i];
-                    param = primitiveTypeMap.get(param);
+                    if(param.isPrimitive()) {
+                        param = primitiveTypeMap.get(param);
+                        assert param != null;
+                    }
                     if(!param.isInstance(stack.get(0))) {
                         match = false;
                         break;
