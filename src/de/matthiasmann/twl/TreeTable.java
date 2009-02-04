@@ -42,7 +42,7 @@ import de.matthiasmann.twl.utils.SizeSequence;
  * @author Matthias Mann
  */
 public class TreeTable extends TableBase {
-
+    
     private final ModelChangeListener modelChangeListener;
     private final TreeLeafCellRenderer leafRenderer;
     private final TreeNodeCellRenderer nodeRenderer;
@@ -182,6 +182,7 @@ public class TreeTable extends TableBase {
         } else {
             modelRowsDeleted(row+1, count);
         }
+        modelRowsChanged(row, 1);
     }
 
     protected int getNumRows() {
@@ -342,6 +343,7 @@ public class TreeTable extends TableBase {
     protected class NodeState extends HashEntry<TreeTableNode, NodeState> implements BooleanModel {
         final NodeState parent;
         boolean expanded;
+        boolean hasNoChildren;
         SizeSequence childSizes;
         NodeState[] children;
         int level;
@@ -386,7 +388,13 @@ public class TreeTable extends TableBase {
             if(childSizes != null) {
                 return childSizes.getEndPosition();
             }
-            return key.getNumChildren();
+            int childCount = key.getNumChildren();
+            hasNoChildren = childCount == 0;
+            return childCount;
+        }
+
+        boolean hasNoChildren() {
+            return hasNoChildren;
         }
     }
 
@@ -460,6 +468,9 @@ public class TreeTable extends TableBase {
         private NodeState nodeState;
 
         public Widget updateWidget(Widget existingWidget) {
+            if(nodeState.hasNoChildren()) {
+                return null;
+            }
             ToggleButton tb = (ToggleButton)existingWidget;
             if(tb == null) {
                 tb = new ToggleButton();

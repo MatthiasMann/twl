@@ -711,6 +711,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 }
                 we.creator = cellWidgetCreator;
                 we.cache = getWidgetCache(ccwc.getCacheTag(row, column));
+                we.widget = null;
             } else {
                 newWidget = cellWidgetCreator.updateWidget(oldWidget);
                 if(newWidget != null) {
@@ -1095,7 +1096,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 }
             }
         }
-        if(row < getRowStartPosition(scrollPosY)) {
+        if(row < getRowFromPosition(scrollPosY)) {
             ScrollPane sp = ScrollPane.getContainingScrollPane(this);
             if(sp != null) {
                 int rowsStart = getRowStartPosition(row);
@@ -1111,7 +1112,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelRowsDeleted(int row, int count) {
-        if(row+count <= getRowStartPosition(scrollPosY)) {
+        if(row+count <= getRowFromPosition(scrollPosY)) {
             ScrollPane sp = ScrollPane.getContainingScrollPane(this);
             if(sp != null) {
                 int rowsStart = getRowStartPosition(row);
