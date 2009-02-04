@@ -387,16 +387,18 @@ public class Scrollbar extends Widget {
     }
     
     void updateTimer() {
-        if(trackClicked != 0 ||
-                btnUpLeft.getModel().isArmed() ||
-                btnDownRight.getModel().isArmed()) {
-            if(!timer.isRunning()) {
-                onTimer();
-                timer.setDelay(INITIAL_DELAY);
-                timer.start();
+        if(timer != null) {
+            if(trackClicked != 0 ||
+                    btnUpLeft.getModel().isArmed() ||
+                    btnDownRight.getModel().isArmed()) {
+                if(!timer.isRunning()) {
+                    onTimer();
+                    timer.setDelay(INITIAL_DELAY);
+                    timer.start();
+                }
+            } else {
+                timer.stop();
             }
-        } else {
-            timer.stop();
         }
     }
 
