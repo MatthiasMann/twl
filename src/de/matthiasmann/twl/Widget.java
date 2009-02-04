@@ -1042,7 +1042,7 @@ public class Widget {
     }
 
     protected void applyThemeBorder(ThemeInfo themeInfo) {
-        setBorderSize(themeInfo.getBorder());
+        setBorderSize(themeInfo.getParameterValue("border", false, Border.class));
     }
 
     protected void applyThemeMinSize(ThemeInfo themeInfo) {

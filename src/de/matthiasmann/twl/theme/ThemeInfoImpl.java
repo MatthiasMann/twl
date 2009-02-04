@@ -43,7 +43,6 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
     private final String name;
     final ThemeInfoImpl parent;
     final HashMap<String, ThemeInfoImpl> children;
-    Border border;
     boolean maybeUsedFromWildcard;
     String wildcardImportPath;
 
@@ -55,9 +54,6 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
     }
 
     void copy(ThemeInfoImpl src) {
-        if(src.border != null) {
-            border = src.border;
-        }
         children.putAll(src.children);
         params.putAll(src.params);
         wildcardImportPath = src.wildcardImportPath;
@@ -65,10 +61,6 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
 
     public String getName() {
         return name;
-    }
-
-    public Border getBorder() {
-        return border;
     }
 
     public ThemeInfo getChildTheme(String theme) {

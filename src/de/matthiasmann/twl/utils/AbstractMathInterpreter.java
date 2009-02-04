@@ -33,9 +33,12 @@ import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -85,6 +88,52 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
             result[i] = popNumber().intValue();
         }
         return result;
+    }
+
+    public<T> T executeCreateObject(String str, Class<T> type) throws ParseException {
+        stack.clear();
+        int count = SimpleMathParser.interpretArray(str, this);
+        if(stack.size() != count) {
+            throw new IllegalStateException("Expected " + count + " return values on the stack");
+        }
+        if(count == 1 && type.isInstance(stack.get(0))) {
+            return type.cast(stack.get(0));
+        }
+        for(Constructor<?> c : type.getConstructors()) {
+            Class<?>[] params = c.getParameterTypes();
+            if(params.length == count) {
+                boolean match = true;
+                for(int i=0 ; i<count ; i++) {
+                    Class<?> param = params[i];
+                    param = primitiveTypeMap.get(param);
+                    if(!param.isInstance(stack.get(0))) {
+                        match = false;
+                        break;
+                    }
+                }
+                if(match) {
+                    try {
+                        return type.cast(c.newInstance(stack.toArray(new Object[count])));
+                    } catch (Exception ex) {
+                        Logger.getLogger(AbstractMathInterpreter.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        }
+        throw new IllegalArgumentException("Can't construct a " + type +
+                " from expression: \"" + str + "\"");
+    }
+
+    private static HashMap<Class<?>, Class<?>> primitiveTypeMap = new HashMap<Class<?>, Class<?>>();
+    static {
+        primitiveTypeMap.put(Boolean.TYPE, Boolean.class);
+        primitiveTypeMap.put(Byte.TYPE, Byte.class);
+        primitiveTypeMap.put(Short.TYPE, Short.class);
+        primitiveTypeMap.put(Character.TYPE, Character.class);
+        primitiveTypeMap.put(Integer.TYPE, Integer.class);
+        primitiveTypeMap.put(Long.TYPE, Long.class);
+        primitiveTypeMap.put(Float.TYPE, Float.class);
+        primitiveTypeMap.put(Double.TYPE, Double.class);
     }
     
     protected void push(Object obj) {

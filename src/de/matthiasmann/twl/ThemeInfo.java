@@ -36,12 +36,6 @@ package de.matthiasmann.twl;
  */
 public interface ThemeInfo extends ParameterMap {
 
-    /**
-     * Returns the border for this element if it has one
-     * @return a border or null
-     */
-    public Border getBorder();
-
     public ThemeInfo getChildTheme(String theme);
     
 }

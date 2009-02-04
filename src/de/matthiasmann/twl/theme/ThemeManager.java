@@ -352,24 +352,6 @@ public class ThemeManager {
                         ThemeInfoImpl tiChild = parseTheme(xpp, name, ti);
                         ti.children.put(name, tiChild);
                     }
-                } else if("border".equals(tagName)) {
-                    ref = xpp.getAttributeValue(null, "ref");
-                    if(ref != null) {
-                        Image img = ti.getImage(ref);
-                        if(img == null) {
-                            throw new XmlPullParserException("image \""+ref+"\" not found", xpp, null);
-                        }
-                        if(!(img instanceof HasBorder)) {
-                            throw new XmlPullParserException("image \""+ref+"\" has no border", xpp, null);
-                        }
-                        ti.border = ((HasBorder)img).getBorder();
-                    } else {
-                        ti.border = ParserUtil.parseBorderFromAttribute(xpp, "border");
-                        if(ti.border == null) {
-                            throw new XmlPullParserException("missing border parameters", xpp, null);
-                        }
-                    }
-                    xpp.nextTag();
                 } else {
                     throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
                 }
@@ -476,28 +458,10 @@ public class ThemeManager {
                 return ParserUtil.parseBool(xpp, value);
             }
             if("border".equals(tagName)) {
-                int[] tmp = parseIntArray(xpp, value);
-                switch(tmp.length) {
-                case 1:
-                    return new Border(tmp[0]);
-                case 2:
-                    return new Border(tmp[0], tmp[1]);
-                case 4:
-                    return new Border(tmp[0], tmp[1], tmp[2], tmp[3]);
-                default:
-                    throw new XmlPullParserException("expected 1, 2 (H,V) or 4 (T,L,B,R) values", xpp, null);
-                }
+                return parseObject(xpp, value, Border.class);
             }
             if("dimension".equals(tagName)) {
-                int[] tmp = parseIntArray(xpp, value);
-                switch(tmp.length) {
-                case 1:
-                    return new Dimension(tmp[0], tmp[0]);
-                case 2:
-                    return new Dimension(tmp[0], tmp[1]);
-                default:
-                    throw new XmlPullParserException("expected 1 or 2 (X,Y) values", xpp, null);
-                }
+                return parseObject(xpp, value, Dimension.class);
             }
             if("constant".equals(tagName)) {
                 Object result = constants.get(value);
@@ -543,9 +507,9 @@ public class ThemeManager {
         }
     }
 
-    private int[] parseIntArray(XmlPullParser xpp, String str) throws XmlPullParserException {
+    private<T> T parseObject(XmlPullParser xpp, String str, Class<T> type) throws XmlPullParserException {
         try {
-            return mathInterpreter.executeIntArray(str);
+            return mathInterpreter.executeCreateObject(str, type);
         } catch(ParseException ex) {
             throw (XmlPullParserException)(new XmlPullParserException(
                     "unable to evaluate", xpp, ex).initCause(ex));

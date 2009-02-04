@@ -185,17 +185,12 @@
 <!ATTLIST include
     filename        CDATA #REQUIRED>
 
-<!ELEMENT theme (border|param|theme)*>
+<!ELEMENT theme (param|theme)*>
 <!ATTLIST theme
     name            CDATA #REQUIRED
     ref             CDATA #IMPLIED
     merge           (true|false) #IMPLIED
     allowWildcard   (true|false) #IMPLIED>
-
-<!ELEMENT border (#PCDATA)>
-<!ATTLIST border
-    ref             CDATA #IMPLIED
-    border          CDATA #IMPLIED>
 
 <!ELEMENT param (color|enum|string|font|int|float|bool|border|dimension|constant|image|cursor|list|map)>
 <!ATTLIST param
@@ -210,7 +205,7 @@
 <!ELEMENT bool (#PCDATA)>
 <!ATTLIST enum
     type            CDATA #IMPLIED>
-<!-- <!ELEMENT border (#PCDATA)> -->
+<!ELEMENT border (#PCDATA)>
 <!ELEMENT dimension (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>
 <!ELEMENT image (#PCDATA)>
