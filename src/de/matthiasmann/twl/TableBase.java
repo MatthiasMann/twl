@@ -759,7 +759,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected ColumnHeader createColumnHeader(int column) {
         ColumnHeader btn = new ColumnHeader();
         btn.setTheme("columnHeader");
-        btn.setClip(true);
         super.insertChild(btn, super.getNumChildren());
         return btn;
     }
