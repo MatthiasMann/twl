@@ -46,6 +46,7 @@ public class Widget {
 
     public static final String STATE_KEYBOARD_FOCUS = "keyboardFocus";
     public static final String STATE_HAS_OPEN_POPUPS = "hasOpenPopups";
+    public static final String STATE_HAS_FOCUSED_CHILD = "hasFocusedChild";
     
     private static final int FOCUS_KEY = Keyboard.KEY_TAB;
     
@@ -86,6 +87,7 @@ public class Widget {
 
     private boolean focusKeyEnabled = true;
     private boolean canAcceptKeyboardFocus;
+    private boolean depthFocusTraversal = true;
     
     public Widget() {
         this(null);
@@ -904,6 +906,14 @@ public class Widget {
         this.canAcceptKeyboardFocus = canAcceptKeyboardFocus;
     }
 
+    public boolean isDepthFocusTraversal() {
+        return depthFocusTraversal;
+    }
+
+    public void setDepthFocusTraversal(boolean depthFocusTraversal) {
+        this.depthFocusTraversal = depthFocusTraversal;
+    }
+
     /**
      * Requests that the keyboard focus is transfered to this widget. Use with care.
      * @return true if keyboard focus was transfered to this widget.
@@ -930,41 +940,19 @@ public class Widget {
     }
 
     public boolean focusNextChild() {
-        if(focusChild != null) {
-            if(!focusChild.canAcceptKeyboardFocus() && focusChild.focusNextChild()) {
-                return true;
-            }
-        }
-        List<Widget> focusList = getKeyboardFocusOrder();
-        int focusIdx = focusList.indexOf(focusChild);
-        if(focusIdx < 0) {
-            focusIdx = 0;
-        }
-
-        return focusChildren(focusIdx+1, +1);
+        return moveFocus(true, +1);
     }
 
     public boolean focusPrevChild() {
-        if(focusChild != null) {
-            if(!focusChild.canAcceptKeyboardFocus() && focusChild.focusPrevChild()) {
-                return true;
-            }
-        }
-        List<Widget> focusList = getKeyboardFocusOrder();
-        int focusIdx = focusList.indexOf(focusChild);
-        if(focusIdx < 0) {
-            focusIdx = focusList.size();
-        }
-
-        return focusChildren(focusIdx-1, -1);
+        return moveFocus(true, -1);
     }
 
     public boolean focusFirstChild() {
-        return focusChildren(0, 1);
+        return moveFocus(false, +1);
     }
 
     public boolean focusLastChild() {
-        return focusChildren(-1, -1);
+        return moveFocus(false, -1);
     }
 
     /**
@@ -1208,6 +1196,9 @@ public class Widget {
                 focusChild.keyboardFocusGained();
             }
         }
+        if(!sharedAnimState) {
+            animState.setAnimationState(STATE_HAS_FOCUSED_CHILD, focusChild != null);
+        }
         return focusChild != null;
     }
     
@@ -1416,32 +1407,42 @@ public class Widget {
         return Collections.unmodifiableList(children);
     }
 
-    protected boolean focusChildren(int start, int dir) {
-        List<Widget> focusList = getKeyboardFocusOrder();
-        final int n = focusList.size();
-        //System.out.println(this+" "+getThemePath()+" n="+n+" start="+start+" dir="+dir);
-        if(n == 0) {
-            return false;
-        }
-
-        if(start < 0) {
-            start += n;
-        }
-
-        for(int idx=start ; idx>=0 && idx<n ; idx+=dir) {
-            Widget child = focusList.get(idx);
-            if(child.visible) {
-                if(child.canAcceptKeyboardFocus()) {
-                    requestKeyboardFocus(child);
-                    return true;
-                } else if((dir > 0 && child.focusFirstChild()) ||
-                        (dir < 0 && child.focusLastChild())) {
-                    return true;
+    private int collectFocusOrderList(ArrayList<Widget> list) {
+        int idx = -1;
+        for(Widget child : getKeyboardFocusOrder()) {
+            if(child.canAcceptKeyboardFocus) {
+                if(child == focusChild) {
+                    idx = list.size();
+                }
+                list.add(child);
+            }
+            if(child.depthFocusTraversal) {
+                int subIdx = child.collectFocusOrderList(list);
+                if(subIdx != -1) {
+                    idx = subIdx;
                 }
             }
         }
+        return idx;
+    }
 
-        return false;
+    private boolean moveFocus(boolean relative, int dir) {
+        ArrayList<Widget> focusList = new ArrayList<Widget>();
+        int curIndex = collectFocusOrderList(focusList);
+        if(focusList.isEmpty()) {
+            return false;
+        }
+        if(dir < 0) {
+            if(!relative || --curIndex < 0) {
+                curIndex = focusList.size() - 1;
+            }
+        } else if(!relative || ++curIndex >= focusList.size()) {
+            curIndex = 0;
+        }
+        Widget widget = focusList.get(curIndex);
+        widget.requestKeyboardFocus();
+        widget.requestKeyboardFocus(null);
+        return true;
     }
 
     /**
@@ -1746,13 +1747,9 @@ public class Widget {
     private void handleFocusKeyEvent(Event evt) {
         if(evt.getType() == Event.Type.KEY_PRESSED) {
             if((evt.getModifiers() & Event.MODIFIER_SHIFT) != 0) {
-                if(!focusPrevChild()) {
-                    focusLastChild();
-                }
+                focusPrevChild();
             } else {
-                if(!focusNextChild()) {
-                    focusFirstChild();
-                }
+                focusNextChild();
             }
         }
     }

@@ -136,6 +136,7 @@ public class Scrollbar extends Widget {
         this.maxValue = 100;
         
         setSize(30, 200);
+        setDepthFocusTraversal(false);
     }
 
     public void addCallback(Runnable cb) {

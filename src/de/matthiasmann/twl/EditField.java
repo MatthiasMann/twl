@@ -79,6 +79,7 @@ public class EditField extends Widget {
         
         add(textRenderer);
         setCanAcceptKeyboardFocus(true);
+        setDepthFocusTraversal(false);
 
         addActionMapping("cut", "cutToClipboard");
         addActionMapping("copy", "copyToClipboard");

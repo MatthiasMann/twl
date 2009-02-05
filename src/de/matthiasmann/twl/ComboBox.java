@@ -109,6 +109,7 @@ public class ComboBox extends Widget {
         add(label);
         add(button);
         setCanAcceptKeyboardFocus(true);
+        setDepthFocusTraversal(false);
     }
 
     public void addCallback(Runnable cb) {

@@ -98,6 +98,7 @@ public abstract class ValueAdjuster extends Widget {
         add(decButton);
         add(incButton);
         setCanAcceptKeyboardFocus(true);
+        setDepthFocusTraversal(false);
     }
 
     public void startEdit() {
@@ -166,11 +167,12 @@ public abstract class ValueAdjuster extends Widget {
     @Override
     protected void keyboardFocusLost() {
         cancelEdit();
+        label.getAnimationState().setAnimationState(STATE_KEYBOARD_FOCUS, false);
     }
 
     @Override
     protected void keyboardFocusGained() {
-        label.requestKeyboardFocus();
+        label.getAnimationState().setAnimationState(STATE_KEYBOARD_FOCUS, true);
     }
 
     @Override

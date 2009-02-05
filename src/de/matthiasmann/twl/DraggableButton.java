@@ -52,6 +52,10 @@ public class DraggableButton extends Button {
     public DraggableButton() {
     }
 
+    public DraggableButton(AnimationState animState) {
+        super(animState);
+    }
+
     public boolean isDragActive() {
         return dragging;
     }

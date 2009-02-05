@@ -96,6 +96,7 @@ public class ListBox extends Widget {
         
         setSize(200, 300);
         setCanAcceptKeyboardFocus(true);
+        setDepthFocusTraversal(false);
     }
 
     public ListBox(ListModel model) {
