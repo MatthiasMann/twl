@@ -482,8 +482,9 @@ public class TreeTable extends TableBase {
 
         public void positionWidget(Widget widget, int x, int y, int w, int h) {
             int indent = level * treeIndent;
+            int availWidth = Math.max(0, w-indent);
             widget.setPosition(x + indent, y + (h-treeButtonSize.getY())/2);
-            widget.setSize(treeButtonSize.getX(), treeButtonSize.getY());
+            widget.setSize(Math.min(availWidth, treeButtonSize.getX()), treeButtonSize.getY());
         }
 
         public void setCellData(int row, int column, Object data, NodeState nodeState) {
