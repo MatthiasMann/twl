@@ -103,6 +103,17 @@ public class TextUtil {
         return n;
     }
 
+    public static int skipSpaces(CharSequence s, int start) {
+        return skipSpaces(s, start, s.length());
+    }
+
+    public static int skipSpaces(CharSequence s, int start, int end) {
+        while(start < end && Character.isWhitespace(s.charAt(start))) {
+            start++;
+        }
+        return start;
+    }
+
     public static String createString(char ch, int len) {
         char[] buf = new char[len];
         for(int i=0 ; i<len ; i++) {

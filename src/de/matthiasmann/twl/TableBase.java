@@ -179,6 +179,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
         super.insertChild(cellWidgetContainer, 0);
         setCanAcceptKeyboardFocus(true);
+
+        addActionMapping("selectAll", "selectAll");
+        addActionMapping("toggleSelectionOnLeadRow", "toggleSelectionOnLeadRow");
     }
 
     public TableSelectionModel getSelectionModel() {
@@ -343,6 +346,21 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
+    public void selectAll() {
+        if(selectionModel != null && numRows > 0) {
+            selectionModel.setSelection(0, numRows-1);
+        }
+    }
+
+    public void toggleSelectionOnLeadRow() {
+        if(selectionModel != null) {
+            int leadIndex = selectionModel.getLeadIndex();
+            if(leadIndex >= 0) {
+                selectionModel.invertSelection(leadIndex, leadIndex);
+            }
+        }
+    }
+    
     protected final void checkRowIndex(int row) {
         if(row < 0 || row >= numRows) {
             throw new IndexOutOfBoundsException("row");
@@ -910,23 +928,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             case Keyboard.KEY_END:
                 handleCursorKey(+numColumns+1, +numRows+1, isShift, isCtrl);
                 return true;
-            case Keyboard.KEY_A:
-                if(isCtrl && selectionModel != null) {
-                    if(numRows > 0) {
-                        selectionModel.setSelection(0, numRows-1);
-                    }
-                    return true;
-                }
-                break;
-            case Keyboard.KEY_SPACE:
-                if(isCtrl && selectionModel != null) {
-                    int leadIndex = selectionModel.getLeadIndex();
-                    if(leadIndex >= 0) {
-                        selectionModel.invertSelection(leadIndex, leadIndex);
-                    }
-                    return true;
-                }
-                break;
             }
             break;
         case KEY_RELEASED:
@@ -940,12 +941,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             case Keyboard.KEY_HOME:
             case Keyboard.KEY_END:
                 return true;
-            case Keyboard.KEY_A:
-            case Keyboard.KEY_SPACE:
-                if(isCtrl && selectionModel != null) {
-                    return true;
-                }
-                break;
             }
             break;
         }

@@ -4,7 +4,7 @@
     SYSTEM ID  : http://hg.l33tlabs.org/twl/raw-file/tip/src/de/matthiasmann/twl/theme/theme.dtd
 -->
 
-<!ELEMENT themes (textures|fontDef|theme|constantDef|include)*>
+<!ELEMENT themes (textures|fontDef|inputMapDef|theme|constantDef|include)*>
 
 <!ELEMENT textures (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage|cursor)*>
 <!ATTLIST textures
@@ -192,7 +192,7 @@
     merge           (true|false) #IMPLIED
     allowWildcard   (true|false) #IMPLIED>
 
-<!ELEMENT param (color|enum|string|font|int|float|bool|border|dimension|constant|image|cursor|list|map)>
+<!ELEMENT param (color|enum|string|font|fontDef|inputMap|inputMapDef|int|float|bool|border|dimension|constant|image|cursor|list|map)>
 <!ATTLIST param
     name            CDATA #REQUIRED>
 
@@ -200,6 +200,7 @@
 <!ELEMENT enum (#PCDATA)>
 <!ELEMENT string (#PCDATA)>
 <!ELEMENT font (#PCDATA)>
+<!ELEMENT inputMap (#PCDATA)>
 <!ELEMENT int (#PCDATA)>
 <!ELEMENT float (#PCDATA)>
 <!ELEMENT bool (#PCDATA)>
@@ -218,8 +219,17 @@
 
 <!ELEMENT fontDef (fontParam)*>
 <!ATTLIST fontDef
-    name            CDATA #REQUIRED
+    name            CDATA #IMPLIED
     default         (true|false) #IMPLIED>
+
+<!ELEMENT inputMapDef (action)*>
+<!ATTLIST inputMapDef
+    name            CDATA #IMPLIED
+    ref             CDATA #IMPLIED>
+
+<!ELEMENT action (#PCDATA)>
+<!ATTLIST action
+    name            CDATA #REQUIRED>
 
 <!ELEMENT fontParam EMPTY>
 <!ATTLIST fontParam

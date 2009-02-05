@@ -77,6 +77,7 @@ public class ThemeManager {
     private final ImageManager imageManager;
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
+    private final HashMap<String, InputMapImpl> inputMaps;
     private final HashMap<String, Object> constants;
     private final MathInterpreter mathInterpreter;
     private Font defaultFont;
@@ -90,6 +91,7 @@ public class ThemeManager {
         this.imageManager = new ImageManager(renderer);
         this.fonts  = new HashMap<String, Font>();
         this.themes = new HashMap<String, ThemeInfoImpl>();
+        this.inputMaps = new HashMap<String, InputMapImpl>();
         this.constants = new HashMap<String, Object>();
         this.emptyMap = new ParameterMapImpl(this);
         this.emptyList = new ParameterListImpl(this);
@@ -221,7 +223,7 @@ public class ThemeManager {
         }
     }
 
-    private void parseThemeFile(XmlPullParser xpp, URL baseURL) throws XmlPullParserException, IOException {
+    private void parseThemeFile(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
         xpp.require(XmlPullParser.START_TAG, null, "themes");
         xpp.nextTag();
 
@@ -229,10 +231,10 @@ public class ThemeManager {
             xpp.require(XmlPullParser.START_TAG, null, null);
             final String tagName = xpp.getName();
             if("textures".equals(tagName)) {
-                imageManager.parseTextures(xpp, baseURL);
+                imageManager.parseTextures(xpp, baseUrl);
             } else if("include".equals(tagName)) {
                 String fontFileName = ParserUtil.getAttributeNotNull(xpp, "filename");
-                parseThemeFile(new URL(baseURL, fontFileName));
+                parseThemeFile(new URL(baseUrl, fontFileName));
                 xpp.nextTag();
             } else {
                 final String name = ParserUtil.getAttributeNotNull(xpp, "name");
@@ -240,13 +242,18 @@ public class ThemeManager {
                     if(themes.containsKey(name)) {
                         throw new XmlPullParserException("theme \"" + name + "\" already defined", xpp, null);
                     }
-                    themes.put(name, parseTheme(xpp, name, null));
+                    themes.put(name, parseTheme(xpp, name, null, baseUrl));
+                } else if("inputMapDef".equals(tagName)) {
+                    if(inputMaps.containsKey(name)) {
+                        throw new XmlPullParserException("inputMap \"" + name + "\" already defined", xpp, null);
+                    }
+                    inputMaps.put(name, parseInputMap(xpp));
                 } else if("fontDef".equals(tagName)) {
                     if(fonts.containsKey(name)) {
                         throw new XmlPullParserException("font \"" + name + "\" already defined", xpp, null);
                     }
                     boolean makeDefault = ParserUtil.parseBoolFromAttribute(xpp, "default", false);
-                    Font font = parseFont(xpp, baseURL);
+                    Font font = parseFont(xpp, baseUrl);
                     fonts.put(name, font);
                     if(firstFont == null) {
                         firstFont = font;
@@ -258,7 +265,7 @@ public class ThemeManager {
                         defaultFont = font;
                     }
                 } else if("constantDef".equals(tagName)) {
-                    insertConstant(name, parseParam(xpp));
+                    insertConstant(name, parseParam(xpp, baseUrl));
                 } else {
                     throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
                 }
@@ -269,7 +276,52 @@ public class ThemeManager {
         xpp.require(XmlPullParser.END_TAG, null, "themes");
     }
 
-    private Font parseFont(XmlPullParser xpp, URL baseURL) throws XmlPullParserException, IOException {
+    private InputMapImpl getInputMap(XmlPullParser xpp, String name) throws XmlPullParserException {
+        InputMapImpl im = inputMaps.get(name);
+        if(im == null) {
+            throw new XmlPullParserException("Undefined input map: " + name, xpp, null);
+        }
+        return im;
+    }
+
+    private InputMapImpl parseInputMap(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        InputMapImpl base = null;
+        String baseName = xpp.getAttributeValue(null, "ref");
+        if(baseName != null) {
+            base = getInputMap(xpp, baseName);
+        }
+
+        ArrayList<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
+        xpp.nextTag();
+        while(xpp.getEventType() != XmlPullParser.END_TAG) {
+            xpp.require(XmlPullParser.START_TAG, null, "action");
+            String name = ParserUtil.getAttributeNotNull(xpp, "name");
+            String key = xpp.nextText();
+            try {
+                KeyStroke ks = KeyStroke.parse(key, name);
+                keyStrokes.add(ks);
+            } catch (IllegalArgumentException ex) {
+                throw (XmlPullParserException)(new XmlPullParserException(
+                        ex.getMessage(), xpp, ex).initCause(ex));
+            }
+            xpp.require(XmlPullParser.END_TAG, null, "action");
+            xpp.nextTag();
+        }
+
+        InputMapImpl im;
+        if(base != null) {
+            if(keyStrokes.isEmpty()) {
+                return base;
+            }
+            im = new InputMapImpl(base);
+        } else {
+            im = new InputMapImpl();
+        }
+        im.addMappings(keyStrokes);
+        return im;
+    }
+
+    private Font parseFont(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
         Map<String, String> params = ParserUtil.getAttributeMap(xpp);
         ArrayList<FontParameter> fontParams = new ArrayList<FontParameter>();
         params.remove("name");
@@ -289,7 +341,7 @@ public class ThemeManager {
             xpp.require(XmlPullParser.END_TAG, null, "fontParam");
             xpp.nextTag();
         }
-        return renderer.loadFont(baseURL, params, fontParams);
+        return renderer.loadFont(baseUrl, params, fontParams);
     }
 
     private void parseThemeWildcardRef(XmlPullParser xpp, ThemeInfoImpl parent) throws IOException, XmlPullParserException {
@@ -311,7 +363,7 @@ public class ThemeManager {
         xpp.nextTag();
     }
     
-    private ThemeInfoImpl parseTheme(XmlPullParser xpp, String themeName, ThemeInfoImpl parent) throws IOException, XmlPullParserException {
+    private ThemeInfoImpl parseTheme(XmlPullParser xpp, String themeName, ThemeInfoImpl parent, URL baseUrl) throws IOException, XmlPullParserException {
         ParserUtil.checkNameNotEmpty(themeName, xpp);
         if(themeName.indexOf('.') >= 0 || themeName.indexOf('*') >= 0) {
             throw new XmlPullParserException("name must not contain '.' or '*'", xpp, null);
@@ -343,13 +395,13 @@ public class ThemeManager {
                 final String tagName = xpp.getName();
                 final String name = xpp.getAttributeValue(null, "name");
                 if("param".equals(tagName)) {
-                    Map<String, ?> entries = parseParam(xpp);
+                    Map<String, ?> entries = parseParam(xpp, baseUrl);
                     ti.params.putAll(entries);
                 } else if("theme".equals(tagName)) {
                     if(name.length() == 0) {
                         parseThemeWildcardRef(xpp, ti);
                     } else {
-                        ThemeInfoImpl tiChild = parseTheme(xpp, name, ti);
+                        ThemeInfoImpl tiChild = parseTheme(xpp, name, ti, baseUrl);
                         ti.children.put(name, tiChild);
                     }
                 } else {
@@ -365,13 +417,13 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, ?> parseParam(XmlPullParser xpp) throws XmlPullParserException, IOException {
+    private Map<String, ?> parseParam(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
         try {
             xpp.require(XmlPullParser.START_TAG, null, "param");
             String name = xpp.getAttributeValue(null, "name");
             xpp.nextTag();
             String tagName = xpp.getName();
-            Object value = parseValue(xpp, tagName, name);
+            Object value = parseValue(xpp, tagName, name, baseUrl);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             xpp.nextTag();
             xpp.require(XmlPullParser.END_TAG, null, "param");
@@ -386,12 +438,12 @@ public class ThemeManager {
         }
     }
 
-    private ParameterListImpl parseList(XmlPullParser xpp) throws XmlPullParserException, IOException {
+    private ParameterListImpl parseList(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
         ParameterListImpl result = new ParameterListImpl(this);
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Object obj = parseValue(xpp, tagName, null);
+            Object obj = parseValue(xpp, tagName, null, baseUrl);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.params.add(obj);
             xpp.nextTag();
@@ -399,12 +451,12 @@ public class ThemeManager {
         return result;
     }
     
-    private ParameterMapImpl parseMap(XmlPullParser xpp) throws XmlPullParserException, IOException, NumberFormatException {
+    private ParameterMapImpl parseMap(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException, NumberFormatException {
         ParameterMapImpl result = new ParameterMapImpl(this);
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Map<String, ?> params = parseParam(xpp);
+            Map<String, ?> params = parseParam(xpp, baseUrl);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.addParameters(params);
             xpp.nextTag();
@@ -413,13 +465,19 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Object parseValue(XmlPullParser xpp, String tagName, String wildcardName) throws XmlPullParserException, IOException, NumberFormatException {
+    private Object parseValue(XmlPullParser xpp, String tagName, String wildcardName, URL baseUrl) throws XmlPullParserException, IOException, NumberFormatException {
         try {
             if("list".equals(tagName)) {
-                return parseList(xpp);
+                return parseList(xpp, baseUrl);
             }
             if("map".equals(tagName)) {
-                return parseMap(xpp);
+                return parseMap(xpp, baseUrl);
+            }
+            if("inputMapDef".equals(tagName)) {
+                return parseInputMap(xpp);
+            }
+            if("fontDef".equals(tagName)) {
+                return parseFont(xpp, baseUrl);
             }
 
             String enumType = xpp.getAttributeValue(null, "type");
@@ -490,6 +548,9 @@ public class ThemeManager {
                     return imageManager.getCursors(value, wildcardName);
                 }
                 return imageManager.getReferencedCursor(xpp, value);
+            }
+            if("inputMap".equals(tagName)) {
+                return getInputMap(xpp, value);
             }
             throw new XmlPullParserException("Unknown type \"" + tagName + "\" specified", xpp, null);
         } catch (NumberFormatException ex) {

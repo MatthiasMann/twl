@@ -79,6 +79,11 @@ public class EditField extends Widget {
         
         add(textRenderer);
         setCanAcceptKeyboardFocus(true);
+
+        addActionMapping("cut", "cutToClipboard");
+        addActionMapping("copy", "copyToClipboard");
+        addActionMapping("paste", "pasteFromClipboard");
+        addActionMapping("selectAll", "selectAll");
     }
 
     public void addCallback(Callback cb) {
@@ -314,6 +319,10 @@ public class EditField extends Widget {
             return true;
         }
 
+        if(super.handleEvent(evt)) {
+            return true;
+        }
+
         switch (evt.getType()) {
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
@@ -374,10 +383,6 @@ public class EditField extends Widget {
                 return true;
             }
             break;
-        }
-        
-        if(super.handleEvent(evt)) {
-            return true;
         }
 
         return evt.isMouseEvent();
@@ -473,7 +478,7 @@ public class EditField extends Widget {
         }
     }
 
-    protected void selectAll() {
+    public void selectAll() {
         selectionStart = 0;
         selectionEnd = editBuffer.length();
     }

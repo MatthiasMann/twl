@@ -63,6 +63,8 @@ public class Widget {
     private Image background;
     private Image overlay;
     private Object tooltipContent;
+    private InputMap inputMap;
+    private ActionMap actionMap;
 
     private final AnimationState animState;
     private final boolean sharedAnimState;
@@ -998,6 +1000,32 @@ public class Widget {
     }
 
     /**
+     * Returns the current input map.
+     * @return the current input map or null.
+     */
+    public InputMap getInputMap() {
+        return inputMap;
+    }
+
+    /**
+     * Sets the input map for key strokes.
+     * 
+     * @param inputMap the input map or null.
+     * @see #handleKeyStrokeAction(java.lang.String, de.matthiasmann.twl.Event)
+     */
+    public void setInputMap(InputMap inputMap) {
+        this.inputMap = inputMap;
+    }
+
+    public ActionMap getActionMap() {
+        return actionMap;
+    }
+
+    public void setActionMap(ActionMap actionMap) {
+        this.actionMap = actionMap;
+    }
+
+    /**
      * Returns the visible widget at the specified location.
      * Use this method to locate drag&drop tragets.
      *
@@ -1031,6 +1059,7 @@ public class Widget {
         applyThemeMinSize(themeInfo);
         applyThemeMaxSize(themeInfo);
         applyThemeMouseCursor(themeInfo);
+        applyThemeInputMap(themeInfo);
     }
 
     protected void applyThemeBackground(ThemeInfo themeInfo) {
@@ -1060,7 +1089,18 @@ public class Widget {
     protected void applyThemeMouseCursor(ThemeInfo themeInfo) {
         setMouseCursor(themeInfo.getMouseCursor("mouseCursor"));
     }
-    
+
+    protected void applyThemeInputMap(ThemeInfo themeInfo) {
+        setInputMap(themeInfo.getParameterValue("inputMap", false, InputMap.class));
+    }
+
+    protected void addActionMapping(String action, String methodName, Object ... params) {
+        if(actionMap == null) {
+            actionMap = new ActionMap();
+        }
+        actionMap.addMapping(action, this, methodName, params, ActionMap.FLAG_ON_PRESSED);
+    }
+
     /**
      * If the widget changed some internal state which may
      * require different theme information then this function
@@ -1085,19 +1125,37 @@ public class Widget {
      * Called when an event occured that this widget could be interrested in.
      *
      * The default implementation handles only keyboard events and delegates
-     * them to child widget which has keyboard focus.
+     * them to the child widget which has keyboard focus.
      * If focusKey handling is enabled then this widget cycles the keyboard
      * focus through it's childs.
+     * If the key was not consumed by a child or focusKey and an inputMap is
+     * specified then the event is translated by the InputMap and
+     * <code>handleKeyStrokeAction</code> is called when a mapping was found.
      *
      * @param evt The event - do not store this object - it may be reused
      * @return true if the widget handled this event
      * @see #setFocusKeyEnabled(boolean)
+     * @see #handleKeyStrokeAction(java.lang.String, de.matthiasmann.twl.Event)
+     * @see #setInputMap(de.matthiasmann.twl.InputMap)
      */
     protected boolean handleEvent(Event evt) {
-        if(children != null) {
-            if(evt.isKeyEvent()) {
-                return handleKeyEvent(evt);
-            }
+        if(evt.isKeyEvent()) {
+            return handleKeyEvent(evt);
+        }
+        return false;
+    }
+
+    /**
+     * Called when a key stroke was found in the inputMap.
+     *
+     * @param action the action associated with the key stroke
+     * @param event the event which caused the action
+     * @return true if the action was handled
+     * @see #setInputMap(de.matthiasmann.twl.InputMap) 
+     */
+    protected boolean handleKeyStrokeAction(String action, Event event) {
+        if(actionMap != null) {
+            return actionMap.invoke(action, event);
         }
         return false;
     }
@@ -1665,12 +1723,22 @@ public class Widget {
     }
 
     private boolean handleKeyEvent(Event evt) {
-        if(focusKeyEnabled && evt.isKeyEvent() && evt.getKeyCode() == FOCUS_KEY) {
-            handleFocusKeyEvent(evt);
-            return true;
+        if(children != null) {
+            if(focusKeyEnabled && evt.isKeyEvent() && evt.getKeyCode() == FOCUS_KEY) {
+                handleFocusKeyEvent(evt);
+                return true;
+            }
+            if(focusChild != null && focusChild.isVisible()) {
+                return focusChild.handleEvent(evt);
+            }
         }
-        if(focusChild != null && focusChild.isVisible()) {
-            return focusChild.handleEvent(evt);
+        if(inputMap != null) {
+            String action = inputMap.mapEvent(evt);
+            if(action != null) {
+                if(handleKeyStrokeAction(action, evt)) {
+                    return true;
+                }
+            }
         }
         return false;
     }

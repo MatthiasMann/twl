@@ -104,12 +104,7 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
             if(params.length == count) {
                 boolean match = true;
                 for(int i=0 ; i<count ; i++) {
-                    Class<?> param = params[i];
-                    if(param.isPrimitive()) {
-                        param = primitiveTypeMap.get(param);
-                        assert param != null;
-                    }
-                    if(!param.isInstance(stack.get(0))) {
+                    if(!ClassUtils.isParamCompatible(params[i], stack.get(i))) {
                         match = false;
                         break;
                     }
@@ -125,18 +120,6 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
         }
         throw new IllegalArgumentException("Can't construct a " + type +
                 " from expression: \"" + str + "\"");
-    }
-
-    private static HashMap<Class<?>, Class<?>> primitiveTypeMap = new HashMap<Class<?>, Class<?>>();
-    static {
-        primitiveTypeMap.put(Boolean.TYPE, Boolean.class);
-        primitiveTypeMap.put(Byte.TYPE, Byte.class);
-        primitiveTypeMap.put(Short.TYPE, Short.class);
-        primitiveTypeMap.put(Character.TYPE, Character.class);
-        primitiveTypeMap.put(Integer.TYPE, Integer.class);
-        primitiveTypeMap.put(Long.TYPE, Long.class);
-        primitiveTypeMap.put(Float.TYPE, Float.class);
-        primitiveTypeMap.put(Double.TYPE, Double.class);
     }
     
     protected void push(Object obj) {
