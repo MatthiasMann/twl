@@ -442,8 +442,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         int endRow = Math.min(numRows-1, Math.max(startRow, getRowFromPosition(scrollEndY)));
         int endColumn = Math.min(numColumns-1, Math.max(startColumn, getColumnFromPosition(scrollEndX)));
 
-        firstRowPartialVisible = getRowStartPosition(startRow) < scrollPosY;
-        lastRowPartialVisible = getRowEndPosition(endRow) > scrollEndY;
+        if(numRows > 0) {
+            firstRowPartialVisible = getRowStartPosition(startRow) < scrollPosY;
+            lastRowPartialVisible = getRowEndPosition(endRow) > scrollEndY;
+        } else {
+            firstRowPartialVisible = false;
+            lastRowPartialVisible = false;
+        }
 
         if(!widgetGrid.isEmpty()) {
             if(startRow > firstVisibleRow) {
