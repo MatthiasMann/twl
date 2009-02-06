@@ -73,6 +73,9 @@ public class LWJGLFont implements Font {
         int offsetX = parseInt(params.get("offsetX"), 0);
         int offsetY = parseInt(params.get("offsetY"), 0);
         Color color = Color.parserColor(colorStr);
+        if(color == null) {
+            throw new IllegalArgumentException("unknown color name");
+        }
         FontState p = new FontState(cond, color, offsetX, offsetY);
         return p;
     }
