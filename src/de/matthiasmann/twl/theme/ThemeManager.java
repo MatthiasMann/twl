@@ -119,6 +119,9 @@ public class ThemeManager {
         if(url == null) {
             throw new NullPointerException("url");
         }
+        if(renderer == null) {
+            throw new NullPointerException("renderer");
+        }
         try {
             ThemeManager tm = new ThemeManager(renderer);
             tm.parseThemeFile(url);
