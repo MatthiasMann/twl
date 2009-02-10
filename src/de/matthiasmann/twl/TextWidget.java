@@ -86,6 +86,9 @@ public class TextWidget extends Widget {
      * @param text The CharSequence to display
      */
     protected void setText(CharSequence text) {
+        if(text == null) {
+            throw new NullPointerException("text");
+        }
         this.text = text;
         this.cachedTextWidth = NOT_CACHED;
         this.numTextLines = TextUtil.countNumLines(text);
