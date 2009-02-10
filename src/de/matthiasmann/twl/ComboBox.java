@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.Label.CallbackReason;
 import de.matthiasmann.twl.model.ListModel;
@@ -41,12 +42,18 @@ import org.lwjgl.input.Keyboard;
  */
 public class ComboBox extends Widget {
 
+    private static final int INVALID_WIDTH = -1;
+    
     private final ComboboxLabel label;
     private final Button button;
     private final PopupWindow popup;
     private final ListBox listbox;
 
     private Runnable[] selectionChangedListeners;
+
+    private ListModel.ChangeListener modelChangeListener;
+    private boolean computeWidthFromModel;
+    private int modelWidth = INVALID_WIDTH;
     
     public ComboBox(ListModel model) {
         this();
@@ -129,7 +136,11 @@ public class ComboBox extends Widget {
     }
 
     public void setModel(ListModel model) {
+        unregisterModelChangeListener();
         listbox.setModel(model);
+        if(computeWidthFromModel) {
+            registerModelChangeListener();
+        }
     }
 
     public ListModel getModel() {
@@ -144,7 +155,42 @@ public class ComboBox extends Widget {
     public int getSelected() {
         return listbox.getSelected();
     }
-    
+
+    public boolean isComputeWidthFromModel() {
+        return computeWidthFromModel;
+    }
+
+    public void setComputeWidthFromModel(boolean computeWidthFromModel) {
+        if(this.computeWidthFromModel != computeWidthFromModel) {
+            this.computeWidthFromModel = computeWidthFromModel;
+            if(computeWidthFromModel) {
+                registerModelChangeListener();
+            } else {
+                unregisterModelChangeListener();
+            }
+        }
+    }
+
+    private void registerModelChangeListener() {
+        final ListModel model = getModel();
+        if(model != null) {
+            modelWidth = INVALID_WIDTH;
+            if(modelChangeListener == null) {
+                modelChangeListener = new ModelChangeListener();
+            }
+            model.addChangeListener(modelChangeListener);
+        }
+    }
+
+    private void unregisterModelChangeListener() {
+        if(modelChangeListener != null) {
+            final ListModel model = getModel();
+            if(model != null) {
+                model.removeChangeListener(modelChangeListener);
+            }
+        }
+    }
+
     protected void openPopup() {
         if(popup.openPopup()) {
             int minHeight = popup.getMinHeight();
@@ -172,14 +218,26 @@ public class ComboBox extends Widget {
         doCallback();
     }
 
+    protected String getModelData(int idx) {
+        return String.valueOf(getModel().getEntry(idx));
+    }
+
     protected void updateLabel() {
         int selected = getSelected();
         if(selected == ListBox.NO_SELECTION) {
             label.setText("");
         } else {
-            label.setText(getModel().getEntry(selected).toString());
+            label.setText(getModelData(selected));
         }
-        invalidateParentLayout();
+        if(!computeWidthFromModel) {
+            invalidateParentLayout();
+        }
+    }
+
+    @Override
+    protected void applyTheme(ThemeInfo themeInfo) {
+        super.applyTheme(themeInfo);
+        modelWidth = INVALID_WIDTH;
     }
 
     @Override
@@ -207,7 +265,16 @@ public class ComboBox extends Widget {
 
     @Override
     public int getPreferredInnerWidth() {
-        return label.getPreferredWidth() + button.getPreferredWidth();
+        int width;
+        if(computeWidthFromModel && getModel() != null) {
+            if(modelWidth == INVALID_WIDTH) {
+                updateModelWidth();
+            }
+            width = modelWidth;
+        } else {
+            width = label.getPreferredWidth();
+        }
+        return width + button.getPreferredWidth();
     }
 
     @Override
@@ -238,7 +305,43 @@ public class ComboBox extends Widget {
         button.setSize(btnWidth, innerHeight);
         label.setSize(Math.max(0, button.getX() - getInnerX()), innerHeight);
     }
+
+    void invalidateModelWidth() {
+        if(computeWidthFromModel) {
+            modelWidth = INVALID_WIDTH;
+            invalidateParentLayout();
+        }
+    }
+
+    void updateModelWidth() {
+        if(computeWidthFromModel) {
+            modelWidth = 0;
+            updateModelWidth(0, getModel().getNumEntries()-1);
+        }
+    }
     
+    void updateModelWidth(int first, int last) {
+        if(computeWidthFromModel) {
+            int newModelWidth = modelWidth;
+            for(int idx=first ; idx<=last ; idx++) {
+                newModelWidth = Math.max(newModelWidth, computeEntryWidth(idx));
+            }
+            if(newModelWidth > modelWidth) {
+                modelWidth = newModelWidth;
+                invalidateParentLayout();
+            }
+        }
+    }
+
+    protected int computeEntryWidth(int idx) {
+        int width = label.getBorderHorizontal();
+        Font font = label.getFont();
+        if(font != null) {
+            width += font.computeMultiLineTextWidth(getModelData(idx));
+        }
+        return width;
+    }
+
     static class ComboboxLabel extends Label {
         public ComboboxLabel(AnimationState animState) {
             super(animState);
@@ -254,6 +357,21 @@ public class ComboBox extends Widget {
                 prefHeight = Math.max(prefHeight, getFont().getLineHeight());
             }
             return prefHeight;
+        }
+    }
+
+    class ModelChangeListener implements ListModel.ChangeListener {
+        public void entriesInserted(int first, int last) {
+            updateModelWidth(first, last);
+        }
+        public void entriesDeleted(int first, int last) {
+            invalidateModelWidth();
+        }
+        public void entriesChanged(int first, int last) {
+            invalidateModelWidth();
+        }
+        public void allChanged() {
+            invalidateModelWidth();
         }
     }
 }
