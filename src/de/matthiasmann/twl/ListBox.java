@@ -504,7 +504,7 @@ public class ListBox extends Widget {
             removeChild(labels[i].getWidget());
         }
 
-        ListBoxLabel[] newLabels = new ListBoxLabel[visibleCells];
+        ListBoxDisplay[] newLabels = new ListBoxDisplay[visibleCells];
         System.arraycopy(labels, 0, newLabels, 0, Math.min(visibleCells, labels.length));
         labels = newLabels;
         
