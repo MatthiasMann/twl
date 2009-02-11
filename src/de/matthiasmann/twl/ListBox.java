@@ -590,7 +590,7 @@ public class ListBox extends Widget {
         }
 
         public void setData(Object data) {
-            setText(String.valueOf(data));
+            setText((data == null) ? "" : data.toString());
         }
 
         public Widget getWidget() {
