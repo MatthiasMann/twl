@@ -83,15 +83,15 @@ public abstract class StateExpression {
                 break;
             }
 
+            ch = si.peek();
+            if("|+^".indexOf(kind) < 0) {
+                break;
+            }
+
             if(children.size() == 1) {
-                kind = si.peek();
-                if("|+^".indexOf(kind) < 0) {
-                    si.unexpected();
-                }
-            } else {
-                if(kind != si.peek()) {
-                    si.unexpected();
-                }
+                kind = ch;
+            } else if(kind != ch) {
+                si.unexpected();
             }
             si.pos++;
         }
@@ -134,7 +134,7 @@ public abstract class StateExpression {
 
         void expect(char what) throws ParseException {
             if(peek() != what) {
-                throw new ParseException("Expected '"+what+"' got '"+peek()+"'", pos);
+                throw new ParseException("Expected '"+what+"' got '"+peek()+"' at " + pos, pos);
             }
             pos++;
         }
@@ -143,7 +143,7 @@ public abstract class StateExpression {
             if(pos == str.length()) {
                 throw new ParseException("Unexpected end of expression", pos);
             }
-            throw new ParseException("Unexpected '"+peek()+"'", pos);
+            throw new ParseException("Unexpected '"+peek()+"' at " + pos, pos);
         }
 
         boolean skipSpaces() {
