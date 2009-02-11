@@ -615,10 +615,16 @@ public class ListBox extends Widget {
         }
 
         protected boolean handleListBoxEvent(Event evt) {
-            if(evt.getType() == Event.Type.MOUSE_BTNDOWN && !selected) {
-                doListBoxCallback((evt.getMouseClickCount() > 1)
-                        ? CallbackReason.MOUSE_DOUBLE_CLICK
-                        : CallbackReason.MOUSE_CLICK);
+            switch(evt.getType()) {
+            case MOUSE_BTNDOWN:
+                if(!selected) {
+                    doListBoxCallback(CallbackReason.MOUSE_CLICK);
+                }
+                return true;
+            case MOUSE_CLICKED:
+                if(selected && evt.getMouseClickCount() > 1) {
+                    doListBoxCallback(CallbackReason.MOUSE_DOUBLE_CLICK);
+                }
                 return true;
             }
             return false;
