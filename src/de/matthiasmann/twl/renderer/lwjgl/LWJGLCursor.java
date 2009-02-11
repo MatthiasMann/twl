@@ -89,7 +89,8 @@ class LWJGLCursor implements MouseCursor {
         buf.clear();
 
         try {
-            cursor = new org.lwjgl.input.Cursor(dstSize, dstSize, hotSpotX, height-hotSpotY, 1, buf, null);
+            cursor = new org.lwjgl.input.Cursor(dstSize, dstSize, hotSpotX,
+                    Math.min(dstSize-1, height-hotSpotY-1), 1, buf, null);
         } catch(LWJGLException ex) {
             ex.printStackTrace();
         }
