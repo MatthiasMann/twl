@@ -35,6 +35,7 @@ import de.matthiasmann.twl.theme.ThemeManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 
 /**
@@ -1723,6 +1724,8 @@ public class Widget {
         }
     }
 
+    private static final boolean WARN_ON_UNHANDLED_ACTION = Boolean.getBoolean("warnOnUnhandledAction");
+
     private boolean handleKeyEvent(Event evt) {
         if(children != null) {
             if(focusKeyEnabled && evt.isKeyEvent() && evt.getKeyCode() == FOCUS_KEY) {
@@ -1738,6 +1741,10 @@ public class Widget {
             if(action != null) {
                 if(handleKeyStrokeAction(action, evt)) {
                     return true;
+                }
+                if(WARN_ON_UNHANDLED_ACTION) {
+                    Logger.getLogger(getClass().getName()).warning("Unhandled action '" +
+                            action + "' for class '" + getClass().getName() + "'");
                 }
             }
         }
