@@ -32,6 +32,11 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.Event.Type;
 import de.matthiasmann.twl.utils.ClassUtils;
 import de.matthiasmann.twl.utils.HashEntry;
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -84,9 +89,39 @@ public class ActionMap {
         addMappingImpl(action, target, method, params, flags);
     }
 
+    public void addMapping(Object target) {
+        for(Method m : target.getClass().getMethods()) {
+            Action action = m.getAnnotation(Action.class);
+            if(action != null) {
+                if(m.getParameterTypes().length > 0) {
+                    throw new UnsupportedOperationException("automatic binding of actions not supported for methods with parameters");
+                }
+                String name = m.getName();
+                if(action.name().length() > 0) {
+                    name = action.name();
+                }
+                int flags =
+                        (action.onPressed() ? FLAG_ON_PRESSED : 0) |
+                        (action.onRelease() ? FLAG_ON_RELEASE : 0) |
+                        (action.onRepeat() ? FLAG_ON_REPEAT : 0);
+                addMappingImpl(name, target, m, null, flags);
+            }
+        }
+    }
+
     public void addMappingImpl(String action, Object target, Method method, Object[] params, int flags) {
         mappings = HashEntry.maybeResizeTable(mappings, numMappings);
         HashEntry.insertEntry(mappings, new Mapping(action, target, method, params, flags));
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.METHOD)
+    public @interface Action {
+        String name() default "";
+        boolean onPressed() default true;
+        boolean onRelease() default false;
+        boolean onRepeat() default true;
     }
 
     static class Mapping extends HashEntry<String, Mapping> {
