@@ -84,7 +84,7 @@ public abstract class StateExpression {
             }
 
             ch = si.peek();
-            if("|+^".indexOf(kind) < 0) {
+            if("|+^".indexOf(ch) < 0) {
                 break;
             }
 
