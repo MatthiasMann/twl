@@ -78,7 +78,7 @@ public class TreeTable extends TableBase {
             this.rootNodeState.level = -1;
             this.rootNodeState.expanded = true;
             this.rootNodeState.initChildSizes();
-            this.numRows = getNumRows();
+            this.numRows = computeNumRows();
             this.numColumns = model.getNumColumns();
         } else {
             this.rootNodeState = null;
@@ -175,7 +175,7 @@ public class TreeTable extends TableBase {
             parent = node.getParent();
         }
 
-        numRows = getNumRows();
+        numRows = computeNumRows();
         int row = getRowFromNode(ns.key);
         if(ns.expanded) {
             modelRowsInserted(row+1, count);
@@ -185,7 +185,7 @@ public class TreeTable extends TableBase {
         modelRowsChanged(row, 1);
     }
 
-    protected int getNumRows() {
+    protected int computeNumRows() {
         return rootNodeState.childSizes.getEndPosition();
     }
 
@@ -223,7 +223,7 @@ public class TreeTable extends TableBase {
             parent.childSizes.setSize(idx, ns.getChildRows() + 1);
             ns = parent;
         }
-        numRows = getNumRows();
+        numRows = computeNumRows();
         return ns.parent == null;
     }
     

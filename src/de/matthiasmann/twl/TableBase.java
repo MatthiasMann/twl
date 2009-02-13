@@ -29,9 +29,7 @@
  */
 package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.TableColumnHeaderModel;
-import de.matthiasmann.twl.model.TableSelectionModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
@@ -41,7 +39,6 @@ import de.matthiasmann.twl.utils.SparseGrid;
 import de.matthiasmann.twl.utils.SparseGrid.Entry;
 import de.matthiasmann.twl.utils.TypeMapping;
 import java.util.ArrayList;
-import org.lwjgl.input.Keyboard;
 
 /**
  *
@@ -137,7 +134,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected boolean hasCellWidgetCreators;
     protected WidgetCache[] widgetCacheTable;
     protected ColumnHeader[] columnHeaders;
-    protected TableSelectionModel selectionModel;
+    protected TableSelectionManager selectionManager;
 
     protected Image imageColumnDivider;
     protected Image imageRowBackground;
@@ -179,24 +176,26 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
         super.insertChild(cellWidgetContainer, 0);
         setCanAcceptKeyboardFocus(true);
-
-        addActionMapping("selectAll", "selectAll");
-        addActionMapping("toggleSelectionOnLeadRow", "toggleSelectionOnLeadRow");
     }
 
-    public TableSelectionModel getSelectionModel() {
-        return selectionModel;
+    public TableSelectionManager getSelectionManager() {
+        return selectionManager;
     }
 
-    public void setSelectionModel(TableSelectionModel selectionModel) {
-        this.selectionModel = selectionModel;
-        if(selectionModel != null) {
-            selectionModel.clearSelection();
+    public void setSelectionManager(TableSelectionManager selectionManager) {
+        if(this.selectionManager != selectionManager) {
+            if(this.selectionManager != null) {
+                this.selectionManager.setAssociatedTable(null);
+            }
+            this.selectionManager = selectionManager;
+            if(this.selectionManager != null) {
+                this.selectionManager.setAssociatedTable(this);
+            }
         }
     }
 
-    public void setDefaultSelectionModel() {
-        setSelectionModel(new DefaultTableSelectionModel());
+    public void setDefaultSelectionManager() {
+        setSelectionManager(new TableRowSelectionManager());
     }
 
     public boolean isVariableRowHeight() {
@@ -211,6 +210,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         } else if(!varibleRowHeight) {
             rowModel = null;
         }
+    }
+
+    public int getNumRows() {
+        return numRows;
+    }
+
+    public int getNumColumns() {
+        return numColumns;
     }
 
     public int getRowFromPosition(int y) {
@@ -342,21 +349,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 int pos = getRowEndPosition(row);
                 pos = Math.max(0, pos - innerHeight);
                 scrollPane.setScrollPositionY(pos);
-            }
-        }
-    }
-
-    public void selectAll() {
-        if(selectionModel != null && numRows > 0) {
-            selectionModel.setSelection(0, numRows-1);
-        }
-    }
-
-    public void toggleSelectionOnLeadRow() {
-        if(selectionModel != null) {
-            int leadIndex = selectionModel.getLeadIndex();
-            if(leadIndex >= 0) {
-                selectionModel.invertSelection(leadIndex, leadIndex);
             }
         }
     }
@@ -517,10 +509,23 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         gui.clipEnter(innerX, innerY, innerWidth, innerHeight);
         try {
             final AnimationState animState = getAnimationState();
-            final int leadIndex = (selectionModel != null) ? selectionModel.getLeadIndex() : -1;
+            final int leadRow;
+            final int leadColumn;
+            final boolean isCellSelection;
+
+            if(selectionManager != null) {
+                leadRow = selectionManager.getLeadRow();
+                leadColumn = selectionManager.getLeadColumn();
+                isCellSelection = selectionManager.getSelectionGranularity() ==
+                        TableSelectionManager.SelectionGranularity.CELLS;
+            } else {
+                leadRow = -1;
+                leadColumn = -1;
+                isCellSelection = false;
+            }
 
             if(imageRowBackground != null) {
-                paintRowImage(imageRowBackground, leadIndex);
+                paintRowImage(imageRowBackground, leadRow);
             }
 
             if(imageColumnDivider != null) {
@@ -538,12 +543,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 final int curRowHeight = rowEndPos - rowStartPos;
                 final int curY = offsetY + rowStartPos;
                 final TreeTableNode rowNode = getNodeFromRow(row);
-                final boolean isSelected = isRowSelected(row);
+                final boolean isRowSelected = !isCellSelection && isRowSelected(row);
                 
                 int colStartPos = getColumnStartPosition(firstVisibleColumn);
                 for(int col=firstVisibleColumn ; col<=lastVisibleColumn ;) {
                     int colEndPos = getColumnEndPosition(col);
                     final CellRenderer cellRenderer = getCellRenderer(row, col, rowNode);
+                    final boolean isCellSelected = isRowSelected || isCellSelected(row, col);
 
                     int curX = offsetX + colStartPos;
                     int colSpan = 1;
@@ -555,7 +561,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                         }
 
                         Widget cellRendererWidget = cellRenderer.getCellRenderWidget(
-                                curX, curY, colEndPos - colStartPos, curRowHeight, isSelected);
+                                curX, curY, colEndPos - colStartPos, curRowHeight, isCellSelected);
 
                         if(cellRendererWidget != null) {
                             if(cellRendererWidget.getParent() != this) {
@@ -573,14 +579,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             }
 
             if(imageRowOverlay != null) {
-                paintRowImage(imageRowOverlay, leadIndex);
+                paintRowImage(imageRowOverlay, leadRow);
             }
         } finally {
             gui.clipLeave();
         }
     }
 
-    private void paintRowImage(Image img, int leadIndex) {
+    private void paintRowImage(Image img, int leadRow) {
         final AnimationState animState = getAnimationState();
         final int x = getOffsetX();
         final int width = columnModel.getEndPosition();
@@ -593,7 +599,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             final int curY = offsetY + rowStartPos;
 
             animState.setAnimationState(STATE_ROW_SELECTED, isRowSelected(row));
-            animState.setAnimationState(STATE_LEAD_ROW, row == leadIndex);
+            animState.setAnimationState(STATE_LEAD_ROW, row == leadRow);
             img.draw(animState, x, curY, width, curRowHeight);
 
             rowStartPos = rowEndPos;
@@ -612,8 +618,15 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected abstract Object getCellData(int row, int column, TreeTableNode node);
 
     protected boolean isRowSelected(int row) {
-        if(selectionModel != null) {
-            return selectionModel.isSelected(row);
+        if(selectionManager != null) {
+            return selectionManager.isRowSelected(row);
+        }
+        return false;
+    }
+
+    protected boolean isCellSelected(int row, int column) {
+        if(selectionManager != null) {
+            return selectionManager.isCellSelected(row, column);
         }
         return false;
     }
@@ -840,16 +853,24 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
         if(evt.isMouseEvent()) {
             return handleMouseEvent(evt);
-        } else if(evt.isKeyEvent()) {
-            if(handleKeyEvent(evt)) {
-                if(evt.getType() == Event.Type.KEY_PRESSED) {
-                    requestKeyboardFocus(null);
-                }
-                return true;
-            }
         }
         
         return false;
+    }
+
+    @Override
+    protected boolean handleKeyStrokeAction(String action, Event event) {
+        if(!super.handleKeyStrokeAction(action, event)) {
+            if(selectionManager == null) {
+                return false;
+            }
+            if(!selectionManager.handleKeyStrokeAction(action, event)) {
+                return false;
+            }
+        }
+        // remove focus from childs
+        requestKeyboardFocus(null);
+        return true;
     }
 
     protected boolean dragActive;
@@ -882,14 +903,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 }
                 return true;
             }
-        } else {
+        } else if(selectionManager != null) {
             int row = getRowUnderMouse(evt.getMouseY());
             int column = getColumnUnderMouse(evt.getMouseX());
-            if(evt.getType() == Event.Type.MOUSE_BTNDOWN && evt.getMouseButton() == Event.MOUSE_LBUTTON) {
-                boolean isShift = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
-                boolean isCtrl = (evt.getModifiers() & Event.MODIFIER_CTRL) != 0;
-                handleMouseClick(row, column, isShift, isCtrl);
-            }
+            selectionManager.handleMouseEvent(row, column, evt);
         }
 
         setMouseCursor(normalCursor);
@@ -898,112 +915,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return evt.getType() != Event.Type.MOUSE_WHEEL;
     }
 
-    protected boolean handleKeyEvent(Event evt) {
-        boolean isShift = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
-        boolean isCtrl = (evt.getModifiers() & Event.MODIFIER_CTRL) != 0;
-        
-        switch (evt.getType()) {
-        case KEY_PRESSED:
-            switch (evt.getKeyCode()) {
-            case Keyboard.KEY_UP:
-                handleCursorKey(0, -1, isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_DOWN:
-                handleCursorKey(0, +1, isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_LEFT:
-                handleCursorKey(-1, 0, isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_RIGHT:
-                handleCursorKey(+1, 0, isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_PERIOD:
-                handleCursorKey(0, -Math.max(1, getNumVisibleRows()), isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_NEXT:
-                handleCursorKey(0, +Math.max(1, getNumVisibleRows()), isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_HOME:
-                handleCursorKey(-numColumns-1, -numRows-1, isShift, isCtrl);
-                return true;
-            case Keyboard.KEY_END:
-                handleCursorKey(+numColumns+1, +numRows+1, isShift, isCtrl);
-                return true;
-            }
-            break;
-        case KEY_RELEASED:
-            switch (evt.getKeyCode()) {
-            case Keyboard.KEY_UP:
-            case Keyboard.KEY_DOWN:
-            case Keyboard.KEY_LEFT:
-            case Keyboard.KEY_RIGHT:
-            case Keyboard.KEY_PERIOD:
-            case Keyboard.KEY_NEXT:
-            case Keyboard.KEY_HOME:
-            case Keyboard.KEY_END:
-                return true;
-            }
-            break;
-        }
-        
-        return false;
-    }
-
-    protected void handleCursorKey(int moveX, int moveY, boolean isShift, boolean isCtrl) {
-        if(selectionModel != null && numRows > 0) {
-            int leadIndex = Math.max(0, selectionModel.getLeadIndex());
-            int anchorIndex = Math.max(0, selectionModel.getAnchorIndex());
-            int index = Math.max(0, Math.min(numRows-1, leadIndex + moveY));
-
-            adjustScrollPosition(index);
-
-            if(isCtrl) {
-                selectionModel.setLeadIndex(index);
-            } else if(isShift) {
-                selectionModel.setSelection(anchorIndex, index);
-            } else {
-                selectionModel.setSelection(index, index);
-            }
-        }
-    }
-
-    protected void handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
-        if(selectionModel != null) {
-            if(row < 0) {
-                if(!isShift) {
-                    selectionModel.clearSelection();
-                }
-            } else {
-                adjustScrollPosition(row);
-                int anchorIndex = selectionModel.getAnchorIndex();
-                boolean anchorSelected;
-                if(anchorIndex == -1) {
-                    anchorIndex = 0;
-                    anchorSelected = false;
-                } else {
-                    anchorSelected = selectionModel.isSelected(anchorIndex);
-                }
-
-                if(isCtrl) {
-                    if(isShift) {
-                        if(anchorSelected) {
-                            selectionModel.addSelection(anchorIndex, row);
-                        } else {
-                            selectionModel.removeSelection(anchorIndex, row);
-                        }
-                    } else if(selectionModel.isSelected(row)) {
-                        selectionModel.removeSelection(row, row);
-                    } else {
-                        selectionModel.addSelection(row, row);
-                    }
-                } else if(isShift) {
-                    selectionModel.setSelection(anchorIndex, row);
-                } else {
-                    selectionModel.setSelection(row, row);
-                }
-            }
-        }
-    }
 
     protected void updateAllColumnWidth() {
         columnModel.initializeAll(numColumns);
@@ -1038,10 +949,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             updateColumnHeader(i);
         }
 
-        if(selectionModel != null) {
-            selectionModel.clearSelection();
-            selectionModel.setAnchorIndex(-1);
-            selectionModel.setLeadIndex(-1);
+        if(selectionManager != null) {
+            selectionManager.modelChanged();
         }
         
         updateAll();
@@ -1105,8 +1014,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 sp.setScrollPositionY(scrollPosY + rowsEnd - rowsStart);
             }
         }
-        if(selectionModel != null) {
-            selectionModel.rowsInserted(row, count);
+        if(selectionManager != null) {
+            selectionManager.rowsInserted(row, count);
         }
         invalidateLayout();
         invalidateParentLayout();
@@ -1128,8 +1037,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             widgetGrid.iterate(row, 0, row+count-1, numColumns, removeCellWidgetsFunction);
             widgetGrid.removeRows(row, count);
         }
-        if(selectionModel != null) {
-            selectionModel.rowsDeleted(row, count);
+        if(selectionManager != null) {
+            selectionManager.rowsDeleted(row, count);
         }
         invalidateLayout();
         invalidateParentLayout();
