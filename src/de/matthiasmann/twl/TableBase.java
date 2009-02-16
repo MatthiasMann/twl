@@ -128,7 +128,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     
     protected final TypeMapping<CellRenderer> cellRenderers;
     protected final SparseGrid widgetGrid;
-    protected final SizeSequence columnModel;
+    protected final ColumnSizeSequence columnModel;
     protected TableColumnHeaderModel columnHeaderModel;
     protected SizeSequence rowModel;
     protected boolean hasCellWidgetCreators;
@@ -283,8 +283,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public void setColumnWidth(int column, int width) {
         checkColumnIndex(column);
         columnHeaders[column].setColumnWidth(width);    // store passed width
-        width = computeColumnWidth(width);
-        if(columnModel.setSize(column, width)) {
+        if(columnModel.update(column)) {
             invalidateLayout();
             invalidateParentLayout();
         }
@@ -351,6 +350,16 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 scrollPane.setScrollPositionY(pos);
             }
         }
+    }
+
+    public boolean isFixedWidthMode() {
+        ScrollPane scrollPane = ScrollPane.getContainingScrollPane(this);
+        if(scrollPane != null) {
+            if(scrollPane.getFixed() != ScrollPane.Fixed.HORIZONTAL) {
+                return false;
+            }
+        }
+        return true;
     }
     
     protected final void checkRowIndex(int row) {
@@ -424,6 +433,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected int getOffsetY() {
         return getInnerY() - scrollPosY + columnHeaderHeight;
+    }
+
+    @Override
+    protected void sizeChanged() {
+        super.sizeChanged();
+        if(isFixedWidthMode()) {
+            updateAllColumnWidth = true;
+        }
     }
 
     @Override
@@ -663,11 +680,29 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return height;
     }
 
-    protected int computeColumnWidth(int columnWidth) {
-        if(columnWidth <= 0) {
-            columnWidth = defaultColumnWidth;
+    protected int computeColumnWidth(int index) {
+        if(isFixedWidthMode()) {
+            int preferredWidth = computePreferredColumnsWidth();
+            return computeFixedColumnWidth(index, preferredWidth);
         }
-        return Math.max(2*columnDividerDragableDistance+1, columnWidth);
+        return Math.max(2*columnDividerDragableDistance+1,
+                columnHeaders[index].getPreferredWidth());
+    }
+
+    protected int computeFixedColumnWidth(int index, int preferredWidth) {
+        int columnWidth = Math.max(2*columnDividerDragableDistance+1,
+                columnHeaders[index].getPreferredWidth());
+        return Math.max(2*columnDividerDragableDistance+1,
+                getInnerWidth() * columnWidth / preferredWidth);
+    }
+
+    protected int computePreferredColumnsWidth() {
+        int preferredWidth = 0;
+        for(int i=0,n=columnHeaders.length ; i<n ; i++) {
+            preferredWidth += Math.max(2*columnDividerDragableDistance+1,
+                    columnHeaders[i].getPreferredWidth());
+        }
+        return preferredWidth;
     }
 
     protected boolean autoSizeRow(int row) {
@@ -880,7 +915,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected boolean handleMouseEvent(Event evt) {
         if(dragActive) {
             if(dragColumn >= 0) {
-                setColumnWidth(dragColumn, evt.getMouseX() - dragStartX);
+                setColumnWidth(dragColumn, Math.max(1, evt.getMouseX() - dragStartX));
             }
             if(evt.isMouseDragEnd()) {
                 dragActive = false;
@@ -891,7 +926,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         boolean inHeader = isMouseInColumnHeader(evt.getMouseY());
         if(inHeader) {
             int column = getColumnSeparatorUnderMouse(evt.getMouseX());
-            if(column >= 0) {
+            if(column >= 0 && (column < getNumColumns()-1 || !isFixedWidthMode())) {
                 setMouseCursor(columnResizeCursor);
 
                 if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
@@ -1121,12 +1156,23 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
-    class ColumnSizeSequence extends SizeSequence {
+    protected class ColumnSizeSequence extends SizeSequence {
         @Override
         protected void initializeSizes(int index, int count) {
-            for(int i=0 ; i<count ; i++,index++) {
-                table[index] = computeColumnWidth(columnHeaders[index].getColumnWidth());
+            if(isFixedWidthMode()) {
+                int preferredWidth = computePreferredColumnsWidth();
+                for(int i=0 ; i<count ; i++,index++) {
+                    table[index] = computeFixedColumnWidth(index, preferredWidth);
+                }
+            } else {
+                for(int i=0 ; i<count ; i++,index++) {
+                    table[index] = computeColumnWidth(index);
+                }
             }
+        }
+        protected boolean update(int index) {
+            int width = computeColumnWidth(index);
+            return setSize(index, width);
         }
     }
 
@@ -1150,13 +1196,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
-    static class WidgetEntry extends SparseGrid.Entry {
-        Widget widget;
-        CellWidgetCreator creator;
-        WidgetCache cache;
-    }
-
-    protected static class ColumnHeader extends Button {
+    protected class ColumnHeader extends Button {
         private int columnWidth;
 
         public int getColumnWidth() {
@@ -1166,6 +1206,21 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         public void setColumnWidth(int columnWidth) {
             this.columnWidth = columnWidth;
         }
+
+        @Override
+        public int getPreferredWidth() {
+            if(columnWidth > 0) {
+                return columnWidth;
+            }
+            int prefWidth = super.getPreferredWidth();
+            return Math.max(prefWidth, defaultColumnWidth);
+        }
+    }
+
+    static class WidgetEntry extends SparseGrid.Entry {
+        Widget widget;
+        CellWidgetCreator creator;
+        WidgetCache cache;
     }
 
     protected static class WidgetCache extends HashEntry<String, WidgetCache> {
