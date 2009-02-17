@@ -94,6 +94,14 @@ public abstract class AbstractTreeTableModel extends AbstractTableColumnHeaderMo
         fireNodesRemoved(this, idx, 1);
     }
 
+    protected void removeAllChildren() {
+        int count = children.size();
+        if(count > 0) {
+            children.clear();
+            fireNodesRemoved(this, 0, count);
+        }
+    }
+
     protected void fireNodesAdded(TreeTableNode parent, int idx, int count) {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
