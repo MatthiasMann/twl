@@ -164,6 +164,7 @@ public class SparseGrid {
     public void clear() {
         Arrays.fill(root.children, null);
         root.size = 0;
+        numLevels = 1;
     }
 
     private void maybeRemoveRoot() {
