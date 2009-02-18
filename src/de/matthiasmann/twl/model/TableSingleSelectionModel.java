@@ -34,22 +34,21 @@ package de.matthiasmann.twl.model;
  * 
  * @author Matthias Mann
  */
-public class TableSingleSelectionModel implements TableSelectionModel {
+public class TableSingleSelectionModel extends AbstractTableSelectionModel implements TableSelectionModel {
 
     public static final int NO_SELECTION = -1;
 
     private int selection;
-    private int leadIndex;
 
+    @Override
     public void rowsInserted(int index, int count) {
         if(selection >= index) {
             selection += count;
         }
-        if(leadIndex >= index) {
-            leadIndex += count;
-        }
+        super.rowsInserted(index, count);
     }
 
+    @Override
     public void rowsDeleted(int index, int count) {
         if(selection >= index) {
             if(selection < index + count) {
@@ -58,56 +57,48 @@ public class TableSingleSelectionModel implements TableSelectionModel {
                 selection -= count;
             }
         }
-        if(leadIndex >= index) {
-            leadIndex = Math.max(index, leadIndex - count);
-        }
+        super.rowsDeleted(index, count);
     }
 
     public void clearSelection() {
-        selection = NO_SELECTION;
+        if(hasSelection()) {
+            selection = NO_SELECTION;
+            fireSelectionChange();
+        }
     }
 
     public void setSelection(int index0, int index1) {
+        updateLeadAndAnchor(index0, index1);
         selection = index1;
-        leadIndex = index1;
+        fireSelectionChange();
     }
 
     public void addSelection(int index0, int index1) {
+        updateLeadAndAnchor(index0, index1);
         selection = index1;
-        leadIndex = index1;
+        fireSelectionChange();
     }
 
     public void invertSelection(int index0, int index1) {
+        updateLeadAndAnchor(index0, index1);
         if(selection == index1) {
             selection = NO_SELECTION;
         } else {
             selection = index1;
         }
-        leadIndex = index1;
+        fireSelectionChange();
     }
 
     public void removeSelection(int index0, int index1) {
-        int first = Math.min(index0, index1);
-        int last = Math.max(index0, index1);
-        if(selection >= first && selection <= last) {
-            selection = NO_SELECTION;
+        updateLeadAndAnchor(index0, index1);
+        if(hasSelection()) {
+            int first = Math.min(index0, index1);
+            int last = Math.max(index0, index1);
+            if(selection >= first && selection <= last) {
+                selection = NO_SELECTION;
+            }
+            fireSelectionChange();
         }
-        leadIndex = index1;
-    }
-
-    public int getLeadIndex() {
-        return leadIndex;
-    }
-
-    public int getAnchorIndex() {
-        return leadIndex;
-    }
-
-    public void setLeadIndex(int index) {
-        leadIndex = index;
-    }
-
-    public void setAnchorIndex(int index) {
     }
 
     public boolean isSelected(int index) {

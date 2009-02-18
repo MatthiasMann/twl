@@ -32,23 +32,20 @@ package de.matthiasmann.twl.model;
 import java.util.BitSet;
 
 /**
+ * A table selection model for multi selection
  *
  * @author Matthias Mann
  */
-public class DefaultTableSelectionModel implements TableSelectionModel {
+public class DefaultTableSelectionModel extends AbstractTableSelectionModel implements TableSelectionModel {
 
     private final BitSet value;
     private int minIndex;
     private int maxIndex;
-    private int leadIndex;
-    private int anchorIndex;
-
+    
     public DefaultTableSelectionModel() {
         this.value = new BitSet();
         this.minIndex = Integer.MAX_VALUE;
         this.maxIndex = Integer.MIN_VALUE;
-        this.leadIndex = -1;
-        this.anchorIndex = -1;
     }
 
     public int getFirstSelected() {
@@ -57,22 +54,6 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
 
     public int getLastSelected() {
         return maxIndex;
-    }
-
-    public int getAnchorIndex() {
-        return anchorIndex;
-    }
-
-    public int getLeadIndex() {
-        return leadIndex;
-    }
-
-    public void setAnchorIndex(int index) {
-        anchorIndex = index;
-    }
-
-    public void setLeadIndex(int index) {
-        leadIndex = index;
     }
 
     public boolean hasSelection() {
@@ -126,48 +107,53 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
     }
 
     public void clearSelection() {
-        minIndex = Integer.MAX_VALUE;
-        maxIndex = Integer.MIN_VALUE;
-        value.clear();
+        if(hasSelection()) {
+            minIndex = Integer.MAX_VALUE;
+            maxIndex = Integer.MIN_VALUE;
+            value.clear();
+            fireSelectionChange();
+        }
     }
 
     public void setSelection(int index0, int index1) {
+        updateLeadAndAnchor(index0, index1);
         minIndex = Math.min(index0, index1);
         maxIndex = Math.max(index0, index1);
         value.clear();
         value.set(minIndex, maxIndex+1);
-        anchorIndex = index0;
-        leadIndex = index1;
+        fireSelectionChange();
     }
 
     public void addSelection(int index0, int index1) {
+        updateLeadAndAnchor(index0, index1);
         int min = Math.min(index0, index1);
         int max = Math.max(index0, index1);
         for(int i=min ; i<=max ; i++) {
             setBit(i);
         }
-        anchorIndex = index0;
-        leadIndex = index1;
+        fireSelectionChange();
     }
 
     public void invertSelection(int index0, int index1) {
+        updateLeadAndAnchor(index0, index1);
         int min = Math.min(index0, index1);
         int max = Math.max(index0, index1);
         for(int i=min ; i<=max ; i++) {
             toggleBit(i);
         }
-        anchorIndex = index0;
-        leadIndex = index1;
+        fireSelectionChange();
     }
 
     public void removeSelection(int index0, int index1) {
-        int min = Math.min(index0, index1);
-        int max = Math.max(index0, index1);
-        for(int i=min ; i<=max ; i++) {
-            clearBit(i);
+        updateLeadAndAnchor(index0, index1);
+        if(hasSelection()) {
+            int min = Math.min(index0, index1);
+            int max = Math.max(index0, index1);
+            for(int i=min ; i<=max ; i++) {
+                clearBit(i);
+            }
+            fireSelectionChange();
         }
-        anchorIndex = index0;
-        leadIndex = index1;
     }
 
     public int[] getSelection() {
@@ -179,6 +165,7 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
         return result;
     }
 
+    @Override
     public void rowsInserted(int index, int count) {
         if(index <= maxIndex) {
             for(int i=maxIndex ; i>=index ; i--) {
@@ -194,14 +181,10 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
                 minIndex += count;
             }
         }
-        if(leadIndex >= index) {
-            leadIndex += count;
-        }
-        if(anchorIndex >= index) {
-            anchorIndex += count;
-        }
+        super.rowsInserted(index, count);
     }
 
+    @Override
     public void rowsDeleted(int index, int count) {
         if(index <= maxIndex) {
             for(int i=index ; i<=maxIndex ; i++) {
@@ -221,11 +204,6 @@ public class DefaultTableSelectionModel implements TableSelectionModel {
                 }
             }
         }
-        if(leadIndex >= index) {
-            leadIndex = Math.max(index, leadIndex - count);
-        }
-        if(anchorIndex >= index) {
-            anchorIndex = Math.max(index, anchorIndex - count);
-        }
+        super.rowsDeleted(index, count);
     }
 }

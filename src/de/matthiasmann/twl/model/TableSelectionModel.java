@@ -94,5 +94,9 @@ public interface TableSelectionModel {
     public int getLastSelected();
     
     public int[] getSelection();
+
+    public void addSelectionChangeListener(Runnable cb);
+
+    public void removeSelectionChangeListener(Runnable cb);
     
 }
