@@ -55,11 +55,6 @@ public class PersistentableBooleanModel extends HasCallback implements BooleanMo
         this.prefKey = prefKey;
         value = prefs.getBoolean(prefKey, defaultValue);
     }
-    
-    public PersistentableBooleanModel() {
-        this.prefs = null;
-        this.prefKey = null;
-    }
 
     public boolean getValue() {
         return value;
