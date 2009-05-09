@@ -437,12 +437,18 @@ public class ListBox extends Widget {
         if(needUpdate) {
             updateDisplay();
         }
-        // always update  scrollbar
-        int maxFirstVisibleRow = Math.max(0, getNumEntries() - labels.length);
+        // always update scrollbar
+        int maxFirstVisibleRow = computeMaxFirstVisibleRow(getNumEntries());
         scrollbar.setMinMaxValue(0, maxFirstVisibleRow);
         scrollbar.setValue(firstVisible / numCols);
 
         super.paint(gui);
+    }
+
+    private int computeMaxFirstVisibleRow(int numEntries) {
+        int maxFirstVisibleRow = Math.max(0, numEntries - labels.length);
+        maxFirstVisibleRow = (maxFirstVisibleRow + numCols + 1) / numCols;
+        return maxFirstVisibleRow;
     }
 
     private void updateDisplay() {
@@ -453,8 +459,7 @@ public class ListBox extends Widget {
             selected = NO_SELECTION;
         }
         
-        int maxFirstVisibleRow = Math.max(0, numEntries - labels.length);
-        maxFirstVisibleRow = (maxFirstVisibleRow + numCols + 1) / numCols;
+        int maxFirstVisibleRow = computeMaxFirstVisibleRow(numEntries);
         int maxFirstVisible = maxFirstVisibleRow * numCols;
         if(firstVisible > maxFirstVisible) {
             firstVisible = Math.max(0, maxFirstVisible);
