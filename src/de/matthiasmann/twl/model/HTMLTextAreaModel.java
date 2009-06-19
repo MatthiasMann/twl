@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl.model;
 
-import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.Image;
