@@ -93,6 +93,17 @@ public class ReorderListModel<T> extends AbstractListModel<T> {
         return base.matchPrefix(remappedIndex, prefix);
     }
 
+    public int findEntry(Object o) {
+        int[] list = this.reorderList;
+        for(int i=0,n=size ; i<n ; i++) {
+            T entry = base.getEntry(list[i]);
+            if(entry == o || (entry != null && entry.equals(o))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     public void shuffle() {
         Random r = new Random();
         for(int i=size ; i>1 ;) {
