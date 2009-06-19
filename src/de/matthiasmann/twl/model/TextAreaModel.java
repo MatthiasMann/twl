@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl.model;
 
-import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Image;
 
@@ -88,12 +87,6 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
     }
 
     public interface TextElement extends Element {
-        /**
-         * Returns the text color.
-         * @return the text color.
-         */
-        public Color getColor();
-
         /**
          * Returns the font name. The font name is mapped to a font using the themeInfo.
          * @return the font name.

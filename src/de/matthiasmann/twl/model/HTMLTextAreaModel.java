@@ -244,12 +244,9 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             style.textIndent = parsePXValue(value);
             return true;
         }
-        if("color".equals(key)) {
-            Color color = Color.parserColor(value);
-            if(color != null) {
-                style.color = color;
-                return true;
-            }
+        if("font".equals(key)) {
+            style.fontName = value;
+            return true;
         }
         if("text-align".equals(key)) {
             HAlignment alignment = HALIGN.get(value);
@@ -370,7 +367,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         int marginLeft;
         int marginRight;
         int textIndent;
-        Color color;
         HAlignment halignment;
         VAlignment valignment;
         String fontName;
@@ -385,7 +381,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             this.marginLeft = src.marginLeft;
             this.marginRight = src.marginRight;
             this.textIndent = src.textIndent;
-            this.color = src.color;
             this.halignment = src.halignment;
             this.valignment = src.valignment;
             this.fontName = src.fontName;
@@ -442,10 +437,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public boolean isParagraphEnd() {
             return isParagraphEnd;
-        }
-
-        public Color getColor() {
-            return style.color;
         }
 
         public String getFontName() {
