@@ -93,7 +93,6 @@ public interface Font extends Resource {
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block
      * @param str the text to draw
-     * @param color the color to draw the text with
      * @param width the width of the text block
      * @param align horizontal alignment for shorter lines
      * @return the height in pixels of the multi line text
@@ -106,7 +105,6 @@ public interface Font extends Resource {
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block
      * @param str the text to draw
-     * @param color the color to draw the text with
      * @return the width in pixels of the text
      */
     int drawText(AnimationState as, int x, int y, CharSequence str);
@@ -117,7 +115,6 @@ public interface Font extends Resource {
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block
      * @param str the text to draw
-     * @param color the color to draw the text with
      * @param start index of first character to draw in str
      * @param end index after last character to draw in str
      * @return the width in pixels of the text

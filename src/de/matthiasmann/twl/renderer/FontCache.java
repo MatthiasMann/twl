@@ -53,7 +53,6 @@ public interface FontCache extends Resource {
      * @param as A time source for animation - may be null
      * @param x the left coordinate
      * @param y the top coordinate
-     * @param color the color for drawing the text
      */
     public void draw(AnimationState as, int x, int y);
     
