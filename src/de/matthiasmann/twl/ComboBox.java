@@ -128,11 +128,7 @@ public class ComboBox extends Widget {
     }
 
     private void doCallback() {
-        if(selectionChangedListeners != null) {
-            for(Runnable cb : selectionChangedListeners) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(selectionChangedListeners);
     }
 
     public void setModel(ListModel model) {

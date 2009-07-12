@@ -89,11 +89,7 @@ public abstract class AbstractTableSelectionModel implements TableSelectionModel
     }
 
     protected void fireSelectionChange() {
-        if(selectionChangeListener != null) {
-            for(Runnable cb : selectionChangeListener) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(selectionChangeListener);
     }
     
     protected void updateLeadAndAnchor(int index0, int index1) {

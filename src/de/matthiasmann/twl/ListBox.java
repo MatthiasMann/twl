@@ -129,13 +129,8 @@ public class ListBox extends Widget {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
     }
 
-    @SuppressWarnings("unchecked")
     private void doCallback(CallbackReason reason) {
-        if(callbacks != null) {
-            for(CallbackWithReason cb : callbacks) {
-                ((CallbackWithReason<CallbackReason>)cb).callback(reason);
-            }
-        }
+        CallbackSupport.fireCallbacks(callbacks, reason);
     }
 
     public int getCellHeight() {
@@ -610,13 +605,8 @@ public class ListBox extends Widget {
             callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
         }
 
-        @SuppressWarnings("unchecked")
         protected void doListBoxCallback(ListBox.CallbackReason reason) {
-            if(callbacks != null) {
-                for(CallbackWithReason cb : callbacks) {
-                    ((CallbackWithReason<ListBox.CallbackReason>)cb).callback(reason);
-                }
-            }
+            CallbackSupport.fireCallbacks(callbacks, reason);
         }
 
         protected boolean handleListBoxEvent(Event evt) {

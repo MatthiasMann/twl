@@ -66,10 +66,6 @@ public class HasCallback {
      * new callback will not be called.
      */
     protected void doCallback() {
-        if(callbacks != null) {
-            for(Runnable cb : callbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(callbacks);
     }
 }

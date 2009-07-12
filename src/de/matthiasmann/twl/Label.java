@@ -70,13 +70,8 @@ public class Label extends TextWidget {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
     }
 
-    @SuppressWarnings("unchecked")
     protected void doCallback(CallbackReason reason) {
-        if(callbacks != null) {
-            for(CallbackWithReason cb : callbacks) {
-                ((CallbackWithReason<CallbackReason>)cb).callback(reason);
-            }
-        }
+        CallbackSupport.fireCallbacks(callbacks, reason);
     }
 
     public boolean isAutoSize() {

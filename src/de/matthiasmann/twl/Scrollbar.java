@@ -148,11 +148,7 @@ public class Scrollbar extends Widget {
     }
 
     protected void doCallback() {
-        if(callbacks != null) {
-            for(Runnable cb : callbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(callbacks);
     }
 
     public Orientation getOrientation() {

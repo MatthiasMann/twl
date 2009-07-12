@@ -104,19 +104,11 @@ public class SimpleButtonModel implements ButtonModel {
     }
 
     protected void fireStateCallback() {
-        if(stateCallbacks != null) {
-            for(Runnable cb : stateCallbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(stateCallbacks);
     }
 
     public void fireActionCallback() {
-        if(actionCallbacks != null) {
-            for(Runnable cb : actionCallbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(actionCallbacks);
     }
 
     public void addActionCallback(Runnable callback) {

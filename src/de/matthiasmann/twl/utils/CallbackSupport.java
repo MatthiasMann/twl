@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.utils;
 
+import de.matthiasmann.twl.CallbackWithReason;
 import java.lang.reflect.Array;
 
 /**
@@ -89,5 +90,22 @@ public class CallbackSupport {
             curList = removeCallbackFromList(curList, idx, clazz);
         }
         return curList;
+    }
+
+    public static void fireCallbacks(Runnable[] callbacks) {
+        if(callbacks != null) {
+            for(Runnable cb : callbacks) {
+                cb.run();
+            }
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T extends Enum<T>> void fireCallbacks(CallbackWithReason[] callbacks, T reason) {
+        if(callbacks != null) {
+            for(CallbackWithReason cb : callbacks) {
+                ((CallbackWithReason<T>)cb).callback(reason);
+            }
+        }
     }
 }

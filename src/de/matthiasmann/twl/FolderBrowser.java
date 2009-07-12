@@ -105,11 +105,7 @@ public class FolderBrowser extends Widget {
     }
 
     protected void doCallback() {
-        if(callbacks != null) {
-            for(Runnable cb : callbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(callbacks);
     }
 
     public Comparator<String> getFolderComparator() {
@@ -189,11 +185,7 @@ public class FolderBrowser extends Widget {
     }
 
     protected void fireSelectionChangedCallback() {
-        if(selectionChangedCallbacks != null) {
-            for(Runnable cb : selectionChangedCallbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(selectionChangedCallbacks);
     }
     
     @Override
