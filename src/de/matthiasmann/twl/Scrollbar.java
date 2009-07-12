@@ -164,11 +164,17 @@ public class Scrollbar extends Widget {
     }
 
     public void setValue(int current) {
+        setValue(current, true);
+    }
+
+    public void setValue(int current, boolean fireCallbacks) {
         current = range(current);
         if(this.value != current) {
             this.value = current;
             setThumbPos();
-            doCallback();
+            if(fireCallbacks) {
+                doCallback();
+            }
         }
     }
     

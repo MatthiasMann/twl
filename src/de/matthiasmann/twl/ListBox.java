@@ -196,7 +196,7 @@ public class ListBox extends Widget {
         firstVisible = Math.max(0, Math.min(firstVisible, getNumEntries() - 1));
         if(this.firstVisible != firstVisible) {
             this.firstVisible = firstVisible;
-            scrollbar.setValue(firstVisible / numCols);
+            scrollbar.setValue(firstVisible / numCols, false);
             needUpdate = true;
         }
     }
@@ -440,7 +440,7 @@ public class ListBox extends Widget {
         // always update scrollbar
         int maxFirstVisibleRow = computeMaxFirstVisibleRow(getNumEntries());
         scrollbar.setMinMaxValue(0, maxFirstVisibleRow);
-        scrollbar.setValue(firstVisible / numCols);
+        scrollbar.setValue(firstVisible / numCols, false);
 
         super.paint(gui);
     }
