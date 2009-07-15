@@ -87,15 +87,12 @@ public class BitmapFont {
         }
     }
 
-    private final LWJGLRenderer renderer;
     private final LWJGLTexture texture;
     private final Glyph[][] glyphs;
     private final int lineHeight;
     private final int baseLine;
 
     public BitmapFont(LWJGLRenderer renderer, XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
-        this.renderer = renderer;
-        
         xpp.require(XmlPullParser.START_TAG, null, "font");
         xpp.nextTag();
         xpp.require(XmlPullParser.START_TAG, null, "info");
