@@ -101,13 +101,13 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
     private State getOrCreate(String stateName) {
         State state = HashEntry.get(stateTable, stateName);
         if(state == null) {
-            state = createState(stateName, state);
+            state = createState(stateName);
         }
         return state;
     }
 
-    private State createState(String stateName, State state) {
-        state = new State(stateName);
+    private State createState(String stateName) {
+        State state = new State(stateName);
         state.lastChangedTime = getCurrentTime();
         stateTable = HashEntry.maybeResizeTable(stateTable, stateTableSize);
         HashEntry.insertEntry(stateTable, state);
