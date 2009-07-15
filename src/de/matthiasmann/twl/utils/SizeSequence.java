@@ -60,7 +60,7 @@ public class SizeSequence {
         int high = size;
         int result = 0;
         while(low < high) {
-            int mid = (low + high)/2;
+            int mid = (low + high) >>> 1;
             if (index <= mid) {
                 high = mid;
             } else {
@@ -76,7 +76,7 @@ public class SizeSequence {
         int high = size;
         int result = 0;
         while(low < high) {
-            int mid = (low + high)/2;
+            int mid = (low + high) >>> 1;
             result += table[mid];
             low = mid + 1;
         }
@@ -87,7 +87,7 @@ public class SizeSequence {
         int low = 0;
         int high = size;
         while(low < high) {
-            int mid = (low + high)/2;
+            int mid = (low + high) >>> 1;
             int pos = table[mid];
             if(position < pos) {
                 high = mid;
@@ -117,7 +117,7 @@ public class SizeSequence {
         int high = size;
 
         while(low < high) {
-            int mid = (low + high)/2;
+            int mid = (low + high) >>> 1;
             if(index <= mid) {
                 table[mid] += delta;
                 high = mid;
@@ -130,7 +130,7 @@ public class SizeSequence {
     protected int toSizes(int low, int high, int[] dst) {
         int subResult = 0;
         while(low < high) {
-            int mid = (low + high)/2;
+            int mid = (low + high) >>> 1;
             int pos = table[mid];
             dst[mid] = pos - toSizes(low, mid, dst);
             subResult += pos;
@@ -142,7 +142,7 @@ public class SizeSequence {
     protected int fromSizes(int low, int high) {
         int subResult = 0;
         while(low < high) {
-            int mid = (low + high)/2;
+            int mid = (low + high) >>> 1;
             int pos = table[mid] + fromSizes(low, mid);
             table[mid] = pos;
             subResult += pos;
