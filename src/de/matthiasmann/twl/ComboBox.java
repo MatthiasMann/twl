@@ -64,25 +64,7 @@ public class ComboBox extends Widget {
         this.label = new ComboboxLabel(getAnimationState());
         this.button = new Button(getAnimationState());
         this.popup = new PopupWindow(this);
-        this.listbox = new ListBox() {
-            @Override
-            protected ListBoxDisplay createDisplay() {
-                return new ListBoxLabel() {
-                    @Override
-                    protected boolean handleListBoxEvent(Event evt) {
-                        if(evt.getType() == Event.Type.MOUSE_CLICKED) {
-                            doListBoxCallback(CallbackReason.MOUSE_CLICK);
-                            return true;
-                        }
-                        if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
-                            doListBoxCallback(CallbackReason.SET_SELECTED);
-                            return true;
-                        }
-                        return false;
-                    }
-                };
-            }
-        };
+        this.listbox = new ComboboxListbox();
         
         label.addCallback(new CallbackWithReason<Label.CallbackReason>() {
             public void callback(CallbackReason reason) {
@@ -370,4 +352,31 @@ public class ComboBox extends Widget {
             invalidateModelWidth();
         }
     }
+
+    static class ComboboxListbox extends ListBox {
+        public ComboboxListbox() {
+            setTheme("listbox");
+        }
+
+        @Override
+        protected ListBoxDisplay createDisplay() {
+            return new ComboboxListboxLabel();
+        }
+    }
+
+    static class ComboboxListboxLabel extends ListBox.ListBoxLabel {
+        @Override
+        protected boolean handleListBoxEvent(Event evt) {
+            if(evt.getType() == Event.Type.MOUSE_CLICKED) {
+                doListBoxCallback(ListBox.CallbackReason.MOUSE_CLICK);
+                return true;
+            }
+            if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
+                doListBoxCallback(ListBox.CallbackReason.SET_SELECTED);
+                return true;
+            }
+            return false;
+        }
+    }
+    
 }
