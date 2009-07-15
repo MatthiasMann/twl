@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl.utils;
 
+import java.lang.reflect.Array;
+
 /**
  * Hash table building block
  *
@@ -39,8 +41,8 @@ package de.matthiasmann.twl.utils;
 public class HashEntry<K, T extends HashEntry<K, T>> {
 
     public final K key;
-    private final int hash;
-    private T next;
+    final int hash;
+    T next;
 
     public HashEntry(K key) {
         this.key = key;
@@ -114,7 +116,7 @@ public class HashEntry<K, T extends HashEntry<K, T>> {
             throw new IllegalArgumentException("newSize");
         }
         @SuppressWarnings("unchecked")
-        T[] newTable = (T[])new HashEntry[newSize];
+        T[] newTable = (T[])Array.newInstance(table.getClass().getComponentType(), newSize);
         for(int i=0,n=table.length ; i<n ; i++) {
             for(T e=table[i] ; e!=null ;) {
                 T ne = e.next;
