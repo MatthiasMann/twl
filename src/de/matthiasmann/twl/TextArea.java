@@ -725,7 +725,7 @@ public class TextArea extends Widget {
             if(cache != null) {
                 cache.draw(getAnimationState(), x+offX, y+offY);
             } else {
-                font.drawText(getAnimationState(), x+offX, y+offY, text);
+                font.drawText(getAnimationState(), x+offX, y+offY, text, start, end);
             }
         }
 
@@ -758,15 +758,17 @@ public class TextArea extends Widget {
 
     static class LImage extends LWidget {
         LImage(Image img, String toolTip) {
-            this.widget = new Label() {
-                @Override
-                protected void applyThemeBackground(ThemeInfo themeInfo) {
-                    // don't load the background image
-                }
-            };
+            widget = new LImageLabel();
             widget.setTheme("image");
             widget.setBackground(img);
             widget.setTooltipContent(toolTip);
+        }
+
+        static class LImageLabel extends Label {
+            @Override
+            protected void applyThemeBackground(ThemeInfo themeInfo) {
+                // don't load the background image
+            }
         }
     }
 }
