@@ -111,7 +111,7 @@ public class GridImage implements Image, HasBorder {
         }
     }
 
-    public GridImage(Image[] images, GridImage src) {
+    private GridImage(Image[] images, GridImage src) {
         this.images = images;
         this.weightX = src.weightX;
         this.weightY = src.weightY;
