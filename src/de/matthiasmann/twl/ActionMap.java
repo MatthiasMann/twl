@@ -110,7 +110,7 @@ public class ActionMap {
     }
 
     public void addMappingImpl(String action, Object target, Method method, Object[] params, int flags) {
-        mappings = HashEntry.maybeResizeTable(mappings, numMappings);
+        mappings = HashEntry.maybeResizeTable(mappings, numMappings++);
         HashEntry.insertEntry(mappings, new Mapping(action, target, method, params, flags));
     }
 
