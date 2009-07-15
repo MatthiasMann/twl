@@ -88,8 +88,6 @@ public class LWJGLTexture implements Texture, Resource {
     private final int height;
     private final int texWidth;
     private final int texHeight;
-    private final float tx1;
-    private final float ty1;
     private ByteBuffer texData;
     private Format texDataFmt;
     
@@ -144,8 +142,6 @@ public class LWJGLTexture implements Texture, Resource {
         
         this.width = width;
         this.height = height;
-        this.tx1 = (width-1) / (float)texWidth;
-        this.ty1 = (height-1) / (float)texHeight;
         this.texData = buf;
         this.texDataFmt = fmt;
     }
