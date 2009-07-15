@@ -476,7 +476,7 @@ public class DialogLayout extends Widget {
             if(value >= 0) {
                 return value;
             }
-            Dimension dim = null;
+            Dimension dim;
             switch(value) {
             case SMALL_GAP:
                 dim = smallGap;
