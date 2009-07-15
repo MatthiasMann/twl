@@ -36,7 +36,7 @@ import java.util.BitSet;
  *
  * @author Matthias Mann
  */
-public class DefaultTableSelectionModel extends AbstractTableSelectionModel implements TableSelectionModel {
+public class DefaultTableSelectionModel extends AbstractTableSelectionModel {
 
     private final BitSet value;
     private int minIndex;

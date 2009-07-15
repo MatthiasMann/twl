@@ -34,7 +34,7 @@ package de.matthiasmann.twl.model;
  * 
  * @author Matthias Mann
  */
-public class TableSingleSelectionModel extends AbstractTableSelectionModel implements TableSelectionModel {
+public class TableSingleSelectionModel extends AbstractTableSelectionModel {
 
     public static final int NO_SELECTION = -1;
 
