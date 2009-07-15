@@ -410,7 +410,7 @@ public class PNGDecoder {
     private void closeChunk() throws IOException {
         if(chunkRemaining > 0) {
             // just skip the rest and the CRC
-            input.skip(chunkRemaining+4);
+            skip(chunkRemaining + 4);
         } else {
             readFully(buffer, 0, 4);
             int expectedCrc = readInt(buffer, 0);
@@ -506,6 +506,16 @@ public class PNGDecoder {
                 ((buffer[offset+1] & 255) << 16) |
                 ((buffer[offset+2] & 255) <<  8) |
                 ((buffer[offset+3] & 255)      );
+    }
+
+    private void skip(long amount) throws IOException {
+        while(amount > 0) {
+            long skipped = input.skip(amount);
+            if(skipped < 0) {
+                throw new EOFException();
+            }
+            amount -= skipped;
+        }
     }
     
     private static boolean checkSignatur(byte[] buffer) {
