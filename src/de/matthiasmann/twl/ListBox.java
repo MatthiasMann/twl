@@ -253,6 +253,10 @@ public class ListBox extends Widget {
     public int getNumRows() {
         return (getNumEntries() + numCols - 1) / numCols;
     }
+
+    public int getNumColumns() {
+        return numCols;
+    }
     
     public int findEntryByName(String prefix) {
         int numEntries = getNumEntries();
