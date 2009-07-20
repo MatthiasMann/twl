@@ -435,6 +435,10 @@ public class TreeTable extends TableBase {
             setSubRenderer(data);
         }
 
+        protected int getIndentation() {
+            return level * treeIndent + treeButtonSize.getX();
+        }
+
         protected void setSubRenderer(Object colData) {
             subRenderer = getCellRenderer(colData);
             if(subRenderer != null) {
@@ -455,7 +459,7 @@ public class TreeTable extends TableBase {
 
         public Widget getCellRenderWidget(int x, int y, int width, int height, boolean isSelected) {
             if(subRenderer != null) {
-                int indent = level * treeIndent + treeButtonSize.getX();
+                int indent = getIndentation();
                 Widget widget = subRenderer.getCellRenderWidget(
                         x + indent, y, Math.max(0, width-indent), height, isSelected);
                 return widget;
@@ -488,6 +492,7 @@ public class TreeTable extends TableBase {
         }
 
         public void setCellData(int row, int column, Object data, NodeState nodeState) {
+            assert nodeState != null;
             this.nodeState = nodeState;
             setSubRenderer(data);
             level = nodeState.level;

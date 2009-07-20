@@ -79,11 +79,7 @@ public abstract class AbstractTreeTableNode implements TreeTableNode {
     protected void setLeaf(boolean leaf) {
         if(this.leaf != leaf) {
             this.leaf = leaf;
-            int selfIdxInParent = parent.getChildIndex(this);
-            if(selfIdxInParent >= 0) {
-                // a negative index means that we are not yet added to the parent
-                getTreeTableModel().fireNodesChanged(parent,selfIdxInParent, 1);
-            }
+            fireNodeChanged();
         }
     }
 
@@ -103,9 +99,11 @@ public abstract class AbstractTreeTableNode implements TreeTableNode {
     }
 
     protected void removeAllChildren() {
-        int count = children.size();
-        children.clear();
-        getTreeTableModel().fireNodesRemoved(this, 0, count);
+        if(children != null) {
+            int count = children.size();
+            children.clear();
+            getTreeTableModel().fireNodesRemoved(this, 0, count);
+        }
     }
 
     protected AbstractTreeTableModel getTreeTableModel() {
@@ -116,6 +114,14 @@ public abstract class AbstractTreeTableNode implements TreeTableNode {
                 return (AbstractTreeTableModel)n;
             }
             n = p;
+        }
+    }
+
+    protected void fireNodeChanged() {
+        int selfIdxInParent = parent.getChildIndex(this);
+        if(selfIdxInParent >= 0) {
+            // a negative index means that we are not yet added to the parent
+            getTreeTableModel().fireNodesChanged(parent, selfIdxInParent, 1);
         }
     }
 }

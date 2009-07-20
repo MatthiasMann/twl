@@ -413,6 +413,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     @Override
+    public void removeAllChildren() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected void childChangedSize(Widget child) {
         // ignore
     }
@@ -451,12 +456,16 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         cellWidgetContainer.setPosition(getInnerX(), getInnerY() + columnHeaderHeight);
         cellWidgetContainer.setSize(innerWidth, innerHeight);
 
-        if(updateAllColumnWidth) {
-            updateAllColumnWidth();
+        if(updateAllColumnWidth | autoSizeAllRows) {
+            if(updateAllColumnWidth) {
+                updateAllColumnWidth();
+            }
+            if(autoSizeAllRows) {
+                autoSizeAllRows();
+            }
+           // repositionAllWidgets();
         }
-        if(autoSizeAllRows) {
-            autoSizeAllRows();
-        }
+        
         if(updateAllCellWidgets) {
             updateAllCellWidgets();
         }

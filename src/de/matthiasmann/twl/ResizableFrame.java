@@ -85,7 +85,7 @@ public class ResizableFrame extends Widget {
     private int dragInitialRight;
     private int dragInitialBottom;
 
-    private Color fadeColorInactive;
+    private Color fadeColorInactive = Color.WHITE;
     private int fadeDurationActivate;
     private int fadeDurationDeactivate;
     private int fadeDurationShow;

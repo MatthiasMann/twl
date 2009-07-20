@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2009, Matthias Mann
  *
  * All rights reserved.
  *
@@ -27,51 +27,18 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl;
+package de.matthiasmann.twl.model;
 
 /**
- *
+ * This interface is used to create sub properties in a PropertySheet if
+ * it is used as value of another Property
+ * 
  * @author Matthias Mann
  */
-public class Dimension {
+public interface PropertyList {
 
-    public static final Dimension ZERO = new Dimension(0, 0);
+    public int getNumProperties();
+
+    public Property<?> getProperty(int idx);
     
-    private final int x;
-    private final int y;
-
-    public Dimension(int x, int y) {
-        this.x = x;
-        this.y = y;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if(obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        final Dimension other = (Dimension)obj;
-        return (this.x == other.x) && (this.y == other.y);
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 71 * hash + this.x;
-        hash = 71 * hash + this.y;
-        return hash;
-    }
-
-    @Override
-    public String toString() {
-        return "Dimension[x="+x+", y="+y+"]";
-    }
 }

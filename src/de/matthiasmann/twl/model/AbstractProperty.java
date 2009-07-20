@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2009, Matthias Mann
  *
  * All rights reserved.
  *
@@ -27,51 +27,32 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl;
+package de.matthiasmann.twl.model;
+
+import de.matthiasmann.twl.utils.CallbackSupport;
 
 /**
+ * An abstract base class for Properties. Provides callback handling.
  *
+ * @param <T> The type of the property value
  * @author Matthias Mann
  */
-public class Dimension {
+public abstract class AbstractProperty<T> implements Property<T> {
 
-    public static final Dimension ZERO = new Dimension(0, 0);
-    
-    private final int x;
-    private final int y;
+    private Runnable[] valueChangedCallbacks = null;
 
-    public Dimension(int x, int y) {
-        this.x = x;
-        this.y = y;
+    public void addValueChangedCallback(Runnable cb) {
+        valueChangedCallbacks = CallbackSupport.addCallbackToList(
+                valueChangedCallbacks, cb, Runnable.class);
     }
 
-    public int getX() {
-        return x;
+    public void removeValueChangedCallback(Runnable cb) {
+        valueChangedCallbacks = CallbackSupport.removeCallbackFromList(
+                valueChangedCallbacks, cb, Runnable.class);
     }
 
-    public int getY() {
-        return y;
+    protected void fireValueChangedCallback() {
+        CallbackSupport.fireCallbacks(valueChangedCallbacks);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if(obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        final Dimension other = (Dimension)obj;
-        return (this.x == other.x) && (this.y == other.y);
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 71 * hash + this.x;
-        hash = 71 * hash + this.y;
-        return hash;
-    }
-
-    @Override
-    public String toString() {
-        return "Dimension[x="+x+", y="+y+"]";
-    }
 }
