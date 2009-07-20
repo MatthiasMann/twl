@@ -51,6 +51,7 @@ public class TextWidget extends Widget {
     private int cachedTextWidth = NOT_CACHED;
     private int numTextLines;
     private boolean useCache = true;
+    private boolean cacheDirty;
     private Alignment alignment = Alignment.TOPLEFT;
 
     public TextWidget() {
@@ -74,7 +75,7 @@ public class TextWidget extends Widget {
         this.font = font;
         this.cachedTextWidth = NOT_CACHED;
         if(useCache) {
-            updateCache();
+            this.cacheDirty = true;
         }
     }
 
@@ -92,7 +93,7 @@ public class TextWidget extends Widget {
         this.text = text;
         this.cachedTextWidth = NOT_CACHED;
         this.numTextLines = TextUtil.countNumLines(text);
-        updateCache();
+        this.cacheDirty = true;
         getAnimationState().resetAnimationTime(STATE_TEXT_CHANGED);
     }
 
@@ -122,7 +123,7 @@ public class TextWidget extends Widget {
         }
         if(this.alignment != alignment) {
             this.alignment = alignment;
-            updateCache();
+            this.cacheDirty = true;
         }
     }
 
@@ -133,7 +134,7 @@ public class TextWidget extends Widget {
     public void setCache(boolean cache) {
         if(this.useCache != cache) {
             this.useCache = cache;
-            updateCache();
+            this.cacheDirty = true;
         }
     }
 
@@ -181,6 +182,9 @@ public class TextWidget extends Widget {
     }
 
     protected void paintLabelText(de.matthiasmann.twl.renderer.AnimationState animState) {
+        if(cacheDirty) {
+            updateCache();
+        }
         if(hasText() && font != null) {
             int x = computeTextX();
             int y = computeTextY();
@@ -196,6 +200,9 @@ public class TextWidget extends Widget {
     }
 
     protected void paintWithSelection(AnimationState animState, int start, int end) {
+        if(cacheDirty) {
+            updateCache();
+        }
         if(hasText() && font != null) {
             int x = computeTextX();
             int y = computeTextY();
@@ -235,7 +242,7 @@ public class TextWidget extends Widget {
 
     public int computeTextWidth() {
         if(font != null) {
-            if(cachedTextWidth == NOT_CACHED) {
+            if(cachedTextWidth == NOT_CACHED || cacheDirty) {
                 if(numTextLines > 1) {
                     cachedTextWidth = font.computeMultiLineTextWidth(text);
                 } else {
@@ -255,6 +262,7 @@ public class TextWidget extends Widget {
     }
 
     private void updateCache() {
+        cacheDirty = false;
         if(useCache && hasText() && font != null) {
             if(numTextLines > 1) {
                 cache = font.cacheMultiLineText(cache, text,
