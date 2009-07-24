@@ -43,7 +43,7 @@ public class TreePathDisplay extends Widget {
 
     public interface Callback {
         public void pathElementClicked(TreeTableNode node, TreeTableNode child);
-        public void resolvePath(String path);
+        public boolean resolvePath(String path);
     }
     
     private final BoxLayout pathBox;
@@ -51,34 +51,15 @@ public class TreePathDisplay extends Widget {
     private Callback[] callbacks;
     private String separator = "/";
     private TreeTableNode currentNode;
+    private boolean allowEdit;
 
     public TreePathDisplay() {
-        pathBox = new BoxLayout(BoxLayout.Direction.HORIZONTAL);
-        pathBox.setTheme("pathbox");
+        pathBox = new PathBox();
         pathBox.setScroll(true);
         pathBox.setClip(true);
 
-        editField = new EditField() {
-            @Override
-            protected void keyboardFocusLost() {
-                setVisible(false);
-            }
-        };
+        editField = new PathEditField();
         editField.setVisible(false);
-        editField.addCallback(new EditField.Callback() {
-            public void callback(int key) {
-                switch(key) {
-                    case Keyboard.KEY_RETURN:
-                        fireResolvePath(editField.getText());
-                        // fall through
-
-                    case Keyboard.KEY_ESCAPE:
-                        editField.setVisible(false);
-                        requestKeyboardFocus();
-                        break;
-                }
-            }
-        });
         
         add(pathBox);
         add(editField);
@@ -110,6 +91,19 @@ public class TreePathDisplay extends Widget {
         rebuildPathBox();
     }
 
+    public boolean isAllowEdit() {
+        return allowEdit;
+    }
+
+    public void setAllowEdit(boolean allowEdit) {
+        this.allowEdit = allowEdit;
+        rebuildPathBox();
+    }
+
+    public void setEditErrorMessage(String msg) {
+        editField.setErrorMessage(msg);
+    }
+    
     protected String getTextFromNode(TreeTableNode node) {
         Object data = node.getData(0);
         String text = (data != null) ? data.toString() : "";
@@ -142,20 +136,31 @@ public class TreePathDisplay extends Widget {
 
             Label l = new Label(separator);
             l.setTheme("separator");
-            l.addCallback(new CallbackWithReason<Label.CallbackReason>() {
-                public void callback(CallbackReason reason) {
-                    if(reason == CallbackReason.DOUBLE_CLICK) {
-                        editPath(node);
+            if(allowEdit) {
+                l.addCallback(new CallbackWithReason<Label.CallbackReason>() {
+                    public void callback(CallbackReason reason) {
+                        if(reason == CallbackReason.DOUBLE_CLICK) {
+                            editPath(node);
+                        }
                     }
-                }
-            });
+                });
+            }
             pathBox.add(l);
         }
     }
 
-    private void editPath(TreeTableNode cursorAfterNode) {
+    void endEdit() {
+        editField.setVisible(false);
+        requestKeyboardFocus();
+    }
+
+    void editPath(TreeTableNode cursorAfterNode) {
         StringBuilder sb = new StringBuilder();
-        int cursorPos = recursiveAddPath(sb, currentNode, cursorAfterNode);
+        int cursorPos = 0;
+        if(currentNode != null) {
+            cursorPos = recursiveAddPath(sb, currentNode, cursorAfterNode);
+        }
+        editField.setErrorMessage(null);
         editField.setText(sb.toString());
         editField.setCursorPos(cursorPos, false);
         editField.setVisible(true);
@@ -175,12 +180,15 @@ public class TreePathDisplay extends Widget {
         }
     }
 
-    protected void fireResolvePath(String text) {
+    protected boolean fireResolvePath(String text) {
         if(callbacks != null) {
             for(Callback cb : callbacks) {
-                cb.resolvePath(text);
+                if(cb.resolvePath(text)) {
+                    return true;
+                }
             }
         }
+        return false;
     }
 
     protected void firePathElementClicked(TreeTableNode node, TreeTableNode child) {
@@ -217,6 +225,45 @@ public class TreePathDisplay extends Widget {
 
         editField.setPosition(getInnerX(), getInnerY());
         editField.setSize(getInnerWidth(), getInnerHeight());
+    }
+
+    private class PathBox extends BoxLayout {
+        public PathBox() {
+            super(BoxLayout.Direction.HORIZONTAL);
+        }
+
+        @Override
+        protected boolean handleEvent(Event evt) {
+            if(evt.isMouseEvent()) {
+                if(evt.getType() == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
+                    editPath(currentNode);
+                    return true;
+                }
+                return evt.getType() != Event.Type.MOUSE_WHEEL;
+            }
+            return super.handleEvent(evt);
+        }
+    }
+
+    private class PathEditField extends EditField {
+        @Override
+        protected void keyboardFocusLost() {
+            setVisible(false);
+        }
+
+        @Override
+        protected void doCallback(int key) {
+            switch(key) {
+            case Keyboard.KEY_RETURN:
+                if(fireResolvePath(editField.getText())) {
+                    endEdit();
+                }
+                break;
+            case Keyboard.KEY_ESCAPE:
+                endEdit();
+                break;
+            }
+        }
     }
 
 }
