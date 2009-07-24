@@ -49,13 +49,14 @@ public class TreePathDisplay extends Widget {
     private final BoxLayout pathBox;
     private final EditField editField;
     private Callback[] callbacks;
-    private String separator;
+    private String separator = "/";
     private TreeTableNode currentNode;
 
     public TreePathDisplay() {
         pathBox = new BoxLayout(BoxLayout.Direction.HORIZONTAL);
         pathBox.setTheme("pathbox");
         pathBox.setScroll(true);
+        pathBox.setClip(true);
 
         editField = new EditField() {
             @Override
@@ -72,7 +73,7 @@ public class TreePathDisplay extends Widget {
                         // fall through
 
                     case Keyboard.KEY_ESCAPE:
-                        setVisible(false);
+                        editField.setVisible(false);
                         requestKeyboardFocus();
                         break;
                 }
@@ -110,7 +111,8 @@ public class TreePathDisplay extends Widget {
     }
 
     protected String getTextFromNode(TreeTableNode node) {
-        String text = node.getData(0).toString();
+        Object data = node.getData(0);
+        String text = (data != null) ? data.toString() : "";
         if(text.endsWith(separator)) {
             // strip of separator
             text = text.substring(0, text.length() - 1);
@@ -120,35 +122,34 @@ public class TreePathDisplay extends Widget {
 
     private void rebuildPathBox() {
         pathBox.removeAllChildren();
-        recursiveAddNode(currentNode, null);
+        if(currentNode != null) {
+            recursiveAddNode(currentNode, null);
+        }
     }
 
     private void recursiveAddNode(final TreeTableNode node, final TreeTableNode child) {
-        if(node != null) {
+        if(node.getParent() != null) {
             recursiveAddNode(node.getParent(), node);
 
-            if(pathBox.getNumChildren() > 0) {
-                Label l = new Label(separator);
-                l.setTheme("separator");
-                l.addCallback(new CallbackWithReason<Label.CallbackReason>() {
-                    public void callback(CallbackReason reason) {
-                        if(reason == CallbackReason.DOUBLE_CLICK) {
-                            editPath(node);
-                        }
-                    }
-                });
-                pathBox.add(l);
-            }
-
             Button btn = new Button(getTextFromNode(node));
+            btn.setTheme("node");
             btn.addCallback(new Runnable() {
                 public void run() {
                     firePathElementClicked(node, child);
                 }
             });
-
-            btn.setTheme("node");
             pathBox.add(btn);
+
+            Label l = new Label(separator);
+            l.setTheme("separator");
+            l.addCallback(new CallbackWithReason<Label.CallbackReason>() {
+                public void callback(CallbackReason reason) {
+                    if(reason == CallbackReason.DOUBLE_CLICK) {
+                        editPath(node);
+                    }
+                }
+            });
+            pathBox.add(l);
         }
     }
 
@@ -163,13 +164,10 @@ public class TreePathDisplay extends Widget {
 
     private int recursiveAddPath(StringBuilder sb, TreeTableNode node, TreeTableNode cursorAfterNode) {
         int cursorPos = 0;
-        if(node != null) {
+        if(node.getParent() != null) {
             cursorPos = recursiveAddPath(sb, node.getParent(), cursorAfterNode);
+            sb.append(getTextFromNode(node)).append(separator);
         }
-        if(sb.length() > 0) {
-            sb.append(separator);
-        }
-        sb.append(getTextFromNode(node));
         if(node == cursorAfterNode) {
             return sb.length();
         } else {
@@ -195,12 +193,21 @@ public class TreePathDisplay extends Widget {
 
     @Override
     public int getPreferredInnerWidth() {
-        return pathBox.getPreferredInnerWidth();
+        return pathBox.getPreferredWidth();
     }
 
     @Override
     public int getPreferredInnerHeight() {
-        return pathBox.getPreferredInnerHeight();
+        return Math.max(
+                pathBox.getPreferredHeight(),
+                editField.getPreferredHeight());
+    }
+
+    @Override
+    public int getMinHeight() {
+        return Math.max(super.getMinHeight(), Math.max(
+                pathBox.getMinHeight(),
+                editField.getMinHeight()));
     }
 
     @Override
