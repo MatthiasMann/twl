@@ -106,14 +106,31 @@ public class TreeTable extends TableBase {
         while(parent != null) {
             NodeState ns = HashEntry.get(nodeStateTable, parent);
             int idx = parent.getChildIndex(node);
-            if(ns.childSizes != null) {
-                idx = ns.childSizes.getPosition(idx);
+            if(ns.childSizes == null) {
+                return -1;
             }
+            idx = ns.childSizes.getPosition(idx);
             position += idx + 1;
             node = parent;
             parent = node.getParent();
         }
         return position;
+    }
+
+    public int getRowFromNodeExpand(TreeTableNode node) {
+        if(node.getParent() != null) {
+            TreeTableNode parent = node.getParent();
+            int row = getRowFromNodeExpand(parent);
+            int idx = parent.getChildIndex(node);
+            NodeState ns = HashEntry.get(nodeStateTable, parent);
+            ns.setValue(true);
+            if(ns.childSizes == null) {
+                ns.initChildSizes();
+            }
+            return row + 1 + ns.childSizes.getPosition(idx);
+        } else {
+            return -1;
+        }
     }
 
     public TreeTableNode getNodeFromRow(int row) {
