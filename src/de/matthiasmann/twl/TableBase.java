@@ -289,6 +289,22 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
+    public void scrollToRow(int row) {
+        ScrollPane scrollPane = ScrollPane.getContainingScrollPane(this);
+        if(scrollPane != null) {
+            int rowStart = getRowStartPosition(row);
+            if(rowStart < scrollPosY) {
+                scrollPane.setScrollPositionY(rowStart);
+            } else {
+                int rowEnd = getRowEndPosition(row);
+                int innerHeight = Math.max(0, getInnerHeight() - columnHeaderHeight);
+                if(rowEnd > scrollPosY + innerHeight) {
+                    scrollPane.setScrollPositionY(rowEnd - innerHeight);
+                }
+            }
+        }
+    }
+
     public int getNumVisibleRows() {
         int rows = lastVisibleRow - firstVisibleRow;
         if(!lastRowPartialVisible) {
