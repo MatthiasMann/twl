@@ -62,7 +62,6 @@ public class TreeTable extends TableBase {
     public TreeTable(TreeTableModel model) {
         this();
         setModel(model);
-        modelAllChanged();
     }
 
     public void setModel(TreeTableModel model) {
@@ -85,6 +84,7 @@ public class TreeTable extends TableBase {
             this.numRows = 0;
             this.numColumns = 0;
         }
+        modelAllChanged();
         invalidateLayout();
         invalidateParentLayout();
     }
@@ -152,6 +152,16 @@ public class TreeTable extends TableBase {
         }
     }
 
+    public void collapseAll() {
+        for(int i=0 ; i<nodeStateTable.length ; ++i) {
+            for(NodeState ns=nodeStateTable[i] ; ns!=null ; ns=ns.next()) {
+                if(ns != rootNodeState) {
+                    ns.setValue(false);
+                }
+            }
+        }
+    }
+    
     protected NodeState getOrCreateNodeState(TreeTableNode node) {
         NodeState ns = HashEntry.get(nodeStateTable, node);
         if(ns == null) {
