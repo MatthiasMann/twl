@@ -37,7 +37,7 @@ import org.lwjgl.input.Keyboard;
 /**
  * Display widget for a TreeTableNode with navigation and editing support
  *
- * @author MannMat
+ * @author Matthias Mann
  */
 public class TreePathDisplay extends Widget {
 
