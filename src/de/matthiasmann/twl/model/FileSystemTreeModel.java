@@ -39,6 +39,25 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
         }
     }
 
+    public TreeTableNode getNodeForFile(Object obj) {
+        Object parent = fsm.getParent(obj);
+        TreeTableNode parentNode;
+        if(parent == null) {
+            parentNode = this;
+        } else {
+            parentNode = (FolderNode)getNodeForFile(parent);
+        }
+        if(parentNode != null) {
+            for(int i=0 ; i<parentNode.getNumChildren() ; i++) {
+                FolderNode node = (FolderNode)parentNode.getChild(i);
+                if(fsm.equals(node.folder, obj)) {
+                    return node;
+                }
+            }
+        }
+        return null;
+    }
+
     static final FolderNode[] NO_CHILDREN = new FolderNode[0];
     
     public static class FolderNode implements TreeTableNode {
