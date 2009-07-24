@@ -82,7 +82,8 @@ public class ComboBox extends ComboBoxBase {
                 }
             }
         });
-        
+
+        popup.setTheme("comboboxPopup");
         popup.add(listbox);
         add(label);
     }

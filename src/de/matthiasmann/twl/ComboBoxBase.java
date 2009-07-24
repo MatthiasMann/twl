@@ -39,6 +39,8 @@ package de.matthiasmann.twl;
  */
 public abstract class ComboBoxBase extends Widget {
 
+    public static final String STATE_COMBOBOX_KEYBOARD_FOCUS = "comboboxKeyboardFocus";
+    
     protected final Button button;
     protected final PopupWindow popup;
     
@@ -52,9 +54,6 @@ public abstract class ComboBoxBase extends Widget {
             }
         });
 
-
-        popup.setTheme("comboboxPopup");
-        
         add(button);
         setCanAcceptKeyboardFocus(true);
         setDepthFocusTraversal(false);
@@ -113,6 +112,26 @@ public abstract class ComboBoxBase extends Widget {
         button.setPosition(getInnerRight() - btnWidth, getInnerY());
         button.setSize(btnWidth, innerHeight);
         getLabel().setSize(Math.max(0, button.getX() - getInnerX()), innerHeight);
+    }
+
+    private void setRecursive(Widget w, String what, boolean state) {
+        w.getAnimationState().setAnimationState(what, state);
+        for(int i=0 ; i<w.getNumChildren() ; ++i) {
+            Widget child = w.getChild(i);
+            setRecursive(child, what, state);
+        }
+    }
+
+    @Override
+    protected void keyboardFocusGained() {
+        super.keyboardFocusGained();
+        setRecursive(getLabel(), STATE_COMBOBOX_KEYBOARD_FOCUS, true);
+    }
+
+    @Override
+    protected void keyboardFocusLost() {
+        super.keyboardFocusLost();
+        setRecursive(getLabel(), STATE_COMBOBOX_KEYBOARD_FOCUS, false);
     }
 
 }
