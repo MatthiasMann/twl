@@ -372,7 +372,7 @@ public class ThemeManager {
             throw new XmlPullParserException("name must not contain '.' or '*'", xpp, null);
         }
         ThemeInfoImpl ti = new ThemeInfoImpl(this, themeName, parent);
-        mathInterpreter.setEnv(ti);
+        ThemeInfoImpl oldEnv = mathInterpreter.setEnv(ti);
         try {
             if(ParserUtil.parseBoolFromAttribute(xpp, "merge", false)) {
                 if(parent == null) {
@@ -414,7 +414,7 @@ public class ThemeManager {
                 xpp.nextTag();
             }
         } finally {
-            mathInterpreter.setEnv(null);
+            mathInterpreter.setEnv(oldEnv);
         }
         return ti;
     }
@@ -591,15 +591,22 @@ public class ThemeManager {
     }
 
     class MathInterpreter extends AbstractMathInterpreter {
-        private ParameterMapImpl env;
+        private ThemeInfoImpl env;
 
-        public void setEnv(ParameterMapImpl env) {
+        public ThemeInfoImpl setEnv(ThemeInfoImpl env) {
+            ThemeInfoImpl oldEnv = this.env;
             this.env = env;
+            return oldEnv;
         }
 
         public void accessVariable(String name) {
             if(env != null) {
                 Object obj = env.getParameterValue(name, false);
+                if(obj != null) {
+                    push(obj);
+                    return;
+                }
+                obj = env.getChildTheme(name);
                 if(obj != null) {
                     push(obj);
                     return;
