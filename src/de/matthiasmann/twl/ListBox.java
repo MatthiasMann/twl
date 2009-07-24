@@ -126,7 +126,7 @@ public class ListBox extends Widget {
     }
 
     public void removeCallback(CallbackWithReason<CallbackReason> cb) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
     private void doCallback(CallbackReason reason) {
@@ -606,7 +606,7 @@ public class ListBox extends Widget {
         }
 
         public void removeListBoxCallback(CallbackWithReason<ListBox.CallbackReason> cb) {
-            callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
+            callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
         }
 
         protected void doListBoxCallback(ListBox.CallbackReason reason) {

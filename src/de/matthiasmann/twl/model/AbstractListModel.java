@@ -48,7 +48,7 @@ public abstract class AbstractListModel<T> implements ListModel<T> {
     }
 
     public void removeChangeListener(ChangeListener listener) {
-        listeners = CallbackSupport.removeCallbackFromList(listeners, listener, ChangeListener.class);
+        listeners = CallbackSupport.removeCallbackFromList(listeners, listener);
     }
 
     protected void fireEntriesInserted(int first, int last) {

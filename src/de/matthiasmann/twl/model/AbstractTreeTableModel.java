@@ -50,7 +50,7 @@ public abstract class AbstractTreeTableModel extends AbstractTableColumnHeaderMo
     }
 
     public void removeChangeListener(ChangeListener listener) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, listener, ChangeListener.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, listener);
     }
 
     public Object getData(int column) {

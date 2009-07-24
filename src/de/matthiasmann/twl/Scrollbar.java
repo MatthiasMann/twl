@@ -144,7 +144,7 @@ public class Scrollbar extends Widget {
     }
 
     public void removeCallback(Runnable cb) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, Runnable.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
     protected void doCallback() {

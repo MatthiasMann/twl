@@ -92,7 +92,7 @@ public class EditField extends Widget {
     }
 
     public void removeCallback(Callback cb) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, Callback.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
     protected void doCallback(int key) {

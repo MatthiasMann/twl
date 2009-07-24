@@ -67,7 +67,7 @@ public class Label extends TextWidget {
     }
 
     public void removeCallback(CallbackWithReason<CallbackReason> cb) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, CallbackWithReason.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
     protected void doCallback(CallbackReason reason) {

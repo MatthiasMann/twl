@@ -57,7 +57,7 @@ public class AnimatedWindow extends Widget {
     }
 
     public void removeCallback(Runnable cb) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, Runnable.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
     private void doCallback() {

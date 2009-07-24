@@ -101,7 +101,7 @@ public class FolderBrowser extends Widget {
     }
 
     public void removeCallback(Runnable cb) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb, Runnable.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
     protected void doCallback() {
@@ -181,7 +181,7 @@ public class FolderBrowser extends Widget {
     }
 
     public void removeSelectionChangedCallback(Runnable cb) {
-        selectionChangedCallbacks = CallbackSupport.removeCallbackFromList(selectionChangedCallbacks, cb, Runnable.class);
+        selectionChangedCallbacks = CallbackSupport.removeCallbackFromList(selectionChangedCallbacks, cb);
     }
 
     protected void fireSelectionChangedCallback() {

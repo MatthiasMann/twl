@@ -40,13 +40,11 @@ import org.lwjgl.input.Keyboard;
  *
  * @author Matthias Mann
  */
-public class ComboBox extends Widget {
+public class ComboBox extends ComboBoxBase {
 
     private static final int INVALID_WIDTH = -1;
     
     private final ComboboxLabel label;
-    private final Button button;
-    private final PopupWindow popup;
     private final ListBox listbox;
 
     private Runnable[] selectionChangedListeners;
@@ -62,17 +60,10 @@ public class ComboBox extends Widget {
     
     public ComboBox() {
         this.label = new ComboboxLabel(getAnimationState());
-        this.button = new Button(getAnimationState());
-        this.popup = new PopupWindow(this);
         this.listbox = new ComboboxListbox();
         
         label.addCallback(new CallbackWithReason<Label.CallbackReason>() {
             public void callback(CallbackReason reason) {
-                openPopup();
-            }
-        });
-        button.addCallback(new Runnable() {
-            public void run() {
                 openPopup();
             }
         });
@@ -92,13 +83,8 @@ public class ComboBox extends Widget {
             }
         });
         
-        popup.setTheme("comboboxPopup");
         popup.add(listbox);
-        
         add(label);
-        add(button);
-        setCanAcceptKeyboardFocus(true);
-        setDepthFocusTraversal(false);
     }
 
     public void addCallback(Runnable cb) {
@@ -106,7 +92,7 @@ public class ComboBox extends Widget {
     }
 
     public void removeCallback(Runnable cb) {
-        selectionChangedListeners = CallbackSupport.removeCallbackFromList(selectionChangedListeners, cb, Runnable.class);
+        selectionChangedListeners = CallbackSupport.removeCallbackFromList(selectionChangedListeners, cb);
     }
 
     private void doCallback() {
@@ -169,23 +155,13 @@ public class ComboBox extends Widget {
         }
     }
 
-    protected void openPopup() {
-        if(popup.openPopup()) {
-            int minHeight = popup.getMinHeight();
-            int popupHeight = computeSize(minHeight,
-                    popup.getPreferredHeight(),
-                    popup.getMaxHeight());
-            int popupMaxBottom = popup.getParent().getInnerBottom();
-            if(getBottom() + minHeight > popupMaxBottom) {
-                popup.setPosition(getX(), popupMaxBottom - minHeight);
-            } else {
-                popup.setPosition(getX(), getBottom());
-            }
-            popupHeight = Math.min(popupHeight, popupMaxBottom - popup.getY());
-            popup.setSize(getWidth(), popupHeight);
-            listbox.setSize(popup.getInnerWidth(), popup.getInnerHeight());
+    @Override
+    protected boolean openPopup() {
+        if(super.openPopup()) {
             listbox.scrollToSelected();
+            return true;
         }
+        return false;
     }
     
     protected void listBoxSelectionChanged(boolean close) {
@@ -198,6 +174,10 @@ public class ComboBox extends Widget {
 
     protected String getModelData(int idx) {
         return String.valueOf(getModel().getEntry(idx));
+    }
+
+    protected Widget getLabel() {
+        return label;
     }
 
     protected void updateLabel() {
@@ -241,49 +221,6 @@ public class ComboBox extends Widget {
         return false;
     }
 
-    @Override
-    public int getPreferredInnerWidth() {
-        int width;
-        if(computeWidthFromModel && getModel() != null) {
-            if(modelWidth == INVALID_WIDTH) {
-                updateModelWidth();
-            }
-            width = modelWidth;
-        } else {
-            width = label.getPreferredWidth();
-        }
-        return width + button.getPreferredWidth();
-    }
-
-    @Override
-    public int getPreferredInnerHeight() {
-        return Math.max(label.getPreferredHeight(), button.getPreferredHeight());
-    }
-
-    @Override
-    public int getMinWidth() {
-        int minWidth = super.getMinWidth();
-        minWidth = Math.max(minWidth, label.getMinWidth() + button.getMinWidth());
-        return minWidth;
-    }
-
-    @Override
-    public int getMinHeight() {
-        int minHeight = super.getMinHeight();
-        minHeight = Math.max(minHeight, label.getMinHeight());
-        minHeight = Math.max(minHeight, button.getMinHeight());
-        return minHeight;
-    }
-
-    @Override
-    protected void layout() {
-        int btnWidth = button.getPreferredWidth();
-        int innerHeight = getInnerHeight();
-        button.setPosition(getInnerRight() - btnWidth, getInnerY());
-        button.setSize(btnWidth, innerHeight);
-        label.setSize(Math.max(0, button.getX() - getInnerX()), innerHeight);
-    }
-
     void invalidateModelWidth() {
         if(computeWidthFromModel) {
             modelWidth = INVALID_WIDTH;
@@ -320,12 +257,24 @@ public class ComboBox extends Widget {
         return width;
     }
 
-    static class ComboboxLabel extends Label {
+    class ComboboxLabel extends Label {
         public ComboboxLabel(AnimationState animState) {
             super(animState);
             setAutoSize(false);
             setClip(true);
             setTheme("display");
+        }
+
+        @Override
+        public int getPreferredInnerWidth() {
+            if(computeWidthFromModel && getModel() != null) {
+                if(modelWidth == INVALID_WIDTH) {
+                    updateModelWidth();
+                }
+                return modelWidth;
+            } else {
+                return super.getPreferredInnerWidth();
+            }
         }
 
         @Override

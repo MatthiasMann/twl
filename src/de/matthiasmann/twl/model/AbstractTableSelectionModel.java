@@ -67,7 +67,7 @@ public abstract class AbstractTableSelectionModel implements TableSelectionModel
     }
 
     public void removeSelectionChangeListener(Runnable cb) {
-        selectionChangeListener = CallbackSupport.removeCallbackFromList(selectionChangeListener, cb, Runnable.class);
+        selectionChangeListener = CallbackSupport.removeCallbackFromList(selectionChangeListener, cb);
     }
 
     public void rowsDeleted(int index, int count) {

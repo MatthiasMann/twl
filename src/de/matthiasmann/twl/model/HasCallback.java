@@ -56,7 +56,7 @@ public class HasCallback {
      * @param callback the callback that should be removed
      */
     public void removeCallback(Runnable callback) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback, Runnable.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
     }
 
     /**

@@ -48,7 +48,7 @@ public abstract class AbstractProperty<T> implements Property<T> {
 
     public void removeValueChangedCallback(Runnable cb) {
         valueChangedCallbacks = CallbackSupport.removeCallbackFromList(
-                valueChangedCallbacks, cb, Runnable.class);
+                valueChangedCallbacks, cb);
     }
 
     protected void fireValueChangedCallback() {

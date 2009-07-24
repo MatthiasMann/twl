@@ -116,7 +116,7 @@ public class SimpleButtonModel implements ButtonModel {
     }
 
     public void removeActionCallback(Runnable callback) {
-        actionCallbacks = CallbackSupport.removeCallbackFromList(actionCallbacks, callback, Runnable.class);
+        actionCallbacks = CallbackSupport.removeCallbackFromList(actionCallbacks, callback);
     }
 
     public boolean hasActionCallbacks() {
@@ -128,7 +128,7 @@ public class SimpleButtonModel implements ButtonModel {
     }
 
     public void removeStateCallback(Runnable callback) {
-        stateCallbacks = CallbackSupport.removeCallbackFromList(stateCallbacks, callback, Runnable.class);
+        stateCallbacks = CallbackSupport.removeCallbackFromList(stateCallbacks, callback);
     }
     
 }

@@ -44,7 +44,7 @@ public abstract class AbstractTableModel extends AbstractTableColumnHeaderModel 
     }
 
     public void removeChangeListener(ChangeListener listener) {
-        callbacks = CallbackSupport.removeCallbackFromList(callbacks, listener, ChangeListener.class);
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, listener);
     }
 
     protected void fireRowsInserted(int idx, int count) {
