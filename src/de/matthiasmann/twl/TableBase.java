@@ -472,16 +472,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         cellWidgetContainer.setPosition(getInnerX(), getInnerY() + columnHeaderHeight);
         cellWidgetContainer.setSize(innerWidth, innerHeight);
 
-        if(updateAllColumnWidth | autoSizeAllRows) {
-            if(updateAllColumnWidth) {
-                updateAllColumnWidth();
-            }
-            if(autoSizeAllRows) {
-                autoSizeAllRows();
-            }
-           // repositionAllWidgets();
+        if(updateAllColumnWidth) {
+            updateAllColumnWidth();
         }
-        
+        if(autoSizeAllRows) {
+            autoSizeAllRows();
+        }
         if(updateAllCellWidgets) {
             updateAllCellWidgets();
         }
@@ -1239,6 +1235,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             }
             int prefWidth = super.getPreferredWidth();
             return Math.max(prefWidth, defaultColumnWidth);
+        }
+
+        @Override
+        public void adjustSize() {
+            // don't do anything
         }
     }
 
