@@ -899,7 +899,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
-    private void updateColumnNumbers() {
+    protected void updateColumnHeaderNumbers() {
         for(int i=0 ; i<columnHeaders.length ; i++) {
             columnHeaders[i].column = i;
         }
@@ -1054,7 +1054,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             columnHeaders[i] = createColumnHeader(i);
             updateColumnHeader(i);
         }
-        updateColumnNumbers();
+        updateColumnHeaderNumbers();
 
         if(selectionManager != null) {
             selectionManager.modelChanged();
@@ -1160,7 +1160,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             newColumnHeaders[column+i] = createColumnHeader(column+i);
         }
         columnHeaders = newColumnHeaders;
-        updateColumnNumbers();
+        updateColumnHeaderNumbers();
 
         columnModel.insert(column, count);
 
@@ -1207,7 +1207,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         System.arraycopy(columnHeaders, 0, newColumnHeaders, 0, column);
         System.arraycopy(columnHeaders, column+count, newColumnHeaders, column, numColumns - count);
         columnHeaders = newColumnHeaders;
-        updateColumnNumbers();
+        updateColumnHeaderNumbers();
         
         invalidateLayout();
         invalidateParentLayout();
