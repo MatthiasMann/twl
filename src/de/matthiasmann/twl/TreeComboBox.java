@@ -77,7 +77,15 @@ public class TreeComboBox extends ComboBoxBase {
         display = new TreePathDisplay();
         display.setTheme("display");
         table = new TreeTable();
-        table.setSelectionManager(new TableRowSelectionManager(selectionModel));
+        table.setSelectionManager(new TableRowSelectionManager(selectionModel) {
+            @Override
+            protected void handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
+                super.handleMouseClick(row, column, isShift, isCtrl);
+                if(!isShift && !isCtrl && row >= 0 && row < getNumRows()) {
+                    popup.closePopup();
+                }
+            }
+        });
 
         display.addCallback(new TreePathDisplay.Callback() {
             public void pathElementClicked(TreeTableNode node, TreeTableNode child) {
@@ -91,7 +99,10 @@ public class TreeComboBox extends ComboBoxBase {
 
         selectionModel.addSelectionChangeListener(new Runnable() {
             public void run() {
-                nodeChanged(table.getNodeFromRow(selectionModel.getFirstSelected()));
+                int row = selectionModel.getFirstSelected();
+                if(row >= 0) {
+                    nodeChanged(table.getNodeFromRow(row));
+                }
             }
         });
 
@@ -198,11 +209,11 @@ public class TreeComboBox extends ComboBoxBase {
 
     @Override
     protected boolean openPopup() {
-        table.collapseAll();
-        int idx = table.getRowFromNodeExpand(display.getCurrentNode());
-        if(idx >= 0 && super.openPopup()) {
+        if(super.openPopup()) {
+            table.collapseAll();
+            int idx = table.getRowFromNodeExpand(display.getCurrentNode());
             selectionModel.setSelection(idx, idx);
-            table.scrollToRow(idx);
+            table.scrollToRow(Math.max(0, idx));
             return true;
         }
         return false;
