@@ -247,6 +247,7 @@ public class FileSelector extends DialogLayout {
                     entries[--lastFileIdx] = e;
                 }
             }
+            Arrays.sort(entries, 0, numFolders, NameComparator.instance);
             sortFilesAndUpdateModel(entries, numFolders);
         } else {
             fileTableModel.setData(EMPTY, 0);
