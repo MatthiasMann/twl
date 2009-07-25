@@ -168,6 +168,9 @@ public class JavaFileSystemModel implements FileSystemModel {
 
     public Object[] listFolder(Object file, final FileFilter filter) {
         try {
+            if(filter == null) {
+                return ((File)file).listFiles();
+            }
             return ((File)file).listFiles(new java.io.FileFilter() {
                 public boolean accept(File pathname) {
                     return filter.accept(JavaFileSystemModel.this, pathname);
