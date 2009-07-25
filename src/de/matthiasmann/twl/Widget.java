@@ -603,14 +603,13 @@ public class Widget {
     public void validateLayout() {
         if(layoutInvalid) {
             layout();
+            layoutInvalid = false;
         }
         if(children != null) {
             for(int i=0,n=children.size() ; i<n ; i++) {
                 children.get(i).validateLayout();
             }
         }
-        // reset flag after calling layout() to prevent loops caused by childChangedSize(Widget)
-        layoutInvalid = false;
     }
     
     /**
@@ -1733,7 +1732,9 @@ public class Widget {
                 return true;
             }
             if(focusChild != null && focusChild.isVisible()) {
-                return focusChild.handleEvent(evt);
+                if(focusChild.handleEvent(evt)) {
+                    return true;
+                }
             }
         }
         if(inputMap != null) {
@@ -1763,9 +1764,8 @@ public class Widget {
 
     private boolean setMouseOverChild(Widget child, Event evt) {
         if (lastChildMouseOver != child) {
-            Widget result = null;
             if(child != null) {
-                result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));
+                Widget result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));
                 if(result == null) {
                     // this child widget doesn't want mouse events
                     return false;
