@@ -33,6 +33,7 @@ import de.matthiasmann.twl.model.TableColumnHeaderModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
+import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
 import de.matthiasmann.twl.utils.SparseGrid;
@@ -46,6 +47,10 @@ import java.util.ArrayList;
  */
 public abstract class TableBase extends Widget implements ScrollPane.Scrollable {
 
+    public interface Callback {
+        public void mouseDoubleClicked(int row, int column);
+    }
+    
     public interface CellRenderer {
         /**
          * Called when the CellRenderer is registered and a theme is applied.
@@ -135,6 +140,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected WidgetCache[] widgetCacheTable;
     protected ColumnHeader[] columnHeaders;
     protected TableSelectionManager selectionManager;
+    protected Callback[] callbacks;
 
     protected Image imageColumnDivider;
     protected Image imageRowBackground;
@@ -198,6 +204,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         setSelectionManager(new TableRowSelectionManager());
     }
 
+    public void addCallback(Callback callback) {
+        callbacks = CallbackSupport.addCallbackToList(callbacks, callback, Callback.class);
+    }
+
+    public void removeCallback(Callback callback) {
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
+    }
+    
     public boolean isVariableRowHeight() {
         return rowModel != null;
     }
@@ -411,6 +425,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             applyCellRendererTheme(cellRenderer);
         }
         applyCellRendererTheme(stringCellRenderer);
+        updateAllColumnWidth = true;
     }
 
     @Override
@@ -526,6 +541,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                             columnDividerDragableDistance, getInnerY());
                     w.setSize(Math.max(0, colEndPos - colStartPos -
                             2*columnDividerDragableDistance), columnHeaderHeight);
+                    w.setVisible(columnHeaderHeight > 0);
                     AnimationState animationState = w.getAnimationState();
                     animationState.setAnimationState(STATE_FIRST_COLUMNHEADER, i == 0);
                     animationState.setAnimationState(STATE_LAST_COLUMNHEADER, i == numColumns-1);
@@ -537,6 +553,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     @Override
     protected void paintWidget(GUI gui) {
+        if(firstVisibleRow < 0 || firstVisibleRow >= numRows) {
+            return;
+        }
+        
         final int innerX = getInnerX();
         final int innerY = getInnerY() + columnHeaderHeight;
         final int innerWidth = getInnerWidth();
@@ -843,6 +863,21 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         cellWidgetContainer.removeAllChildren();
     }
 
+    protected int getDefaultColumnWidth(int column) {
+        int width = 0;
+        if(tableBaseThemeInfo != null) {
+            ParameterMap columnWidthMap = tableBaseThemeInfo.getParameterMap("columnWidths");
+            Object obj = columnWidthMap.getParameterValue(Integer.toString(column), false);
+            if(obj instanceof Integer) {
+                width = ((Integer)obj).intValue();
+            }
+        }
+        if(width > 0) {
+            return width;
+        }
+        return defaultColumnWidth;
+    }
+
     protected ColumnHeader createColumnHeader(int column) {
         ColumnHeader btn = new ColumnHeader();
         btn.setTheme("columnHeader");
@@ -861,6 +896,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 animationState.setAnimationState(states[i],
                         columnHeaderModel.getColumnHeaderState(column, i));
             }
+        }
+    }
+
+    private void updateColumnNumbers() {
+        for(int i=0 ; i<columnHeaders.length ; i++) {
+            columnHeaders[i].column = i;
         }
     }
     
@@ -959,10 +1000,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 }
                 return true;
             }
-        } else if(selectionManager != null) {
+        } else {
             int row = getRowUnderMouse(evt.getMouseY());
             int column = getColumnUnderMouse(evt.getMouseX());
-            selectionManager.handleMouseEvent(row, column, evt);
+            if(selectionManager != null) {
+                selectionManager.handleMouseEvent(row, column, evt);
+            }
+            if(evt.getType() == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
+                if(callbacks != null) {
+                    for(Callback cb : callbacks) {
+                        cb.mouseDoubleClicked(row, column);
+                    }
+                }
+            }
         }
 
         setMouseCursor(normalCursor);
@@ -1004,6 +1054,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             columnHeaders[i] = createColumnHeader(i);
             updateColumnHeader(i);
         }
+        updateColumnNumbers();
 
         if(selectionManager != null) {
             selectionManager.modelChanged();
@@ -1109,6 +1160,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             newColumnHeaders[column+i] = createColumnHeader(column+i);
         }
         columnHeaders = newColumnHeaders;
+        updateColumnNumbers();
 
         columnModel.insert(column, count);
 
@@ -1155,6 +1207,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         System.arraycopy(columnHeaders, 0, newColumnHeaders, 0, column);
         System.arraycopy(columnHeaders, column+count, newColumnHeaders, column, numColumns - count);
         columnHeaders = newColumnHeaders;
+        updateColumnNumbers();
         
         invalidateLayout();
         invalidateParentLayout();
@@ -1218,6 +1271,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected class ColumnHeader extends Button {
+        private int column;
         private int columnWidth;
 
         public int getColumnWidth() {
@@ -1234,7 +1288,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 return columnWidth;
             }
             int prefWidth = super.getPreferredWidth();
-            return Math.max(prefWidth, defaultColumnWidth);
+            return Math.max(prefWidth, getDefaultColumnWidth(column));
         }
 
         @Override
