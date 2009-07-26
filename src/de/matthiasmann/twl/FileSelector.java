@@ -35,8 +35,11 @@ import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
 import de.matthiasmann.twl.model.TableModel;
+import de.matthiasmann.twl.model.TableSelectionModel;
+import de.matthiasmann.twl.model.TableSingleSelectionModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
+import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.text.DateFormat;
 import java.util.Arrays;
@@ -45,18 +48,31 @@ import java.util.Comparator;
 import java.util.Date;
 
 /**
+ * A File selector widget using FileSystemModel
  *
  * @author Matthias Mann
  */
 public class FileSelector extends DialogLayout {
+
+    public interface Callback {
+        public void filesSelected(Object[] files);
+        public void canceled();
+    }
 
     public static final String STATE_SORT_ASCENDING  = "sortAscending";
     public static final String STATE_SORT_DESCENDING = "sortDescending";
 
     private final TreeComboBox currentFolder;
     private final FileTableModel fileTableModel;
-    private final DefaultTableSelectionModel fileTableSelectionModel;
     private final FileTable fileTable;
+    private final Runnable selectionChangedListener;
+    private final Button btnOk;
+    private final Button btnCancel;
+
+    private TableSelectionModel fileTableSelectionModel;
+    private boolean allowMultiSelection;
+    private boolean allowFolderSelection;
+    private Callback[] callbacks;
 
     private FileSystemModel fsm;
     private FileSystemTreeModel model;
@@ -74,6 +90,11 @@ public class FileSelector extends DialogLayout {
         currentFolder.setTheme("currentFolder");
         fileTableModel = new FileTableModel();
         fileTable = new FileTable(fileTableModel);
+        selectionChangedListener = new Runnable() {
+            public void run() {
+                selectionChanged();
+            }
+        };
 
         currentSorting = NameComparator.instance;
         
@@ -85,11 +106,25 @@ public class FileSelector extends DialogLayout {
             }
         });
 
-        Button btnOk = new Button();
+        btnOk = new Button();
         btnOk.setTheme("buttonOk");
+        btnOk.addCallback(new Runnable() {
+            public void run() {
+                acceptSelection(true);
+            }
+        });
 
-        Button btnCancel = new Button();
+        btnCancel = new Button();
         btnCancel.setTheme("buttonCancel");
+        btnCancel.addCallback(new Runnable() {
+            public void run() {
+                if(callbacks != null) {
+                    for(Callback cb : callbacks) {
+                        cb.canceled();
+                    }
+                }
+            }
+        });
 
         currentFolder.setPathResolver(new TreeComboBox.PathResolver() {
             public TreeTableNode resolvePath(TreeTableModel model, String path) throws IllegalArgumentException {
@@ -102,11 +137,10 @@ public class FileSelector extends DialogLayout {
             }
         });
 
-        fileTableSelectionModel = new DefaultTableSelectionModel();
-        fileTable.setSelectionManager(new TableRowSelectionManager(fileTableSelectionModel));
+        setAllowMultiSelection(true);
         fileTable.addCallback(new TableBase.Callback() {
             public void mouseDoubleClicked(int row, int column) {
-                acceptSelection();
+                acceptSelection(false);
             }
         });
         
@@ -150,9 +184,8 @@ public class FileSelector extends DialogLayout {
                 .addWidget(scrollPane)
                 .addGroup(vButtonGroup));
 
-        setCanAcceptKeyboardFocus(true);
         addActionMapping("goOneLevelUp", "goOneLevelUp");
-        addActionMapping("acceptSelection", "acceptSelection");
+        addActionMapping("acceptSelection", "acceptSelection", false);
     }
 
     public FileSystemModel getFileSystemModel() {
@@ -171,6 +204,42 @@ public class FileSelector extends DialogLayout {
             currentFolder.setSeparator(fsm.getSeparator());
             setCurrentNode(model);
         }
+    }
+
+    public boolean getAllowMultiSelection() {
+        return allowMultiSelection;
+    }
+
+    public void setAllowMultiSelection(boolean allowMultiSelection) {
+        this.allowMultiSelection = allowMultiSelection;
+        if(fileTableSelectionModel != null) {
+            fileTableSelectionModel.removeSelectionChangeListener(selectionChangedListener);
+        }
+        if(allowMultiSelection) {
+            fileTableSelectionModel = new DefaultTableSelectionModel();
+        } else {
+            fileTableSelectionModel = new TableSingleSelectionModel();
+        }
+        fileTableSelectionModel.addSelectionChangeListener(selectionChangedListener);
+        fileTable.setSelectionManager(new TableRowSelectionManager(fileTableSelectionModel));
+        selectionChanged();
+    }
+
+    public boolean getAllowFolderSelection() {
+        return allowFolderSelection;
+    }
+
+    public void setAllowFolderSelection(boolean allowFolderSelection) {
+        this.allowFolderSelection = allowFolderSelection;
+        selectionChanged();
+    }
+
+    public void addCallback(Callback callback) {
+        callbacks = CallbackSupport.addCallbackToList(callbacks, callback, Callback.class);
+    }
+
+    public void removeCallback(Callback callback) {
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
     }
 
     public Object getCurrentFolder() {
@@ -199,14 +268,26 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    public void acceptSelection() {
+    public void acceptSelection(boolean fireCallback) {
         int[] selection = fileTableSelectionModel.getSelection();
-        if(selection.length == 1) {
-            int row = selection[0];
-            FileTableModel m = (FileTableModel)fileTable.getModel();
-            Entry entry = m.getEntry(row);
-            if(entry != null && fsm.isFolder(entry.obj)) {
+        if(!fireCallback || selection.length == 1) {
+            Entry entry = fileTableModel.getEntry(selection[0]);
+            if(entry != null && entry.isFolder && (!allowFolderSelection || !fireCallback)) {
                 setCurrentFolder(entry.obj);
+                return;
+            }
+        }
+        if(callbacks != null) {
+            Object[] objects = new Object[selection.length];
+            for(int i=0 ; i<selection.length ; i++) {
+                Entry e = fileTableModel.getEntry(selection[i]);
+                if(e.isFolder && !allowFolderSelection) {
+                    return;
+                }
+                objects[i] = e.obj;
+            }
+            for(Callback cb : callbacks) {
+                cb.filesSelected(objects);
             }
         }
     }
@@ -224,6 +305,23 @@ public class FileSelector extends DialogLayout {
         }
         Entry[] entries = fileTableModel.entries.clone();
         sortFilesAndUpdateModel(entries, fileTableModel.numFolders);
+    }
+
+    void selectionChanged() {
+        boolean foldersSelected = false;
+        boolean filesSelected = false;
+        for(int row : fileTableSelectionModel.getSelection()) {
+            if(fileTableModel.getEntry(row).isFolder) {
+                foldersSelected = true;
+            } else {
+                filesSelected = true;
+            }
+        }
+        if(allowFolderSelection) {
+            btnOk.setEnabled(filesSelected ||  foldersSelected);
+        } else {
+            btnOk.setEnabled(filesSelected && !foldersSelected);
+        }
     }
 
     protected void setCurrentNode(TreeTableNode node) {
