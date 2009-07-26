@@ -44,6 +44,8 @@ public interface ButtonModel {
     public boolean isArmed();
     
     public boolean isHover();
+
+    public boolean isEnabled();
     
     public void setSelected(boolean selected);
     
@@ -52,6 +54,8 @@ public interface ButtonModel {
     public void setArmed(boolean armed);
     
     public void setHover(boolean hover);
+
+    public void setEnabled(boolean enabled);
 
     public void addActionCallback(Runnable callback);
     

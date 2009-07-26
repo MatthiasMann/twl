@@ -39,9 +39,10 @@ import de.matthiasmann.twl.utils.CallbackSupport;
  */
 public class SimpleButtonModel implements ButtonModel {
 
-    protected static final int STATE_MASK_HOVER   = 1;
-    protected static final int STATE_MASK_PRESSED = 2;
-    protected static final int STATE_MASK_ARMED   = 4;
+    protected static final int STATE_MASK_HOVER    = 1;
+    protected static final int STATE_MASK_PRESSED  = 2;
+    protected static final int STATE_MASK_ARMED    = 4;
+    protected static final int STATE_MASK_DISABLED = 8;
     
     protected Runnable[] actionCallbacks;
     protected Runnable[] stateCallbacks;
@@ -63,12 +64,17 @@ public class SimpleButtonModel implements ButtonModel {
         return (state & STATE_MASK_HOVER) != 0;
     }
 
+    public boolean isEnabled() {
+        // !Caution! negated logic
+        return (state & STATE_MASK_DISABLED) == 0;
+    }
+
     public void setSelected(boolean selected) {
     }
 
     public void setPressed(boolean pressed) {
         if(pressed != isPressed()) {
-            boolean fireAction = !pressed && isArmed();
+            boolean fireAction = !pressed && isArmed() && isEnabled();
             setStateBit(STATE_MASK_PRESSED, pressed);
             fireStateCallback();
             if(fireAction) {
@@ -87,6 +93,13 @@ public class SimpleButtonModel implements ButtonModel {
     public void setHover(boolean hover) {
         if(hover != isHover()) {
             setStateBit(STATE_MASK_HOVER, hover);
+            fireStateCallback();
+        }
+    }
+
+    public void setEnabled(boolean enabled) {
+        if(enabled != isEnabled()) {
+            setStateBit(STATE_MASK_DISABLED, !enabled);
             fireStateCallback();
         }
     }

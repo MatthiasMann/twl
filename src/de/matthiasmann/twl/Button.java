@@ -45,6 +45,7 @@ public class Button extends TextWidget {
     public static final String STATE_HOVER = "hover";
     public static final String STATE_PRESSED = "pressed";
     public static final String STATE_SELECTED = "selected";
+    public static final String STATE_DISABLED = "disabled";
 
     private final Runnable stateChangedCB;
     private ButtonModel model;
@@ -79,7 +80,6 @@ public class Button extends TextWidget {
             model = new SimpleButtonModel();
         }
         setModel(model);
-        setCanAcceptKeyboardFocus(true);
     }
 
     public ButtonModel getModel() {
@@ -97,6 +97,17 @@ public class Button extends TextWidget {
         this.model.addStateCallback(stateChangedCB);
         modelStateChanged();
         reapplyTheme();
+    }
+
+    public void setEnabled(boolean enabled) {
+        model.setEnabled(enabled);
+        if(!enabled) {
+            disarm();
+        }
+    }
+
+    public boolean isEnabled() {
+        return model.isEnabled();
     }
 
     public void addCallback(Runnable callback) {
@@ -151,19 +162,26 @@ public class Button extends TextWidget {
     public void setVisible(boolean visible) {
         super.setVisible(visible);
         if(!visible) {
-            // disarm first to not fire a callback
-            model.setHover(false);
-            model.setArmed(false);
-            model.setPressed(false);
+            disarm();
         }
     }
 
+    protected void disarm() {
+        // disarm first to not fire a callback
+        model.setHover(false);
+        model.setArmed(false);
+        model.setPressed(false);
+    }
+
     void modelStateChanged() {
+        boolean enabled = model.isEnabled();
         AnimationState as = getAnimationState();
         as.setAnimationState(STATE_SELECTED, model.isSelected());
         as.setAnimationState(STATE_HOVER, model.isHover());
         as.setAnimationState(STATE_ARMED, model.isArmed());
         as.setAnimationState(STATE_PRESSED, model.isPressed());
+        as.setAnimationState(STATE_DISABLED, !enabled);
+        setCanAcceptKeyboardFocus(enabled);
     }
 
     void updateText() {
@@ -180,6 +198,10 @@ public class Button extends TextWidget {
             boolean hover = (evt.getType() != Event.Type.MOUSE_EXITED) && isMouseInside(evt);
             model.setHover(hover);
             model.setArmed(hover && model.isPressed());
+        }
+        if(!model.isEnabled()) {
+            // don't process event for a disabled button (except hover above)
+            return false;
         }
         switch (evt.getType()) {
         case MOUSE_BTNDOWN:
