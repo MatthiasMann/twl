@@ -69,7 +69,11 @@ public abstract class ComboBoxBase extends Widget {
                     popup.getMaxHeight());
             int popupMaxBottom = popup.getParent().getInnerBottom();
             if(getBottom() + minHeight > popupMaxBottom) {
-                popup.setPosition(getX(), popupMaxBottom - minHeight);
+                if(getY() - popupHeight >= popup.getParent().getInnerY()) {
+                    popup.setPosition(getX(), getY() - popupHeight);
+                } else {
+                    popup.setPosition(getX(), popupMaxBottom - minHeight);
+                }
             } else {
                 popup.setPosition(getX(), getBottom());
             }
