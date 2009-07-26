@@ -1410,16 +1410,18 @@ public class Widget {
     private int collectFocusOrderList(ArrayList<Widget> list) {
         int idx = -1;
         for(Widget child : getKeyboardFocusOrder()) {
-            if(child.canAcceptKeyboardFocus) {
-                if(child == focusChild) {
-                    idx = list.size();
+            if(child.visible) {
+                if(child.canAcceptKeyboardFocus) {
+                    if(child == focusChild) {
+                        idx = list.size();
+                    }
+                    list.add(child);
                 }
-                list.add(child);
-            }
-            if(child.depthFocusTraversal) {
-                int subIdx = child.collectFocusOrderList(list);
-                if(subIdx != -1) {
-                    idx = subIdx;
+                if(child.depthFocusTraversal) {
+                    int subIdx = child.collectFocusOrderList(list);
+                    if(subIdx != -1) {
+                        idx = subIdx;
+                    }
                 }
             }
         }
