@@ -33,7 +33,9 @@ import de.matthiasmann.twl.TableBase.ColumnHeader;
 import de.matthiasmann.twl.model.AbstractTableModel;
 import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.FileSystemModel;
+import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
+import de.matthiasmann.twl.model.SimpleListModel;
 import de.matthiasmann.twl.model.TableModel;
 import de.matthiasmann.twl.model.TableSelectionModel;
 import de.matthiasmann.twl.model.TableSingleSelectionModel;
@@ -42,6 +44,7 @@ import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,6 +62,24 @@ public class FileSelector extends DialogLayout {
         public void canceled();
     }
 
+    public static class NamedFileFilter {
+        private final String name;
+        private final FileSystemModel.FileFilter fileFilter;
+
+        public NamedFileFilter(String name, FileFilter fileFilter) {
+            this.name = name;
+            this.fileFilter = fileFilter;
+        }
+        public String getDisplayName() {
+            return name;
+        }
+        public FileSystemModel.FileFilter getFileFilter() {
+            return fileFilter;
+        }
+    }
+
+    public static NamedFileFilter AllFilesFilter = new NamedFileFilter("All files", null);
+
     public static final String STATE_SORT_ASCENDING  = "sortAscending";
     public static final String STATE_SORT_DESCENDING = "sortDescending";
 
@@ -68,11 +89,14 @@ public class FileSelector extends DialogLayout {
     private final Runnable selectionChangedListener;
     private final Button btnOk;
     private final Button btnCancel;
+    private final ComboBox fileFilterBox;
+    private final FileFiltersModel fileFiltersModel;
 
     private TableSelectionModel fileTableSelectionModel;
     private boolean allowMultiSelection;
     private boolean allowFolderSelection;
     private Callback[] callbacks;
+    private NamedFileFilter activeFileFilter;
 
     private FileSystemModel fsm;
     private FileSystemTreeModel model;
@@ -143,6 +167,21 @@ public class FileSelector extends DialogLayout {
                 acceptSelection(false);
             }
         });
+
+        activeFileFilter = AllFilesFilter;
+        fileFiltersModel = new FileFiltersModel();
+        fileFilterBox = new ComboBox(fileFiltersModel);
+        fileFilterBox.setTheme("fileFiltersBox");
+        fileFilterBox.setComputeWidthFromModel(true);
+        fileFilterBox.setVisible(false);
+        fileFilterBox.addCallback(new Runnable() {
+            public void run() {
+                int idx = fileFilterBox.getSelected();
+                if(idx >= 0) {
+                    setFileFilter(fileFiltersModel.getFileFilter(idx));
+                }
+            }
+        });
         
         Label labelCurrentFolder = new Label("Folder");
         labelCurrentFolder.setLabelFor(currentFolder);
@@ -153,6 +192,7 @@ public class FileSelector extends DialogLayout {
         add(currentFolder);
         add(btnUp);
         add(scrollPane);
+        add(fileFilterBox);
         add(btnOk);
         add(btnCancel);
         
@@ -166,12 +206,14 @@ public class FileSelector extends DialogLayout {
                 .addWidget(btnUp);
 
         Group hButtonGroup = createSequentialGroup()
+                .addWidget(fileFilterBox)
                 .addGap()
                 .addWidget(btnOk)
                 .addGap(20)
                 .addWidget(btnCancel)
                 .addGap(20);
         Group vButtonGroup = createParallelGroup()
+                .addWidget(fileFilterBox)
                 .addWidget(btnOk)
                 .addWidget(btnCancel);
 
@@ -260,6 +302,46 @@ public class FileSelector extends DialogLayout {
         return false;
     }
 
+    public void addFileFilter(NamedFileFilter filter) {
+        if(filter == null) {
+            throw new NullPointerException("filter");
+        }
+        fileFiltersModel.addFileFilter(filter);
+        fileFilterBox.setVisible(fileFiltersModel.getNumEntries() > 0);
+        if(fileFilterBox.getSelected() < 0) {
+            fileFilterBox.setSelected(0);
+        }
+    }
+
+    public void removeFileFilter(NamedFileFilter filter) {
+        if(filter == null) {
+            throw new NullPointerException("filter");
+        }
+        fileFiltersModel.removeFileFilter(filter);
+        if(fileFiltersModel.getNumEntries() == 0) {
+            fileFilterBox.setVisible(false);
+            setFileFilter(null);
+        }
+    }
+
+    public void removeAllFileFilters() {
+        fileFiltersModel.removeAll();
+        fileFilterBox.setVisible(false);
+        setFileFilter(null);
+    }
+
+    public void setFileFilter(NamedFileFilter filter) {
+        if(filter == null) {
+            throw new NullPointerException("filter");
+        }
+        activeFileFilter = filter;
+        setCurrentNode(currentFolder.getCurrentNode());
+    }
+
+    public NamedFileFilter getFileFilter() {
+        return activeFileFilter;
+    }
+
     public void goOneLevelUp() {
         TreeTableNode node = currentFolder.getCurrentNode();
         TreeTableNode parent = node.getParent();
@@ -331,7 +413,11 @@ public class FileSelector extends DialogLayout {
             objs = fsm.listRoots();
         } else {
             Object folder = getCurrentFolder();
-            objs = fsm.listFolder(folder, null);
+            FileFilter filter = activeFileFilter.getFileFilter();
+            if(filter != null) {
+                filter = new FileFilterWrapper(filter);
+            }
+            objs = fsm.listFolder(folder,filter);
         }
         if(objs != null) {
             int lastFileIdx = objs.length;
@@ -349,18 +435,33 @@ public class FileSelector extends DialogLayout {
             sortFilesAndUpdateModel(entries, numFolders);
         } else {
             fileTableModel.setData(EMPTY, 0);
+            setLeadIndex(null);
         }
-        fileTableSelectionModel.setAnchorIndex(0);
-        fileTableSelectionModel.setLeadIndex(0);
     }
 
     private void sortFilesAndUpdateModel(Entry[] entries, int numFolders) {
+        Entry leadEntry = fileTableModel.getEntry(fileTableSelectionModel.getLeadIndex());
+        Entry[] selectedEntries = fileTableModel.getEntries(fileTableSelectionModel.getSelection());
         Comparator<Entry> c = currentSorting;
         if(sortDescending) {
             c = Collections.reverseOrder(c);
         }
         Arrays.sort(entries, numFolders, entries.length, c);
         fileTableModel.setData(entries, numFolders);
+        for(Entry e : selectedEntries) {
+            int idx = fileTableModel.findEntry(e);
+            if(idx >= 0) {
+                fileTableSelectionModel.addSelection(idx, idx);
+            }
+        }
+        setLeadIndex(leadEntry);
+    }
+    
+    private void setLeadIndex(Entry entry) {
+        int index = Math.max(0, fileTableModel.findEntry(entry));
+        fileTableSelectionModel.setLeadIndex(index);
+        fileTableSelectionModel.setAnchorIndex(index);
+        fileTable.scrollToRow(index);
     }
 
     TreeTableNode resolvePath(String path) throws IllegalArgumentException {
@@ -461,14 +562,35 @@ public class FileSelector extends DialogLayout {
                 return null;
             }
         }
+
+        int findEntry(Entry entry) {
+            for(int i=0 ; i<entries.length ; i++) {
+                if(entries[i] == entry) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        Entry[] getEntries(int[] selection) {
+            final int count = selection.length;
+            if(count == 0) {
+                return EMPTY;
+            }
+            Entry[] result = new Entry[count];
+            for(int i=0 ; i<count ; i++) {
+                result[i] = entries[selection[i]];
+            }
+            return result;
+        }
         
         static final DateFormat dateFormat = DateFormat.getDateInstance();
-        static String SIZE_UNITS[] = {"MB", "KB", "B"};
+        static String SIZE_UNITS[] = {" MB", " KB", " B"};
         static long SIZE_FACTORS[] = {1024*1024, 1024, 1};
 
         private String formatFileSize(long size) {
             if(size <= 0) {
-                return "";
+                return "0 B";
             } else {
                 for(int i=0 ;; ++i) {
                     if(size >= SIZE_FACTORS[i]) {
@@ -540,6 +662,46 @@ public class FileSelector extends DialogLayout {
                 animState.setAnimationState(STATE_SORT_ASCENDING, (i == sortColumn) && !sortDescending);
                 animState.setAnimationState(STATE_SORT_DESCENDING, (i == sortColumn) && sortDescending);
             }
+        }
+    }
+
+    class FileFiltersModel extends SimpleListModel<String> {
+        private final ArrayList<NamedFileFilter> filters = new ArrayList<NamedFileFilter>();
+        public NamedFileFilter getFileFilter(int index) {
+            return filters.get(index);
+        }
+        public String getEntry(int index) {
+            NamedFileFilter filter = getFileFilter(index);
+            return filter.getDisplayName();
+        }
+        public int getNumEntries() {
+            return filters.size();
+        }
+        public void addFileFilter(NamedFileFilter filter) {
+            int index = filters.size();
+            filters.add(filter);
+            fireEntriesInserted(index, 1);
+        }
+        public void removeFileFilter(NamedFileFilter filter) {
+            int idx = filters.indexOf(filter);
+            if(idx >= 0) {
+                filters.remove(idx);
+                fireEntriesDeleted(idx, 1);
+            }
+        }
+        private void removeAll() {
+            filters.clear();
+            fireAllChanged();
+        }
+    }
+
+    private static class FileFilterWrapper implements FileFilter {
+        private final FileFilter base;
+        public FileFilterWrapper(FileFilter base) {
+            this.base = base;
+        }
+        public boolean accept(FileSystemModel fsm, Object file) {
+            return fsm.isFolder(file) || base.accept(fsm, file);
         }
     }
 }
