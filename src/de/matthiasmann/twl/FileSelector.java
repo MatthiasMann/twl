@@ -87,8 +87,12 @@ public class FileSelector extends DialogLayout {
     private final FileTableModel fileTableModel;
     private final FileTable fileTable;
     private final Runnable selectionChangedListener;
+    private final Button btnUp;
     private final Button btnOk;
     private final Button btnCancel;
+    private final Button btnRefresh;
+    private final ToggleButton btnShowFolders;
+    private final ToggleButton btnShowHidden;
     private final ComboBox fileFilterBox;
     private final FileFiltersModel fileFiltersModel;
 
@@ -122,7 +126,7 @@ public class FileSelector extends DialogLayout {
 
         currentSorting = NameComparator.instance;
         
-        Button btnUp = new Button();
+        btnUp = new Button();
         btnUp.setTheme("buttonUp");
         btnUp.addCallback(new Runnable() {
             public void run() {
@@ -188,6 +192,25 @@ public class FileSelector extends DialogLayout {
 
         ScrollPane scrollPane = new ScrollPane(fileTable);
 
+        Runnable showBtnCallback = new Runnable() {
+            public void run() {
+                refreshFileTable();
+            }
+        };
+
+        btnRefresh = new Button();
+        btnRefresh.setTheme("buttonRefresh");
+        btnRefresh.addCallback(showBtnCallback);
+        
+        btnShowFolders = new ToggleButton();
+        btnShowFolders.setTheme("buttonShowFolders");
+        btnShowFolders.getModel().setSelected(true);
+        btnShowFolders.addCallback(showBtnCallback);
+
+        btnShowHidden = new ToggleButton();
+        btnShowHidden.setTheme("buttonShowHidden");
+        btnShowHidden.addCallback(showBtnCallback);
+
         add(labelCurrentFolder);
         add(currentFolder);
         add(btnUp);
@@ -195,6 +218,9 @@ public class FileSelector extends DialogLayout {
         add(fileFilterBox);
         add(btnOk);
         add(btnCancel);
+        add(btnRefresh);
+        add(btnShowFolders);
+        add(btnShowHidden);
         
         Group hCurrentFolder = createSequentialGroup()
                 .addWidget(labelCurrentFolder)
@@ -217,13 +243,31 @@ public class FileSelector extends DialogLayout {
                 .addWidget(btnOk)
                 .addWidget(btnCancel);
 
+        Group hShowBtns = createParallelGroup()
+                .addWidget(btnRefresh)
+                .addWidget(btnShowFolders)
+                .addWidget(btnShowHidden);
+        Group vShowBtns = createSequentialGroup()
+                .addWidget(btnRefresh)
+                .addGap(MEDIUM_GAP)
+                .addWidget(btnShowFolders)
+                .addWidget(btnShowHidden)
+                .addGap();
+
+        Group hMainGroup = createSequentialGroup()
+                .addGroup(hShowBtns)
+                .addWidget(scrollPane);
+        Group vMainGroup = createParallelGroup()
+                .addGroup(vShowBtns)
+                .addWidget(scrollPane);
+
         setHorizontalGroup(createParallelGroup()
                 .addGroup(hCurrentFolder)
-                .addWidget(scrollPane)
+                .addGroup(hMainGroup)
                 .addGroup(hButtonGroup));
         setVerticalGroup(createSequentialGroup()
                 .addGroup(vCurrentFolder)
-                .addWidget(scrollPane)
+                .addGroup(vMainGroup)
                 .addGroup(vButtonGroup));
 
         addActionMapping("goOneLevelUp", "goOneLevelUp");
@@ -335,11 +379,27 @@ public class FileSelector extends DialogLayout {
             throw new NullPointerException("filter");
         }
         activeFileFilter = filter;
-        setCurrentNode(currentFolder.getCurrentNode());
+        refreshFileTable();
     }
 
     public NamedFileFilter getFileFilter() {
         return activeFileFilter;
+    }
+
+    public boolean getShowFolders() {
+        return btnShowFolders.getModel().isSelected();
+    }
+
+    public void setShowFolders(boolean showFolders) {
+        btnShowFolders.getModel().setSelected(showFolders);
+    }
+
+    public boolean getShowHidden() {
+        return btnShowHidden.getModel().isSelected();
+    }
+
+    public void setShowHidden(boolean showHidden) {
+        btnShowHidden.getModel().setSelected(showHidden);
     }
 
     public void goOneLevelUp() {
@@ -408,14 +468,19 @@ public class FileSelector extends DialogLayout {
 
     protected void setCurrentNode(TreeTableNode node) {
         currentFolder.setCurrentNode(node);
+        refreshFileTable();
+    }
+
+    void refreshFileTable() {
+        final TreeTableNode node = currentFolder.getCurrentNode();
         Object[] objs;
         if(node == model) {
             objs = fsm.listRoots();
         } else {
             Object folder = getCurrentFolder();
             FileFilter filter = activeFileFilter.getFileFilter();
-            if(filter != null) {
-                filter = new FileFilterWrapper(filter);
+            if(filter != null || !getShowFolders() || !getShowHidden()) {
+                filter = new FileFilterWrapper(filter, getShowFolders(), getShowHidden());
             }
             objs = fsm.listFolder(folder,filter);
         }
@@ -697,11 +762,21 @@ public class FileSelector extends DialogLayout {
 
     private static class FileFilterWrapper implements FileFilter {
         private final FileFilter base;
-        public FileFilterWrapper(FileFilter base) {
+        private final boolean showFolder;
+        private final boolean showHidden;
+        public FileFilterWrapper(FileFilter base, boolean showFolder, boolean showHidden) {
             this.base = base;
+            this.showFolder = showFolder;
+            this.showHidden = showHidden;
         }
         public boolean accept(FileSystemModel fsm, Object file) {
-            return fsm.isFolder(file) || base.accept(fsm, file);
+            if(showHidden || !fsm.isHidden(file)) {
+                if(fsm.isFolder(file)) {
+                    return showFolder;
+                }
+                return (base == null) || base.accept(fsm, file);
+            }
+            return false;
         }
     }
 }
