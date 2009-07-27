@@ -54,6 +54,8 @@ public interface FileSystemModel {
     public boolean isFolder(Object file);
     
     public boolean isFile(Object file);
+
+    public boolean isHidden(Object file);
     
     public String getName(Object file);
     

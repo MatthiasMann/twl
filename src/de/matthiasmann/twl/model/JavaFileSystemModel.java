@@ -68,6 +68,10 @@ public class JavaFileSystemModel implements FileSystemModel {
         return ((File)file).isFile();
     }
 
+    public boolean isHidden(Object file) {
+        return ((File)file).isHidden();
+    }
+
     public String getName(Object file) {
         String name = ((File)file).getName();
         if(name.length() == 0) {
