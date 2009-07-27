@@ -412,14 +412,14 @@ public class FileSelector extends DialogLayout {
 
     public void acceptSelection(boolean fireCallback) {
         int[] selection = fileTableSelectionModel.getSelection();
-        if(!fireCallback || selection.length == 1) {
+        if((!allowFolderSelection || !fireCallback) && selection.length == 1) {
             Entry entry = fileTableModel.getEntry(selection[0]);
-            if(entry != null && entry.isFolder && (!allowFolderSelection || !fireCallback)) {
+            if(entry != null && entry.isFolder) {
                 setCurrentFolder(entry.obj);
                 return;
             }
         }
-        if(callbacks != null) {
+        if(fireCallback && callbacks != null) {
             Object[] objects = new Object[selection.length];
             for(int i=0 ; i<selection.length ; i++) {
                 Entry e = fileTableModel.getEntry(selection[i]);
