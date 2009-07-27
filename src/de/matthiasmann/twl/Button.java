@@ -51,6 +51,7 @@ public class Button extends TextWidget {
     private ButtonModel model;
     private String themeText;
     private String text;
+    private String themeTooltip;
 
     public Button() {
         this(null, null);
@@ -141,7 +142,14 @@ public class Button extends TextWidget {
 
     protected void applyThemeButton(ThemeInfo themeInfo) {
         themeText = themeInfo.getParameterValue("text", false, String.class);
+        themeTooltip = themeInfo.getParameterValue("tooltip", false, String.class);
         updateText();
+    }
+
+    @Override
+    public Object getTooltipContent() {
+        Object tooltipContent = super.getTooltipContent();
+        return (tooltipContent == null) ? themeTooltip : tooltipContent;
     }
 
     @Override
