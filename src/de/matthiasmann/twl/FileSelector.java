@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.ListBox.CallbackReason;
 import de.matthiasmann.twl.TableBase.ColumnHeader;
 import de.matthiasmann.twl.model.AbstractTableModel;
 import de.matthiasmann.twl.model.DefaultTableSelectionModel;
@@ -39,16 +40,26 @@ import de.matthiasmann.twl.model.SimpleListModel;
 import de.matthiasmann.twl.model.TableModel;
 import de.matthiasmann.twl.model.TableSelectionModel;
 import de.matthiasmann.twl.model.TableSingleSelectionModel;
+import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.NaturalSortComparator;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.prefs.Preferences;
+import java.util.zip.Deflater;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
 
 /**
  * A File selector widget using FileSystemModel
@@ -83,16 +94,20 @@ public class FileSelector extends DialogLayout {
     public static final String STATE_SORT_ASCENDING  = "sortAscending";
     public static final String STATE_SORT_DESCENDING = "sortDescending";
 
+    private static final int MAX_LRU_SIZE = 10;
+
+    private final PersistentState persistentState;
     private final TreeComboBox currentFolder;
     private final FileTableModel fileTableModel;
     private final FileTable fileTable;
     private final Runnable selectionChangedListener;
     private final Button btnUp;
+    private final Button btnFolderLRU;
     private final Button btnOk;
     private final Button btnCancel;
     private final Button btnRefresh;
-    private final ToggleButton btnShowFolders;
-    private final ToggleButton btnShowHidden;
+    private final Button btnShowFolders;
+    private final Button btnShowHidden;
     private final ComboBox fileFilterBox;
     private final FileFiltersModel fileFiltersModel;
 
@@ -108,12 +123,16 @@ public class FileSelector extends DialogLayout {
     private int sortColumn;
     private boolean sortDescending;
 
+    private Preferences prefs;
+    private String prefsKey;
+
     public FileSelector(FileSystemModel fsm) {
         this();
         setFileSystemModel(fsm);
     }
 
     public FileSelector() {
+        persistentState = new PersistentState();
         currentFolder = new TreeComboBox();
         currentFolder.setTheme("currentFolder");
         fileTableModel = new FileTableModel();
@@ -131,6 +150,14 @@ public class FileSelector extends DialogLayout {
         btnUp.addCallback(new Runnable() {
             public void run() {
                 goOneLevelUp();
+            }
+        });
+
+        btnFolderLRU = new Button();
+        btnFolderLRU.setTheme("buttonLRU");
+        btnFolderLRU.addCallback(new Runnable() {
+            public void run() {
+                showFolderLRU();
             }
         });
 
@@ -202,17 +229,17 @@ public class FileSelector extends DialogLayout {
         btnRefresh.setTheme("buttonRefresh");
         btnRefresh.addCallback(showBtnCallback);
         
-        btnShowFolders = new ToggleButton();
+        btnShowFolders = new Button(new PersistentStateButtonModel(PersistentState.FLAG_SHOW_FOLDERS));
         btnShowFolders.setTheme("buttonShowFolders");
-        btnShowFolders.getModel().setSelected(true);
         btnShowFolders.addCallback(showBtnCallback);
 
-        btnShowHidden = new ToggleButton();
+        btnShowHidden = new Button(new PersistentStateButtonModel(PersistentState.FLAG_SHOW_HIDDEN));
         btnShowHidden.setTheme("buttonShowHidden");
         btnShowHidden.addCallback(showBtnCallback);
 
         add(labelCurrentFolder);
         add(currentFolder);
+        add(btnFolderLRU);
         add(btnUp);
         add(scrollPane);
         add(fileFilterBox);
@@ -225,10 +252,12 @@ public class FileSelector extends DialogLayout {
         Group hCurrentFolder = createSequentialGroup()
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
+                .addWidget(btnFolderLRU)
                 .addWidget(btnUp);
         Group vCurrentFolder = createParallelGroup()
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
+                .addWidget(btnFolderLRU)
                 .addWidget(btnUp);
 
         Group hButtonGroup = createSequentialGroup()
@@ -402,6 +431,29 @@ public class FileSelector extends DialogLayout {
         btnShowHidden.getModel().setSelected(showHidden);
     }
 
+    public void setPersistentStorage(Preferences prefs, String key) {
+        if(prefs != null) {
+            if(key == null) {
+                throw new NullPointerException("key");
+            }
+            this.prefs = prefs;
+            this.prefsKey = key;
+            byte[] arr = prefs.getByteArray(key, null);
+            if(arr != null) {
+                try {
+                    persistentState.decode(arr);
+                } catch (IOException ex) {
+                    ex.printStackTrace();
+                }
+            }
+            btnShowFolders.modelStateChanged();
+            btnShowHidden.modelStateChanged();
+        } else {
+            this.prefs = null;
+            this.prefsKey = null;
+        }
+    }
+    
     public void goOneLevelUp() {
         TreeTableNode node = currentFolder.getCurrentNode();
         TreeTableNode parent = node.getParent();
@@ -427,6 +479,10 @@ public class FileSelector extends DialogLayout {
                     return;
                 }
                 objects[i] = e.obj;
+            }
+            if(persistentState != null) {
+                addToLRU(selection);
+                savePersistentState();
             }
             for(Callback cb : callbacks) {
                 cb.filesSelected(objects);
@@ -538,6 +594,62 @@ public class FileSelector extends DialogLayout {
             }
         }
         throw new IllegalArgumentException("Could not resolve: " + path);
+    }
+
+    void showFolderLRU() {
+        final PopupWindow popup = new PopupWindow(this);
+        final ListBox listBox = new ListBox(new FolderListModel(persistentState));
+        popup.setTheme("fileselector-folderLRUpopup");
+        popup.add(listBox);
+        if(popup.openPopup()) {
+            popup.setInnerSize(getInnerWidth()*2/3, getInnerHeight()*2/3);
+            popup.setPosition(btnFolderLRU.getX() - popup.getWidth(), btnFolderLRU.getY());
+            listBox.addCallback(new CallbackWithReason<ListBox.CallbackReason>() {
+                public void callback(CallbackReason reason) {
+                    if(reason.actionRequested()) {
+                        popup.closePopup();
+                        int idx = listBox.getSelected();
+                        if(idx >= 0) {
+                            String path = persistentState.groups[idx].path;
+                            try {
+                                TreeTableNode node = resolvePath(path);
+                                setCurrentNode(node);
+                            } catch(IllegalArgumentException ex) {
+                                persistentState.removeGroup(idx);
+                                savePersistentState();
+                            }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    private void addToLRU(int[] selection) {
+        String[] files = new String[selection.length];
+        for(int i=0 ; i<files.length ; i++) {
+            Entry e = fileTableModel.getEntry(selection[i]);
+            files[i] = e.name;
+        }
+        PersistentState.FileGroup group = new PersistentState.FileGroup(
+                fsm.getPath(getCurrentFolder()), files);
+        persistentState.addGroup(group);
+    }
+
+    private void savePersistentState() {
+        assert(persistentState != null);
+        assert(prefs != null);
+        assert(prefsKey != null);
+        persistentState.setFlag(PersistentState.FLAG_SHOW_FOLDERS, btnShowFolders.getModel().isSelected());
+        persistentState.setFlag(PersistentState.FLAG_SHOW_HIDDEN, btnShowHidden.getModel().isSelected());
+        try {
+            byte[] arr = persistentState.encode();
+            if(arr != null) {
+                prefs.putByteArray(prefsKey, arr);
+            }
+        } catch(IOException ex) {
+            ex.printStackTrace();
+        }
     }
 
     static class Entry {
@@ -777,6 +889,141 @@ public class FileSelector extends DialogLayout {
                 return (base == null) || base.accept(fsm, file);
             }
             return false;
+        }
+    }
+
+    static class PersistentState {
+        private static final int MAGIC = 0x965A4D07;
+
+        static class FileGroup {
+            final String path;
+            final String[] files;
+            final long time;
+
+            public FileGroup(String path, String[] files) {
+                this.path = path;
+                this.files = files;
+                this.time = System.currentTimeMillis();
+            }
+            public FileGroup(DataInputStream dis) throws IOException {
+                this.path = dis.readUTF();
+                this.time = dis.readLong();
+                int count = dis.readUnsignedByte();
+                this.files = new String[count];
+                for(int i=0 ; i<count ; ++i) {
+                    files[i] = dis.readUTF();
+                }
+            }
+
+            void encode(DataOutputStream dos) throws IOException {
+                // ensure that count can fit into a byte, also the available space is limited
+                int count = Math.min(100, files.length);
+                dos.writeUTF(path);
+                dos.writeLong(time);
+                dos.writeByte((byte)count);
+                for(int i=0 ; i<count ; i++) {
+                    dos.writeUTF(files[i]);
+                }
+            }
+        }
+
+        static final int FLAG_SHOW_FOLDERS = 1;
+        static final int FLAG_SHOW_HIDDEN  = 2;
+
+        final FileGroup[] groups = new FileGroup[MAX_LRU_SIZE];
+        int numGroups;
+        int flags = FLAG_SHOW_FOLDERS;
+
+        void setFlag(int flag, boolean value) {
+            if(value) {
+                flags |= flag;
+            } else {
+                flags &= ~flag;
+            }
+        }
+        boolean getFlag(int flag) {
+            return (flags & flag) == flag;
+        }
+        
+        void addGroup(FileGroup g) {
+            System.arraycopy(groups, 0, groups, 1, MAX_LRU_SIZE-1);
+            groups[0] = g;
+            numGroups = Math.min(numGroups+1, MAX_LRU_SIZE);
+        }
+        void removeGroup(int idx) {
+            assert idx < numGroups;
+            System.arraycopy(groups, idx+1, groups, idx, (MAX_LRU_SIZE-1)-idx);
+            groups[MAX_LRU_SIZE-1] = null;
+            numGroups--;
+        }
+        void moveGroupToFront(int idx) {
+            assert idx < numGroups;
+            FileGroup g = groups[idx];
+            System.arraycopy(groups, 0, groups, 1, idx-1);
+            groups[0] = g;
+        }
+
+        byte[] encode() throws IOException {
+            ByteArrayOutputStream boas = new ByteArrayOutputStream();
+            DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(boas, new Deflater(9));
+            DataOutputStream dos = new DataOutputStream(deflaterOutputStream);
+            dos.writeInt(MAGIC);
+            dos.writeShort((short)flags);
+            dos.writeByte(numGroups);
+            for(int i=0 ; i<numGroups ; ++i) {
+                groups[i].encode(dos);
+            }
+            dos.close();
+            return boas.toByteArray();
+        }
+        
+        void decode(byte[] arr) throws IOException {
+            ByteArrayInputStream bais = new ByteArrayInputStream(arr);
+            InflaterInputStream iis = new InflaterInputStream(bais);
+            DataInputStream dis = new DataInputStream(iis);
+            if(dis.readInt() != MAGIC) {
+                throw new IOException("Invalid MAGIC");
+            }
+            flags = dis.readUnsignedShort();
+            numGroups = 0;
+            int count = Math.min(MAX_LRU_SIZE, dis.readUnsignedByte());
+            for(int i=0 ; i<count ; i++) {
+                groups[i] = new FileGroup(dis);
+                numGroups = i+1;  // number of groups sucessfully parsed
+            }
+        }
+    }
+
+    class PersistentStateButtonModel extends ToggleButtonModel {
+        final int flag;
+
+        PersistentStateButtonModel(int flag) {
+            this.flag = flag;
+        }
+        @Override
+        public boolean isSelected() {
+            return persistentState.getFlag(flag);
+        }
+        @Override
+        public void setSelected(boolean selected) {
+            if(selected != isSelected()) {
+                persistentState.setFlag(flag, selected);
+                savePersistentState();
+                fireStateCallback();
+            }
+        }
+    }
+
+    static class FolderListModel extends SimpleListModel<String> {
+        final PersistentState persistentState;
+        public FolderListModel(PersistentState persistentState) {
+            this.persistentState = persistentState;
+        }
+        public String getEntry(int index) {
+            return persistentState.groups[index].path;
+        }
+        public int getNumEntries() {
+            return persistentState.numGroups;
         }
     }
 }
