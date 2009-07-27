@@ -30,32 +30,20 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.ListBox.CallbackReason;
-import de.matthiasmann.twl.TableBase.ColumnHeader;
-import de.matthiasmann.twl.model.AbstractTableModel;
-import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
 import de.matthiasmann.twl.model.SimpleListModel;
-import de.matthiasmann.twl.model.TableModel;
-import de.matthiasmann.twl.model.TableSelectionModel;
-import de.matthiasmann.twl.model.TableSingleSelectionModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
-import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.text.DateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
 import java.util.prefs.Preferences;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
@@ -91,16 +79,11 @@ public class FileSelector extends DialogLayout {
 
     public static NamedFileFilter AllFilesFilter = new NamedFileFilter("All files", null);
 
-    public static final String STATE_SORT_ASCENDING  = "sortAscending";
-    public static final String STATE_SORT_DESCENDING = "sortDescending";
-
     private static final int MAX_LRU_SIZE = 10;
 
     private final PersistentState persistentState;
     private final TreeComboBox currentFolder;
-    private final FileTableModel fileTableModel;
     private final FileTable fileTable;
-    private final Runnable selectionChangedListener;
     private final Button btnUp;
     private final Button btnFolderLRU;
     private final Button btnOk;
@@ -111,7 +94,6 @@ public class FileSelector extends DialogLayout {
     private final ComboBox fileFilterBox;
     private final FileFiltersModel fileFiltersModel;
 
-    private TableSelectionModel fileTableSelectionModel;
     private boolean allowMultiSelection;
     private boolean allowFolderSelection;
     private Callback[] callbacks;
@@ -119,9 +101,6 @@ public class FileSelector extends DialogLayout {
 
     private FileSystemModel fsm;
     private FileSystemTreeModel model;
-    private Comparator<Entry> currentSorting;
-    private int sortColumn;
-    private boolean sortDescending;
 
     private Preferences prefs;
     private String prefsKey;
@@ -135,16 +114,16 @@ public class FileSelector extends DialogLayout {
         persistentState = new PersistentState();
         currentFolder = new TreeComboBox();
         currentFolder.setTheme("currentFolder");
-        fileTableModel = new FileTableModel();
-        fileTable = new FileTable(fileTableModel);
-        selectionChangedListener = new Runnable() {
-            public void run() {
-                selectionChanged();
+        fileTable = new FileTable();
+        fileTable.setTheme("fileTable");
+        fileTable.addCallback(new FileTable.Callback() {
+            public void selectionChanged() {
+                FileSelector.this.selectionChanged();
             }
-        };
+            public void sortingChanged() {
+            }
+        });
 
-        currentSorting = NameComparator.instance;
-        
         btnUp = new Button();
         btnUp.setTheme("buttonUp");
         btnUp.addCallback(new Runnable() {
@@ -221,6 +200,8 @@ public class FileSelector extends DialogLayout {
 
         Runnable showBtnCallback = new Runnable() {
             public void run() {
+                fileTable.setShowFolders(btnShowFolders.getModel().isSelected());
+                fileTable.setShowHidden(btnShowHidden.getModel().isSelected());
                 refreshFileTable();
             }
         };
@@ -312,7 +293,7 @@ public class FileSelector extends DialogLayout {
         if(fsm == null) {
             model = null;
             currentFolder.setModel(null);
-            fileTableModel.setData(EMPTY, 0);
+            fileTable.setCurrentFolder(null, null);
         } else {
             model = new FileSystemTreeModel(fsm);
             currentFolder.setModel(model);
@@ -322,22 +303,11 @@ public class FileSelector extends DialogLayout {
     }
 
     public boolean getAllowMultiSelection() {
-        return allowMultiSelection;
+        return fileTable.getAllowMultiSelection();
     }
 
     public void setAllowMultiSelection(boolean allowMultiSelection) {
-        this.allowMultiSelection = allowMultiSelection;
-        if(fileTableSelectionModel != null) {
-            fileTableSelectionModel.removeSelectionChangeListener(selectionChangedListener);
-        }
-        if(allowMultiSelection) {
-            fileTableSelectionModel = new DefaultTableSelectionModel();
-        } else {
-            fileTableSelectionModel = new TableSingleSelectionModel();
-        }
-        fileTableSelectionModel.addSelectionChangeListener(selectionChangedListener);
-        fileTable.setSelectionManager(new TableRowSelectionManager(fileTableSelectionModel));
-        selectionChanged();
+        fileTable.setAllowMultiSelection(allowMultiSelection);
     }
 
     public boolean getAllowFolderSelection() {
@@ -393,14 +363,14 @@ public class FileSelector extends DialogLayout {
         fileFiltersModel.removeFileFilter(filter);
         if(fileFiltersModel.getNumEntries() == 0) {
             fileFilterBox.setVisible(false);
-            setFileFilter(null);
+            setFileFilter(AllFilesFilter);
         }
     }
 
     public void removeAllFileFilters() {
         fileFiltersModel.removeAll();
         fileFilterBox.setVisible(false);
-        setFileFilter(null);
+        setFileFilter(AllFilesFilter);
     }
 
     public void setFileFilter(NamedFileFilter filter) {
@@ -408,7 +378,7 @@ public class FileSelector extends DialogLayout {
             throw new NullPointerException("filter");
         }
         activeFileFilter = filter;
-        refreshFileTable();
+        fileTable.setFileFilter(filter.getFileFilter());
     }
 
     public NamedFileFilter getFileFilter() {
@@ -463,9 +433,9 @@ public class FileSelector extends DialogLayout {
     }
 
     public void acceptSelection(boolean fireCallback) {
-        int[] selection = fileTableSelectionModel.getSelection();
+        FileTable.Entry[] selection = fileTable.getSelection();
         if((!allowFolderSelection || !fireCallback) && selection.length == 1) {
-            Entry entry = fileTableModel.getEntry(selection[0]);
+            FileTable.Entry entry = selection[0];
             if(entry != null && entry.isFolder) {
                 setCurrentFolder(entry.obj);
                 return;
@@ -474,7 +444,7 @@ public class FileSelector extends DialogLayout {
         if(fireCallback && callbacks != null) {
             Object[] objects = new Object[selection.length];
             for(int i=0 ; i<selection.length ; i++) {
-                Entry e = fileTableModel.getEntry(selection[i]);
+                FileTable.Entry e = selection[i];
                 if(e.isFolder && !allowFolderSelection) {
                     return;
                 }
@@ -490,26 +460,11 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    void setSortColumn(int column) {
-        if(sortColumn == column) {
-            sortDescending = !sortDescending;
-        }
-        this.sortColumn = column;
-        switch(column) {
-        case 0: currentSorting = NameComparator.instance; break;
-        case 1: currentSorting = ExtensionComparator.instance; break;
-        case 2: currentSorting = SizeComparator.instance; break;
-        case 3: currentSorting = LastModifiedComparator.instance; break;
-        }
-        Entry[] entries = fileTableModel.entries.clone();
-        sortFilesAndUpdateModel(entries, fileTableModel.numFolders);
-    }
-
     void selectionChanged() {
         boolean foldersSelected = false;
         boolean filesSelected = false;
-        for(int row : fileTableSelectionModel.getSelection()) {
-            if(fileTableModel.getEntry(row).isFolder) {
+        for(FileTable.Entry entry : fileTable.getSelection()) {
+            if(entry.isFolder) {
                 foldersSelected = true;
             } else {
                 filesSelected = true;
@@ -528,61 +483,7 @@ public class FileSelector extends DialogLayout {
     }
 
     void refreshFileTable() {
-        final TreeTableNode node = currentFolder.getCurrentNode();
-        Object[] objs;
-        if(node == model) {
-            objs = fsm.listRoots();
-        } else {
-            Object folder = getCurrentFolder();
-            FileFilter filter = activeFileFilter.getFileFilter();
-            if(filter != null || !getShowFolders() || !getShowHidden()) {
-                filter = new FileFilterWrapper(filter, getShowFolders(), getShowHidden());
-            }
-            objs = fsm.listFolder(folder,filter);
-        }
-        if(objs != null) {
-            int lastFileIdx = objs.length;
-            Entry[] entries = new Entry[lastFileIdx];
-            int numFolders = 0;
-            for(int i=0 ; i<objs.length ; i++) {
-                Entry e = new Entry(fsm, objs[i]);
-                if(e.isFolder) {
-                    entries[numFolders++] = e;
-                } else {
-                    entries[--lastFileIdx] = e;
-                }
-            }
-            Arrays.sort(entries, 0, numFolders, NameComparator.instance);
-            sortFilesAndUpdateModel(entries, numFolders);
-        } else {
-            fileTableModel.setData(EMPTY, 0);
-            setLeadIndex(null);
-        }
-    }
-
-    private void sortFilesAndUpdateModel(Entry[] entries, int numFolders) {
-        Entry leadEntry = fileTableModel.getEntry(fileTableSelectionModel.getLeadIndex());
-        Entry[] selectedEntries = fileTableModel.getEntries(fileTableSelectionModel.getSelection());
-        Comparator<Entry> c = currentSorting;
-        if(sortDescending) {
-            c = Collections.reverseOrder(c);
-        }
-        Arrays.sort(entries, numFolders, entries.length, c);
-        fileTableModel.setData(entries, numFolders);
-        for(Entry e : selectedEntries) {
-            int idx = fileTableModel.findEntry(e);
-            if(idx >= 0) {
-                fileTableSelectionModel.addSelection(idx, idx);
-            }
-        }
-        setLeadIndex(leadEntry);
-    }
-    
-    private void setLeadIndex(Entry entry) {
-        int index = Math.max(0, fileTableModel.findEntry(entry));
-        fileTableSelectionModel.setLeadIndex(index);
-        fileTableSelectionModel.setAnchorIndex(index);
-        fileTable.scrollToRow(index);
+        fileTable.setCurrentFolder(fsm, getCurrentFolder());
     }
 
     TreeTableNode resolvePath(String path) throws IllegalArgumentException {
@@ -625,11 +526,10 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    private void addToLRU(int[] selection) {
+    private void addToLRU(FileTable.Entry[] selection) {
         String[] files = new String[selection.length];
         for(int i=0 ; i<files.length ; i++) {
-            Entry e = fileTableModel.getEntry(selection[i]);
-            files[i] = e.name;
+            files[i] = selection[i].name;
         }
         PersistentState.FileGroup group = new PersistentState.FileGroup(
                 fsm.getPath(getCurrentFolder()), files);
@@ -649,196 +549,6 @@ public class FileSelector extends DialogLayout {
             }
         } catch(IOException ex) {
             ex.printStackTrace();
-        }
-    }
-
-    static class Entry {
-        public final Object obj;
-        public final String name;
-        public final boolean isFolder;
-        public final long size;
-        public final Date lastModified;
-
-        public Entry(FileSystemModel fsm, Object obj) {
-            this.obj = obj;
-            this.name = fsm.getName(obj);
-            this.isFolder = fsm.isFolder(obj);
-            this.lastModified = new Date(fsm.getLastModified(obj));
-            if(isFolder) {
-                this.size = 0;
-            } else {
-                this.size = fsm.getSize(obj);
-            }
-        }
-
-        public String getExtension() {
-            int idx = name.lastIndexOf('.');
-            if(idx >= 0) {
-                return name.substring(idx+1);
-            } else {
-                return "";
-            }
-        }
-    }
-    
-    static Entry[] EMPTY = new Entry[0];
-
-    static class FileTableModel extends AbstractTableModel {
-        private Entry[] entries = EMPTY;
-        private int numFolders;
-
-        public void setData(Entry[] entries, int numFolders) {
-            fireRowsDeleted(0, getNumRows());
-            this.entries = entries;
-            this.numFolders = numFolders;
-            fireRowsInserted(0, getNumRows());
-        }
-
-        static String COLUMN_HEADER[] = {"File name", "Type", "Size", "Last modified"};
-
-        public String getColumnHeaderText(int column) {
-            return COLUMN_HEADER[column];
-        }
-
-        public int getNumColumns() {
-            return COLUMN_HEADER.length;
-        }
-
-        public Object getCell(int row, int column) {
-            Entry e = entries[row];
-            if(e.isFolder) {
-                switch(column) {
-                case 0: return "["+e.name+"]";
-                case 1: return "Folder";
-                case 2: return "";
-                case 3: return dateFormat.format(e.lastModified);
-                default: return "??";
-                }
-            } else {
-                switch(column) {
-                case 0: return e.name;
-                case 1: {
-                    String ext = e.getExtension();
-                    return (ext.length() == 0) ? "File" : ext+"-file";
-                }
-                case 2: return formatFileSize(e.size);
-                case 3: return dateFormat.format(e.lastModified);
-                default: return "??";
-                }
-            }
-        }
-
-        public int getNumRows() {
-            return entries.length;
-        }
-
-        Entry getEntry(int row) {
-            if(row >= 0 && row < entries.length) {
-                return entries[row];
-            } else {
-                return null;
-            }
-        }
-
-        int findEntry(Entry entry) {
-            for(int i=0 ; i<entries.length ; i++) {
-                if(entries[i] == entry) {
-                    return i;
-                }
-            }
-            return -1;
-        }
-
-        Entry[] getEntries(int[] selection) {
-            final int count = selection.length;
-            if(count == 0) {
-                return EMPTY;
-            }
-            Entry[] result = new Entry[count];
-            for(int i=0 ; i<count ; i++) {
-                result[i] = entries[selection[i]];
-            }
-            return result;
-        }
-        
-        static final DateFormat dateFormat = DateFormat.getDateInstance();
-        static String SIZE_UNITS[] = {" MB", " KB", " B"};
-        static long SIZE_FACTORS[] = {1024*1024, 1024, 1};
-
-        private String formatFileSize(long size) {
-            if(size <= 0) {
-                return "0 B";
-            } else {
-                for(int i=0 ;; ++i) {
-                    if(size >= SIZE_FACTORS[i]) {
-                        long value = (size*10) / SIZE_FACTORS[i];
-                        return Long.toString(value / 10) + '.' +
-                                Character.forDigit((int)(value % 10), 10) +
-                                SIZE_UNITS[i];
-                    }
-                }
-            }
-        }
-    }
-
-    static class NameComparator implements Comparator<Entry> {
-        static final NameComparator instance = new NameComparator();
-        public int compare(Entry o1, Entry o2) {
-            return NaturalSortComparator.naturalCompare(o1.name, o2.name);
-        }
-    }
-
-    static class ExtensionComparator implements Comparator<Entry> {
-        static final ExtensionComparator instance = new ExtensionComparator();
-        public int compare(Entry o1, Entry o2) {
-            return NaturalSortComparator.naturalCompare(o1.getExtension(), o2.getExtension());
-        }
-    }
-
-    static class SizeComparator implements Comparator<Entry> {
-        static final SizeComparator instance = new SizeComparator();
-        public int compare(Entry o1, Entry o2) {
-            return Long.signum(o1.size - o2.size);
-        }
-    }
-
-    static class LastModifiedComparator implements Comparator<Entry> {
-        static final LastModifiedComparator instance = new LastModifiedComparator();
-        public int compare(Entry o1, Entry o2) {
-            return o1.lastModified.compareTo(o2.lastModified);
-        }
-    }
-
-    private class FileTable extends Table {
-        public FileTable(TableModel model) {
-            super(model);
-            setTheme("fileTable");
-        }
-
-        @Override
-        protected ColumnHeader createColumnHeader(final int column) {
-            ColumnHeader columnHeader = super.createColumnHeader(column);
-            columnHeader.addCallback(new Runnable() {
-                public void run() {
-                    setSortColumn(column);
-                    setSortArrows();
-                }
-            });
-            return columnHeader;
-        }
-
-        @Override
-        protected void updateColumnHeaderNumbers() {
-            super.updateColumnHeaderNumbers();
-            setSortArrows();
-        }
-
-        protected void setSortArrows() {
-            for(int i = 0 ; i < numColumns ; i++) {
-                AnimationState animState = columnHeaders[i].getAnimationState();
-                animState.setAnimationState(STATE_SORT_ASCENDING, (i == sortColumn) && !sortDescending);
-                animState.setAnimationState(STATE_SORT_DESCENDING, (i == sortColumn) && sortDescending);
-            }
         }
     }
 
@@ -869,26 +579,6 @@ public class FileSelector extends DialogLayout {
         private void removeAll() {
             filters.clear();
             fireAllChanged();
-        }
-    }
-
-    private static class FileFilterWrapper implements FileFilter {
-        private final FileFilter base;
-        private final boolean showFolder;
-        private final boolean showHidden;
-        public FileFilterWrapper(FileFilter base, boolean showFolder, boolean showHidden) {
-            this.base = base;
-            this.showFolder = showFolder;
-            this.showHidden = showHidden;
-        }
-        public boolean accept(FileSystemModel fsm, Object file) {
-            if(showHidden || !fsm.isHidden(file)) {
-                if(fsm.isFolder(file)) {
-                    return showFolder;
-                }
-                return (base == null) || base.accept(fsm, file);
-            }
-            return false;
         }
     }
 
