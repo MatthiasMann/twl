@@ -30,9 +30,11 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.ListBox.CallbackReason;
+import de.matthiasmann.twl.model.BitfieldBooleanModel;
 import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
+import de.matthiasmann.twl.model.SimpleIntegerModel;
 import de.matthiasmann.twl.model.SimpleListModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
@@ -94,7 +96,6 @@ public class FileSelector extends DialogLayout {
     private final ComboBox fileFilterBox;
     private final FileFiltersModel fileFiltersModel;
 
-    private boolean allowMultiSelection;
     private boolean allowFolderSelection;
     private Callback[] callbacks;
     private NamedFileFilter activeFileFilter;
@@ -210,11 +211,11 @@ public class FileSelector extends DialogLayout {
         btnRefresh.setTheme("buttonRefresh");
         btnRefresh.addCallback(showBtnCallback);
         
-        btnShowFolders = new Button(new PersistentStateButtonModel(PersistentState.FLAG_SHOW_FOLDERS));
+        btnShowFolders = new Button(new ToggleButtonModel(new BitfieldBooleanModel(persistentState, 0), true));
         btnShowFolders.setTheme("buttonShowFolders");
         btnShowFolders.addCallback(showBtnCallback);
 
-        btnShowHidden = new Button(new PersistentStateButtonModel(PersistentState.FLAG_SHOW_HIDDEN));
+        btnShowHidden = new Button(new ToggleButtonModel(new BitfieldBooleanModel(persistentState, 1), false));
         btnShowHidden.setTheme("buttonShowHidden");
         btnShowHidden.addCallback(showBtnCallback);
 
@@ -540,8 +541,6 @@ public class FileSelector extends DialogLayout {
         assert(persistentState != null);
         assert(prefs != null);
         assert(prefsKey != null);
-        persistentState.setFlag(PersistentState.FLAG_SHOW_FOLDERS, btnShowFolders.getModel().isSelected());
-        persistentState.setFlag(PersistentState.FLAG_SHOW_HIDDEN, btnShowHidden.getModel().isSelected());
         try {
             byte[] arr = persistentState.encode();
             if(arr != null) {
@@ -582,7 +581,7 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    static class PersistentState {
+    static class PersistentState extends SimpleIntegerModel {
         private static final int MAGIC = 0x965A4D07;
 
         static class FileGroup {
@@ -617,22 +616,11 @@ public class FileSelector extends DialogLayout {
             }
         }
 
-        static final int FLAG_SHOW_FOLDERS = 1;
-        static final int FLAG_SHOW_HIDDEN  = 2;
-
         final FileGroup[] groups = new FileGroup[MAX_LRU_SIZE];
         int numGroups;
-        int flags = FLAG_SHOW_FOLDERS;
 
-        void setFlag(int flag, boolean value) {
-            if(value) {
-                flags |= flag;
-            } else {
-                flags &= ~flag;
-            }
-        }
-        boolean getFlag(int flag) {
-            return (flags & flag) == flag;
+        public PersistentState() {
+            super(0x0000, 0xFFFF, 0);
         }
         
         void addGroup(FileGroup g) {
@@ -658,7 +646,7 @@ public class FileSelector extends DialogLayout {
             DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(boas, new Deflater(9));
             DataOutputStream dos = new DataOutputStream(deflaterOutputStream);
             dos.writeInt(MAGIC);
-            dos.writeShort((short)flags);
+            dos.writeShort((short)getValue());
             dos.writeByte(numGroups);
             for(int i=0 ; i<numGroups ; ++i) {
                 groups[i].encode(dos);
@@ -674,32 +662,12 @@ public class FileSelector extends DialogLayout {
             if(dis.readInt() != MAGIC) {
                 throw new IOException("Invalid MAGIC");
             }
-            flags = dis.readUnsignedShort();
+            setValue(dis.readUnsignedShort());
             numGroups = 0;
             int count = Math.min(MAX_LRU_SIZE, dis.readUnsignedByte());
             for(int i=0 ; i<count ; i++) {
                 groups[i] = new FileGroup(dis);
                 numGroups = i+1;  // number of groups sucessfully parsed
-            }
-        }
-    }
-
-    class PersistentStateButtonModel extends ToggleButtonModel {
-        final int flag;
-
-        PersistentStateButtonModel(int flag) {
-            this.flag = flag;
-        }
-        @Override
-        public boolean isSelected() {
-            return persistentState.getFlag(flag);
-        }
-        @Override
-        public void setSelected(boolean selected) {
-            if(selected != isSelected()) {
-                persistentState.setFlag(flag, selected);
-                savePersistentState();
-                fireStateCallback();
             }
         }
     }
