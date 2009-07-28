@@ -67,7 +67,7 @@ public class BitfieldBooleanModel extends HasCallback implements BooleanModel {
     
     public void setValue(boolean value) {
         int oldBFValue = bitfield.getValue();
-        int newBFValue = value ? (oldBFValue | bitmask) : (oldBFValue &= ~bitmask);
+        int newBFValue = value ? (oldBFValue | bitmask) : (oldBFValue & ~bitmask);
         if(oldBFValue != newBFValue) {
             bitfield.setValue(newBFValue);
             // bitfield's callback will call our callback
