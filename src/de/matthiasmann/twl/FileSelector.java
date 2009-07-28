@@ -163,7 +163,7 @@ public class FileSelector extends DialogLayout {
         btnOk.setTheme("buttonOk");
         btnOk.addCallback(new Runnable() {
             public void run() {
-                acceptSelection(true);
+                acceptSelection();
             }
         });
 
@@ -193,7 +193,7 @@ public class FileSelector extends DialogLayout {
         setAllowMultiSelection(true);
         fileTable.addCallback(new TableBase.Callback() {
             public void mouseDoubleClicked(int row, int column) {
-                acceptSelection(false);
+                acceptSelection();
             }
         });
 
@@ -307,7 +307,7 @@ public class FileSelector extends DialogLayout {
                 .addGroup(vButtonGroup));
 
         addActionMapping("goOneLevelUp", "goOneLevelUp");
-        addActionMapping("acceptSelection", "acceptSelection", false);
+        addActionMapping("acceptSelection", "acceptSelection");
     }
 
     public FileSystemModel getFileSystemModel() {
@@ -435,16 +435,16 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    public void acceptSelection(boolean fireCallback) {
+    public void acceptSelection() {
         FileTable.Entry[] selection = fileTable.getSelection();
-        if((!allowFolderSelection || !fireCallback) && selection.length == 1) {
+        if(selection.length == 1) {
             FileTable.Entry entry = selection[0];
             if(entry != null && entry.isFolder) {
                 setCurrentFolder(entry.obj);
                 return;
             }
         }
-        if(fireCallback && callbacks != null) {
+        if(callbacks != null) {
             Object[] objects = new Object[selection.length];
             for(int i=0 ; i<selection.length ; i++) {
                 FileTable.Entry e = selection[i];
