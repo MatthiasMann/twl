@@ -35,23 +35,19 @@ import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
 import de.matthiasmann.twl.model.IntegerModel;
+import de.matthiasmann.twl.model.LRUListModel;
 import de.matthiasmann.twl.model.PersistentIntegerModel;
+import de.matthiasmann.twl.model.PersistentLRUListModel;
 import de.matthiasmann.twl.model.SimpleIntegerModel;
+import de.matthiasmann.twl.model.SimpleLRUListModel;
 import de.matthiasmann.twl.model.SimpleListModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
 
 /**
  * A File selector widget using FileSystemModel
@@ -85,8 +81,9 @@ public class FileSelector extends DialogLayout {
 
     private static final int MAX_LRU_SIZE = 10;
 
-    private final PersistentState persistentState;
     private final IntegerModel flags;
+    private final LRUListModel<String> folderLRU;
+    private final LRUListModel<FileGroup> filesLRU;
 
     private final TreeComboBox currentFolder;
     private final FileTable fileTable;
@@ -120,11 +117,13 @@ public class FileSelector extends DialogLayout {
         }
 
         if(prefs != null) {
-            flags           = new PersistentIntegerModel(prefs, prefsKey.concat("_Flags"), 0, 0xFFFF, 0);
-            persistentState = new PersistentState(prefs, prefsKey.concat("_LRU"));
+            flags     = new PersistentIntegerModel(prefs, prefsKey.concat("_Flags"), 0, 0xFFFF, 0);
+            folderLRU = new PersistentLRUListModel<String>(10, String.class, prefs, prefsKey.concat("_foldersLRU"));
+            filesLRU  = new PersistentLRUListModel<FileGroup>(10, FileGroup.class, prefs, prefsKey.concat("_filesLRU"));
         } else {
-            flags           = new SimpleIntegerModel(0, 0xFFFF, 0);
-            persistentState = null;
+            flags     = new SimpleIntegerModel(0, 0xFFFF, 0);
+            folderLRU = new SimpleLRUListModel<String>(10);
+            filesLRU  = new SimpleLRUListModel<FileGroup>(10);
         }
 
         currentFolder = new TreeComboBox();
@@ -147,17 +146,13 @@ public class FileSelector extends DialogLayout {
             }
         });
 
-        if(persistentState != null) {
-            btnFolderLRU = new Button();
-            btnFolderLRU.setTheme("buttonLRU");
-            btnFolderLRU.addCallback(new Runnable() {
-                public void run() {
-                    showFolderLRU();
-                }
-            });
-        } else {
-            btnFolderLRU = null;
-        }
+        btnFolderLRU = new Button();
+        btnFolderLRU.setTheme("buttonLRU");
+        btnFolderLRU.addCallback(new Runnable() {
+            public void run() {
+                showFolderLRU();
+            }
+        });
 
         btnOk = new Button();
         btnOk.setTheme("buttonOk");
@@ -253,19 +248,14 @@ public class FileSelector extends DialogLayout {
         
         Group hCurrentFolder = createSequentialGroup()
                 .addWidget(labelCurrentFolder)
-                .addWidget(currentFolder);
-        if(btnFolderLRU != null) {
-                hCurrentFolder.addWidget(btnFolderLRU);
-        }
-        hCurrentFolder.addWidget(btnUp);
-
+                .addWidget(currentFolder)
+                .addWidget(btnFolderLRU)
+                .addWidget(btnUp);
         Group vCurrentFolder = createParallelGroup()
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
+                .addWidget(btnFolderLRU)
                 .addWidget(btnUp);
-        if(btnFolderLRU != null) {
-                vCurrentFolder.addWidget(btnFolderLRU);
-        }
 
         Group hButtonGroup = createSequentialGroup()
                 .addWidget(fileFilterBox)
@@ -325,6 +315,9 @@ public class FileSelector extends DialogLayout {
             currentFolder.setModel(model);
             currentFolder.setSeparator(fsm.getSeparator());
             setCurrentNode(model);
+            if(folderLRU.getNumEntries() > 0) {
+                gotoFolderFromLRU(0);
+            }
         }
     }
 
@@ -498,10 +491,8 @@ public class FileSelector extends DialogLayout {
     }
 
     void showFolderLRU() {
-        assert(persistentState != null);
-        
         final PopupWindow popup = new PopupWindow(this);
-        final ListBox listBox = new ListBox(new FolderListModel(persistentState));
+        final ListBox listBox = new ListBox(new FolderListModel(folderLRU));
         popup.setTheme("fileselector-folderLRUpopup");
         popup.add(listBox);
         if(popup.openPopup()) {
@@ -513,14 +504,7 @@ public class FileSelector extends DialogLayout {
                         popup.closePopup();
                         int idx = listBox.getSelected();
                         if(idx >= 0) {
-                            String path = persistentState.groups[idx].path;
-                            try {
-                                TreeTableNode node = resolvePath(path);
-                                setCurrentNode(node);
-                            } catch(IllegalArgumentException ex) {
-                                persistentState.removeGroup(idx);
-                                persistentState.savePersistentState();
-                            }
+                            gotoFolderFromLRU(idx);
                         }
                     }
                 }
@@ -529,15 +513,26 @@ public class FileSelector extends DialogLayout {
     }
 
     private void addToLRU(FileTable.Entry[] selection) {
-        if(persistentState != null) {
-            String[] files = new String[selection.length];
-            for(int i=0 ; i<files.length ; i++) {
-                files[i] = selection[i].name;
-            }
-            PersistentState.FileGroup group = new PersistentState.FileGroup(
-                    fsm.getPath(getCurrentFolder()), files);
-            persistentState.addGroup(group);
-            persistentState.savePersistentState();
+        String[] files = new String[selection.length];
+        for(int i=0 ; i<files.length ; i++) {
+            files[i] = selection[i].name;
+        }
+        FileGroup group = new FileGroup();
+        group.setPath(fsm.getPath(getCurrentFolder()));
+        group.setFiles(files);
+        group.setTime(System.currentTimeMillis());
+
+        filesLRU.addEntry(group);
+        folderLRU.addEntry(group.getPath());
+    }
+
+    void gotoFolderFromLRU(int idx) {
+        String path = folderLRU.getEntry(idx);
+        try {
+            TreeTableNode node = resolvePath(path);
+            setCurrentNode(node);
+        } catch(IllegalArgumentException ex) {
+            folderLRU.removeEntry(idx);
         }
     }
 
@@ -571,129 +566,41 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    static class PersistentState {
-        private static final int MAGIC = 0x965A4D17;
+    public static class FileGroup implements Serializable {
+        String path;
+        String[] files;
+        long time;
 
-        static class FileGroup {
-            final String path;
-            final String[] files;
-            final long time;
-
-            public FileGroup(String path, String[] files) {
-                this.path = path;
-                this.files = files;
-                this.time = System.currentTimeMillis();
-            }
-            public FileGroup(DataInputStream dis) throws IOException {
-                this.path = dis.readUTF();
-                this.time = dis.readLong();
-                int count = dis.readUnsignedByte();
-                this.files = new String[count];
-                for(int i=0 ; i<count ; ++i) {
-                    files[i] = dis.readUTF();
-                }
-            }
-
-            void encode(DataOutputStream dos) throws IOException {
-                // ensure that count can fit into a byte, also the available space is limited
-                int count = Math.min(100, files.length);
-                dos.writeUTF(path);
-                dos.writeLong(time);
-                dos.writeByte((byte)count);
-                for(int i=0 ; i<count ; i++) {
-                    dos.writeUTF(files[i]);
-                }
-            }
+        public String[] getFiles() {
+            return files;
         }
-
-        private final Preferences prefs;
-        private final String prefsKey;
-
-        final FileGroup[] groups = new FileGroup[MAX_LRU_SIZE];
-        int numGroups;
-
-        public PersistentState(Preferences prefs, String prefsKey) {
-            this.prefs = prefs;
-            this.prefsKey = prefsKey;
-
-            byte[] arr = prefs.getByteArray(prefsKey, null);
-            if(arr != null) {
-                try {
-                    decode(arr);
-                } catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
+        public void setFiles(String[] files) {
+            this.files = files;
         }
-
-        void addGroup(FileGroup g) {
-            System.arraycopy(groups, 0, groups, 1, MAX_LRU_SIZE-1);
-            groups[0] = g;
-            numGroups = Math.min(numGroups+1, MAX_LRU_SIZE);
+        public String getPath() {
+            return path;
         }
-        void removeGroup(int idx) {
-            assert idx < numGroups;
-            System.arraycopy(groups, idx+1, groups, idx, (MAX_LRU_SIZE-1)-idx);
-            groups[MAX_LRU_SIZE-1] = null;
-            numGroups--;
+        public void setPath(String path) {
+            this.path = path;
         }
-        void moveGroupToFront(int idx) {
-            assert idx < numGroups;
-            FileGroup g = groups[idx];
-            System.arraycopy(groups, 0, groups, 1, idx-1);
-            groups[0] = g;
+        public long getTime() {
+            return time;
         }
-
-        void savePersistentState() {
-            try {
-                byte[] arr = encode();
-                if(arr != null) {
-                    prefs.putByteArray(prefsKey, arr);
-                }
-            } catch(IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-
-        private byte[] encode() throws IOException {
-            ByteArrayOutputStream boas = new ByteArrayOutputStream();
-            DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(boas, new Deflater(9));
-            DataOutputStream dos = new DataOutputStream(deflaterOutputStream);
-            dos.writeInt(MAGIC);
-            dos.writeByte(numGroups);
-            for(int i=0 ; i<numGroups ; ++i) {
-                groups[i].encode(dos);
-            }
-            dos.close();
-            return boas.toByteArray();
-        }
-        
-        private void decode(byte[] arr) throws IOException {
-            ByteArrayInputStream bais = new ByteArrayInputStream(arr);
-            InflaterInputStream iis = new InflaterInputStream(bais);
-            DataInputStream dis = new DataInputStream(iis);
-            if(dis.readInt() != MAGIC) {
-                throw new IOException("Invalid MAGIC");
-            }
-            numGroups = 0;
-            int count = Math.min(MAX_LRU_SIZE, dis.readUnsignedByte());
-            for(int i=0 ; i<count ; i++) {
-                groups[i] = new FileGroup(dis);
-                numGroups = i+1;  // number of groups sucessfully parsed
-            }
+        public void setTime(long time) {
+            this.time = time;
         }
     }
 
     static class FolderListModel extends SimpleListModel<String> {
-        final PersistentState persistentState;
-        public FolderListModel(PersistentState persistentState) {
-            this.persistentState = persistentState;
+        final LRUListModel<String> lru;
+        public FolderListModel(LRUListModel<String> lru) {
+            this.lru = lru;
         }
         public String getEntry(int index) {
-            return persistentState.groups[index].path;
+            return lru.getEntry(index);
         }
         public int getNumEntries() {
-            return persistentState.numGroups;
+            return lru.getNumEntries();
         }
     }
 }
