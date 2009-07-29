@@ -360,6 +360,10 @@ public class FileTable extends Table {
             }
         }
 
+        public String getPath() {
+            return fsm.getPath(obj);
+        }
+
         @Override
         public boolean equals(Object o) {
             if(o == null || getClass() != o.getClass()) {
