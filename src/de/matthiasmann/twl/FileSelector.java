@@ -35,17 +35,16 @@ import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
 import de.matthiasmann.twl.model.IntegerModel;
-import de.matthiasmann.twl.model.LRUListModel;
+import de.matthiasmann.twl.model.MRUListModel;
 import de.matthiasmann.twl.model.PersistentIntegerModel;
-import de.matthiasmann.twl.model.PersistentLRUListModel;
+import de.matthiasmann.twl.model.PersistentMRUListModel;
 import de.matthiasmann.twl.model.SimpleIntegerModel;
-import de.matthiasmann.twl.model.SimpleLRUListModel;
+import de.matthiasmann.twl.model.SimpleMRUListModel;
 import de.matthiasmann.twl.model.SimpleListModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
@@ -79,16 +78,15 @@ public class FileSelector extends DialogLayout {
 
     public static NamedFileFilter AllFilesFilter = new NamedFileFilter("All files", null);
 
-    private static final int MAX_LRU_SIZE = 10;
-
     private final IntegerModel flags;
-    private final LRUListModel<String> folderLRU;
-    private final LRUListModel<FileGroup> filesLRU;
+    private final MRUListModel<String> folderMRU;
+    private final MRUListModel<String> filesMRU;
 
     private final TreeComboBox currentFolder;
     private final FileTable fileTable;
     private final Button btnUp;
-    private final Button btnFolderLRU;
+    private final Button btnFolderMRU;
+    private final Button btnFilesMRU;
     private final Button btnOk;
     private final Button btnCancel;
     private final Button btnRefresh;
@@ -118,12 +116,12 @@ public class FileSelector extends DialogLayout {
 
         if(prefs != null) {
             flags     = new PersistentIntegerModel(prefs, prefsKey.concat("_Flags"), 0, 0xFFFF, 0);
-            folderLRU = new PersistentLRUListModel<String>(10, String.class, prefs, prefsKey.concat("_foldersLRU"));
-            filesLRU  = new PersistentLRUListModel<FileGroup>(10, FileGroup.class, prefs, prefsKey.concat("_filesLRU"));
+            folderMRU = new PersistentMRUListModel<String>(10, String.class, prefs, prefsKey.concat("_foldersMRU"));
+            filesMRU  = new PersistentMRUListModel<String>(20, String.class, prefs, prefsKey.concat("_filesMRU"));
         } else {
             flags     = new SimpleIntegerModel(0, 0xFFFF, 0);
-            folderLRU = new SimpleLRUListModel<String>(10);
-            filesLRU  = new SimpleLRUListModel<FileGroup>(10);
+            folderMRU = new SimpleMRUListModel<String>(10);
+            filesMRU  = new SimpleMRUListModel<String>(20);
         }
 
         currentFolder = new TreeComboBox();
@@ -146,11 +144,19 @@ public class FileSelector extends DialogLayout {
             }
         });
 
-        btnFolderLRU = new Button();
-        btnFolderLRU.setTheme("buttonLRU");
-        btnFolderLRU.addCallback(new Runnable() {
+        btnFolderMRU = new Button();
+        btnFolderMRU.setTheme("buttonFoldersMRU");
+        btnFolderMRU.addCallback(new Runnable() {
             public void run() {
-                showFolderLRU();
+                showFolderMRU();
+            }
+        });
+
+        btnFilesMRU = new Button();
+        btnFilesMRU.setTheme("buttonFilesMRU");
+        btnFilesMRU.addCallback(new Runnable() {
+            public void run() {
+                showFilesMRU();
             }
         });
 
@@ -234,8 +240,8 @@ public class FileSelector extends DialogLayout {
 
         add(labelCurrentFolder);
         add(currentFolder);
-        if(btnFolderLRU != null) {
-            add(btnFolderLRU);
+        if(btnFolderMRU != null) {
+            add(btnFolderMRU);
         }
         add(btnUp);
         add(scrollPane);
@@ -249,23 +255,26 @@ public class FileSelector extends DialogLayout {
         Group hCurrentFolder = createSequentialGroup()
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
-                .addWidget(btnFolderLRU)
+                .addWidget(btnFolderMRU)
                 .addWidget(btnUp);
         Group vCurrentFolder = createParallelGroup()
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
-                .addWidget(btnFolderLRU)
+                .addWidget(btnFolderMRU)
                 .addWidget(btnUp);
 
         Group hButtonGroup = createSequentialGroup()
                 .addWidget(fileFilterBox)
                 .addGap()
+                .addWidget(btnFilesMRU)
+                .addGap(20)
                 .addWidget(btnOk)
                 .addGap(20)
                 .addWidget(btnCancel)
                 .addGap(20);
         Group vButtonGroup = createParallelGroup()
                 .addWidget(fileFilterBox)
+                .addWidget(btnFilesMRU)
                 .addWidget(btnOk)
                 .addWidget(btnCancel);
 
@@ -315,8 +324,8 @@ public class FileSelector extends DialogLayout {
             currentFolder.setModel(model);
             currentFolder.setSeparator(fsm.getSeparator());
             setCurrentNode(model);
-            if(folderLRU.getNumEntries() > 0) {
-                gotoFolderFromLRU(0);
+            if(folderMRU.getNumEntries() > 0) {
+                gotoFolderFromMRU(0);
             }
         }
     }
@@ -437,6 +446,10 @@ public class FileSelector extends DialogLayout {
                 return;
             }
         }
+        fireAcceptCallback(selection);
+    }
+
+   void fireAcceptCallback(FileTable.Entry[] selection) {
         if(callbacks != null) {
             Object[] objects = new Object[selection.length];
             for(int i=0 ; i<selection.length ; i++) {
@@ -446,12 +459,12 @@ public class FileSelector extends DialogLayout {
                 }
                 objects[i] = e.obj;
             }
-            addToLRU(selection);
+            addToMRU(selection);
             for(Callback cb : callbacks) {
                 cb.filesSelected(objects);
             }
         }
-    }
+   }
 
     void selectionChanged() {
         boolean foldersSelected = false;
@@ -490,21 +503,21 @@ public class FileSelector extends DialogLayout {
         throw new IllegalArgumentException("Could not resolve: " + path);
     }
 
-    void showFolderLRU() {
+    void showFolderMRU() {
         final PopupWindow popup = new PopupWindow(this);
-        final ListBox listBox = new ListBox(new FolderListModel(folderLRU));
-        popup.setTheme("fileselector-folderLRUpopup");
+        final ListBox listBox = new ListBox(folderMRU);
+        popup.setTheme("fileselector-folderMRUpopup");
         popup.add(listBox);
         if(popup.openPopup()) {
             popup.setInnerSize(getInnerWidth()*2/3, getInnerHeight()*2/3);
-            popup.setPosition(btnFolderLRU.getX() - popup.getWidth(), btnFolderLRU.getY());
+            popup.setPosition(btnFolderMRU.getX() - popup.getWidth(), btnFolderMRU.getY());
             listBox.addCallback(new CallbackWithReason<ListBox.CallbackReason>() {
                 public void callback(CallbackReason reason) {
                     if(reason.actionRequested()) {
                         popup.closePopup();
                         int idx = listBox.getSelected();
                         if(idx >= 0) {
-                            gotoFolderFromLRU(idx);
+                            gotoFolderFromMRU(idx);
                         }
                     }
                 }
@@ -512,27 +525,77 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    private void addToLRU(FileTable.Entry[] selection) {
-        String[] files = new String[selection.length];
-        for(int i=0 ; i<files.length ; i++) {
-            files[i] = selection[i].name;
-        }
-        FileGroup group = new FileGroup();
-        group.setPath(fsm.getPath(getCurrentFolder()));
-        group.setFiles(files);
-        group.setTime(System.currentTimeMillis());
+    void showFilesMRU() {
+        final PopupWindow popup = new PopupWindow(this);
+        final DialogLayout layout = new DialogLayout();
+        final ListBox listBox = new ListBox(filesMRU);
+        final Button popupBtnOk = new Button();
+        final Button popupBtnCancel = new Button();
+        popupBtnOk.setTheme("buttonOk");
+        popupBtnCancel.setTheme("buttonCancel");
+        popup.setTheme("fileselector-filesMRUpopup");
+        popup.add(layout);
+        layout.add(listBox);
+        layout.add(popupBtnOk);
+        layout.add(popupBtnCancel);
 
-        filesLRU.addEntry(group);
-        folderLRU.addEntry(group.getPath());
+        DialogLayout.Group hBtnGroup = layout.createSequentialGroup()
+                .addGap().addWidget(popupBtnOk).addWidget(popupBtnCancel);
+        DialogLayout.Group vBtnGroup = layout.createParallelGroup()
+                .addWidget(popupBtnOk).addWidget(popupBtnCancel);
+        layout.setHorizontalGroup(layout.createParallelGroup().addWidget(listBox).addGroup(hBtnGroup));
+        layout.setVerticalGroup(layout.createSequentialGroup().addWidget(listBox).addGroup(vBtnGroup));
+        
+        if(popup.openPopup()) {
+            popup.setInnerSize(getInnerWidth()*2/3, getInnerHeight()*2/3);
+            popup.setPosition(getInnerX() + (getInnerWidth() - popup.getWidth())/2, btnFilesMRU.getY() - popup.getHeight());
+
+            final Runnable okCB = new Runnable() {
+                public void run() {
+                    int idx = listBox.getSelected();
+                    if(idx >= 0) {
+                        Object obj = fsm.getFile(filesMRU.getEntry(idx));
+                        if(obj != null) {
+                            popup.closePopup();
+                            fireAcceptCallback(new FileTable.Entry[] {
+                                new FileTable.Entry(fsm, obj)
+                            });
+                        } else {
+                            filesMRU.removeEntry(idx);
+                        }
+                    }
+                }
+            };
+            popupBtnOk.addCallback(okCB);
+            popupBtnCancel.addCallback(new Runnable() {
+                public void run() {
+                    popup.closePopup();
+                }
+            });
+            listBox.addCallback(new CallbackWithReason<ListBox.CallbackReason>() {
+                public void callback(CallbackReason reason) {
+                    if(reason.actionRequested()) {
+                        okCB.run();
+                    }
+                }
+            });
+        }
     }
 
-    void gotoFolderFromLRU(int idx) {
-        String path = folderLRU.getEntry(idx);
+    private void addToMRU(FileTable.Entry[] selection) {
+        for(FileTable.Entry entry : selection) {
+            filesMRU.addEntry(entry.getPath());
+        }
+        folderMRU.addEntry(fsm.getPath(getCurrentFolder()));
+    }
+
+    void gotoFolderFromMRU(int idx) {
+        String path = folderMRU.getEntry(idx);
         try {
             TreeTableNode node = resolvePath(path);
             setCurrentNode(node);
         } catch(IllegalArgumentException ex) {
-            folderLRU.removeEntry(idx);
+            folderMRU.removeEntry(idx);
         }
     }
 
@@ -563,44 +626,6 @@ public class FileSelector extends DialogLayout {
         private void removeAll() {
             filters.clear();
             fireAllChanged();
-        }
-    }
-
-    public static class FileGroup implements Serializable {
-        String path;
-        String[] files;
-        long time;
-
-        public String[] getFiles() {
-            return files;
-        }
-        public void setFiles(String[] files) {
-            this.files = files;
-        }
-        public String getPath() {
-            return path;
-        }
-        public void setPath(String path) {
-            this.path = path;
-        }
-        public long getTime() {
-            return time;
-        }
-        public void setTime(long time) {
-            this.time = time;
-        }
-    }
-
-    static class FolderListModel extends SimpleListModel<String> {
-        final LRUListModel<String> lru;
-        public FolderListModel(LRUListModel<String> lru) {
-            this.lru = lru;
-        }
-        public String getEntry(int index) {
-            return lru.getEntry(index);
-        }
-        public int getNumEntries() {
-            return lru.getNumEntries();
         }
     }
 }
