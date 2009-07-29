@@ -32,15 +32,11 @@ package de.matthiasmann.twl.model;
 /**
  * A generic LRU list model.
  *
- * It uses the ChangeListener interface from ListModel but does not
- * provide all function of ListModel. This allows easy wrapping of an
- * LRUListModel into a ListModel for display.
- *
  * @param <T> the data type stored in this LRU model
  *
  * @author Matthias Mann
  */
-public interface LRUListModel<T> {
+public interface LRUListModel<T> extends ListModel<T> {
 
     /**
      * Returns the maximum number of entries stored in this LRU list

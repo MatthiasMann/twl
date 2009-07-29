@@ -114,4 +114,12 @@ public class SimpleLRUListModel<T> implements LRUListModel<T> {
 
     protected void saveEntries() {
     }
+
+    public Object getEntryTooltip(int index) {
+        return null;
+    }
+
+    public boolean matchPrefix(int index, String prefix) {
+        return false;
+    }
 }
