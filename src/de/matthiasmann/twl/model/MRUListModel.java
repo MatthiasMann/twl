@@ -30,17 +30,17 @@
 package de.matthiasmann.twl.model;
 
 /**
- * A generic LRU list model.
+ * A generic MRU (most recently used) list model.
  *
- * @param <T> the data type stored in this LRU model
+ * @param <T> the data type stored in this MRU model
  *
  * @author Matthias Mann
  */
-public interface LRUListModel<T> extends ListModel<T> {
+public interface MRUListModel<T> extends ListModel<T> {
 
     /**
-     * Returns the maximum number of entries stored in this LRU list
-     * @return the maximum number of entries stored in this LRU list
+     * Returns the maximum number of entries stored in this MRU list
+     * @return the maximum number of entries stored in this MRU list
      */
     public int getMaxEntries();
     
@@ -49,7 +49,7 @@ public interface LRUListModel<T> extends ListModel<T> {
     public T getEntry(int index);
 
     /**
-     * Adds an entry to this LRU model. If the entry is already in the LRU list,
+     * Adds an entry to this MRU model. If the entry is already in the MRU list,
      * then it is moved to the from.
      *
      * @see java.lang.Object#equals(java.lang.Object)

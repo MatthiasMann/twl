@@ -34,19 +34,19 @@ import de.matthiasmann.twl.utils.CallbackSupport;
 import java.util.ArrayList;
 
 /**
- * A non persistent LRU list implementation
+ * A non persistent MRU list implementation
  *
- * @param <T> the data type stored in this LRU model
+ * @param <T> the data type stored in this MRU model
  * 
  * @author Matthias Mann
  */
-public class SimpleLRUListModel<T> implements LRUListModel<T> {
+public class SimpleMRUListModel<T> implements MRUListModel<T> {
 
     protected final ArrayList<T> entries;
     protected final int maxEntries;
     protected ChangeListener[] listeners;
 
-    public SimpleLRUListModel(int maxEntries) {
+    public SimpleMRUListModel(int maxEntries) {
         if(maxEntries <= 1) {
             throw new IllegalArgumentException("maxEntries <= 1");
         }

@@ -44,12 +44,12 @@ import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 /**
- * A persistent LRU list model.
+ * A persistent MRU list model.
  *
  * Entries are stored compressed (deflate) using serialization and
  * <code>putByteArray</code> except Strings which use <code>put</code>
  *
- * @param <T> the data type stored in this LRU model
+ * @param <T> the data type stored in this MRU model
  * 
  * @see java.util.zip.Deflater
  * @see java.util.prefs.Preferences#putByteArray(java.lang.String, byte[])
@@ -57,15 +57,15 @@ import java.util.zip.InflaterInputStream;
  * 
  * @author Matthias Mann
  */
-public class PersistentLRUListModel<T extends Serializable> extends SimpleLRUListModel<T> {
+public class PersistentMRUListModel<T extends Serializable> extends SimpleMRUListModel<T> {
 
-    private static final Logger logger = Logger.getLogger(PersistentLRUListModel.class.getName());
+    private static final Logger logger = Logger.getLogger(PersistentMRUListModel.class.getName());
 
     private final Class<T> clazz;
     private final Preferences prefs;
     private final String prefKey;
 
-    public PersistentLRUListModel(int maxEntries, Class<T> clazz, Preferences prefs, String prefKey) {
+    public PersistentMRUListModel(int maxEntries, Class<T> clazz, Preferences prefs, String prefKey) {
         super(maxEntries);
         if(clazz == null) {
             throw new NullPointerException("clazz");
@@ -133,7 +133,7 @@ public class PersistentLRUListModel<T extends Serializable> extends SimpleLRULis
             }
             return baos.toByteArray();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to serialize LRU entry", ex);
+            logger.log(Level.SEVERE, "Unable to serialize MRU entry", ex);
             return new byte[0];
         }
     }
@@ -153,7 +153,7 @@ public class PersistentLRUListModel<T extends Serializable> extends SimpleLRULis
                 close(iis);
             }
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unable to deserialize LRU entry", ex);
+            logger.log(Level.SEVERE, "Unable to deserialize MRU entry", ex);
         }
         return null;
     }
