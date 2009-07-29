@@ -52,8 +52,9 @@ public class JavaFileSystemModel implements FileSystemModel {
         return File.separator;
     }
 
-    public Object getFile(String name) {
-        return new File(name);
+    public Object getFile(String path) {
+        File file = new File(path);
+        return file.exists() ? file : null;
     }
     
     public Object getParent(Object file) {

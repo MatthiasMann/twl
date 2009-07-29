@@ -46,8 +46,14 @@ public interface FileSystemModel {
     }
     
     public String getSeparator();
-    
-    public Object getFile(String name);
+
+    /**
+     * Returns the object which represents the specified file name.
+     *
+     * @param path the file path as returned by getPath()
+     * @return the object or null if the file was not found
+     */
+    public Object getFile(String path);
     
     public Object getParent(Object file);
     
