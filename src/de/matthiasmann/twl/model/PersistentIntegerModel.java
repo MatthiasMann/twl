@@ -35,7 +35,7 @@ import java.util.prefs.Preferences;
  *
  * @author Matthias Mann
  */
-public class PersistentableIntegerModel extends AbstractIntegerModel {
+public class PersistentIntegerModel extends AbstractIntegerModel {
 
     private final Preferences prefs;
     private final String prefKey;
@@ -44,7 +44,7 @@ public class PersistentableIntegerModel extends AbstractIntegerModel {
 
     private int value;
     
-    public PersistentableIntegerModel(Preferences prefs, String prefKey, int minValue, int maxValue, int defaultValue) {
+    public PersistentIntegerModel(Preferences prefs, String prefKey, int minValue, int maxValue, int defaultValue) {
         if(maxValue < minValue) {
             throw new IllegalArgumentException("maxValue < minValue");
         }
@@ -61,7 +61,7 @@ public class PersistentableIntegerModel extends AbstractIntegerModel {
         setValue(prefs.getInt(prefKey, defaultValue));
     }
 
-    public PersistentableIntegerModel(int minValue, int maxValue, int value) {
+    public PersistentIntegerModel(int minValue, int maxValue, int value) {
         if(maxValue < minValue) {
             throw new IllegalArgumentException("maxValue < minValue");
         }

@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2008, Matthias Mann
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  *     * Neither the name of Matthias Mann nor the names of its contributors may
  *       be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,69 +29,46 @@
  */
 package de.matthiasmann.twl.model;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 /**
+ * A model that stores a boolean value and supports callback on value change.
+ * The value can also be persisted using java.util.prefs.Preferences
  *
- * @param <T> The enum type
  * @author Matthias Mann
  */
-public class PersistentableEnumModel<T extends Enum<T>> extends AbstractEnumModel<T> {
+public class PersistentBooleanModel extends HasCallback implements BooleanModel {
 
-    private static final Logger logger = Logger.getLogger(PersistentableEnumModel.class.getName());
-    
     private final Preferences prefs;
     private final String prefKey;
+
+    private boolean value;
     
-    private T value;
-    
-    public PersistentableEnumModel(Preferences prefs, String prefKey, Class<T> enumClass, T defaultValue) {
-        super(enumClass);
+    public PersistentBooleanModel(Preferences prefs, String prefKey, boolean defaultValue) {
         if(prefs == null) {
             throw new NullPointerException("prefs");
         }
         if(prefKey == null) {
             throw new NullPointerException("prefKey");
         }
-        if(defaultValue == null) {
-            throw new NullPointerException("value");
-        }
         this.prefs = prefs;
         this.prefKey = prefKey;
-        
-        T storedValue = defaultValue;
-        String storedStr = prefs.get(prefKey, null);
-        if(storedStr != null) {
-            try {
-                storedValue = Enum.valueOf(enumClass, storedStr);
-            } catch (IllegalArgumentException ex) {
-                logger.log(Level.WARNING, "Unable to parse value '" + storedStr + "' of key '" + prefKey + "' of type " + enumClass, ex);
-            }
-        }
-        setValue(storedValue);
+        value = prefs.getBoolean(prefKey, defaultValue);
     }
-    
-    public T getValue() {
+
+    public boolean getValue() {
         return value;
     }
 
-    public void setValue(T value) {
-        if(value == null) {
-            throw new NullPointerException("value");
-        }
+    public void setValue(boolean value) {
         if(this.value != value) {
             this.value = value;
-            storeSetting();
+            storeSettings();
             doCallback();
         }
     }
 
-    private void storeSetting() {
-        if(prefs != null) {
-            prefs.put(prefKey, value.name());
-        }
+    private void storeSettings() {
+        prefs.putBoolean(prefKey, value);
     }
-
 }

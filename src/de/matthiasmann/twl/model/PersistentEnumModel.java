@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
- *
+ * Copyright (c) 2008, Matthias Mann
+ * 
  * All rights reserved.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * 
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  *     * Neither the name of Matthias Mann nor the names of its contributors may
  *       be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- *
+ * 
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -29,19 +29,26 @@
  */
 package de.matthiasmann.twl.model;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 /**
  *
+ * @param <T> The enum type
  * @author Matthias Mann
  */
-public class PersistentableStringModel extends HasCallback implements StringModel {
+public class PersistentEnumModel<T extends Enum<T>> extends AbstractEnumModel<T> {
 
+    private static final Logger logger = Logger.getLogger(PersistentEnumModel.class.getName());
+    
     private final Preferences prefs;
     private final String prefKey;
-    private String value;
-
-    public PersistentableStringModel(Preferences prefs, String prefKey, String defaultValue) {
+    
+    private T value;
+    
+    public PersistentEnumModel(Preferences prefs, String prefKey, Class<T> enumClass, T defaultValue) {
+        super(enumClass);
         if(prefs == null) {
             throw new NullPointerException("prefs");
         }
@@ -49,25 +56,41 @@ public class PersistentableStringModel extends HasCallback implements StringMode
             throw new NullPointerException("prefKey");
         }
         if(defaultValue == null) {
-            throw new NullPointerException("defaultValue");
+            throw new NullPointerException("value");
         }
         this.prefs = prefs;
         this.prefKey = prefKey;
-        this.value = prefs.get(prefKey, defaultValue);
+        
+        T storedValue = defaultValue;
+        String storedStr = prefs.get(prefKey, null);
+        if(storedStr != null) {
+            try {
+                storedValue = Enum.valueOf(enumClass, storedStr);
+            } catch (IllegalArgumentException ex) {
+                logger.log(Level.WARNING, "Unable to parse value '" + storedStr + "' of key '" + prefKey + "' of type " + enumClass, ex);
+            }
+        }
+        setValue(storedValue);
     }
-
-    public String getValue() {
+    
+    public T getValue() {
         return value;
     }
 
-    public void setValue(String value) {
+    public void setValue(T value) {
         if(value == null) {
             throw new NullPointerException("value");
         }
-        if(!this.value.equals(value)) {
+        if(this.value != value) {
             this.value = value;
-            prefs.put(prefKey, value);
+            storeSetting();
             doCallback();
+        }
+    }
+
+    private void storeSetting() {
+        if(prefs != null) {
+            prefs.put(prefKey, value.name());
         }
     }
 

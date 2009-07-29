@@ -35,7 +35,7 @@ import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
 import de.matthiasmann.twl.model.IntegerModel;
-import de.matthiasmann.twl.model.PersistentableIntegerModel;
+import de.matthiasmann.twl.model.PersistentIntegerModel;
 import de.matthiasmann.twl.model.SimpleIntegerModel;
 import de.matthiasmann.twl.model.SimpleListModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
@@ -120,7 +120,7 @@ public class FileSelector extends DialogLayout {
         }
 
         if(prefs != null) {
-            flags           = new PersistentableIntegerModel(prefs, prefsKey.concat("_Flags"), 0, 0xFFFF, 0);
+            flags           = new PersistentIntegerModel(prefs, prefsKey.concat("_Flags"), 0, 0xFFFF, 0);
             persistentState = new PersistentState(prefs, prefsKey.concat("_LRU"));
         } else {
             flags           = new SimpleIntegerModel(0, 0xFFFF, 0);

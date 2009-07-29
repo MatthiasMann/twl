@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2009, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,43 +32,43 @@ package de.matthiasmann.twl.model;
 import java.util.prefs.Preferences;
 
 /**
- * A model that stores a boolean value and supports callback on value change.
- * The value can also be persisted using java.util.prefs.Preferences
  *
  * @author Matthias Mann
  */
-public class PersistentableBooleanModel extends HasCallback implements BooleanModel {
+public class PersistentStringModel extends HasCallback implements StringModel {
 
     private final Preferences prefs;
     private final String prefKey;
+    private String value;
 
-    private boolean value;
-    
-    public PersistentableBooleanModel(Preferences prefs, String prefKey, boolean defaultValue) {
+    public PersistentStringModel(Preferences prefs, String prefKey, String defaultValue) {
         if(prefs == null) {
             throw new NullPointerException("prefs");
         }
         if(prefKey == null) {
             throw new NullPointerException("prefKey");
         }
+        if(defaultValue == null) {
+            throw new NullPointerException("defaultValue");
+        }
         this.prefs = prefs;
         this.prefKey = prefKey;
-        value = prefs.getBoolean(prefKey, defaultValue);
+        this.value = prefs.get(prefKey, defaultValue);
     }
 
-    public boolean getValue() {
+    public String getValue() {
         return value;
     }
 
-    public void setValue(boolean value) {
-        if(this.value != value) {
+    public void setValue(String value) {
+        if(value == null) {
+            throw new NullPointerException("value");
+        }
+        if(!this.value.equals(value)) {
             this.value = value;
-            storeSettings();
+            prefs.put(prefKey, value);
             doCallback();
         }
     }
 
-    private void storeSettings() {
-        prefs.putBoolean(prefKey, value);
-    }
 }
