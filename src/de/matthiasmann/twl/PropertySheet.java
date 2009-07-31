@@ -30,8 +30,10 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.TableBase.CellRenderer;
+import de.matthiasmann.twl.model.AbstractListModel;
 import de.matthiasmann.twl.model.AbstractTreeTableModel;
 import de.matthiasmann.twl.model.AbstractTreeTableNode;
+import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.Property;
 import de.matthiasmann.twl.model.PropertyList;
 import de.matthiasmann.twl.model.SimplePropertyList;
@@ -39,6 +41,8 @@ import de.matthiasmann.twl.model.TableSingleSelectionModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import java.util.HashMap;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 
 /**
@@ -46,6 +50,7 @@ import org.lwjgl.input.Keyboard;
  * @author Matthias Mann
  */
 public class PropertySheet extends TreeTable {
+    private static final Logger logger = Logger.getLogger(PropertySheet.class.getName());
 
     public interface PropertyEditor {
         public Widget getWidget();
@@ -141,13 +146,16 @@ public class PropertySheet extends TreeTable {
         if(property.getType() == PropertyList.class) {
             return new ListNode(parent, property);
         } else {
-            PropertyEditorFactory factory = factories.get(property.getType());
+            Class<?> type = property.getType();
+            PropertyEditorFactory factory = factories.get(type);
             if(factory != null) {
                 @SuppressWarnings("unchecked")
                 PropertyEditor editor = factory.createEditor(property);
                 if(editor != null) {
                     return new LeafNode(parent, property, editor);
                 }
+            } else {
+                logger.log(Level.WARNING, "No property editor factory for type {0}", type);
             }
             return null;
         }
@@ -220,6 +228,7 @@ public class PropertySheet extends TreeTable {
             }
         }
         public void run() {
+            editor.valueChanged();
             fireNodeChanged();
         }
     }
@@ -371,6 +380,104 @@ public class PropertySheet extends TreeTable {
         @SuppressWarnings("unchecked")
         public PropertyEditor createEditor(Property<String> property) {
             return new StringEditor(property);
+        }
+    }
+
+    public static class ComboBoxEditor<T> implements PropertyEditor, Runnable {
+        protected final ComboBox comboBox;
+        protected final Property<T> property;
+        protected final ListModel<T> model;
+
+        public ComboBoxEditor(Property<T> property, ListModel<T> model) {
+            this.property = property;
+            this.comboBox = new ComboBox(model);
+            this.model = model;
+            comboBox.addCallback(this);
+            resetValue();
+        }
+        public Widget getWidget() {
+            return comboBox;
+        }
+        public void valueChanged() {
+            resetValue();
+        }
+        public void preDestroy() {
+            comboBox.removeCallback(this);
+        }
+        public void setSelected(boolean selected) {
+        }
+        public void run() {
+            int idx = comboBox.getSelected();
+            if(idx >= 0) {
+                property.setValue(model.getEntry(idx));
+            }
+        }
+        protected void resetValue() {
+            comboBox.setSelected(findEntry(property.getValue()));
+        }
+        protected int findEntry(T value) {
+            for(int i=0,n=model.getNumEntries() ; i<n ; i++) {
+                if(model.getEntry(i).equals(value)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+    }
+    public static class ComboBoxEditorFactory<T> implements PropertyEditorFactory<T> {
+        private final ModelForwarder modelForwarder;
+        public ComboBoxEditorFactory(ListModel<T> model) {
+            this.modelForwarder = new ModelForwarder(model);
+        }
+        public ListModel<T> getModel() {
+            return modelForwarder.getModel();
+        }
+        public void setModel(ListModel<T> model) {
+            modelForwarder.setModel(model);
+        }
+        public PropertyEditor createEditor(Property<T> property) {
+            return new ComboBoxEditor<T>(property, modelForwarder);
+        }
+        class ModelForwarder extends AbstractListModel<T> implements ListModel.ChangeListener {
+            private ListModel<T> model;
+            public ModelForwarder(ListModel<T> model) {
+                setModel(model);
+            }
+            public int getNumEntries() {
+                return model.getNumEntries();
+            }
+            public T getEntry(int index) {
+                return model.getEntry(index);
+            }
+            public Object getEntryTooltip(int index) {
+                return model.getEntryTooltip(index);
+            }
+            public boolean matchPrefix(int index, String prefix) {
+                return model.matchPrefix(index, prefix);
+            }
+            public ListModel<T> getModel() {
+                return model;
+            }
+            public void setModel(ListModel<T> model) {
+                if(this.model != null) {
+                    this.model.removeChangeListener(this);
+                }
+                this.model = model;
+                this.model.addChangeListener(this);
+                fireAllChanged();
+            }
+            public void entriesInserted(int first, int last) {
+                fireEntriesInserted(first, last);
+            }
+            public void entriesDeleted(int first, int last) {
+                fireEntriesDeleted(first, last);
+            }
+            public void entriesChanged(int first, int last) {
+                fireEntriesChanged(first, last);
+            }
+            public void allChanged() {
+                fireAllChanged();
+            }
         }
     }
 }
