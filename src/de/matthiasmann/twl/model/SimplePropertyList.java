@@ -70,4 +70,9 @@ public class SimplePropertyList extends AbstractProperty<PropertyList> implement
         properties.remove(idx);
         fireValueChangedCallback();
     }
+
+    public void removeAllProperties() {
+        properties.clear();
+        fireValueChangedCallback();
+    }
 }
