@@ -363,7 +363,7 @@ public class PropertySheet extends TreeTable {
         public void callback(int key) {
             if(key == Keyboard.KEY_ESCAPE) {
                 resetValue();
-            } else {
+            } else if(!property.isReadOnly()) {
                 try {
                     property.setValue(editField.getText());
                     editField.setErrorMessage(null);
@@ -374,6 +374,8 @@ public class PropertySheet extends TreeTable {
         }
         private void resetValue() {
             editField.setText(property.getValue());
+            editField.setErrorMessage(null);
+            editField.setReadOnly(property.isReadOnly());
         }
     }
     static class StringEditorFactory implements PropertyEditorFactory<String> {
@@ -407,9 +409,13 @@ public class PropertySheet extends TreeTable {
         public void setSelected(boolean selected) {
         }
         public void run() {
-            int idx = comboBox.getSelected();
-            if(idx >= 0) {
-                property.setValue(model.getEntry(idx));
+            if(property.isReadOnly()) {
+                resetValue();
+            } else {
+                int idx = comboBox.getSelected();
+                if(idx >= 0) {
+                    property.setValue(model.getEntry(idx));
+                }
             }
         }
         protected void resetValue() {
