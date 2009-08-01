@@ -371,9 +371,23 @@ public class EditField extends Widget {
                     insertChar(evt.getKeyChar());
                     return true;
                 }
-                break;
+                return false;
             }
-            break;
+
+        case KEY_RELEASED:
+            switch (evt.getKeyCode()) {
+            case Keyboard.KEY_BACK:
+            case Keyboard.KEY_DELETE:
+            case Keyboard.KEY_RETURN:
+            case Keyboard.KEY_ESCAPE:
+            case Keyboard.KEY_HOME:
+            case Keyboard.KEY_END:
+            case Keyboard.KEY_LEFT:
+            case Keyboard.KEY_RIGHT:
+                return true;
+            default:
+                return evt.hasKeyChar();
+            }
 
         case MOUSE_BTNUP:
             if(evt.getMouseButton() == Event.MOUSE_RBUTTON && isMouseInside(evt)) {
