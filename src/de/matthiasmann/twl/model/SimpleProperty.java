@@ -30,6 +30,9 @@
 package de.matthiasmann.twl.model;
 
 /**
+ * A simple implementation of a property
+ *
+ * @param <T> the type of the property value
  *
  * @author Matthias Mann
  */
@@ -59,14 +62,30 @@ public class SimpleProperty<T> extends AbstractProperty<T> {
         return readOnly;
     }
 
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+    }
+
     public T getValue() {
         return value;
     }
 
+    /**
+     * This method is called by the PropertyEditor. It should not be called by user code.
+     * 
+     * @param value the new value for the property
+     * @throws IllegalArgumentException is not thrown but part of the Property interface
+     */
     public void setValue(T value) throws IllegalArgumentException {
         this.value = value;
     }
 
+    /**
+     * Call this method to change the property value from application code.
+     * Callbacks will be fired to update the UI
+     *
+     * @param value the new value for the property
+     */
     public void setValueFromCode(T value) {
         this.value = value;
         fireValueChangedCallback();
