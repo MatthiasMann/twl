@@ -44,6 +44,7 @@ import org.lwjgl.input.Keyboard;
 public class EditField extends Widget {
 
     public static final String STATE_ERROR = "error";
+    public static final String STATE_READONLY = "readonly";
     
     public interface Callback {
         public void callback(int key);
@@ -54,6 +55,7 @@ public class EditField extends Widget {
     private PasswordMasker passwordMasking;
     private Runnable modelChangeListener;
     private StringModel model;
+    private boolean readOnly;
 
     private int cursorPos;
     private int scrollPos;
@@ -170,20 +172,31 @@ public class EditField extends Widget {
         return selectionStart != selectionEnd;
     }
 
+    public boolean isReadOnly() {
+        return readOnly;
+    }
+
+    public void setReadOnly(boolean readOnly) {
+        this.readOnly = readOnly;
+        getAnimationState().setAnimationState(STATE_READONLY, readOnly);
+    }
+
     public void insertText(String str) {
-        boolean update = false;
-        if(hasSelection()) {
-            deleteSelection();
-            update = true;
-        }
-        int insertLength = Math.min(str.length(), maxTextLength - editBuffer.length());
-        if(insertLength > 0) {
-            editBuffer.insert(cursorPos, str, 0, insertLength);
-            cursorPos += insertLength;
-            update = true;
-        }
-        if(update) {
-            updateText();
+        if(!readOnly) {
+            boolean update = false;
+            if(hasSelection()) {
+                deleteSelection();
+                update = true;
+            }
+            int insertLength = Math.min(str.length(), maxTextLength - editBuffer.length());
+            if(insertLength > 0) {
+                editBuffer.insert(cursorPos, str, 0, insertLength);
+                cursorPos += insertLength;
+                update = true;
+            }
+            if(update) {
+                updateText();
+            }
         }
     }
 
@@ -212,11 +225,15 @@ public class EditField extends Widget {
         String text;
         if(hasSelection()) {
             text = getSelectedText();
-            deleteSelection();
-            updateText();
+            if(!readOnly) {
+                deleteSelection();
+                updateText();
+            }
         } else {
             text = getText();
-            setText("");
+            if(!readOnly) {
+                setText("");
+            }
         }
         if(isPasswordMasking()) {
             text = TextUtil.createString(passwordChar, text.length());
@@ -423,7 +440,9 @@ public class EditField extends Widget {
         Button btnClear = new Button("clear");
         btnClear.addCallback(new Runnable() {
             public void run() {
-                setText("");
+                if(!isReadOnly()) {
+                    setText("");
+                }
             }
         });
 
@@ -507,7 +526,7 @@ public class EditField extends Widget {
     
     protected void insertChar(char ch) {
         // don't add control characters
-        if(!Character.isISOControl(ch)) {
+        if(!readOnly && !Character.isISOControl(ch)) {
             boolean update = false;
             if(hasSelection()) {
                 deleteSelection();
@@ -525,22 +544,26 @@ public class EditField extends Widget {
     }
 
     protected void deletePrev() {
-        if(hasSelection()) {
-            deleteSelection();
-            updateText();
-        } else if(cursorPos > 0) {
-            --cursorPos;
-            deleteNext();
+        if(!readOnly) {
+            if(hasSelection()) {
+                deleteSelection();
+                updateText();
+            } else if(cursorPos > 0) {
+                --cursorPos;
+                deleteNext();
+            }
         }
     }
 
     protected void deleteNext() {
-        if(hasSelection()) {
-            deleteSelection();
-            updateText();
-        } else if(cursorPos < editBuffer.length()) {
-            editBuffer.deleteCharAt(cursorPos);
-            updateText();
+        if(!readOnly) {
+            if(hasSelection()) {
+                deleteSelection();
+                updateText();
+            } else if(cursorPos < editBuffer.length()) {
+                editBuffer.deleteCharAt(cursorPos);
+                updateText();
+            }
         }
     }
 
