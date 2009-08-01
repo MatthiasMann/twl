@@ -37,7 +37,6 @@ import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.Property;
 import de.matthiasmann.twl.model.PropertyList;
 import de.matthiasmann.twl.model.SimplePropertyList;
-import de.matthiasmann.twl.model.TableSingleSelectionModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import java.util.HashMap;
@@ -82,7 +81,6 @@ public class PropertySheet extends TreeTable {
         this.rootTreeGenerator = new TreeGenerator(rootList, model);
         rootList.addValueChangedCallback(rootTreeGenerator);
         registerPropertyEditorFactory(String.class, new StringEditorFactory());
-        setSelectionManager(new TableRowSelectionManager(new TableSingleSelectionModel()));
     }
 
     public SimplePropertyList getPropertyList() {
