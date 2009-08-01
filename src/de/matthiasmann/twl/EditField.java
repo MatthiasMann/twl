@@ -70,6 +70,7 @@ public class EditField extends Widget {
     private Object errorMsg;
     private Callback[] callbacks;
     private PopupMenu popupMenu;
+    private boolean textLongerThenWidget;
     
     public EditField() {
         this.editBuffer = new StringBuilder();
@@ -262,6 +263,7 @@ public class EditField extends Widget {
     protected void layout() {
         textRenderer.setPosition(getInnerX(), getInnerY());
         textRenderer.setSize(getInnerWidth(), getInnerHeight());
+        checkTextWidth();
     }
         
     private int computeInnerWidth() {
@@ -321,7 +323,11 @@ public class EditField extends Widget {
         if(errorMsg != null) {
             return errorMsg;
         }
-        return super.getTooltipContent();
+        Object tooltip = super.getTooltipContent();
+        if(tooltip == null && textLongerThenWidget) {
+            tooltip = getText();
+        }
+        return tooltip;
     }
 
     @Override
@@ -474,8 +480,13 @@ public class EditField extends Widget {
             model.setValue(getText());
         }
         textRenderer.setText(passwordMasking != null ? passwordMasking : editBuffer);
+        checkTextWidth();
         scrollToCursor(false);
         doCallback(Keyboard.KEY_NONE);
+    }
+
+    private void checkTextWidth() {
+        textLongerThenWidget = textRenderer.getPreferredWidth() > textRenderer.getWidth();
     }
 
     protected void moveCursor(int dir, boolean select) {
