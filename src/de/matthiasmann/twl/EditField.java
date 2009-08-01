@@ -324,7 +324,7 @@ public class EditField extends Widget {
             return errorMsg;
         }
         Object tooltip = super.getTooltipContent();
-        if(tooltip == null && textLongerThenWidget) {
+        if(tooltip == null && !isPasswordMasking() && textLongerThenWidget) {
             tooltip = getText();
         }
         return tooltip;
