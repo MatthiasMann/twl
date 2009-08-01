@@ -721,27 +721,25 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return height;
     }
 
-    protected int computeColumnWidth(int index) {
-        if(isFixedWidthMode()) {
-            int preferredWidth = computePreferredColumnsWidth();
-            return computeFixedColumnWidth(index, preferredWidth);
-        }
-        return Math.max(2*columnDividerDragableDistance+1,
-                columnHeaders[index].getPreferredWidth());
+    protected int clampColumnWidth(int width) {
+        return Math.max(2*columnDividerDragableDistance+1, width);
     }
 
-    protected int computeFixedColumnWidth(int index, int preferredWidth) {
-        int columnWidth = Math.max(2*columnDividerDragableDistance+1,
-                columnHeaders[index].getPreferredWidth());
-        return Math.max(2*columnDividerDragableDistance+1,
-                getInnerWidth() * columnWidth / preferredWidth);
+    protected int computePreferredColumnWidth(int index) {
+        return clampColumnWidth(columnHeaders[index].getPreferredWidth());
+    }
+
+    protected int computeScaleColumnWidth(int index, int preferredWidth) {
+        int start = (index > 0) ? columnHeaders[index-1].preferredEnd : 0;
+        int width = columnHeaders[index].preferredEnd - start;
+        return clampColumnWidth(getInnerWidth() * width / preferredWidth);
     }
 
     protected int computePreferredColumnsWidth() {
         int preferredWidth = 0;
         for(int i=0,n=columnHeaders.length ; i<n ; i++) {
-            preferredWidth += Math.max(2*columnDividerDragableDistance+1,
-                    columnHeaders[i].getPreferredWidth());
+            preferredWidth += computePreferredColumnWidth(i);
+            columnHeaders[i].preferredEnd = preferredWidth;
         }
         return preferredWidth;
     }
@@ -973,11 +971,23 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected boolean dragActive;
     protected int dragColumn;
     protected int dragStartX;
+    protected int dragStartSumWidth;
 
     protected boolean handleMouseEvent(Event evt) {
         if(dragActive) {
-            if(dragColumn >= 0) {
-                setColumnWidth(dragColumn, Math.max(1, evt.getMouseX() - dragStartX));
+            final int innerWidth = getInnerWidth();
+            if(dragColumn >= 0 && innerWidth > 0) {
+                int newWidth = clampColumnWidth(evt.getMouseX() - dragStartX);
+                if(isFixedWidthMode()) {
+                    assert dragColumn+1 < numColumns;
+                    newWidth = Math.min(newWidth, dragStartSumWidth - 2*columnDividerDragableDistance);
+                    columnHeaders[dragColumn  ].setColumnWidth(newWidth);
+                    columnHeaders[dragColumn+1].setColumnWidth(dragStartSumWidth - newWidth);
+                    updateAllColumnWidth = true;
+                    invalidateLayout();
+                } else {
+                    setColumnWidth(dragColumn, newWidth);
+                }
             }
             if(evt.isMouseDragEnd()) {
                 dragActive = false;
@@ -988,12 +998,20 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         boolean inHeader = isMouseInColumnHeader(evt.getMouseY());
         if(inHeader) {
             int column = getColumnSeparatorUnderMouse(evt.getMouseX());
-            if(column >= 0 && (column < getNumColumns()-1 || !isFixedWidthMode())) {
+            boolean fixedWidthMode = isFixedWidthMode();
+            if(column >= 0 && (column < getNumColumns()-1 || !fixedWidthMode)) {
                 setMouseCursor(columnResizeCursor);
 
                 if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
+                    int columnWidth = getColumnWidth(column);
                     dragColumn = column;
-                    dragStartX = evt.getMouseX() - getColumnWidth(column);
+                    dragStartX = evt.getMouseX() - columnWidth;
+                    if(fixedWidthMode) {
+                        for(int i=0 ; i<numColumns ; ++i) {
+                            columnHeaders[i].setColumnWidth(getColumnWidth(column));
+                        }
+                        dragStartSumWidth = columnWidth + getColumnWidth(column+1);
+                    }
                 }
                 if(evt.isMouseDragEvent()) {
                     dragActive = true;
@@ -1236,16 +1254,22 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             if(isFixedWidthMode()) {
                 int preferredWidth = computePreferredColumnsWidth();
                 for(int i=0 ; i<count ; i++,index++) {
-                    table[index] = computeFixedColumnWidth(index, preferredWidth);
+                    table[index] = computeScaleColumnWidth(index, preferredWidth);
                 }
             } else {
                 for(int i=0 ; i<count ; i++,index++) {
-                    table[index] = computeColumnWidth(index);
+                    table[index] = computePreferredColumnWidth(index);
                 }
             }
         }
         protected boolean update(int index) {
-            int width = computeColumnWidth(index);
+            int width;
+            if(isFixedWidthMode()) {
+                int preferredWidth = computePreferredColumnsWidth();
+                width = computeScaleColumnWidth(index, preferredWidth);
+            } else {
+                width = computePreferredColumnWidth(index);
+            }
             return setSize(index, width);
         }
     }
@@ -1273,6 +1297,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected class ColumnHeader extends Button {
         private int column;
         private int columnWidth;
+        private int preferredEnd;
 
         public int getColumnWidth() {
             return columnWidth;
