@@ -81,6 +81,7 @@ public class DialogLayout extends Widget {
     protected Dimension mediumGap;
     protected Dimension largeGap;
     protected Dimension defaultGap;
+    protected ParameterMap namedGaps;
 
     protected boolean addDefaultGaps = true;
     protected boolean redoDefaultGaps;
@@ -203,6 +204,7 @@ public class DialogLayout extends Widget {
         setMediumGap(themeInfo.getParameterValue("mediumGap", true, Dimension.class, Dimension.ZERO));
         setLargeGap(themeInfo.getParameterValue("largeGap", true, Dimension.class, Dimension.ZERO));
         setDefaultGap(themeInfo.getParameterValue("defaultGap", true, Dimension.class, Dimension.ZERO));
+        namedGaps = themeInfo.getParameterMap("namedGaps");
     }
 
     @Override
@@ -349,6 +351,36 @@ public class DialogLayout extends Widget {
         return widget;
     }
 
+    public static class Gap {
+        public final int min;
+        public final int preferred;
+        public final int max;
+
+        public Gap() {
+            this(0,0,32767);
+        }
+        public Gap(int size) {
+            this(size, size, size);
+        }
+        public Gap(int min, int preferred) {
+            this(min, preferred, 32767);
+        }
+        public Gap(int min, int preferred, int max) {
+            if(min < 0) {
+                throw new IllegalArgumentException("min");
+            }
+            if(preferred < min) {
+                throw new IllegalArgumentException("preferred");
+            }
+            if(max < 0 || (max > 0 && max < preferred)) {
+                throw new IllegalArgumentException("max");
+            }
+            this.min = min;
+            this.preferred = preferred;
+            this.max = max;
+        }
+    }
+    
     private static final int AXIS_X = 0;
     private static final int AXIS_Y = 1;
 
@@ -503,6 +535,42 @@ public class DialogLayout extends Widget {
         }
     }
 
+    private static final Gap NO_GAP = new Gap(0,0,32767);
+
+    private class NamedGapSpring extends Spring {
+        final String name;
+
+        public NamedGapSpring(String name) {
+            this.name = name;
+        }
+
+        @Override
+        int getMaxSize(int axis) {
+            return getGap().max;
+        }
+
+        @Override
+        int getMinSize(int axis) {
+            return getGap().min;
+        }
+
+        @Override
+        int getPrefSize(int axis) {
+            return getGap().preferred;
+        }
+
+        @Override
+        void setSize(int axis, int pos, int size) {
+        }
+
+        private Gap getGap() {
+            if(namedGaps != null) {
+                return namedGaps.getParameterValue(name, true, Gap.class, NO_GAP);
+            }
+            return NO_GAP;
+        }
+    }
+
     public abstract class Group extends Spring {
         final ArrayList<Spring> springs = new ArrayList<Spring>();
         boolean alreadyAdded;
@@ -603,6 +671,14 @@ public class DialogLayout extends Widget {
          */
         public Group addGap() {
             addSpring(new GapSpring(0, 0, Short.MAX_VALUE, false));
+            return this;
+        }
+
+        public Group addGap(String name) {
+            if(name.length() == 0) {
+                throw new IllegalArgumentException("name");
+            }
+            addSpring(new NamedGapSpring(name));
             return this;
         }
 
@@ -707,7 +783,7 @@ public class DialogLayout extends Widget {
                 boolean wasGap = true;
                 for(int i=0 ; i<springs.size() ; i++) {
                     Spring s = springs.get(i);
-                    boolean isGap = s instanceof GapSpring;
+                    boolean isGap = (s instanceof GapSpring) || (s instanceof NamedGapSpring);
                     if(!isGap && !wasGap) {
                         springs.add(i++, new GapSpring(DEFAULT_GAP, DEFAULT_GAP, DEFAULT_GAP, true));
                     }

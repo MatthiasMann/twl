@@ -31,6 +31,7 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.Border;
+import de.matthiasmann.twl.DialogLayout;
 import de.matthiasmann.twl.Dimension;
 import de.matthiasmann.twl.ListBox;
 import de.matthiasmann.twl.renderer.Font;
@@ -523,6 +524,9 @@ public class ThemeManager {
             }
             if("dimension".equals(tagName)) {
                 return parseObject(xpp, value, Dimension.class);
+            }
+            if("gap".equals(tagName)) {
+                return parseObject(xpp, value, DialogLayout.Gap.class);
             }
             if("constant".equals(tagName)) {
                 Object result = constants.get(value);
