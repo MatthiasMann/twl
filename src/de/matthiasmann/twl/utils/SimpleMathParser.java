@@ -68,6 +68,12 @@ public class SimpleMathParser {
 
     private int parse(boolean allowArray) throws ParseException {
         try {
+            if(peek() == -1) {
+                if(allowArray) {
+                    return 0;
+                }
+                unexpected(-1);
+            }
             int count = 0;
             for(;;) {
                 count++;
