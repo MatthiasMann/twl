@@ -107,7 +107,11 @@ public class TreeTable extends TableBase {
             NodeState ns = HashEntry.get(nodeStateTable, parent);
             int idx = parent.getChildIndex(node);
             if(ns.childSizes == null) {
-                return -1;
+                if(ns.expanded) {
+                    ns.initChildSizes();
+                } else {
+                    return -1;
+                }
             }
             idx = ns.childSizes.getPosition(idx);
             position += idx + 1;
