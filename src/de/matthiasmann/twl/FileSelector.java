@@ -265,13 +265,13 @@ public class FileSelector extends DialogLayout {
 
         Group hButtonGroup = createSequentialGroup()
                 .addWidget(fileFilterBox)
-                .addGap()
+                .addGap("buttonBarLeft")
                 .addWidget(btnFilesMRU)
-                .addGap(20)
+                .addGap("buttonBarSpacer")
                 .addWidget(btnOk)
-                .addGap(20)
+                .addGap("buttonBarSpacer")
                 .addWidget(btnCancel)
-                .addGap(20);
+                .addGap("buttonBarRight");
         Group vButtonGroup = createParallelGroup()
                 .addWidget(fileFilterBox)
                 .addWidget(btnFilesMRU)
