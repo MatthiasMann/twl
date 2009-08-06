@@ -39,7 +39,7 @@ import de.matthiasmann.twl.model.PropertyList;
 import de.matthiasmann.twl.model.SimplePropertyList;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
-import java.util.HashMap;
+import de.matthiasmann.twl.utils.TypeMapping;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
@@ -66,7 +66,7 @@ public class PropertySheet extends TreeTable {
     private final TreeGenerator rootTreeGenerator;
     private final PropertyListCellRenderer subListRenderer;
     private final CellRenderer editorRenderer;
-    private final HashMap<Class<?>, PropertyEditorFactory<?>> factories;
+    private final TypeMapping<PropertyEditorFactory<?>> factories;
 
     public PropertySheet() {
         this(new Model());
@@ -77,7 +77,7 @@ public class PropertySheet extends TreeTable {
         this.rootList = new SimplePropertyList("<root>");
         this.subListRenderer = new PropertyListCellRenderer();
         this.editorRenderer = new EditorRenderer();
-        this.factories = new HashMap<Class<?>, PropertyEditorFactory<?>>();
+        this.factories = new TypeMapping<PropertyEditorFactory<?>>();
         this.rootTreeGenerator = new TreeGenerator(rootList, model);
         rootList.addValueChangedCallback(rootTreeGenerator);
         registerPropertyEditorFactory(String.class, new StringEditorFactory());
