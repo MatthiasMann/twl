@@ -240,9 +240,7 @@ public class FileSelector extends DialogLayout {
 
         add(labelCurrentFolder);
         add(currentFolder);
-        if(btnFolderMRU != null) {
-            add(btnFolderMRU);
-        }
+        add(btnFolderMRU);
         add(btnUp);
         add(scrollPane);
         add(fileFilterBox);
