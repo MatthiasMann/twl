@@ -71,6 +71,7 @@ public class TreeComboBox extends ComboBoxBase {
     private TreeTableModel model;
     private Callback[] callbacks;
     private PathResolver pathResolver;
+    private boolean suppressCallback;
 
     public TreeComboBox() {
         selectionModel = new TableSingleSelectionModel();
@@ -197,7 +198,9 @@ public class TreeComboBox extends ComboBoxBase {
     void nodeChanged(TreeTableNode node) {
         TreeTableNode oldNode = display.getCurrentNode();
         display.setCurrentNode(node);
-        fireSelectedNodeChanged(node, getChildOf(node, oldNode));
+        if(!suppressCallback) {
+            fireSelectedNodeChanged(node, getChildOf(node, oldNode));
+        }
     }
 
     private TreeTableNode getChildOf(TreeTableNode parent, TreeTableNode node) {
@@ -212,7 +215,12 @@ public class TreeComboBox extends ComboBoxBase {
         if(super.openPopup()) {
             table.collapseAll();
             int idx = table.getRowFromNodeExpand(display.getCurrentNode());
-            selectionModel.setSelection(idx, idx);
+            suppressCallback = true;
+            try {
+                selectionModel.setSelection(idx, idx);
+            } finally {
+                suppressCallback = false;
+            }
             table.scrollToRow(Math.max(0, idx));
             return true;
         }
