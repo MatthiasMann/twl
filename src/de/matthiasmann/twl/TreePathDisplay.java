@@ -213,9 +213,8 @@ public class TreePathDisplay extends Widget {
 
     @Override
     public int getMinHeight() {
-        return Math.max(super.getMinHeight(), Math.max(
-                pathBox.getMinHeight(),
-                editField.getMinHeight()));
+        int minInnerHeight = Math.max(pathBox.getMinHeight(), editField.getMinHeight());
+        return Math.max(super.getMinHeight(), minInnerHeight + getBorderVertical());
     }
 
     @Override

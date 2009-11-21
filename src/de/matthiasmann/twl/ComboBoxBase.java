@@ -103,10 +103,8 @@ public abstract class ComboBoxBase extends Widget {
 
     @Override
     public int getMinHeight() {
-        int minHeight = super.getMinHeight();
-        minHeight = Math.max(minHeight, getLabel().getMinHeight());
-        minHeight = Math.max(minHeight, button.getMinHeight());
-        return minHeight;
+        int minInnerHeight = Math.max(getLabel().getMinHeight(), button.getMinHeight());
+        return Math.max(super.getMinHeight(), minInnerHeight + getBorderVertical());
     }
 
     @Override
