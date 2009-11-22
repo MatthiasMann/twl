@@ -78,19 +78,17 @@ public class ListBox extends Widget {
     private int numCols = 1;
     private int firstVisible;
     private int selected = NO_SELECTION;
+    private int numEntries;
     private boolean needUpdate;
     private CallbackWithReason[] callbacks;
     
     public ListBox() {
-        modelCallback = new ChangeListenerImpl();
+        LImpl li = new LImpl();
+
+        modelCallback = li;
         scrollbar = new Scrollbar();
+        scrollbar.addCallback(li);
         labels = EMPTY_LABELS;
-        
-        scrollbar.addCallback(new Runnable() {
-            public void run() {
-                setFirstVisible(scrollbar.getValue() * numCols);
-            }
-        });
         
         add(scrollbar);
         
@@ -188,7 +186,7 @@ public class ListBox extends Widget {
     }
     
     public void setFirstVisible(int firstVisible) {
-        firstVisible = Math.max(0, Math.min(firstVisible, getNumEntries() - 1));
+        firstVisible = Math.max(0, Math.min(firstVisible, numEntries - 1));
         if(this.firstVisible != firstVisible) {
             this.firstVisible = firstVisible;
             scrollbar.setValue(firstVisible / numCols, false);
@@ -209,7 +207,7 @@ public class ListBox extends Widget {
     }
     
     void setSelected(int selected, boolean scroll, CallbackReason reason) {
-        if(selected < NO_SELECTION || selected >= getNumEntries()) {
+        if(selected < NO_SELECTION || selected >= numEntries) {
             throw new IllegalArgumentException();
         }
         if(scroll) {
@@ -244,14 +242,11 @@ public class ListBox extends Widget {
     }
 
     public int getNumEntries() {
-        if(model != null) {
-            return model.getNumEntries();
-        }
-        return 0;
+        return numEntries;
     }
     
     public int getNumRows() {
-        return (getNumEntries() + numCols - 1) / numCols;
+        return (numEntries + numCols - 1) / numCols;
     }
 
     public int getNumColumns() {
@@ -259,7 +254,6 @@ public class ListBox extends Widget {
     }
     
     public int findEntryByName(String prefix) {
-        int numEntries = getNumEntries();
         for(int i=selected+1 ; i<numEntries ; i++) {
             if(model.matchPrefix(i, prefix)) {
                 return i;
@@ -294,7 +288,7 @@ public class ListBox extends Widget {
      * @return the index of the entry or -1.
      */
     public int getEntryAt(int x, int y) {
-        int n = Math.max(labels.length, getNumEntries() - firstVisible);
+        int n = Math.max(labels.length, numEntries - firstVisible);
         for(int i=0 ; i<n ; i++) {
             if(labels[i].getWidget().isInside(x, y)) {
                 return firstVisible + i;
@@ -315,7 +309,7 @@ public class ListBox extends Widget {
 
     protected void goKeyboard(int dir) {
         int newPos = selected + dir;
-        if(newPos >= 0 && newPos < getNumEntries()) {
+        if(newPos >= 0 && newPos < numEntries) {
             setSelected(newPos, true, CallbackReason.KEYBOARD);
         }
     }
@@ -362,22 +356,22 @@ public class ListBox extends Widget {
                 goKeyboard(1);
                 break;
             case Keyboard.KEY_PRIOR:
-                if(getNumEntries() > 0) {
+                if(numEntries > 0) {
                     setSelected(Math.max(0, selected-labels.length),
                         true, CallbackReason.KEYBOARD);
                 }
                 break;
             case Keyboard.KEY_NEXT:
-                setSelected(Math.min(getNumEntries()-1, selected+labels.length),
+                setSelected(Math.min(numEntries-1, selected+labels.length),
                         true, CallbackReason.KEYBOARD);
                 break;
             case Keyboard.KEY_HOME:
-                if(getNumEntries() > 0) {
+                if(numEntries > 0) {
                     setSelected(0, true, CallbackReason.KEYBOARD);
                 }
                 break;
             case Keyboard.KEY_END:
-                setSelected(getNumEntries()-1, true, CallbackReason.KEYBOARD);
+                setSelected(numEntries-1, true, CallbackReason.KEYBOARD);
                 break;
             case Keyboard.KEY_RETURN:
                 setSelected(selected, false, CallbackReason.KEYBOARD_RETURN);
@@ -437,28 +431,27 @@ public class ListBox extends Widget {
             updateDisplay();
         }
         // always update scrollbar
-        int maxFirstVisibleRow = computeMaxFirstVisibleRow(getNumEntries());
+        int maxFirstVisibleRow = computeMaxFirstVisibleRow();
         scrollbar.setMinMaxValue(0, maxFirstVisibleRow);
         scrollbar.setValue(firstVisible / numCols, false);
 
         super.paint(gui);
     }
 
-    private int computeMaxFirstVisibleRow(int numEntries) {
+    private int computeMaxFirstVisibleRow() {
         int maxFirstVisibleRow = Math.max(0, numEntries - labels.length);
-        maxFirstVisibleRow = (maxFirstVisibleRow + numCols + 1) / numCols;
+        maxFirstVisibleRow = (maxFirstVisibleRow + numCols - 1) / numCols;
         return maxFirstVisibleRow;
     }
 
     private void updateDisplay() {
         needUpdate = false;
         
-        int numEntries = getNumEntries();
         if(selected >= numEntries) {
             selected = NO_SELECTION;
         }
         
-        int maxFirstVisibleRow = computeMaxFirstVisibleRow(numEntries);
+        int maxFirstVisibleRow = computeMaxFirstVisibleRow();
         int maxFirstVisible = maxFirstVisibleRow * numCols;
         if(firstVisible > maxFirstVisible) {
             firstVisible = Math.max(0, maxFirstVisible);
@@ -644,52 +637,75 @@ public class ListBox extends Widget {
 
     }
 
-    private class ChangeListenerImpl implements ChangeListener {
-        public void entriesInserted(int first, int last) {
-            int delta = last - first + 1;
-            int fv = getFirstVisible();
-            if(fv >= first) {
-                fv += delta;
-                setFirstVisible(fv);
-            }
-            int s = getSelected();
-            if(s >= first) {
-                setSelected(s + delta, false, CallbackReason.MODEL_CHANGED);
-            }
-            if(first <= getLastVisible() && last >= fv) {
-                needUpdate = true;
-            }
+    void entriesInserted(int first, int last) {
+        int delta = last - first + 1;
+        numEntries += delta;
+        int fv = getFirstVisible();
+        if(fv >= first) {
+            fv += delta;
+            setFirstVisible(fv);
         }
-
-        public void entriesDeleted(int first, int last) {
-            int delta = last - first + 1;
-            int fv = getFirstVisible();
-            int lv = getLastVisible();
-            if(fv > last) {
-                setFirstVisible(fv - delta);
-            } else if(fv <= last && lv >= first) {
-                setFirstVisible(first);
-            }
-            int s = getSelected();
-            if(s > last) {
-                setSelected(s - delta, false, CallbackReason.MODEL_CHANGED);
-            } else if(s >= first && s <= last) {
-                setSelected(NO_SELECTION, false, CallbackReason.MODEL_CHANGED);
-            }
+        int s = getSelected();
+        if(s >= first) {
+            setSelected(s + delta, false, CallbackReason.MODEL_CHANGED);
         }
-
-        public void entriesChanged(int first, int last) {
-            int fv = getFirstVisible();
-            int lv = getLastVisible();
-            if(fv <= last && lv >= first) {
-                needUpdate = true;
-            }
-        }
-
-        public void allChanged() {
-            setSelected(NO_SELECTION, false, CallbackReason.MODEL_CHANGED);
-            setFirstVisible(0);
+        if(first <= getLastVisible() && last >= fv) {
             needUpdate = true;
         }
     }
+    
+    void entriesDeleted(int first, int last) {
+        int delta = last - first + 1;
+        numEntries -= delta;
+        int fv = getFirstVisible();
+        int lv = getLastVisible();
+        if(fv > last) {
+            setFirstVisible(fv - delta);
+        } else if(fv <= last && lv >= first) {
+            setFirstVisible(first);
+        }
+        int s = getSelected();
+        if(s > last) {
+            setSelected(s - delta, false, CallbackReason.MODEL_CHANGED);
+        } else if(s >= first && s <= last) {
+            setSelected(NO_SELECTION, false, CallbackReason.MODEL_CHANGED);
+        }
+    }
+    
+    void entriesChanged(int first, int last) {
+        int fv = getFirstVisible();
+        int lv = getLastVisible();
+        if(fv <= last && lv >= first) {
+            needUpdate = true;
+        }
+    }
+
+    void allChanged() {
+        numEntries = (model != null) ? model.getNumEntries() : 0;
+        setSelected(NO_SELECTION, false, CallbackReason.MODEL_CHANGED);
+        setFirstVisible(0);
+        needUpdate = true;
+    }
+
+    void scrollbarChanged() {
+        setFirstVisible(scrollbar.getValue() * numCols);
+    }
+
+    private class LImpl implements ChangeListener, Runnable {
+        public void entriesInserted(int first, int last) {
+            ListBox.this.entriesInserted(first, last);
+        }
+        public void entriesDeleted(int first, int last) {
+            ListBox.this.entriesDeleted(first, last);
+        }
+        public void entriesChanged(int first, int last) {
+            ListBox.this.entriesChanged(first, last);
+        }
+        public void allChanged() {
+            ListBox.this.allChanged();
+        }
+        public void run() {
+            ListBox.this.scrollbarChanged();
+        }
+    };
 }
