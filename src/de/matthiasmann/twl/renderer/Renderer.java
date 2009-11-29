@@ -66,6 +66,32 @@ public interface Renderer {
     public int getHeight();
     
     /**
+     * Creates a new cache context.
+     * Call setActiveCacheContext to activate it.
+     * 
+     * @return a new CacheContext
+     * @see #setActiveCacheContext(de.matthiasmann.twl.renderer.CacheContext) 
+     */
+    public CacheContext createNewCacheContext();
+
+    /**
+     * Sets the active cache context. It will be used for all future load operations.
+     *
+     * @param cc The CacheContext object
+     * @throws NullPointerException when cc is null
+     * @throws IllegalStateException when the CacheContext object is invalid
+     */
+    public void setActiveCacheContext(CacheContext cc) throws IllegalStateException;
+    
+    /**
+     * Returns the active cache context.
+     * If no valid cache context is active then a new one is created and activated.
+     * 
+     * @return the active CacheContext object
+     */
+    public CacheContext getActiveCacheContext();
+    
+    /**
      * Loads a font.
      * 
      * @param baseUrl the base URL that can be used to load font data

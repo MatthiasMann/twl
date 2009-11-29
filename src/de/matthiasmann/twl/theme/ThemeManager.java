@@ -38,6 +38,7 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.PositionAnimatedPanel;
 import de.matthiasmann.twl.ThemeInfo;
+import de.matthiasmann.twl.renderer.CacheContext;
 import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.utils.AbstractMathInterpreter;
@@ -75,6 +76,7 @@ public class ThemeManager {
     static final Object NULL = new Object();
     
     private final Renderer renderer;
+    private final CacheContext cacheContext;
     private final ImageManager imageManager;
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
@@ -86,9 +88,10 @@ public class ThemeManager {
 
     final ParameterMapImpl emptyMap;
     final ParameterListImpl emptyList;
-    
-    private ThemeManager(Renderer renderer) throws XmlPullParserException, IOException {
+
+    private ThemeManager(Renderer renderer, CacheContext cacheContext) throws XmlPullParserException, IOException {
         this.renderer = renderer;
+        this.cacheContext = cacheContext;
         this.imageManager = new ImageManager(renderer);
         this.fonts  = new HashMap<String, Font>();
         this.themes = new HashMap<String, ThemeInfoImpl>();
@@ -101,21 +104,24 @@ public class ThemeManager {
         insertDefaultConstants();
     }
 
+    public CacheContext getCacheContext() {
+        return cacheContext;
+    }
 
     /**
-     * Releases all OpenGL resources
+     * Destroys the CacheContext and releases all OpenGL resources
      */
     public void destroy() {
-        imageManager.destroy();
         for(Font font : fonts.values()) {
             font.destroy();
         }
+        cacheContext.destroy();
     }
     
     public Font getDefaultFont() {
         return defaultFont;
     }
-    
+
     public static ThemeManager createThemeManager(URL url, Renderer renderer) throws IOException {
         if(url == null) {
             throw new NullPointerException("url");
@@ -123,8 +129,22 @@ public class ThemeManager {
         if(renderer == null) {
             throw new NullPointerException("renderer");
         }
+        return createThemeManager(url, renderer, renderer.createNewCacheContext());
+    }
+    
+    public static ThemeManager createThemeManager(URL url, Renderer renderer, CacheContext cacheContext) throws IOException {
+        if(url == null) {
+            throw new NullPointerException("url");
+        }
+        if(renderer == null) {
+            throw new NullPointerException("renderer");
+        }
+        if(cacheContext == null) {
+            throw new NullPointerException("renderer");
+        }
         try {
-            ThemeManager tm = new ThemeManager(renderer);
+            renderer.setActiveCacheContext(cacheContext);
+            ThemeManager tm = new ThemeManager(renderer, cacheContext);
             tm.parseThemeFile(url);
             if(tm.defaultFont == null) {
                 tm.defaultFont = tm.firstFont;

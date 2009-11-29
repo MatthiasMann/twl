@@ -31,6 +31,7 @@ package de.matthiasmann.twl.renderer.lwjgl;
 
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.Rect;
+import de.matthiasmann.twl.renderer.CacheContext;
 import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Font;
@@ -38,13 +39,10 @@ import de.matthiasmann.twl.renderer.LineRenderer;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
 import org.lwjgl.BufferUtils;
@@ -52,7 +50,6 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GLContext;
 
 /**
  * A renderer using only GL11 features
@@ -64,8 +61,6 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private static final Logger logger = Logger.getLogger(LWJGLRenderer.class.getName());
 
     private final IntBuffer ib16;
-    private final HashMap<URL, LWJGLTexture> textureCache;
-    private final HashMap<URL, BitmapFont> fontCache;
 
     private int width;
     private int height;
@@ -75,14 +70,13 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private boolean useQuadsForLines;
     private boolean useSWMouseCursors;
     private SWCursor swCursor;
+    private LWJGLCacheContext cacheContext;
 
     final ArrayList<Integer> textureDLs;
     TintState tintState;
 
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
-        this.textureCache = new HashMap<URL, LWJGLTexture>();
-        this.fontCache = new HashMap<URL, BitmapFont>();
         this.textureDLs = new ArrayList<Integer>();
         this.tintStateRoot = new TintState();
         this.tintState = tintStateRoot;
@@ -109,20 +103,44 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     public void setUseSWMouseCursors(boolean useSWMouseCursors) {
         this.useSWMouseCursors = useSWMouseCursors;
     }
-    
-    public void destroy() {
-        for(LWJGLTexture t : textureCache.values()) {
-            t.destroy();
+
+    public CacheContext createNewCacheContext() {
+        return new LWJGLCacheContext(this);
+    }
+
+    private LWJGLCacheContext activeCacheContext() {
+        if(cacheContext == null) {
+            setActiveCacheContext(createNewCacheContext());
         }
-        for(BitmapFont f : fontCache.values()) {
-            f.destroy();
+        return cacheContext;
+    }
+
+    public CacheContext getActiveCacheContext() {
+        return activeCacheContext();
+    }
+
+    public void setActiveCacheContext(CacheContext cc) throws IllegalStateException {
+        if(cc == null) {
+            throw new NullPointerException();
         }
-        textureCache.clear();
-        fontCache.clear();
-        for(int id : textureDLs) {
-            GL11.glDeleteLists(id, 1);
+        if(!cc.isValid()) {
+            throw new IllegalStateException("CacheContext is invalid");
         }
-        textureDLs.clear();
+        if(!(cc instanceof LWJGLCacheContext)) {
+            throw new IllegalArgumentException("CacheContext object not from this renderer");
+        }
+        LWJGLCacheContext lwjglCC = (LWJGLCacheContext)cc;
+        if(lwjglCC.renderer != this) {
+            throw new IllegalArgumentException("CacheContext object not from this renderer");
+        }
+        this.cacheContext = lwjglCC;
+        try {
+            for(int id : textureDLs) {
+                GL11.glDeleteLists(id, 1);
+            }
+        } finally {
+            textureDLs.clear();
+        }
     }
     
     public void syncViewportSize() {
@@ -181,11 +199,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             throw new IllegalArgumentException("filename parameter required");
         }
         URL url = new URL(baseUrl, fileName);
-        BitmapFont bmFont = fontCache.get(url);
-        if(bmFont == null) {
-            bmFont = BitmapFont.loadFont(this, url);
-            fontCache.put(url, bmFont);
-        }
+        BitmapFont bmFont = activeCacheContext().loadBitmapFont(url);
         return new LWJGLFont(this, bmFont, parameter, conditionalParameter);
     }
 
@@ -228,14 +242,16 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public void setCursor(MouseCursor cursor) {
         try {
-            swCursor = null;
-            if(cursor instanceof LWJGLCursor) {
-                Mouse.setNativeCursor(((LWJGLCursor)cursor).cursor);
-            } else if(cursor instanceof SWCursor) {
-                Mouse.setNativeCursor(emptyCursor);
-                swCursor = (SWCursor)cursor;
-            } else {
-                Mouse.setNativeCursor(null);
+            if(Mouse.isInsideWindow()) {
+                swCursor = null;
+                if(cursor instanceof LWJGLCursor) {
+                    Mouse.setNativeCursor(((LWJGLCursor)cursor).cursor);
+                } else if(cursor instanceof SWCursor) {
+                    Mouse.setNativeCursor(emptyCursor);
+                    swCursor = (SWCursor)cursor;
+                } else {
+                    Mouse.setNativeCursor(null);
+                }
             }
         } catch(LWJGLException ex) {
             ex.printStackTrace();
@@ -246,40 +262,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         if(textureUrl == null) {
             throw new NullPointerException("textureUrl");
         }
-        LWJGLTexture tex = textureCache.get(textureUrl);
-        if(tex == null) {
-            tex = createTexture(textureUrl, fmt, filter);
-            textureCache.put(textureUrl, tex);
-        }
-        return tex;
-    }
-
-    private LWJGLTexture createTexture(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
-        InputStream is = textureUrl.openStream();
-        try {
-            PNGDecoder dec = new PNGDecoder(is);
-            fmt = dec.decideTextureFormat(fmt);
-
-            if(GLContext.getCapabilities().GL_EXT_abgr) {
-                if(fmt == LWJGLTexture.Format.RGBA) {
-                    fmt = LWJGLTexture.Format.ABGR;
-                }
-            } else if(fmt == LWJGLTexture.Format.ABGR) {
-                fmt = LWJGLTexture.Format.RGBA;
-            }
-
-            int stride = dec.getWidth() * fmt.getPixelSize();
-            ByteBuffer buf = BufferUtils.createByteBuffer(stride * dec.getHeight());
-            dec.decode(buf, stride, fmt);
-            buf.flip();
-
-            return new LWJGLTexture(this, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
-        } finally {
-            try {
-                is.close();
-            } catch (IOException ex) {
-            }
-        }
+        return activeCacheContext().loadTexture(textureUrl, fmt, filter);
     }
 
     public void pushGlobalTintColor(float r, float g, float b, float a) {

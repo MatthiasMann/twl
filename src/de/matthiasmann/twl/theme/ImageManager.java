@@ -56,23 +56,17 @@ class ImageManager {
     private final Renderer renderer;
     private final TreeMap<String, Image> images;
     private final TreeMap<String, MouseCursor> cursors;
-    private final ArrayList<Texture> textureResources;
 
+    private Texture currentTexture;
+    
     static final EmptyImage NONE = new EmptyImage(0, 0);
     
     ImageManager(Renderer renderer) {
         this.renderer = renderer;
         this.images = new TreeMap<String, Image>();
         this.cursors = new TreeMap<String, MouseCursor>();
-        this.textureResources = new ArrayList<Texture>();
 
         images.put("none", NONE);
-    }
-
-    void destroy() {
-        for(Texture texture : textureResources) {
-            texture.destroy();
-        }
     }
 
     Image getImage(String name) {
@@ -126,7 +120,7 @@ class ImageManager {
             if(texture == null) {
                 throw new NullPointerException("loadTexture returned null");
             }
-            textureResources.add(texture);
+            this.currentTexture = texture;
 
             try {
                 xpp.nextTag();
@@ -148,6 +142,7 @@ class ImageManager {
                 }
             } finally {
                 texture.themeLoadingDone();
+                currentTexture = null;
             }
         } catch (Exception ex) {
             throw (XmlPullParserException)(new XmlPullParserException(
@@ -559,7 +554,7 @@ class ImageManager {
             y -= h;
         }
 
-        Texture texture = textureResources.get(textureResources.size()-1);
+        Texture texture = currentTexture;
         if(x >= texture.getWidth() || x+Math.abs(w) <= 0 ||
                 y >= texture.getHeight() || y+Math.abs(h) <= 0) {
             logger.warning("texture partly outside of file: " + xpp.getPositionDescription());
