@@ -69,11 +69,11 @@ public class ParserUtil {
 
     static<E extends Enum<E>> E parseEnum(XmlPullParser xpp, Class<E> enumClazz, String value) throws XmlPullParserException {
         try {
-            return Enum.valueOf(enumClazz, value);
+            return Enum.valueOf(enumClazz, value.toUpperCase());
         } catch (IllegalArgumentException ex) {
         }
         try {
-            return Enum.valueOf(enumClazz, value.toUpperCase());
+            return Enum.valueOf(enumClazz, value);
         } catch (IllegalArgumentException ex) {
         }
         throw new XmlPullParserException("Unknown enum value \"" + value
