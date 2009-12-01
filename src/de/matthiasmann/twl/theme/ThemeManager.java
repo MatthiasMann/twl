@@ -545,7 +545,7 @@ public class ThemeManager {
             if("dimension".equals(tagName)) {
                 return parseObject(xpp, value, Dimension.class);
             }
-            if("gap".equals(tagName)) {
+            if("gap".equals(tagName) || "size".equals(tagName)) {
                 return parseObject(xpp, value, DialogLayout.Gap.class);
             }
             if("constant".equals(tagName)) {

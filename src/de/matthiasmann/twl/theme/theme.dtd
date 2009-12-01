@@ -192,7 +192,7 @@
     merge           (true|false) #IMPLIED
     allowWildcard   (true|false) #IMPLIED>
 
-<!ELEMENT param (color|enum|string|font|fontDef|inputMap|inputMapDef|int|float|bool|border|dimension|constant|image|cursor|list|map)>
+<!ELEMENT param (color|enum|string|font|fontDef|inputMap|inputMapDef|int|float|bool|border|dimension|gap|size|constant|image|cursor|list|map)>
 <!ATTLIST param
     name            CDATA #REQUIRED>
 
@@ -208,9 +208,11 @@
     type            CDATA #IMPLIED>
 <!ELEMENT border (#PCDATA)>
 <!ELEMENT dimension (#PCDATA)>
+<!ELEMENT gap (#PCDATA)>
+<!ELEMENT size (#PCDATA)>
 <!ELEMENT constant (#PCDATA)>
 <!ELEMENT image (#PCDATA)>
-<!ELEMENT list (color|enum|string|font|int|float|bool|dimension|constant|image|cursor|list|map)*>
+<!ELEMENT list (color|enum|string|font|int|float|bool|dimension|gap|size|constant|image|cursor|list|map)*>
 <!ELEMENT map (param)*>
 
 <!ELEMENT constantDef (color|enum|string|font|int|float|bool|dimension|constant|list|map)>
