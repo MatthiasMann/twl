@@ -381,10 +381,10 @@ public class DialogLayout extends Widget {
         }
     }
     
-    private static final int AXIS_X = 0;
-    private static final int AXIS_Y = 1;
+    static final int AXIS_X = 0;
+    static final int AXIS_Y = 1;
 
-    private static abstract class Spring {
+    static abstract class Spring {
         abstract int getMinSize(int axis);
         abstract int getPrefSize(int axis);
         abstract int getMaxSize(int axis);
@@ -710,7 +710,7 @@ public class DialogLayout extends Widget {
             }
         }
 
-        private void addSpring(Spring s) {
+        void addSpring(Spring s) {
             springs.add(s);
             getDialogLayout().redoDefaultGaps = true;
         }
@@ -829,7 +829,10 @@ public class DialogLayout extends Widget {
                 }
             }
             if(resizeable > 0) {
-                Arrays.sort(deltas, 0, resizeable);
+                if(resizeable > 1) {
+                    Arrays.sort(deltas, 0, resizeable);
+                }
+                
                 int sdelta = delta / resizeable;
                 int rest = delta - sdelta * resizeable;
                 int sizes[] = new int[springs.size()];

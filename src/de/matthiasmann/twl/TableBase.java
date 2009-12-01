@@ -42,7 +42,8 @@ import de.matthiasmann.twl.utils.TypeMapping;
 import java.util.ArrayList;
 
 /**
- *
+ * Base class for Table and TreeTable
+ * 
  * @author Matthias Mann
  */
 public abstract class TableBase extends Widget implements ScrollPane.Scrollable {
@@ -729,21 +730,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return clampColumnWidth(columnHeaders[index].getPreferredWidth());
     }
 
-    protected int computeScaleColumnWidth(int index, int preferredWidth) {
-        int start = (index > 0) ? columnHeaders[index-1].preferredEnd : 0;
-        int width = columnHeaders[index].preferredEnd - start;
-        return clampColumnWidth(getInnerWidth() * width / preferredWidth);
-    }
-
-    protected int computePreferredColumnsWidth() {
-        int preferredWidth = 0;
-        for(int i=0,n=columnHeaders.length ; i<n ; i++) {
-            preferredWidth += computePreferredColumnWidth(i);
-            columnHeaders[i].preferredEnd = preferredWidth;
-        }
-        return preferredWidth;
-    }
-
     protected boolean autoSizeRow(int row) {
         int height = computeRowHeight(row);
         return rowModel.setSize(row, height);
@@ -861,19 +847,18 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         cellWidgetContainer.removeAllChildren();
     }
 
-    protected int getDefaultColumnWidth(int column) {
-        int width = 0;
+    protected DialogLayout.Gap getColumnMPM(int column) {
         if(tableBaseThemeInfo != null) {
             ParameterMap columnWidthMap = tableBaseThemeInfo.getParameterMap("columnWidths");
             Object obj = columnWidthMap.getParameterValue(Integer.toString(column), false);
+            if(obj instanceof DialogLayout.Gap) {
+                return (DialogLayout.Gap)obj;
+            }
             if(obj instanceof Integer) {
-                width = ((Integer)obj).intValue();
+                return new DialogLayout.Gap(((Integer)obj).intValue());
             }
         }
-        if(width > 0) {
-            return width;
-        }
-        return defaultColumnWidth;
+        return null;
     }
 
     protected ColumnHeader createColumnHeader(int column) {
@@ -1252,9 +1237,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         @Override
         protected void initializeSizes(int index, int count) {
             if(isFixedWidthMode()) {
-                int preferredWidth = computePreferredColumnsWidth();
+                computeColumnHeaderLayout();
                 for(int i=0 ; i<count ; i++,index++) {
-                    table[index] = computeScaleColumnWidth(index, preferredWidth);
+                    table[index] = clampColumnWidth(columnHeaders[i].springWidth);
                 }
             } else {
                 for(int i=0 ; i<count ; i++,index++) {
@@ -1265,12 +1250,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         protected boolean update(int index) {
             int width;
             if(isFixedWidthMode()) {
-                int preferredWidth = computePreferredColumnsWidth();
-                width = computeScaleColumnWidth(index, preferredWidth);
+                computeColumnHeaderLayout();
+                width = clampColumnWidth(columnHeaders[index].springWidth);
             } else {
                 width = computePreferredColumnWidth(index);
             }
             return setSize(index, width);
+        }
+        void computeColumnHeaderLayout() {
+            DialogLayout.SequentialGroup g = (DialogLayout.SequentialGroup)(new DialogLayout()).createSequentialGroup();
+            for(ColumnHeader h : columnHeaders) {
+                g.addSpring(h.spring);
+            }
+            g.setSize(DialogLayout.AXIS_X, 0, getInnerWidth());
         }
     }
 
@@ -1297,7 +1289,26 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected class ColumnHeader extends Button {
         private int column;
         private int columnWidth;
-        private int preferredEnd;
+        int springWidth;
+
+        final DialogLayout.Spring spring = new DialogLayout.Spring() {
+            @Override
+            int getMinSize(int axis) {
+                return clampColumnWidth(getMinWidth());
+            }
+            @Override
+            int getPrefSize(int axis) {
+                return getPreferredWidth();
+            }
+            @Override
+            int getMaxSize(int axis) {
+                return getMaxWidth();
+            }
+            @Override
+            void setSize(int axis, int pos, int size) {
+                springWidth = size;
+            }
+        };
 
         public int getColumnWidth() {
             return columnWidth;
@@ -1312,8 +1323,23 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             if(columnWidth > 0) {
                 return columnWidth;
             }
-            int prefWidth = super.getPreferredWidth();
-            return Math.max(prefWidth, getDefaultColumnWidth(column));
+            DialogLayout.Gap mpm = getColumnMPM(column);
+            int prefWidth = (mpm != null) ? mpm.preferred : defaultColumnWidth;
+            return Math.max(prefWidth, super.getPreferredWidth());
+        }
+
+        @Override
+        public int getMinWidth() {
+            DialogLayout.Gap mpm = getColumnMPM(column);
+            int minWidth = (mpm != null) ? mpm.min : 0;
+            return Math.max(minWidth, super.getPreferredWidth());
+        }
+        
+        @Override
+        public int getMaxWidth() {
+            DialogLayout.Gap mpm = getColumnMPM(column);
+            int maxWidth = (mpm != null) ? mpm.max : 32767;
+            return maxWidth;
         }
 
         @Override
