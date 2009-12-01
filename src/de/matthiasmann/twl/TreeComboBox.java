@@ -64,6 +64,8 @@ public class TreeComboBox extends ComboBoxBase {
         public TreeTableNode resolvePath(TreeTableModel model, String path) throws IllegalArgumentException;
     }
 
+    private static final String DEFAULT_POPUP_THEME = "treecomboboxPopup";
+
     private final TableSingleSelectionModel selectionModel;
     private final TreePathDisplay display;
     private final TreeTable table;
@@ -111,7 +113,7 @@ public class TreeComboBox extends ComboBoxBase {
         scrollPane.setFixed(ScrollPane.Fixed.HORIZONTAL);
         
         add(display);
-        popup.setTheme("treecomboboxPopup");
+        popup.setTheme(DEFAULT_POPUP_THEME);
         popup.add(scrollPane);
     }
 
@@ -160,12 +162,26 @@ public class TreeComboBox extends ComboBoxBase {
         display.setAllowEdit(pathResolver != null);
     }
 
+    public TreeTable getTreeTable() {
+        return table;
+    }
+
     public void addCallback(Callback callback) {
         callbacks = CallbackSupport.addCallbackToList(callbacks, callback, Callback.class);
     }
     
     public void removeCallback(Callback callback) {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
+    }
+
+    @Override
+    protected void applyTheme(ThemeInfo themeInfo) {
+        super.applyTheme(themeInfo);
+        applyTreeComboboxPopupThemeName(themeInfo);
+    }
+
+    protected void applyTreeComboboxPopupThemeName(ThemeInfo themeInfo) {
+        popup.setTheme(themeInfo.getParameter("popupThemeName", DEFAULT_POPUP_THEME));
     }
 
     @Override
