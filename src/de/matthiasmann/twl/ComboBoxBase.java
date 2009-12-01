@@ -63,22 +63,7 @@ public abstract class ComboBoxBase extends Widget {
 
     protected boolean openPopup() {
         if(popup.openPopup()) {
-            int minHeight = popup.getMinHeight();
-            int popupHeight = computeSize(minHeight,
-                    popup.getPreferredHeight(),
-                    popup.getMaxHeight());
-            int popupMaxBottom = popup.getParent().getInnerBottom();
-            if(getBottom() + minHeight > popupMaxBottom) {
-                if(getY() - popupHeight >= popup.getParent().getInnerY()) {
-                    popup.setPosition(getX(), getY() - popupHeight);
-                } else {
-                    popup.setPosition(getX(), popupMaxBottom - minHeight);
-                }
-            } else {
-                popup.setPosition(getX(), getBottom());
-            }
-            popupHeight = Math.min(popupHeight, popupMaxBottom - popup.getY());
-            popup.setSize(getWidth(), popupHeight);
+            setPopupSize();
             return true;
         }
         return false;
@@ -107,6 +92,25 @@ public abstract class ComboBoxBase extends Widget {
         return Math.max(super.getMinHeight(), minInnerHeight + getBorderVertical());
     }
 
+    protected void setPopupSize() {
+        int minHeight = popup.getMinHeight();
+        int popupHeight = computeSize(minHeight,
+                popup.getPreferredHeight(),
+                popup.getMaxHeight());
+        int popupMaxBottom = popup.getParent().getInnerBottom();
+        if(getBottom() + minHeight > popupMaxBottom) {
+            if(getY() - popupHeight >= popup.getParent().getInnerY()) {
+                popup.setPosition(getX(), getY() - popupHeight);
+            } else {
+                popup.setPosition(getX(), popupMaxBottom - minHeight);
+            }
+        } else {
+            popup.setPosition(getX(), getBottom());
+        }
+        popupHeight = Math.min(popupHeight, popupMaxBottom - popup.getY());
+        popup.setSize(getWidth(), popupHeight);
+    }
+
     @Override
     protected void layout() {
         int btnWidth = button.getPreferredWidth();
@@ -114,6 +118,14 @@ public abstract class ComboBoxBase extends Widget {
         button.setPosition(getInnerRight() - btnWidth, getInnerY());
         button.setSize(btnWidth, innerHeight);
         getLabel().setSize(Math.max(0, button.getX() - getInnerX()), innerHeight);
+    }
+
+    @Override
+    protected void sizeChanged() {
+        super.sizeChanged();
+        if(popup.isOpen()) {
+            setPopupSize();
+        }
     }
 
     private void setRecursive(Widget w, String what, boolean state) {
