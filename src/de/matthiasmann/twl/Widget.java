@@ -1222,7 +1222,7 @@ public class Widget {
     }
     
     /**
-     * Called from paint() when the layoutInvalid flag is set
+     * Called when the layoutInvalid flag is set
      */
     protected void layout() {
     }

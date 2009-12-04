@@ -77,6 +77,8 @@ public class DialogLayout extends Widget {
      */
     public static final int DEFAULT_GAP = -4;
 
+    private static final boolean DEBUG_LAYOUT_GROUPS = Boolean.getBoolean("debugLayoutGroups");
+    
     protected Dimension smallGap;
     protected Dimension mediumGap;
     protected Dimension largeGap;
@@ -88,10 +90,17 @@ public class DialogLayout extends Widget {
 
     protected Group horz;
     protected Group vert;
-    private final HashMap<Widget, WidgetSpring> widgetSprings;
+
+    /**
+     * Debugging aid. Captures the stack trace where one of the group was last assigned.
+     */
+    Throwable debugStackTrace;
+
+    final HashMap<Widget, WidgetSpring> widgetSprings;
 
     public DialogLayout() {
         widgetSprings = new HashMap<Widget, WidgetSpring>();
+        collectDebugStack();
     }
 
     public Group getHorizontalGroup() {
@@ -101,6 +110,10 @@ public class DialogLayout extends Widget {
     /**
      * The horizontal group control the position and size of all child
      * widgets along the X axis.
+     *
+     * Every widget must be part of both horizontal and vertical group.
+     * Otherwise a IllegalStateException is thrown at layout time.
+     *
      * @param g the group used for the X axis
      */
     public void setHorizontalGroup(Group g) {
@@ -109,6 +122,7 @@ public class DialogLayout extends Widget {
         }
         this.horz = g;
         this.redoDefaultGaps = true;
+        collectDebugStack();
     }
 
     public Group getVerticalGroup() {
@@ -118,6 +132,10 @@ public class DialogLayout extends Widget {
     /**
      * The vertical group control the position and size of all child
      * widgets along the Y axis.
+     *
+     * Every widget must be part of both horizontal and vertical group.
+     * Otherwise a IllegalStateException is thrown at layout time.
+     *
      * @param g the group used for the Y axis
      */
     public void setVerticalGroup(Group g) {
@@ -126,6 +144,7 @@ public class DialogLayout extends Widget {
         }
         this.vert = g;
         this.redoDefaultGaps = true;
+        collectDebugStack();
     }
 
     public Dimension getSmallGap() {
@@ -196,6 +215,12 @@ public class DialogLayout extends Widget {
             horz.addDefaultGap();
             vert.addDefaultGap();
             invalidateLayout();
+        }
+    }
+
+    private void collectDebugStack() {
+        if(DEBUG_LAYOUT_GROUPS) {
+            debugStackTrace = new Throwable("DialogLayout created/used here").fillInStackTrace();
         }
     }
 
@@ -289,8 +314,15 @@ public class DialogLayout extends Widget {
     protected void doLayout() {
         horz.setSize(AXIS_X, getInnerX(), getInnerWidth());
         vert.setSize(AXIS_Y, getInnerY(), getInnerHeight());
-        for(WidgetSpring s : widgetSprings.values()) {
-            s.apply();
+        try{
+            for(WidgetSpring s : widgetSprings.values()) {
+                s.apply();
+            }
+        }catch(IllegalStateException ex) {
+            if(debugStackTrace != null && ex.getCause() == null) {
+                ex.initCause(debugStackTrace);
+            }
+            throw ex;
         }
         if((getWidth() < horz.getMinSize(AXIS_X) || getHeight() < vert.getMinSize(AXIS_Y))) {
             invalidateParentLayout();
@@ -406,6 +438,7 @@ public class DialogLayout extends Widget {
         int height;
         int prefWidth;
         int prefHeight;
+        int flags;
 
         WidgetSpring(Widget w) {
             this.w = w;
@@ -418,6 +451,7 @@ public class DialogLayout extends Widget {
             this.height = w.getHeight();
             this.prefWidth = computeSize(w.getMinWidth(), w.getPreferredWidth(), w.getMaxWidth());
             this.prefHeight = computeSize(w.getMinHeight(), w.getPreferredHeight(), w.getMaxHeight());
+            this.flags = 0;
         }
 
         @Override
@@ -449,6 +483,7 @@ public class DialogLayout extends Widget {
 
         @Override
         void setSize(int axis, int pos, int size) {
+            this.flags |= 1 << axis;
             switch(axis) {
             case AXIS_X:
                 this.x = pos;
@@ -464,8 +499,25 @@ public class DialogLayout extends Widget {
         }
 
         void apply() {
+            if(flags != 3) {
+                invalidState();
+            }
             w.setPosition(x, y);
             w.setSize(width, height);
+        }
+
+        void invalidState() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Widget ").append(w)
+                    .append(" with theme ").append(w.getTheme())
+                    .append(" is not part of the following groups:");
+            if((flags & (1 << AXIS_X)) == 0) {
+                sb.append(" horizontal");
+            }
+            if((flags & (1 << AXIS_Y)) == 0) {
+                sb.append(" vertical");
+            }
+            throw new IllegalStateException(sb.toString());
         }
     }
 

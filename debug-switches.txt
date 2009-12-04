@@ -1,0 +1,9 @@
+The following VM properties can be set to enable additional debugging functions:
+
+    -DdebugLayoutGroups=true                    DialogLayout.java
+            Includes stack trace of DialogLayout construction/use
+            when a error is detected in the layout description
+
+    -DwarnOnUnhandledAction=true                Widget.java
+            Outputs a warning when a keyboard shortcut is mapped to
+            an action and is not handled by any handler.
