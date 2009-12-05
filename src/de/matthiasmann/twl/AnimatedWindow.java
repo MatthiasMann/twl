@@ -61,11 +61,7 @@ public class AnimatedWindow extends Widget {
     }
 
     private void doCallback() {
-        if(callbacks != null) {
-            for(Runnable cb : callbacks) {
-                cb.run();
-            }
-        }
+        CallbackSupport.fireCallbacks(callbacks);
     }
 
     public int getNumAnimSteps() {
@@ -161,10 +157,51 @@ public class AnimatedWindow extends Widget {
     }
 
     @Override
+    public int getMinWidth() {
+        int minWidth = 0;
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            minWidth = Math.max(minWidth, child.getMinWidth());
+        }
+        return Math.max(super.getMinWidth(), minWidth + getBorderHorizontal());
+    }
+
+    @Override
+    public int getMinHeight() {
+        int minHeight = 0;
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            minHeight = Math.max(minHeight, child.getMinHeight());
+        }
+        return Math.max(super.getMinHeight(), minHeight + getBorderVertical());
+    }
+
+    @Override
+    public int getPreferredInnerWidth() {
+        int prefWidth = 0;
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            prefWidth = Math.max(prefWidth, child.getPreferredWidth());
+        }
+        return prefWidth;
+    }
+
+    @Override
+    public int getPreferredInnerHeight() {
+        int prefHeight = 0;
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            prefHeight = Math.max(prefHeight, child.getPreferredHeight());
+        }
+        return prefHeight;
+    }
+
+    @Override
     protected void layout() {
-        for(int i=0 ; i<getNumChildren() ; i++) {
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             child.setPosition(getInnerX(), getInnerY());
+            child.setSize(getInnerWidth(), getInnerHeight());
         }
     }
     

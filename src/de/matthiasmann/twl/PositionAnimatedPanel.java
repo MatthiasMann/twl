@@ -164,6 +164,26 @@ public class PositionAnimatedPanel extends Widget {
         return x == getInnerX() + direction.x*animatedWidget.getWidth() &&
                 y == getInnerY() + direction.y*animatedWidget.getHeight();
     }
+
+    @Override
+    public int getMinWidth() {
+        return Math.max(super.getMinWidth(), animatedWidget.getMinWidth() + getBorderHorizontal());
+    }
+
+    @Override
+    public int getMinHeight() {
+        return Math.max(super.getMinHeight(), animatedWidget.getMinHeight() + getBorderVertical());
+    }
+
+    @Override
+    public int getPreferredInnerWidth() {
+        return animatedWidget.getPreferredWidth();
+    }
+
+    @Override
+    public int getPreferredInnerHeight() {
+        return animatedWidget.getPreferredHeight();
+    }
     
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
@@ -190,15 +210,7 @@ public class PositionAnimatedPanel extends Widget {
     }
 
     @Override
-    protected void childChangedSize(Widget child) {
-        if(child == animatedWidget) {
-            setInnerSize(child.getWidth(), child.getHeight());
-        }
-    }
-
-    @Override
-    protected void sizeChanged() {
-        super.sizeChanged();
+    protected void layout() {
         animatedWidget.setSize(getInnerWidth(), getInnerHeight());
         setRectSize();
     }
