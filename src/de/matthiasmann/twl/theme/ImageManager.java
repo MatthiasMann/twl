@@ -467,7 +467,7 @@ class ImageManager {
 
     private AnimatedImage.Img parseAnimFrame(XmlPullParser xpp) throws XmlPullParserException, IOException {
         int duration = ParserUtil.parseIntFromAttribute(xpp, "duration");
-        if(duration <= 0) {
+        if(duration < 0) {
             throw new IllegalArgumentException("duration must be >= 1 ms");
         }
         Color tint = ParserUtil.parseColorFromAttribute(xpp, "tint", Color.WHITE);

@@ -36,7 +36,7 @@ public class AnimatedImage implements Image, HasBorder {
         final float a;
 
         Img(int duration, Image image, Color tintColor) {
-            if(duration <= 0) {
+            if(duration < 0) {
                 throw new IllegalArgumentException("duration");
             }
             this.duration = duration;
@@ -137,7 +137,7 @@ public class AnimatedImage implements Image, HasBorder {
             Element e = null;
             for(int i=0 ; i<children.length ; i++) {
                 e = children[i];
-                if(time < e.duration) {
+                if(time < e.duration && e.duration > 0) {
                     if(i+1 < children.length) {
                         next = children[i+1].getFirstImg();
                     } else if(repeatCount == 0 || iteration < repeatCount) {
