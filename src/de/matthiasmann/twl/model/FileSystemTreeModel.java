@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl.model;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Date;
 
 /**
@@ -40,6 +42,8 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
 
     private final FileSystemModel fsm;
     private final boolean includeLastModified;
+
+    protected Comparator<Object> sorter;
 
     public FileSystemTreeModel(FileSystemModel fsm, boolean includeLastModified) {
         this.fsm = fsm;
@@ -71,6 +75,9 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
         return fsm;
     }
 
+    /**
+     * Removes all nodes from the tree and creates the root nodes
+     */
     public void insertRoots() {
         removeAllChildren();
 
@@ -98,6 +105,25 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
         return null;
     }
 
+    public Comparator<Object> getSorter() {
+        return sorter;
+    }
+
+    /**
+     * Sets the sorter used for sorting folders (the root nodes are not sorted).
+     *
+     * Will call insertRoots() when the sorter is changed.
+     *
+     * @see #insertRoots()
+     * @param sorter The new sorter - can be null
+     */
+    public void setSorter(Comparator<Object> sorter) {
+        if(this.sorter != sorter) {
+            this.sorter = sorter;
+            insertRoots();
+        }
+    }
+
     static final FolderNode[] NO_CHILDREN = new FolderNode[0];
     
     public static class FolderNode implements TreeTableNode {
@@ -106,7 +132,7 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
         private final Object folder;
         FolderNode[] children;
 
-        public FolderNode(TreeTableNode parent, FileSystemModel fsm, Object folder) {
+        protected FolderNode(TreeTableNode parent, FileSystemModel fsm, Object folder) {
             this.parent = parent;
             this.fsm = fsm;
             this.folder = folder;
@@ -155,11 +181,24 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
             return false;
         }
 
+        public FileSystemTreeModel getTreeModel() {
+            TreeTableNode node = this.parent;
+            TreeTableNode nodeParent;
+            while((nodeParent = node.getParent()) != null) {
+                node = nodeParent;
+            }
+            return (FileSystemTreeModel)node;
+        }
+
         private void collectChilds() {
             children = NO_CHILDREN;
             try {
                 Object[] subFolder = fsm.listFolder(folder, FolderFilter.instance);
                 if(subFolder != null && subFolder.length > 0) {
+                    Comparator<Object> sorter = getTreeModel().sorter;
+                    if(sorter != null) {
+                        Arrays.sort(subFolder, sorter);
+                    }
                     FolderNode[] newChildren = new FolderNode[subFolder.length];
                     for(int i=0 ; i<subFolder.length ; i++) {
                         newChildren[i] = new FolderNode(this, fsm, subFolder[i]);
