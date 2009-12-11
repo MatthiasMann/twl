@@ -333,7 +333,7 @@ public class SparseGrid {
                     if(n.row >= row) {
                         n.removeRows(row, count, levels);
                         needsMerging |= n.isBelowHalf();
-                        if(n.size == 0) {
+                        if(n.size == 0 && size > 1) {
                             removeNodeAt(i);
                         }
                     }
@@ -362,7 +362,7 @@ public class SparseGrid {
                     Node n = (Node)children[i];
                     n.removeColumns(column, count, levels);
                     needsMerging |= n.isBelowHalf();
-                    if(n.size == 0) {
+                    if(n.size == 0 && size > 1) {
                         removeNodeAt(i);
                     }
                 }
