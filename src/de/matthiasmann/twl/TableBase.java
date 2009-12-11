@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.SortOrder;
 import de.matthiasmann.twl.model.TableColumnHeaderModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
@@ -50,6 +51,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     public interface Callback {
         public void mouseDoubleClicked(int row, int column);
+        public void columnHeaderClicked(int column);
     }
     
     public interface CellRenderer {
@@ -69,7 +71,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
          * This method sets the row, column and the cell data.
          * It is called before any other cell related method is called.
          * @param row the table row
-         * @param column the table column
+         * @param sortColumn the table column
          * @param data the cell data
          */
         public void setCellData(int row, int column, Object data);
@@ -127,6 +129,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public static final String STATE_ROW_HOVER = "rowHover";
     public static final String STATE_LEAD_ROW = "leadRow";
     public static final String STATE_SELECTED = "selected";
+    public static final String STATE_SORT_ASCENDING  = "sortAscending";
+    public static final String STATE_SORT_DESCENDING = "sortDescending";
 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
@@ -306,6 +310,24 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         if(columnModel.update(column)) {
             invalidateLayout();
             invalidateParentLayout();
+        }
+    }
+
+    public AnimationState getColumnHeaderAnimationState(int column) {
+        checkColumnIndex(column);
+        return columnHeaders[column].getAnimationState();
+    }
+
+    /**
+     * Sets the sort order animation state for all column headers.
+     * @param sortColumn This column gets sort order indicators, all other columns not
+     * @param sortOrder Which sort order. Can be null to disable the indicators
+     */
+    public void setColumnSortOrderAnimationState(int sortColumn, SortOrder sortOrder) {
+        for(int column=0 ; column<numColumns ; ++column) {
+            AnimationState animState = columnHeaders[column].getAnimationState();
+            animState.setAnimationState(STATE_SORT_ASCENDING, (column == sortColumn) && (sortOrder == SortOrder.ASCENDING));
+            animState.setAnimationState(STATE_SORT_DESCENDING, (column == sortColumn) && (sortOrder == SortOrder.DESCENDING));
         }
     }
 
@@ -1036,6 +1058,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return evt.getType() != Event.Type.MOUSE_WHEEL;
     }
 
+    protected void columnHeaderClicked(int column) {
+        if(callbacks != null) {
+            for(Callback cb : callbacks) {
+                cb.columnHeaderClicked(column);
+            }
+        }
+    }
 
     protected void updateAllColumnWidth() {
         columnModel.initializeAll(numColumns);
@@ -1298,10 +1327,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
     }
 
-    protected class ColumnHeader extends Button {
+    protected class ColumnHeader extends Button implements Runnable {
         private int column;
         private int columnWidth;
         int springWidth;
+
+        public ColumnHeader() {
+            addCallback(this);
+        }
 
         final DialogLayout.Spring spring = new DialogLayout.Spring() {
             @Override
@@ -1357,6 +1390,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         @Override
         public void adjustSize() {
             // don't do anything
+        }
+
+        public void run() {
+            columnHeaderClicked(column);
         }
     }
 

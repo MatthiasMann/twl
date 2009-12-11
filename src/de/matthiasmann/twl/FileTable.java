@@ -33,13 +33,13 @@ import de.matthiasmann.twl.model.AbstractTableModel;
 import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
+import de.matthiasmann.twl.model.SortOrder;
 import de.matthiasmann.twl.model.TableSelectionModel;
 import de.matthiasmann.twl.model.TableSingleSelectionModel;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.text.DateFormat;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -51,23 +51,6 @@ import java.util.Date;
  * @author Matthias Mann
  */
 public class FileTable extends Table {
-
-    public static final String STATE_SORT_ASCENDING  = "sortAscending";
-    public static final String STATE_SORT_DESCENDING = "sortDescending";
-
-    public enum SortOrder {
-        ASCENDING {
-            public Comparator<Entry> map(Comparator<Entry> c) { return c; }
-            public SortOrder invert() { return DESCENDING; }
-        },
-        DESCENDING {
-            public Comparator<Entry> map(Comparator<Entry> c) { return Collections.reverseOrder(c); }
-            public SortOrder invert() { return ASCENDING; }
-        };
-
-        public abstract Comparator<Entry> map(Comparator<Entry> c);
-        public abstract SortOrder invert();
-    }
 
     public enum SortColumn {
         NAME(NameComparator.instance),
@@ -272,19 +255,15 @@ public class FileTable extends Table {
     }
 
     @Override
-    protected ColumnHeader createColumnHeader(int column) {
-        final SortColumn thisColumn = SortColumn.values()[column];
-        ColumnHeader columnHeader = super.createColumnHeader(column);
-        columnHeader.addCallback(new Runnable() {
-            public void run() {
-                if(sortColumn == thisColumn) {
-                    setSortOrder(sortOrder.invert());
-                } else {
-                    setSortColumn(thisColumn);
-                }
-            }
-        });
-        return columnHeader;
+    protected void columnHeaderClicked(int column) {
+        super.columnHeaderClicked(column);
+
+        SortColumn thisColumn = SortColumn.values()[column];
+        if(sortColumn == thisColumn) {
+            setSortOrder(sortOrder.invert());
+        } else {
+            setSortColumn(thisColumn);
+        }
     }
 
     @Override
@@ -294,13 +273,7 @@ public class FileTable extends Table {
     }
 
     protected void setSortArrows() {
-        for(int i = 0 ; i < numColumns ; i++) {
-            AnimationState animState = columnHeaders[i].getAnimationState();
-            animState.setAnimationState(STATE_SORT_ASCENDING,
-                    (i == sortColumn.ordinal()) && sortOrder == SortOrder.ASCENDING);
-            animState.setAnimationState(STATE_SORT_DESCENDING,
-                    (i == sortColumn.ordinal()) && sortOrder == SortOrder.DESCENDING);
-        }
+        setColumnSortOrderAnimationState(sortColumn.ordinal(), sortOrder);
     }
 
     private void sortFilesAndUpdateModel() {

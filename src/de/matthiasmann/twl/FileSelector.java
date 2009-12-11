@@ -196,6 +196,8 @@ public class FileSelector extends DialogLayout {
             public void mouseDoubleClicked(int row, int column) {
                 acceptSelection();
             }
+            public void columnHeaderClicked(int column) {
+            }
         });
 
         activeFileFilter = AllFilesFilter;
