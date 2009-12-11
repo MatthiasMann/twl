@@ -124,6 +124,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
     public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
     public static final String STATE_ROW_SELECTED = "rowSelected";
+    public static final String STATE_ROW_HOVER = "rowHover";
     public static final String STATE_LEAD_ROW = "leadRow";
     public static final String STATE_SELECTED = "selected";
 
@@ -169,6 +170,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected int lastVisibleColumn;
     protected boolean firstRowPartialVisible;
     protected boolean lastRowPartialVisible;
+
+    protected static final int LAST_MOUSE_Y_OUTSIDE = Integer.MIN_VALUE;
+    
+    protected int lastMouseY = LAST_MOUSE_Y_OUTSIDE;
 
     protected TableBase() {
         this.cellRenderers = new TypeMapping<CellRenderer>();
@@ -658,6 +663,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             final int curY = offsetY + rowStartPos;
 
             animState.setAnimationState(STATE_ROW_SELECTED, isRowSelected(row));
+            animState.setAnimationState(STATE_ROW_HOVER, lastMouseY >= curY && lastMouseY < (curY + curRowHeight));
             animState.setAnimationState(STATE_LEAD_ROW, row == leadRow);
             img.draw(animState, x, curY, width, curRowHeight);
 
@@ -959,6 +965,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected int dragStartSumWidth;
 
     protected boolean handleMouseEvent(Event evt) {
+        if(evt.getType() == Event.Type.MOUSE_EXITED) {
+            lastMouseY = LAST_MOUSE_Y_OUTSIDE;
+        } else {
+            lastMouseY = evt.getMouseY();
+        }
+
         if(dragActive) {
             final int innerWidth = getInnerWidth();
             if(dragColumn >= 0 && innerWidth > 0) {
