@@ -93,7 +93,7 @@ public class HashEntry<K, T extends HashEntry<K, T>> {
         int idx = entry.hash & (table.length - 1);
         T e = table[idx];
         if(e == entry) {
-            table[idx] = entry;
+            table[idx] = e.next;
         } else {
             T p;
             do {
