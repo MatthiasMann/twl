@@ -48,6 +48,7 @@ public class TreeTable extends TableBase {
     private final TreeNodeCellRenderer nodeRenderer;
 
     private NodeState[] nodeStateTable;
+    private int nodeStateTableSize;
     private TreeTableModel model;
     private NodeState rootNodeState;
 
@@ -71,6 +72,7 @@ public class TreeTable extends TableBase {
         this.columnHeaderModel = model;
         this.model = model;
         this.nodeStateTable = new NodeState[64];
+        this.nodeStateTableSize = 0;
         if(this.model != null) {
             this.model.addChangeListener(modelChangeListener);
             this.rootNodeState = createNodeState(model);
@@ -182,6 +184,7 @@ public class TreeTable extends TableBase {
             assert nsParent != null;
         }
         NodeState newNS = new NodeState(node, nsParent);
+        nodeStateTable = HashEntry.maybeResizeTable(nodeStateTable, ++nodeStateTableSize);
         HashEntry.insertEntry(nodeStateTable, newNS);
         return newNS;
     }
@@ -283,6 +286,7 @@ public class TreeTable extends TableBase {
 
     protected void recursiveRemove(NodeState ns) {
         if(ns != null) {
+            --nodeStateTableSize;
             HashEntry.remove(nodeStateTable, ns);
             if(ns.children != null) {
                 for(NodeState nsChild : ns.children) {
