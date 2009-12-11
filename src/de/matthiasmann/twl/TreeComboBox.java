@@ -139,6 +139,9 @@ public class TreeComboBox extends ComboBoxBase {
             throw new NullPointerException("node");
         }
         display.setCurrentNode(node);
+        if(popup.isOpen()) {
+            tableSelectToCurrentNode();
+        }
     }
 
     public TreeTableNode getCurrentNode() {
@@ -226,18 +229,23 @@ public class TreeComboBox extends ComboBoxBase {
         return node;
     }
 
+    private void tableSelectToCurrentNode() {
+        table.collapseAll();
+        int idx = table.getRowFromNodeExpand(display.getCurrentNode());
+        suppressCallback = true;
+        try {
+            selectionModel.setSelection(idx, idx);
+        } finally {
+            suppressCallback = false;
+        }
+        table.scrollToRow(Math.max(0, idx));
+    }
+
     @Override
     protected boolean openPopup() {
         if(super.openPopup()) {
-            table.collapseAll();
-            int idx = table.getRowFromNodeExpand(display.getCurrentNode());
-            suppressCallback = true;
-            try {
-                selectionModel.setSelection(idx, idx);
-            } finally {
-                suppressCallback = false;
-            }
-            table.scrollToRow(Math.max(0, idx));
+            popup.validateLayout();
+            tableSelectToCurrentNode();
             return true;
         }
         return false;
