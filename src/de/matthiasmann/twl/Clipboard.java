@@ -40,28 +40,28 @@ import java.awt.datatransfer.Transferable;
  */
 public class Clipboard {
 
-	public static String getClipboard() {
-		try {
-			java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-			Transferable transferable = clipboard.getContents(null);
-			if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-				return (String)transferable.getTransferData(DataFlavor.stringFlavor);
-			}
-		} catch (Exception ex) {
+    public static String getClipboard() {
+        try {
+            java.awt.datatransfer.Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            Transferable transferable = clipboard.getContents(null);
+            if (transferable.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+                return (String)transferable.getTransferData(DataFlavor.stringFlavor);
+            }
+        } catch (Exception ex) {
             ex.printStackTrace();
-		}
-		return "";
-	}
+        }
+        return "";
+    }
 
     public static void setClipboard(String str) {
         try {
-			java.awt.datatransfer.Clipboard clipboard =
+            java.awt.datatransfer.Clipboard clipboard =
                     Toolkit.getDefaultToolkit().getSystemClipboard();
             StringSelection transferable = new StringSelection(str);
             clipboard.setContents(transferable, transferable);
-		} catch (Exception ex) {
+        } catch (Exception ex) {
             ex.printStackTrace();
-		}
+        }
     }
     
 }
