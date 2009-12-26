@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -203,8 +203,7 @@ public class Graph extends Widget {
 
     @Override
     protected void layout() {
-        area.setPosition(getInnerX(), getInnerY());
-        area.setSize(getInnerWidth(), getInnerHeight());
+        layoutChildFullInnerArea(area);
     }
     
     static class LineStyle {

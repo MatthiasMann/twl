@@ -219,11 +219,8 @@ public class TreePathDisplay extends Widget {
 
     @Override
     protected void layout() {
-        pathBox.setPosition(getInnerX(), getInnerY());
-        pathBox.setSize(getInnerWidth(), getInnerHeight());
-
-        editField.setPosition(getInnerX(), getInnerY());
-        editField.setSize(getInnerWidth(), getInnerHeight());
+        layoutChildFullInnerArea(pathBox);
+        layoutChildFullInnerArea(editField);
     }
 
     private class PathBox extends BoxLayout {

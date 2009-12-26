@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -127,11 +127,7 @@ public class PopupWindow extends Widget {
 
     @Override
     protected void layout() {
-        for(int i=0,n=getNumChildren() ; i<n ; i++) {
-            Widget child = getChild(i);
-            child.setPosition(getInnerX(), getInnerY());
-            child.setSize(getInnerWidth(), getInnerHeight());
-        }
+        layoutChildrenFullInnerArea();
     }
     
     @Override

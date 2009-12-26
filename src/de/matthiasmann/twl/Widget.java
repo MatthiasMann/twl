@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -1400,6 +1400,32 @@ public class Widget {
         child.drawWidget(gui);
     }
 
+    /**
+     * Sets size and position of a child widget so that it consumes the complete
+     * inner area.
+     *
+     * @param child A child widget
+     */
+    protected void layoutChildFullInnerArea(Widget child) {
+        if(child.parent != this) {
+            throw new IllegalArgumentException("can only layout direct children");
+        }
+        child.setPosition(getInnerX(), getInnerY());
+        child.setSize(getInnerWidth(), getInnerHeight());
+    }
+
+    /**
+     * Sets size and position of all child widgets so that they all consumes the
+     * complete inner area. If there is more then one child then they will overlap.
+     *
+     * @param child A child widget
+     */
+    protected void layoutChildrenFullInnerArea() {
+        for(Widget child : children) {
+            layoutChildFullInnerArea(child);
+        }
+    }
+
     protected List<Widget> getKeyboardFocusOrder() {
         if(children == null) {
             return Collections.<Widget>emptyList();
@@ -1764,7 +1790,7 @@ public class Widget {
         }
     }
 
-    private boolean setMouseOverChild(Widget child, Event evt) {
+    boolean setMouseOverChild(Widget child, Event evt) {
         if (lastChildMouseOver != child) {
             if(child != null) {
                 Widget result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));

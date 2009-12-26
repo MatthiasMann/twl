@@ -344,8 +344,7 @@ public class ResizableFrame extends Widget {
         for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget child = getChild(i);
             if(!isFrameElement(child)) {
-                child.setPosition(getInnerX(), getInnerY());
-                child.setSize(getInnerWidth(), getInnerHeight());
+                layoutChildFullInnerArea(child);
             }
         }
 
