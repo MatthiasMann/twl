@@ -130,6 +130,7 @@ public class SparseGridTest {
         }
 
         public void insert(int row, int column) {
+            checkSize();
             check(row, column);
             Entry e = new Entry(currentNr++);
             sg.set(row, column, e);
@@ -150,11 +151,13 @@ public class SparseGridTest {
         }
 
         public void remove(int row, int column) {
+            checkSize();
             check(row, column);
             Entry eSG = (Entry)sg.remove(row, column);
             Coord c = new Coord(row, column);
             Entry eMap = map.remove(c);
             assertSame(eMap, eSG);
+            //checkAll();
         }
 
         private void rewriteMap(int rowStart, int rowOffset, int colStart, int colOffset) {
@@ -185,36 +188,36 @@ public class SparseGridTest {
         }
 
         private void checkLinks(SparseGrid.Node node, SparseGrid.Node prev, SparseGrid.Node next, int levels) {
+            assertTrue("empty node", node.size > 0);
             if(--levels == 0) {
                 return;
             }
-            if(node.size > 0) {
-                SparseGrid.Node n = null;
+            SparseGrid.Node n = null;
+            for(int i=0 ; i<node.size ; i++) {
+                n = (SparseGrid.Node)node.children[i];
+                assertSame(prev, n.prev);
+                //assertFalse("below half", n.isBelowHalf() || node.size == 1);
+                if(prev != null) {
+                    assertSame(n, prev.next);
+                }
+                prev = n;
+            }
+            assertSame(next, n.next);
+
+            if(levels > 1) {
+                prev = null;
+                if(node.prev != null) {
+                    prev = getLast(node.prev);
+                }
                 for(int i=0 ; i<node.size ; i++) {
                     n = (SparseGrid.Node)node.children[i];
-                    assertSame(prev, n.prev);
-                    if(prev != null) {
-                        assertSame(n, prev.next);
+                    if(i+1 < node.size) {
+                        next = (SparseGrid.Node)node.children[i+1];
+                    } else {
+                        next = getFirst(node.next);
                     }
+                    checkLinks(n, getLast(prev), getFirst(next), levels);
                     prev = n;
-                }
-                assertSame(next, n.next);
-
-                if(levels > 1) {
-                    prev = null;
-                    if(node.prev != null) {
-                        prev = getLast(node.prev);
-                    }
-                    for(int i=0 ; i<node.size ; i++) {
-                        n = (SparseGrid.Node)node.children[i];
-                        if(i+1 < node.size) {
-                            next = (SparseGrid.Node)node.children[i+1];
-                        } else {
-                            next = getFirst(node.next);
-                        }
-                        checkLinks(n, getLast(prev), getFirst(next), levels);
-                        prev = n;
-                    }
                 }
             }
         }
@@ -231,16 +234,36 @@ public class SparseGridTest {
             return null;
         }
         private void checkLinks() {
-            checkLinks(sg.root, null, null, sg.numLevels);
+            if(!sg.isEmpty()) {
+                checkLinks(sg.root, null, null, sg.numLevels);
+            }
+        }
+        private int getSize(SparseGrid.Node n, int level) {
+            if(--level==0) {
+                return n.size;
+            }
+            int size = 0;
+            for(int i=0 ; i<n.size ; ++i) {
+                size += getSize((SparseGrid.Node)n.children[i], level);
+            }
+            return size;
+        }
+        private int getSize() {
+            return getSize(sg.root, sg.numLevels);
         }
 
+        private void checkSize() {
+            int curSize = getSize();
+            assertEquals(map.size(), curSize);
+        }
         private void checkAll() {
+            checkSize();
+            checkLinks();
             for(Map.Entry<Coord, Entry> e : map.entrySet()) {
                 Coord c = e.getKey();
                 Entry eSG = (Entry)sg.get(c.row, c.column);
                 assertSame(e.getValue(), eSG);
             }
-            checkLinks();
         }
         
         public void insertRows(int row, int count) {
@@ -253,8 +276,12 @@ public class SparseGridTest {
 
         public void removeRows(int row, int count) {
             //checkAll();
+            int oldSize = getSize();
+            assertEquals(map.size(), oldSize);
             sg.removeRows(row, count);
+            int newSize = getSize();
             rewriteMap(row, -count, Integer.MAX_VALUE, 0);
+            assertEquals(map.size(), newSize);
             checkAll();
             numRemoveRows++;
         }
