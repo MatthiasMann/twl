@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -47,6 +47,14 @@ public class EditField extends Widget {
     public static final String STATE_READONLY = "readonly";
     
     public interface Callback {
+        /**
+         * Gets called for any change in the edit field, or when ESCAPE or RETURN was pressed
+         *
+         * @param key One of KEY_NONE, KEY_ESCAPE, KEY_RETURN
+         * @see Keyboard#KEY_NONE
+         * @see Keyboard#KEY_ESCAPE
+         * @see Keyboard#KEY_RETURN
+         */
         public void callback(int key);
     }
 
@@ -71,6 +79,10 @@ public class EditField extends Widget {
     private Callback[] callbacks;
     private PopupMenu popupMenu;
     private boolean textLongerThenWidget;
+
+    private InfoWindow autoCompletionWindow;
+    private boolean autoCompletionWantKeys;
+    private int autoCompletionHeight = 100;
     
     public EditField() {
         this.editBuffer = new StringBuilder();
@@ -173,6 +185,14 @@ public class EditField extends Widget {
         return selectionStart != selectionEnd;
     }
 
+    public int getCursorPos() {
+        return cursorPos;
+    }
+
+    public int getTextLength() {
+        return editBuffer.length();
+    }
+    
     public boolean isReadOnly() {
         return readOnly;
     }
@@ -255,17 +275,25 @@ public class EditField extends Widget {
         super.applyTheme(themeInfo);
         cursorImage = themeInfo.getImage("cursor");
         selectionImage = themeInfo.getImage("selection");
+        autoCompletionHeight = themeInfo.getParameter("autocompletion-height", 100);
         setPasswordChar((char)themeInfo.getParameter("passwordChar", '*'));
         setErrorMessage(errorMsg);  // update color
     }
 
     @Override
     protected void layout() {
-        textRenderer.setPosition(getInnerX(), getInnerY());
-        textRenderer.setSize(getInnerWidth(), getInnerHeight());
+        layoutChildFullInnerArea(textRenderer);
         checkTextWidth();
+        if(autoCompletionWindow != null) {
+            layoutAutocompletionWindow();
+        }
     }
-        
+
+    private void layoutAutocompletionWindow() {
+        autoCompletionWindow.setPosition(getX(), getBottom());
+        autoCompletionWindow.setSize(getWidth(), autoCompletionHeight);
+    }
+
     private int computeInnerWidth() {
         Font font = textRenderer.getFont();
         if(font != null) {
@@ -330,6 +358,22 @@ public class EditField extends Widget {
         return tooltip;
     }
 
+    public void setAutoCompletionWindow(InfoWindow window, boolean wantKeys) {
+        if(window == null) {
+            if(autoCompletionWindow != null) {
+                autoCompletionWindow.closeInfo();
+                autoCompletionWindow = null;
+            }
+            autoCompletionWantKeys = false;
+        } else {
+            autoCompletionWindow = window;
+            autoCompletionWantKeys = wantKeys;
+            if(autoCompletionWindow.openInfo()) {
+                layoutAutocompletionWindow();
+            }
+        }
+    }
+
     @Override
     public boolean handleEvent(Event evt) {
         boolean selectPressed = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
@@ -347,6 +391,12 @@ public class EditField extends Widget {
             return true;
         }
 
+        if(evt.isKeyEvent() && autoCompletionWantKeys) {
+            if(autoCompletionWindow.handleEvent(evt)) {
+                return true;
+            }
+        }
+        
         switch (evt.getType()) {
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
@@ -372,6 +422,12 @@ public class EditField extends Widget {
             case Keyboard.KEY_RIGHT:
                 moveCursor(+1, selectPressed);
                 return true;
+            case Keyboard.KEY_UP:
+            case Keyboard.KEY_DOWN:
+                if(!autoCompletionWantKeys && autoCompletionWindow != null) {
+                    return autoCompletionWindow.handleEvent(evt);
+                }
+                return false;
             default:
                 if(evt.hasKeyChar()) {
                     insertChar(evt.getKeyChar());
@@ -391,6 +447,12 @@ public class EditField extends Widget {
             case Keyboard.KEY_LEFT:
             case Keyboard.KEY_RIGHT:
                 return true;
+            case Keyboard.KEY_UP:
+            case Keyboard.KEY_DOWN:
+                if(!autoCompletionWantKeys && autoCompletionWindow != null) {
+                    return autoCompletionWindow.handleEvent(evt);
+                }
+                return false;
             default:
                 return evt.hasKeyChar();
             }
