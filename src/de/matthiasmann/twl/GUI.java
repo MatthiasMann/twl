@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -96,6 +96,9 @@ public final class GUI extends Widget {
     
     private Rect[] clipRects;
     private int numClipRects;
+
+    private InfoWindow activeInfoWindow;
+    private final Widget infoWindowPlaceholder;
     
     private final TooltipWindow tooltipWindow;
     private final Label tooltipLabel;
@@ -124,6 +127,9 @@ public final class GUI extends Widget {
         this.rootPane.setFocusKeyEnabled(false);
         this.clipRects = new Rect[8];
 
+        this.infoWindowPlaceholder = new Widget();
+        this.infoWindowPlaceholder.setTheme("");
+        
         this.tooltipLabel = new Label();
         this.tooltipWindow = new TooltipWindow();
         this.tooltipWindow.add(tooltipLabel);
@@ -137,7 +143,8 @@ public final class GUI extends Widget {
         setSize();
         
         super.insertChild(rootPane, 0);
-        super.insertChild(tooltipWindow, 1);
+        super.insertChild(infoWindowPlaceholder, 1);
+        super.insertChild(tooltipWindow, 2);
         
         resyncTimerAfterPause();
     }
@@ -623,7 +630,7 @@ public final class GUI extends Widget {
 
     private Widget getTopPane() {
         // don't use potential overwritten methods
-        return super.getChild(super.getNumChildren()-2);
+        return super.getChild(super.getNumChildren()-3);
     }
     
     @Override
@@ -642,7 +649,17 @@ public final class GUI extends Widget {
             return target;
         } else {
             assert !dragActive;
-            return getTopPane().routeMouseEvent(event);
+            Widget widget = null;
+            if(activeInfoWindow != null) {
+                if(setMouseOverChild(activeInfoWindow, event)) {
+                    widget = activeInfoWindow;
+                }
+            }
+            if(widget == null) {
+                widget = getTopPane();
+                setMouseOverChild(widget, event);
+            }
+            return widget.routeMouseEvent(event);
         }
     }
 
@@ -670,7 +687,7 @@ public final class GUI extends Widget {
         }
         hideTooltip();
         sendPopupEvent(Event.Type.POPUP_OPENED);
-        super.insertChild(popup, getNumChildren()-1);
+        super.insertChild(popup, getNumChildren()-2);
         popup.getOwner().setOpenPopup(this, true);
         popupEventOccured = true;
     }
@@ -687,7 +704,7 @@ public final class GUI extends Widget {
     }
 
     boolean hasOpenPopups(Widget owner) {
-        for(int i=getNumChildren()-1 ; i-->1 ;) {
+        for(int i=getNumChildren()-2 ; i-->1 ;) {
             PopupWindow popup = (PopupWindow)getChild(i);
             if(popup.getOwner() == popup.getOwner()) {
                 return true;
@@ -697,7 +714,7 @@ public final class GUI extends Widget {
     }
     
     void closePopupFromWidgets(Widget widget) {
-        for(int i=getNumChildren()-1 ; i-->1 ;) {
+        for(int i=getNumChildren()-2 ; i-->1 ;) {
             PopupWindow popup = (PopupWindow)getChild(i);
             Widget owner = popup.getOwner();
             while(owner != null && owner != widget) {
@@ -717,6 +734,30 @@ public final class GUI extends Widget {
         }
         if(to != null) {
             hideTooltip();
+        }
+    }
+
+    void openInfo(InfoWindow info) {
+        if(info == null) {
+            throw new NullPointerException("info");
+        }
+
+        int idx = getNumChildren()-2;
+        super.removeChild(idx);
+        super.insertChild(info, idx);
+        activeInfoWindow = info;
+    }
+
+    void closeInfo(InfoWindow info) {
+        if(info == null) {
+            throw new NullPointerException("info");
+        }
+
+        if(info == activeInfoWindow) {
+            int idx = getNumChildren()-2;
+            super.removeChild(idx);
+            super.insertChild(infoWindowPlaceholder, idx);
+            activeInfoWindow = null;
         }
     }
 
@@ -912,11 +953,7 @@ public final class GUI extends Widget {
 
         @Override
         protected void layout() {
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                Widget c = getChild(i);
-                c.setSize(getInnerWidth(), getInnerHeight());
-                c.setPosition(getInnerX(), getInnerY());
-            }
+            layoutChildrenFullInnerArea();
         }
     }
     
