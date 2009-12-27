@@ -76,4 +76,18 @@ public abstract class AutoCompletionResult {
      * @see #getNumResults()
      */
     public abstract String getResult(int idx);
+
+    /**
+     * Tries to refine the results. Refining can result in a different order
+     * of results then a new query but is faster.
+     *
+     * If refining resulted in no results then an empty AutoCompletionResult
+     * is returned.
+     *
+     * @param text The new text
+     * @return the new refined AutoCompletionResult or null if refining was not possible
+     */
+    public AutoCompletionResult refine(String text) {
+        return null;
+    }
 }

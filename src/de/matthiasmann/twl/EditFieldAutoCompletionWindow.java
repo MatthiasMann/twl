@@ -29,14 +29,13 @@
  */
 package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.ListBox.CallbackReason;
 import de.matthiasmann.twl.model.AutoCompletionDataSource;
 import de.matthiasmann.twl.model.AutoCompletionResult;
 import de.matthiasmann.twl.model.SimpleListModel;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.FutureTask;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
@@ -53,7 +52,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
     private boolean captureKeys;
     private AutoCompletionDataSource dataSource;
     private ExecutorService executorService;
-    private FutureTask<AutoCompletionResult> future;
+    private Future<AutoCompletionResult> future;
 
     /**
      * Creates an EditFieldAutoCompletionWindow associated with the specified
@@ -142,6 +141,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
      */
     public void setExecutorService(ExecutorService executorService) {
         this.executorService = executorService;
+        cancelFuture();
     }
 
     /**
@@ -163,6 +163,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
      */
     public void setDataSource(AutoCompletionDataSource dataSource) {
         this.dataSource = dataSource;
+        cancelFuture();
         if(isOpen()) {
             updateAutoCompletion();
         }
@@ -173,20 +174,28 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
      * are available
      */
     public void updateAutoCompletion() {
+        cancelFuture();
         AutoCompletionResult result = null;
         if(dataSource != null) {
             EditField ef = getEditField();
-            GUI gui = getGUI();
             int cursorPos = ef.getCursorPos();
             if(cursorPos > 0 && cursorPos == ef.getTextLength()) {
                 String text = ef.getText();
-                if(executorService != null && gui != null) {
-                    if(future != null) {
-                        future.cancel(true);
+                GUI gui = ef.getGUI();
+                if(listModel.result != null) {
+                    result = listModel.result.refine(text);
+                }
+                if(result == null) {
+                    if(executorService != null && gui != null) {
+                        future = executorService.submit((Callable<AutoCompletionResult>)
+                                new AsyncQuery(gui, dataSource, text, listModel.result));
+                    } else {
+                        try {
+                            result = dataSource.collectSuggestions(text, listModel.result);
+                        } catch (Exception ex) {
+                            reportQueryException(ex);
+                        }
                     }
-                    future = new FutureTask<AutoCompletionResult>(new AsyncQuery(gui, dataSource, text, listModel.result));
-                } else {
-                    result = dataSource.collectSuggestions(text, listModel.result);
                 }
             }
         }
@@ -216,16 +225,29 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                 try {
                     result = future.get();
                 } catch (InterruptedException ex) {
-                    ex.printStackTrace();   // should never happen
+                    // set the interrupted state again
+                    Thread.currentThread().interrupt();
                 } catch (ExecutionException ex) {
-                    Logger.getLogger(EditFieldAutoCompletionWindow.class.getName()).log(Level.SEVERE, "Exception while collection auto completion results", ex);
+                    reportQueryException(ex.getCause());
                 }
                 future = null;
                 updateAutoCompletion(result);
             }
         }
     }
-    
+
+    void cancelFuture() {
+        if(future != null) {
+            future.cancel(true);
+            future = null;
+        }
+    }
+
+    protected void reportQueryException(Throwable ex) {
+        Logger.getLogger(EditFieldAutoCompletionWindow.class.getName()).log(
+                Level.SEVERE, "Exception while collecting auto completion results", ex);
+    }
+
     @Override
     protected boolean handleEvent(Event evt) {
         if(evt.isKeyEvent()) {
@@ -250,8 +272,10 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                             break;
 
                         default:
-                            if(evt.hasKeyChar()) {
-                                stopAutoCompletion();
+                            if(evt.hasKeyChar() || evt.getKeyCode() == Keyboard.KEY_BACK) {
+                                if(!acceptAutoCompletion()) {
+                                    stopAutoCompletion();
+                                }
                                 return false;
                             }
                             break;
@@ -274,12 +298,14 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         return super.handleEvent(evt);
     }
 
-    void acceptAutoCompletion() {
+    boolean acceptAutoCompletion() {
         int selected = listBox.getSelected();
         if(selected >= 0) {
             getEditField().setText(listModel.getEntry(selected));
             stopAutoCompletion();
+            return true;
         }
+        return false;
     }
     
     private void startCapture() {
@@ -322,7 +348,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
             }
         }
 
-        public void callback(CallbackReason reason) {
+        public void callback(ListBox.CallbackReason reason) {
             switch(reason) {
                 case MOUSE_DOUBLE_CLICK:
                     acceptAutoCompletion();
