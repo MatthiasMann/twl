@@ -211,8 +211,8 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
         }
     }
 
-    static class FolderFilter implements FileSystemModel.FileFilter {
-        static final FolderFilter instance = new FolderFilter();
+    public static final class FolderFilter implements FileSystemModel.FileFilter {
+        public static final FolderFilter instance = new FolderFilter();
         
         public boolean accept(FileSystemModel model, Object file) {
             return model.isFolder(file);

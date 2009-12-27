@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.ListBox.CallbackReason;
 import de.matthiasmann.twl.model.BitfieldBooleanModel;
+import de.matthiasmann.twl.model.FileSystemAutoCompletionDataSource;
 import de.matthiasmann.twl.model.FileSystemModel;
 import de.matthiasmann.twl.model.FileSystemModel.FileFilter;
 import de.matthiasmann.twl.model.FileSystemTreeModel;
@@ -46,6 +47,7 @@ import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
 import java.util.prefs.Preferences;
 
 /**
@@ -94,6 +96,7 @@ public class FileSelector extends DialogLayout {
     private final Button btnShowHidden;
     private final ComboBox fileFilterBox;
     private final FileFiltersModel fileFiltersModel;
+    private final EditFieldAutoCompletionWindow autoCompletion;
 
     private boolean allowFolderSelection;
     private Callback[] callbacks;
@@ -190,6 +193,9 @@ public class FileSelector extends DialogLayout {
                 setCurrentNode(node);
             }
         });
+
+        autoCompletion = new EditFieldAutoCompletionWindow(currentFolder.getEditField());
+        autoCompletion.setExecutorService(Executors.newSingleThreadExecutor());
 
         setAllowMultiSelection(true);
         fileTable.addCallback(new TableBase.Callback() {
@@ -319,10 +325,13 @@ public class FileSelector extends DialogLayout {
             model = null;
             currentFolder.setModel(null);
             fileTable.setCurrentFolder(null, null);
+            autoCompletion.setDataSource(null);
         } else {
             model = new FileSystemTreeModel(fsm);
             currentFolder.setModel(model);
             currentFolder.setSeparator(fsm.getSeparator());
+            autoCompletion.setDataSource(new FileSystemAutoCompletionDataSource(fsm,
+                    FileSystemTreeModel.FolderFilter.instance));
             setCurrentNode(model);
             if(folderMRU.getNumEntries() > 0) {
                 gotoFolderFromMRU(0);

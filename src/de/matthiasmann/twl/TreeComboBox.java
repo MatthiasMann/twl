@@ -169,6 +169,10 @@ public class TreeComboBox extends ComboBoxBase {
         return table;
     }
 
+    public EditField getEditField() {
+        return display.getEditField();
+    }
+    
     public void addCallback(Callback callback) {
         callbacks = CallbackSupport.addCallbackToList(callbacks, callback, Callback.class);
     }

@@ -103,6 +103,10 @@ public class TreePathDisplay extends Widget {
     public void setEditErrorMessage(String msg) {
         editField.setErrorMessage(msg);
     }
+
+    public EditField getEditField() {
+        return editField;
+    }
     
     protected String getTextFromNode(TreeTableNode node) {
         Object data = node.getData(0);
@@ -249,6 +253,9 @@ public class TreePathDisplay extends Widget {
 
         @Override
         protected void doCallback(int key) {
+            // for auto completion
+            super.doCallback(key);
+
             switch(key) {
             case Keyboard.KEY_RETURN:
                 if(fireResolvePath(editField.getText())) {
