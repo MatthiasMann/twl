@@ -76,6 +76,12 @@ public class InfoWindow extends Widget {
         }
     }
 
+    /**
+     * Called after the info window has been closed
+     */
+    protected void infoWindowClosed() {
+    }
+
     @Override
     protected void layout() {
         layoutChildrenFullInnerArea();

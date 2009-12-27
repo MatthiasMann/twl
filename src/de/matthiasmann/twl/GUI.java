@@ -712,15 +712,18 @@ public final class GUI extends Widget {
         }
         return false;
     }
+
+    private boolean isOwner(Widget owner, Widget widget) {
+        while(owner != null && owner != widget) {
+            owner = owner.getParent();
+        }
+        return owner == widget;
+    }
     
     void closePopupFromWidgets(Widget widget) {
         for(int i=getNumChildren()-2 ; i-->1 ;) {
             PopupWindow popup = (PopupWindow)getChild(i);
-            Widget owner = popup.getOwner();
-            while(owner != null && owner != widget) {
-                owner = owner.getParent();
-            }
-            if(owner == widget) {
+            if(isOwner(popup.getOwner(), widget)) {
                 closePopup(popup);
             }
         }
@@ -728,12 +731,13 @@ public final class GUI extends Widget {
 
     void widgetHidden(Widget widget) {
         closePopupFromWidgets(widget);
-        Widget to = tooltipOwner;
-        while(to != null && to != widget) {
-            to = to.getParent();
-        }
-        if(to != null) {
+        if(isOwner(tooltipOwner, widget)) {
             hideTooltip();
+        }
+        if(activeInfoWindow != null) {
+            if(isOwner(activeInfoWindow.getOwner(), widget)) {
+                closeInfo(activeInfoWindow);
+            }
         }
     }
 
@@ -758,6 +762,7 @@ public final class GUI extends Widget {
             super.removeChild(idx);
             super.insertChild(infoWindowPlaceholder, idx);
             activeInfoWindow = null;
+            info.infoWindowClosed();
         }
     }
 

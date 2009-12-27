@@ -212,6 +212,11 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         installAutoCompletion();
     }
 
+    @Override
+    protected void infoWindowClosed() {
+        stopAutoCompletion();
+    }
+
     protected void updateAutoCompletion(AutoCompletionResult results) {
         listModel.setResult(results);
         captureKeys = false;
