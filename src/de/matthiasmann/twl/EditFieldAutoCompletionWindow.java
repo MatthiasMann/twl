@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.ListBox.CallbackReason;
 import de.matthiasmann.twl.model.AutoCompletionDataSource;
 import de.matthiasmann.twl.model.AutoCompletionResult;
 import de.matthiasmann.twl.model.SimpleListModel;
@@ -54,50 +55,123 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
     private ExecutorService executorService;
     private FutureTask<AutoCompletionResult> future;
 
+    /**
+     * Creates an EditFieldAutoCompletionWindow associated with the specified
+     * EditField. It will register itself as callback.
+     *
+     * Auto completion will start to work once a data source is set
+     *
+     * @param editField the EditField to which auto completion should be applied
+     */
     public EditFieldAutoCompletionWindow(EditField editField) {
         super(editField);
 
         this.listModel = new ResultListModel();
         this.listBox = new ListBox(listModel);
-
+        
         add(listBox);
 
-        editField.addCallback(new EditField.Callback() {
-            public void callback(int key) {
-                if(key == Keyboard.KEY_NONE) {
-                    updateAutoCompletion();
-                } else {
-                    stopAutoCompletion();
-                }
-            }
-        });
+        Callbacks cb = new Callbacks();
+        listBox.addCallback(cb);
+        editField.addCallback(cb);
     }
 
+    /**
+     * Creates an EditFieldAutoCompletionWindow associated with the specified
+     * EditField. It will register itself as callback.
+     *
+     * Auto completion is operational with the given data source (when it's not null)
+     *
+     * @param editField the EditField to which auto completion should be applied
+     * @param dataSource the data source used for auto completion - can be null
+     */
+    public EditFieldAutoCompletionWindow(EditField editField, AutoCompletionDataSource dataSource) {
+        this(editField);
+        this.dataSource = dataSource;
+    }
+
+    /**
+     * Creates an EditFieldAutoCompletionWindow associated with the specified
+     * EditField. It will register itself as callback.
+     *
+     * Auto completion is operational with the given data source (when it's not null)
+     *
+     * @see #setExecutorService(executorService)
+     *
+     * @param editField the EditField to which auto completion should be applied
+     * @param dataSource the data source used for auto completion - can be null
+     * @param executorService the executorService used to execute the data source queries
+     */
+    public EditFieldAutoCompletionWindow(EditField editField,
+            AutoCompletionDataSource dataSource,
+            ExecutorService executorService) {
+        this(editField);
+        this.dataSource = dataSource;
+        this.executorService = executorService;
+    }
+
+    /**
+     * Returns the EditField to which this EditFieldAutoCompletionWindow is attached
+     * @return the EditField
+     */
     public EditField getEditField() {
         return (EditField)getOwner();
     }
 
+    /**
+     * Returns the current ExecutorService
+     * @return the current ExecutorService
+     */
     public ExecutorService getExecutorService() {
         return executorService;
     }
 
+    /**
+     * Sets the ExecutorService which is used to perform async queries on the
+     * AutoCompletionDataSource.
+     *
+     * If it is null then all queries are done synchronously from the EditField
+     * callback. This is good as long as data source is very fast (eg small in
+     * memory tables).
+     *
+     * When the data source quries take too long they will impact the UI
+     * responsiveness. To prevent that the queries can be executed in another
+     * thread. This requires the data source and results to be thread save.
+     *
+     * @param executorService the ExecutorService or null
+     */
     public void setExecutorService(ExecutorService executorService) {
         this.executorService = executorService;
     }
 
+    /**
+     * Returns the current data source
+     * @return the current data source
+     */
     public AutoCompletionDataSource getDataSource() {
         return dataSource;
     }
 
+    /**
+     * Sets a new data source.
+     *
+     * If the info window is currently open, then the displayed auto completion
+     * will be refreshed. If you also need to change the ExecutorService then
+     * it's adviced to do that first.
+     *
+     * @param dataSource the new AutoCompletionDataSource - can be null
+     */
     public void setDataSource(AutoCompletionDataSource dataSource) {
-        if(this.dataSource != dataSource) {
-            this.dataSource = dataSource;
-            if(isOpen()) {
-                updateAutoCompletion();
-            }
+        this.dataSource = dataSource;
+        if(isOpen()) {
+            updateAutoCompletion();
         }
     }
 
+    /**
+     * This will update the auto completion and open the info window when results
+     * are available
+     */
     public void updateAutoCompletion() {
         AutoCompletionResult result = null;
         if(dataSource != null) {
@@ -117,6 +191,16 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
             }
         }
         updateAutoCompletion(result);
+    }
+
+    /**
+     * Stops the auto completion.
+     * 
+     * Closes the infow window and discards the collected results.
+     */
+    public void stopAutoCompletion() {
+        listModel.setResult(null);
+        installAutoCompletion();
     }
 
     protected void updateAutoCompletion(AutoCompletionResult results) {
@@ -149,10 +233,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                 if(evt.getType() == Event.Type.KEY_PRESSED) {
                     switch (evt.getKeyCode()) {
                         case Keyboard.KEY_RETURN:
-                            if(listBox.getSelected() >= 0) {
-                                getEditField().setText(listModel.getEntry(listBox.getSelected()));
-                                stopAutoCompletion();
-                            }
+                            acceptAutoCompletion();
                             break;
 
                         case Keyboard.KEY_ESCAPE:
@@ -161,6 +242,10 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
 
                         case Keyboard.KEY_UP:
                         case Keyboard.KEY_DOWN:
+                        case Keyboard.KEY_PRIOR:
+                        case Keyboard.KEY_NEXT:
+                        case Keyboard.KEY_HOME:
+                        case Keyboard.KEY_END:
                             listBox.handleEvent(evt);
                             break;
 
@@ -189,11 +274,14 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         return super.handleEvent(evt);
     }
 
-    public void stopAutoCompletion() {
-        listModel.setResult(null);
-        installAutoCompletion();
+    void acceptAutoCompletion() {
+        int selected = listBox.getSelected();
+        if(selected >= 0) {
+            getEditField().setText(listModel.getEntry(selected));
+            stopAutoCompletion();
+        }
     }
-
+    
     private void startCapture() {
         captureKeys = true;
         installAutoCompletion();
@@ -222,6 +310,24 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
 
         public String getEntry(int index) {
             return result.getResult(index);
+        }
+    }
+
+    class Callbacks implements EditField.Callback, CallbackWithReason<ListBox.CallbackReason> {
+        public void callback(int key) {
+            if(key == Keyboard.KEY_NONE) {
+                updateAutoCompletion();
+            } else {
+                stopAutoCompletion();
+            }
+        }
+
+        public void callback(CallbackReason reason) {
+            switch(reason) {
+                case MOUSE_DOUBLE_CLICK:
+                    acceptAutoCompletion();
+                    break;
+            }
         }
     }
 
