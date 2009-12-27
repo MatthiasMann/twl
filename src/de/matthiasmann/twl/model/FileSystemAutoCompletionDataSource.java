@@ -105,14 +105,13 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
         public Result(String text, int prefixLength, Object parent) {
             super(text, prefixLength);
             this.parent = parent;
-            this.nameFilter = text.substring(prefixLength);
+            this.nameFilter = text.substring(prefixLength).toUpperCase();
         }
 
         public boolean accept(FileSystemModel fsm, Object file) {
             FileSystemModel.FileFilter ff = fileFilter;
             if(ff == null || ff.accept(fsm, file)) {
-                String name = fsm.getName(file);
-                int idx = name.indexOf(nameFilter);
+                int idx = getMatchIndex(fsm.getName(file));
                 if(idx >= 0) {
                     addName(fsm.getPath(file), idx);
                 }
@@ -120,6 +119,9 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
             return false;
         }
 
+        private int getMatchIndex(String partName) {
+            return partName.toUpperCase().indexOf(nameFilter);
+        }
         private void addName(String fullName, int matchIdx) {
             if(matchIdx == 0) {
                 results1.add(fullName);
@@ -131,7 +133,7 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
         private void addFiltedNames(ArrayList<String> results) {
             for(int i=0,n=results.size() ; i<n ; i++) {
                 String fullName = results.get(i);
-                int idx = fullName.indexOf(nameFilter, prefixLength);
+                int idx = getMatchIndex(fullName.substring(prefixLength));
                 addName(fullName, idx);
             }
         }
