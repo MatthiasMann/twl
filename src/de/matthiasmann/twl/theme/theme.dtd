@@ -149,7 +149,7 @@
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
-<!ELEMENT animation (repeat|frame)+>
+<!ELEMENT animation (repeat|frame|frames)+>
 <!ATTLIST animation
     name            CDATA #IMPLIED
     count           CDATA #IMPLIED
@@ -164,6 +164,18 @@
 <!ATTLIST frame
     ref             CDATA #REQUIRED
     duration        CDATA #REQUIRED
+    tint            CDATA #IMPLIED>
+
+<!ELEMENT frames EMPTY>
+<!ATTLIST frames
+    duration        CDATA #REQUIRED
+    count           CDATA #REQUIRED
+    x               CDATA #REQUIRED
+    y               CDATA #REQUIRED
+    width           CDATA #REQUIRED
+    height          CDATA #REQUIRED
+    offsetx         CDATA #IMPLIED
+    offsety         CDATA #IMPLIED
     tint            CDATA #IMPLIED>
 
 <!ELEMENT repeat (repeat|frame)+>

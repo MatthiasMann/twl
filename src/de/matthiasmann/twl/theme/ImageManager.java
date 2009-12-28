@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -455,26 +455,56 @@ class ImageManager {
         return image;
     }
 
-    private AnimatedImage.Element parseAnimElement(XmlPullParser xpp, String tagName) throws XmlPullParserException, IOException {
+    private void parseAnimElements(XmlPullParser xpp, String tagName, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
         if("repeat".equals(tagName)) {
-            return parseAnimRepeat(xpp);
+            frames.add(parseAnimRepeat(xpp));
+        } else if("frame".equals(tagName)) {
+            frames.add(parseAnimFrame(xpp));
+        } else if("frames".equals(tagName)) {
+            parseAnimFrames(xpp, frames);
+        } else {
+            throw new XmlPullParserException("Unexpected " + tagName, xpp, null);
         }
-        if("frame".equals(tagName)) {
-            return parseAnimFrame(xpp);
-        }
-        throw new XmlPullParserException("Unexpected " + tagName, xpp, null);
     }
 
     private AnimatedImage.Img parseAnimFrame(XmlPullParser xpp) throws XmlPullParserException, IOException {
         int duration = ParserUtil.parseIntFromAttribute(xpp, "duration");
         if(duration < 0) {
-            throw new IllegalArgumentException("duration must be >= 1 ms");
+            throw new IllegalArgumentException("duration must be >= 0 ms");
         }
         Color tint = ParserUtil.parseColorFromAttribute(xpp, "tint", Color.WHITE);
         Image image = getReferencedImage(xpp);
         AnimatedImage.Img img = new AnimatedImage.Img(duration, image, tint);
         xpp.nextTag();
         return img;
+    }
+
+    private void parseAnimFrames(XmlPullParser xpp, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
+        ImageParams params = new ImageParams();
+        parseRectFromAttribute(xpp, params);
+        int duration = ParserUtil.parseIntFromAttribute(xpp, "duration");
+        if(duration < 1) {
+            throw new IllegalArgumentException("duration must be >= 1 ms");
+        }
+        int count = ParserUtil.parseIntFromAttribute(xpp, "count");
+        if(count < 1) {
+            throw new IllegalArgumentException("count must be >= 1");
+        }
+        Color tint = ParserUtil.parseColorFromAttribute(xpp, "tint", Color.WHITE);
+        int xOffset = ParserUtil.parseIntFromAttribute(xpp, "offsetx", 0);
+        int yOffset = ParserUtil.parseIntFromAttribute(xpp, "offsety", 0);
+        if(count > 1 && (xOffset == 0 && yOffset == 0)) {
+            throw new IllegalArgumentException("offsets required for multiple frames");
+        }
+        for(int i=0 ; i<count ; i++) {
+            Image image = createImage(xpp, params.x, params.y, params.w, params.h, Color.WHITE, false);
+            AnimatedImage.Img img = new AnimatedImage.Img(duration, image, tint);
+            frames.add(img);
+            params.x += xOffset;
+            params.y += yOffset;
+        }
+
+        xpp.nextTag();
     }
 
     private AnimatedImage.Repeat parseAnimRepeat(XmlPullParser xpp) throws XmlPullParserException, IOException {
@@ -496,8 +526,8 @@ class ImageManager {
                 logger.warning("Animation frames after an endless repeat won't be displayed: " + xpp.getPositionDescription());
             }
             String tagName = xpp.getName();
-            AnimatedImage.Element e = parseAnimElement(xpp, tagName);
-            children.add(e);
+            parseAnimElements(xpp, tagName, children);
+            AnimatedImage.Element e = children.get(children.size()-1);
             lastRepeatsEndless =
                     (e instanceof AnimatedImage.Repeat) &&
                     ((AnimatedImage.Repeat)e).repeatCount == 0;
