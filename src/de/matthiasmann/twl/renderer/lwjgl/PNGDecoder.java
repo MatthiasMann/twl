@@ -33,6 +33,7 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.zip.CRC32;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
@@ -103,6 +104,10 @@ public class PNGDecoder {
             }
             closeChunk();
         }
+
+        if(colorType == COLOR_INDEXED && palette == null) {
+            throw new IOException("Missing PLTE chunk");
+        }
     }
 
     public int getHeight() {
@@ -146,6 +151,12 @@ public class PNGDecoder {
             case ALPHA: return fmt;
             default: return LWJGLTexture.Format.LUMINANCE;
             }
+        case COLOR_INDEXED:
+            switch (fmt) {
+            case ABGR:
+            case RGBA: return fmt;
+            default: return LWJGLTexture.Format.RGBA;
+            }
         default:
             throw new UnsupportedOperationException("Not yet implemented");
         }
@@ -185,6 +196,13 @@ public class PNGDecoder {
                     switch (fmt) {
                     case LUMINANCE:
                     case ALPHA: copy(buffer, curLine); break;
+                    default: throw new UnsupportedOperationException("Unsupported format for this image");
+                    }
+                    break;
+                case COLOR_INDEXED:
+                    switch (fmt) {
+                    case ABGR: copyPALtoABGR(buffer, curLine); break;
+                    case RGBA: copyPALtoRGBA(buffer, curLine); break;
                     default: throw new UnsupportedOperationException("Unsupported format for this image");
                     }
                     break;
@@ -258,6 +276,50 @@ public class PNGDecoder {
     private void copyRGBAtoRGB(ByteBuffer buffer, byte[] curLine) {
         for(int i=1,n=curLine.length ; i<n ; i+=4) {
             buffer.put(curLine[i]).put(curLine[i+1]).put(curLine[i+2]);
+        }
+    }
+
+    private void copyPALtoABGR(ByteBuffer buffer, byte[] curLine) {
+        if(paletteA != null) {
+            for(int i=1,n=curLine.length ; i<n ; i+=1) {
+                int idx = curLine[i] & 255;
+                byte r = palette[idx*3 + 0];
+                byte g = palette[idx*3 + 1];
+                byte b = palette[idx*3 + 2];
+                byte a = paletteA[idx];
+                buffer.put(a).put(b).put(g).put(r);
+            }
+        } else {
+            for(int i=1,n=curLine.length ; i<n ; i+=1) {
+                int idx = curLine[i] & 255;
+                byte r = palette[idx*3 + 0];
+                byte g = palette[idx*3 + 1];
+                byte b = palette[idx*3 + 2];
+                byte a = (byte)0xFF;
+                buffer.put(a).put(b).put(g).put(r);
+            }
+        }
+    }
+
+    private void copyPALtoRGBA(ByteBuffer buffer, byte[] curLine) {
+        if(paletteA != null) {
+            for(int i=1,n=curLine.length ; i<n ; i+=1) {
+                int idx = curLine[i] & 255;
+                byte r = palette[idx*3 + 0];
+                byte g = palette[idx*3 + 1];
+                byte b = palette[idx*3 + 2];
+                byte a = paletteA[idx];
+                buffer.put(r).put(g).put(b).put(a);
+            }
+        } else {
+            for(int i=1,n=curLine.length ; i<n ; i+=1) {
+                int idx = curLine[i] & 255;
+                byte r = palette[idx*3 + 0];
+                byte g = palette[idx*3 + 1];
+                byte b = palette[idx*3 + 2];
+                byte a = (byte)0xFF;
+                buffer.put(r).put(g).put(b).put(a);
+            }
         }
     }
     
@@ -359,6 +421,9 @@ public class PNGDecoder {
         case COLOR_TRUEALPHA:
             bytesPerPixel = 4;
             break;
+        case COLOR_INDEXED:
+            bytesPerPixel = 1;
+            break;
         default:
             throw new IOException("unsupported color format");  
         }
@@ -399,7 +464,8 @@ public class PNGDecoder {
             if(palette == null) {
                 throw new IOException("tRNS chunk without PLTE chunk");
             }
-            paletteA = new byte[palette.length];
+            paletteA = new byte[palette.length/3];
+            Arrays.fill(paletteA, (byte)0xFF);
             readChunk(paletteA, 0, paletteA.length);
             break;
         default:
