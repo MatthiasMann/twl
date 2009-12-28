@@ -113,7 +113,7 @@ class ImageManager {
         xpp.require(XmlPullParser.START_TAG, null, "textures");
         String fmt = xpp.getAttributeValue(null, "format");
         String filter = xpp.getAttributeValue(null, "filter");
-        String fileName = xpp.getAttributeValue(null, "file");
+        String fileName = ParserUtil.getAttributeNotNull(xpp, "file");
 
         try {
             Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
