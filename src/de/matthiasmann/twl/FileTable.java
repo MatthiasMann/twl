@@ -353,6 +353,8 @@ public class FileTable extends Table {
     }
 
     static class FileTableModel extends AbstractTableModel {
+        private final DateFormat dateFormat = DateFormat.getDateInstance();
+        
         Entry[] entries = EMPTY;
         int numFolders;
 
@@ -430,7 +432,6 @@ public class FileTable extends Table {
             return result;
         }
 
-        static final DateFormat dateFormat = DateFormat.getDateInstance();
         static String SIZE_UNITS[] = {" MB", " KB", " B"};
         static long SIZE_FACTORS[] = {1024*1024, 1024, 1};
 
