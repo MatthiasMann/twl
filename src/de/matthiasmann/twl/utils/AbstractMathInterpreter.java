@@ -236,10 +236,12 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
                     }
                 }
             }
-        } catch(Exception ex) {
+            throw new IllegalStateException("unknown field '"+field+
+                        "' of class '"+obj.getClass()+"'");
+        } catch(Throwable ex) {
+            throw new IllegalStateException("error accessing field '"+field+
+                        "' of class '"+obj.getClass()+"'", ex);
         }
-        throw new IllegalStateException("unknown field '"+field+
-                    "' of class '"+obj.getClass()+"'");
     }
 
     public void callFunction(String name, int args) {
