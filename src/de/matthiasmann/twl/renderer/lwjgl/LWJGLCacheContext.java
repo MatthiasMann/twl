@@ -45,22 +45,23 @@ import org.lwjgl.opengl.GLContext;
 public class LWJGLCacheContext implements CacheContext {
 
     final LWJGLRenderer renderer;
-    final HashMap<URL, LWJGLTexture> textures;
-    final HashMap<URL, BitmapFont> fontCache;
+    final HashMap<String, LWJGLTexture> textures;
+    final HashMap<String, BitmapFont> fontCache;
     boolean valid;
 
     LWJGLCacheContext(LWJGLRenderer renderer) {
         this.renderer = renderer;
-        this.textures = new HashMap<URL, LWJGLTexture>();
-        this.fontCache = new HashMap<URL, BitmapFont>();
+        this.textures = new HashMap<String, LWJGLTexture>();
+        this.fontCache = new HashMap<String, BitmapFont>();
         valid = true;
     }
 
     LWJGLTexture loadTexture(URL url, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
-        LWJGLTexture texture = textures.get(url);
+        String urlString = url.toString();
+        LWJGLTexture texture = textures.get(urlString);
         if(texture == null) {
             texture = createTexture(url, fmt, filter);
-            textures.put(url, texture);
+            textures.put(urlString, texture);
         }
         return texture;
     }
@@ -94,10 +95,11 @@ public class LWJGLCacheContext implements CacheContext {
     }
 
     BitmapFont loadBitmapFont(URL url) throws IOException {
-        BitmapFont bmFont = fontCache.get(url);
+        String urlString = url.toString();
+        BitmapFont bmFont = fontCache.get(urlString);
         if(bmFont == null) {
             bmFont = BitmapFont.loadFont(renderer, url);
-            fontCache.put(url, bmFont);
+            fontCache.put(urlString, bmFont);
         }
         return bmFont;
     }
