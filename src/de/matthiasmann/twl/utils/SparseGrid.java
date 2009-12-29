@@ -284,7 +284,7 @@ public class SparseGrid {
         int findPos(int row, int column, int high) {
             int low = 0;
             while(low < high) {
-                int mid = (low + high) / 2;
+                int mid = (low + high) >>> 1;
                 Entry e = children[mid];
                 int cmp = e.compare(row, column);
                 if(cmp > 0) {
