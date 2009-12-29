@@ -78,7 +78,7 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    public static NamedFileFilter AllFilesFilter = new NamedFileFilter("All files", null);
+    public static final NamedFileFilter AllFilesFilter = new NamedFileFilter("All files", null);
 
     private final IntegerModel flags;
     private final MRUListModel<String> folderMRU;
@@ -608,7 +608,7 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    class FileFiltersModel extends SimpleListModel<String> {
+    static class FileFiltersModel extends SimpleListModel<String> {
         private final ArrayList<NamedFileFilter> filters = new ArrayList<NamedFileFilter>();
         public NamedFileFilter getFileFilter(int index) {
             return filters.get(index);
