@@ -19,7 +19,6 @@ public class AnimatedImage implements Image, HasBorder {
 
     static abstract class Element {
         int duration;
-        int startTime;
 
         abstract int getWidth();
         abstract int getHeight();
