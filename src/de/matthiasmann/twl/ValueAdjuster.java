@@ -35,6 +35,11 @@ import org.lwjgl.input.Keyboard;
  * Base class for value adjuster widgets.
  * It has a value display/edit widget and 2 buttons.
  *
+ * You can adjust the value via drag&drop on the display
+ * or by clicking on the display which will open an edit field
+ * or using the +/ buttons
+ * or using the left/right keys
+ * 
  * @author Matthias Mann
  */
 public abstract class ValueAdjuster extends Widget {
