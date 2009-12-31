@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -37,7 +37,35 @@ import java.util.HashSet;
 /**
  * A layout manager similar to Swing's GroupLayout
  *
+ * This layout manager uses two independant layout groups:
+ *   one for the horizontal axis
+ *   one for the vertical axis.
+ * Every widget must be added to both the horizontal and the vertical group.
+ *
+ * When a widget is added to a group it will also be added as a child widget
+ * if it was not already added. You can add widgets to DialogLayout before
+ * adding them to a group to set the focus order.
+ *
+ * There are two kinds of groups:
+ *   a sequential group which which behaves similar to BoxLayout
+ *   a parallel group which alignes the start and size of each child
+ *
+ * Groups can be cascaded as a tree without restrictions.
+ *
+ * It is also possible to add widgets to DialogLayout without adding them
+ * to the layout groups. These widgets are then not touched by DialogLayout's
+ * layout system.
+ *
+ * When a widget is only added to either the horizontal or vertical groups
+ * and not both, then an IllegalStateException exception is created on layout.
+ *
+ * To help debugging the group construction you can set the system property
+ * "debugLayoutGroups" to "true" which will collect additional stack traces
+ * to help locate the source of the error.
+ *
  * @author Matthias Mann
+ * @see #createParallelGroup() 
+ * @see #createSequentialGroup()
  */
 public class DialogLayout extends Widget {
 
