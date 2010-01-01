@@ -289,7 +289,7 @@ public class ThemeManager {
                         defaultFont = font;
                     }
                 } else if("constantDef".equals(tagName)) {
-                    insertConstant(name, parseParam(xpp, baseUrl));
+                    insertConstant(name, parseParam(xpp, baseUrl, "constantDef"));
                 } else {
                     throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
                 }
@@ -419,7 +419,7 @@ public class ThemeManager {
                 final String tagName = xpp.getName();
                 final String name = xpp.getAttributeValue(null, "name");
                 if("param".equals(tagName)) {
-                    Map<String, ?> entries = parseParam(xpp, baseUrl);
+                    Map<String, ?> entries = parseParam(xpp, baseUrl, "param");
                     ti.params.putAll(entries);
                 } else if("theme".equals(tagName)) {
                     if(name.length() == 0) {
@@ -441,16 +441,16 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, ?> parseParam(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
+    private Map<String, ?> parseParam(XmlPullParser xpp, URL baseUrl, String tagName) throws XmlPullParserException, IOException {
         try {
-            xpp.require(XmlPullParser.START_TAG, null, "param");
+            xpp.require(XmlPullParser.START_TAG, null, tagName);
             String name = xpp.getAttributeValue(null, "name");
             xpp.nextTag();
-            String tagName = xpp.getName();
-            Object value = parseValue(xpp, tagName, name, baseUrl);
-            xpp.require(XmlPullParser.END_TAG, null, tagName);
+            String valueTagName = xpp.getName();
+            Object value = parseValue(xpp, valueTagName, name, baseUrl);
+            xpp.require(XmlPullParser.END_TAG, null, valueTagName);
             xpp.nextTag();
-            xpp.require(XmlPullParser.END_TAG, null, "param");
+            xpp.require(XmlPullParser.END_TAG, null, tagName);
             if(value instanceof Map) {
                 return (Map<String, ?>)value;
             }
@@ -480,7 +480,7 @@ public class ThemeManager {
         xpp.nextTag();
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             String tagName = xpp.getName();
-            Map<String, ?> params = parseParam(xpp, baseUrl);
+            Map<String, ?> params = parseParam(xpp, baseUrl, "param");
             xpp.require(XmlPullParser.END_TAG, null, tagName);
             result.addParameters(params);
             xpp.nextTag();
