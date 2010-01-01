@@ -368,6 +368,17 @@ public class DialogLayout extends Widget {
     }
 
     /**
+     * Creates a parallel group and adds the specified widgets.
+     *
+     * @see #createParallelGroup()
+     * @param widgets the widgets to add
+     * @return a new parallel Group.
+     */
+    public Group createParallelGroup(Widget ... widgets) {
+        return createParallelGroup().addWidgets(widgets);
+    }
+
+    /**
      * Creates a new sequential group.
      * All children in a sequential group are ordered with increasing coordinates
      * along it's axis in the order they are added to the group. The available
@@ -378,6 +389,17 @@ public class DialogLayout extends Widget {
      */
     public Group createSequentialGroup() {
         return new SequentialGroup();
+    }
+
+    /**
+     * Creates a sequential group and adds the specified widgets.
+     *
+     * @see #createSequentialGroup()
+     * @param widgets the widgets to add
+     * @return a new sequential Group.
+     */
+    public Group createSequentialGroup(Widget ... widgets) {
+        return createSequentialGroup().addWidgets(widgets);
     }
 
     @Override
@@ -680,7 +702,7 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Addsa  widget to this group. The widget is automaticly added as child widget.
+         * Adds a widget to this group. The widget is automaticly added as child widget.
          *
          * @param w the child widget.
          * @return this Group
@@ -694,6 +716,19 @@ public class DialogLayout extends Widget {
                 throw new IllegalStateException("WidgetSpring for Widget not found: " + w);
             }
             addSpring(s);
+            return this;
+        }
+
+        /**
+         * Adds several widgets to this group. The widget is automaticly added as child widget.
+         * 
+         * @param widgets The widgets which should be added.
+         * @return this Group
+         */
+        public Group addWidgets(Widget ... widgets) {
+            for(Widget w : widgets) {
+                addWidget(w);
+            }
             return this;
         }
 
