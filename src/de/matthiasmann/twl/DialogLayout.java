@@ -379,6 +379,17 @@ public class DialogLayout extends Widget {
     }
 
     /**
+     * Creates a parallel group and adds the specified groups.
+     *
+     * @see #createParallelGroup()
+     * @param groups the groups to add
+     * @return a new parallel Group.
+     */
+    public Group createParallelGroup(Group ... groups) {
+        return createParallelGroup().addGroups(groups);
+    }
+
+    /**
      * Creates a new sequential group.
      * All children in a sequential group are ordered with increasing coordinates
      * along it's axis in the order they are added to the group. The available
@@ -698,6 +709,21 @@ public class DialogLayout extends Widget {
             g.checkGroup(getDialogLayout());
             g.alreadyAdded = true;
             addSpring(g);
+            return this;
+        }
+
+        /**
+         * Adds several groups. A group can only be added once.
+         *
+         * WARNING: No check is made to prevent cycles.
+         *
+         * @param groups the groups to add
+         * @return this Group
+         */
+        public Group addGroups(Group ... groups) {
+            for(Group g : groups) {
+                addGroup(g);
+            }
             return this;
         }
 
