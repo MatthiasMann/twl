@@ -109,7 +109,7 @@ public class TintAnimator {
     }
 
     /**
-     * Fade the current color to the specified color
+     * Fade the current color to the specified color. Any active fade is stopped.
      *
      * @param color the destination color of the fade
      * @param fadeDuration the fade time in miliseconds
@@ -128,7 +128,13 @@ public class TintAnimator {
     }
 
     /**
-     * Fade the current color to alpha 0.0f
+     * Fade the current color to alpha 0.0f. Any active fade is stopped.
+     *
+     * This method uses the current color (which may be a mix if a fade was
+     * active) as a base to fade the alpha value. Because of that the only
+     * defined part of the target color is the alpha channel. This is
+     * the reason why no fadeToShow method exists. Use fadeTo with the
+     * desired color to make the widget visible again.
      *
      * @param fadeDuration the fade time in miliseconds
      */
