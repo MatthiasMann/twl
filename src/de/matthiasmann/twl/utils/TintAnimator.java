@@ -36,7 +36,7 @@ import de.matthiasmann.twl.Widget;
 import de.matthiasmann.twl.renderer.Renderer;
 
 /**
- * A untility class to animate tint colors for widgets
+ * A utility class to animate tint colors for widgets
  *
  * @author Matthias Mann
  */
