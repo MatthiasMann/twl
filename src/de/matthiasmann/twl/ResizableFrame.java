@@ -30,7 +30,7 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.renderer.MouseCursor;
-import de.matthiasmann.twl.renderer.Renderer;
+import de.matthiasmann.twl.utils.TintAnimator;
 
 /**
  * A resizable frame
@@ -107,12 +107,7 @@ public class ResizableFrame extends Widget {
     private int resizeHandleX;
     private int resizeHandleY;
     private DragMode resizeHandleDragMode;
-
-    private int fadeDuration;
-    private boolean fadeActive;
-    private boolean hasTint;
-    private float[] currentTint;
-
+    
     public ResizableFrame() {
         cursors = new MouseCursor[DragMode.values().length];
         setCanAcceptKeyboardFocus(true);
@@ -169,7 +164,8 @@ public class ResizableFrame extends Widget {
     @Override
     public void setVisible(boolean visible) {
         if(visible) {
-            if(hasTint || !super.isVisible()) {
+            TintAnimator tintAnimator = getTintAnimator();
+            if((tintAnimator != null && tintAnimator.hasTint()) || !super.isVisible()) {
                 fadeTo(hasKeyboardFocus() ? Color.WHITE : fadeColorInactive, fadeDurationShow);
             }
         } else if(super.isVisible()) {
@@ -215,7 +211,7 @@ public class ResizableFrame extends Widget {
         layoutResizeHandle();
 
         if(super.isVisible() && !hasKeyboardFocus() &&
-                (currentTint != null || !Color.WHITE.equals(fadeColorInactive))) {
+                (getTintAnimator() != null || !Color.WHITE.equals(fadeColorInactive))) {
             fadeTo(fadeColorInactive, 0);
         }
     }
@@ -227,99 +223,37 @@ public class ResizableFrame extends Widget {
     }
 
     @Override
-    protected void paint(GUI gui) {
-        if(hasTint) {
-            paintWithTint(gui);
-        } else {
-            super.paint(gui);
-        }
-    }
-
-    protected void paintWithTint(GUI gui) {
-        if(fadeActive) {
-            doTintFade();
-        }
-        float[] tint = currentTint;
-        Renderer renderer = gui.getRenderer();
-        renderer.pushGlobalTintColor(tint[0], tint[1], tint[2], tint[3]);
-        try {
-            super.paint(gui);
-        } finally {
-            renderer.popGlobalTintColor();
-        }
-    }
-
-    private static final float ZERO_EPSILON = 1e-3f;
-    private static final float ONE_EPSILON = 1f - ZERO_EPSILON;
-    
-    private void doTintFade() {
-        int time = getAnimationState().getAnimationTime(STATE_FADE);
-        float t = Math.min(time, fadeDuration) / (float)fadeDuration;
-        float[] tint = currentTint;
-        for(int i=0 ; i<4 ; i++) {
-            tint[i] = tint[i+4] + t * tint[i+8];
-        }
-        if(time >= fadeDuration) {
-            fadeActive = false;
-            if(currentTint[3] <= ZERO_EPSILON) {
-                setHardVisible(false);
-            }
-            // disable tinted rendering if we have full WHITE as tint
-            hasTint =
-                    (currentTint[0] < ONE_EPSILON) ||
-                    (currentTint[1] < ONE_EPSILON) ||
-                    (currentTint[2] < ONE_EPSILON) ||
-                    (currentTint[3] < ONE_EPSILON);
+    protected void updateTintAnimation() {
+        TintAnimator tintAnimator = getTintAnimator();
+        tintAnimator.update();
+        if(!tintAnimator.isFadeActive() && tintAnimator.isZeroAlpha()) {
+            setHardVisible(false);
         }
     }
 
     protected void fadeTo(Color color, int duration) {
         //System.out.println("Start fade to " + color + " over " + duration + " ms");
-        allocateTint();
-        // get destination color
-        color.getFloats(currentTint, 8);
-        // finish fadeTo computation
-        fadeTo(duration);
+        allocateTint().fadeTo(color, duration);
+        if(!super.isVisible() && color.getA() != 0) {
+            setHardVisible(true);
+        }
     }
 
     protected void fadeToHide(int duration) {
-        allocateTint();
-        // get current tint as destination value but with 0 alpha
-        System.arraycopy(currentTint, 0, currentTint, 8, 3);
-        currentTint[11] = 0f;
-        // finish fadeTo computation
-        fadeTo(duration);
+        allocateTint().fadeToHide(duration);
     }
 
-    private void allocateTint() {
-        if(currentTint == null) {
-            currentTint = new float[12];
-            // we start with WHITE tint color
-            Color.WHITE.getFloats(currentTint, 0);
+    private TintAnimator allocateTint() {
+        TintAnimator tintAnimator = getTintAnimator();
+        if(tintAnimator == null) {
+            tintAnimator = new TintAnimator(new TintAnimator.AnimationStateTimeSource(getAnimationState(), STATE_FADE));
+            setTintAnimator(tintAnimator);
             if(!super.isVisible()) {
                 // we start with TRANSPARENT when hidden
-                currentTint[3] = 0f;
+                tintAnimator.fadeToHide(0);
             }
         }
-        // get current tint as start value
-        System.arraycopy(currentTint, 0, currentTint, 4, 4);
-    }
-
-    private void fadeTo(int duration) {
-        // currentTint[8..11] contain the destination color
-        // if destination alpha is > 0 then make frame visible
-        if(currentTint[11] >= ZERO_EPSILON) {
-            setHardVisible(true);
-        }
-        // convert destination into deltas
-        for(int i=0 ; i<4 ; i++) {
-            currentTint[i+8] -= currentTint[i+4];
-        }
-        // start fade, flags will be set correctly at end of fade
-        hasTint = true;
-        fadeActive = true;
-        fadeDuration = Math.max(1, duration);
-        getAnimationState().resetAnimationTime(STATE_FADE);
+        return tintAnimator;
     }
 
     protected boolean isFrameElement(Widget widget) {

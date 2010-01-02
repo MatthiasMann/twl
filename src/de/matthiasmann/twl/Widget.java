@@ -31,7 +31,9 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
+import de.matthiasmann.twl.utils.TintAnimator;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,6 +69,7 @@ public class Widget {
     private Object tooltipContent;
     private InputMap inputMap;
     private ActionMap actionMap;
+    private TintAnimator tintAnimator;
 
     private final AnimationState animState;
     private final boolean sharedAnimState;
@@ -964,6 +967,22 @@ public class Widget {
     }
 
     /**
+     * Returns the current tine animation object or null if none was set
+     * @return the current tine animation object or null if none was set
+     */
+    public TintAnimator getTintAnimator() {
+        return tintAnimator;
+    }
+
+    /**
+     * Sets the tint animation object. Can be null to disable tinting.
+     * @param tintAnimator the new tint animation object
+     */
+    public void setTintAnimator(TintAnimator tintAnimator) {
+        this.tintAnimator = tintAnimator;
+    }
+
+    /**
      * Automatic tooltip support.
      * This function is called when the mouse is idle over the widget for a certain time.
      *
@@ -1491,7 +1510,17 @@ public class Widget {
         }
         return null;
     }
-    
+
+    /**
+     * Updates the tint animation when a fade is active.
+     * 
+     * Can be overriden to do additional things like hiden the widget
+     * after the end of the animation.
+     */
+    protected void updateTintAnimation() {
+        tintAnimator.update();
+    }
+
     //
     // start of internal stuff
     //
@@ -1596,6 +1625,27 @@ public class Widget {
     }
     
     final void drawWidget(GUI gui) {
+        if(tintAnimator != null && tintAnimator.hasTint()) {
+            drawWidgetTint(gui);
+        } else {
+            drawWidgetClip(gui);
+        }
+    }
+
+    private final void drawWidgetTint(GUI gui) {
+        if(tintAnimator.isFadeActive()) {
+            updateTintAnimation();
+        }
+        final Renderer renderer = gui.getRenderer();
+        tintAnimator.paintWithTint(renderer);
+        try {
+            drawWidgetClip(gui);
+        } finally {
+            renderer.popGlobalTintColor();
+        }
+    }
+
+    private final void drawWidgetClip(GUI gui) {
         if(clip) {
             gui.clipEnter(posX, posY, width, height);
             try {
