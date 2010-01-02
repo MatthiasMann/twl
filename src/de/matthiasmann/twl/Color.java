@@ -33,6 +33,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 /**
+ * A immutable color class. Colors are represented as bytes.
  *
  * @author MannMat
  */
@@ -67,7 +68,16 @@ public class Color {
         this.b = b;
         this.a = a;
     }
-    
+
+    /**
+     * Creates a new color object from an integer.
+     * bits  0- 7 are blue
+     * bits  8-15 are green
+     * bits 16-23 are red
+     * bits 24-31 are alpha
+     * 
+     * @param rgba the color value as integer
+     */
     public Color(int rgba) {
         this.r = (byte)(rgba >> 16);
         this.g = (byte)(rgba >>  8);
@@ -114,6 +124,13 @@ public class Color {
         dst[off+3] = getAlphaFloat();
     }
 
+    /**
+     * Retrieves a color by it's name. This uses the case insensitive lookup
+     * for the color constants defined in this class.
+     *
+     * @param name the color name to lookup
+     * @return a Color or null if the name was not found
+     */
     public static Color getColorByName(String name) {
         name = name.toUpperCase();
         try {
@@ -127,27 +144,46 @@ public class Color {
         return null;
     }
 
+    /**
+     * Parses a numeric or symbolic color. Symbolic names are resolved by getColorByName
+     *
+     * The following hex formats are supported:
+     * #RGB
+     * #RGBA
+     * #RRGGBB
+     * #RRGGBBAA
+     *
+     * @param value the color to parse
+     * @return a Color object or null
+     * @throws NumberFormatException if the hex color code can't be parsed
+     * @see #getColorByName(java.lang.String)
+     */
     public static Color parserColor(String value) throws NumberFormatException {
-        if(value.length() == 4 && value.charAt(0) == '#') {
-            int rgb4 = Integer.parseInt(value.substring(1), 16);
-            int r = ((rgb4 >> 8) & 0xF) * 0x11;
-            int g = ((rgb4 >> 4) & 0xF) * 0x11;
-            int b = ((rgb4     ) & 0xF) * 0x11;
-            return new Color(0xFF000000 | (r << 16) | (g << 8) | b);
-        }
-        if(value.length() == 5 && value.charAt(0) == '#') {
-            int rgb4 = Integer.parseInt(value.substring(1), 16);
-            int a = ((rgb4 >> 12) & 0xF) * 0x11;
-            int r = ((rgb4 >>  8) & 0xF) * 0x11;
-            int g = ((rgb4 >>  4) & 0xF) * 0x11;
-            int b = ((rgb4      ) & 0xF) * 0x11;
-            return new Color((a << 24) | (r << 16) | (g << 8) | b);
-        }
-        if(value.length() == 7 && value.charAt(0) == '#') {
-            return new Color(0xFF000000 | Integer.parseInt(value.substring(1), 16));
-        }
-        if(value.length() == 9 && value.charAt(0) == '#') {
-            return new Color((int)Long.parseLong(value.substring(1), 16));
+        if(value.length() > 0 && value.charAt(0) == '#') {
+            String hexcode = value.substring(1);
+            switch (value.length()) {
+                case 4: {
+                    int rgb4 = Integer.parseInt(hexcode, 16);
+                    int r = ((rgb4 >> 8) & 0xF) * 0x11;
+                    int g = ((rgb4 >> 4) & 0xF) * 0x11;
+                    int b = ((rgb4     ) & 0xF) * 0x11;
+                    return new Color(0xFF000000 | (r << 16) | (g << 8) | b);
+                }
+                case 5: {
+                    int rgb4 = Integer.parseInt(hexcode, 16);
+                    int a = ((rgb4 >> 12) & 0xF) * 0x11;
+                    int r = ((rgb4 >>  8) & 0xF) * 0x11;
+                    int g = ((rgb4 >>  4) & 0xF) * 0x11;
+                    int b = ((rgb4      ) & 0xF) * 0x11;
+                    return new Color((a << 24) | (r << 16) | (g << 8) | b);
+                }
+                case 7:
+                    return new Color(0xFF000000 | Integer.parseInt(value.substring(1), 16));
+                case 9:
+                    return new Color((int)Long.parseLong(value.substring(1), 16));
+                default:
+                    throw new NumberFormatException("Can't parse '" + value + "' as hex color");
+            }
         }
         return Color.getColorByName(value);
     }
