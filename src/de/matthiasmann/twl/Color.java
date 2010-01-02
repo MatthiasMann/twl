@@ -149,9 +149,9 @@ public class Color {
      *
      * The following hex formats are supported:
      * #RGB
-     * #RGBA
+     * #ARGB
      * #RRGGBB
-     * #RRGGBBAA
+     * #AARRGGBB
      *
      * @param value the color to parse
      * @return a Color object or null
