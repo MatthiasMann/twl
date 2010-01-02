@@ -86,6 +86,8 @@ public class TintAnimator {
 
     /**
      * Creates a new TintAnimator which starts with Color.WHITE
+     *
+     * @param timeSource the time source for the fade animation
      */
     public TintAnimator(TimeSource timeSource) {
         this(timeSource, Color.WHITE);
@@ -147,8 +149,7 @@ public class TintAnimator {
     }
 
     /**
-     * Updates the fade to the specified time. The time must go from 0 to
-     * fadeDuration.
+     * Updates the fade animation. Does not need to be called when no fade is active.
      */
     public void update() {
         if(fadeActive) {
