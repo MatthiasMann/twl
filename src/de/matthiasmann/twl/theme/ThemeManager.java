@@ -64,7 +64,6 @@ import org.xmlpull.v1.XmlPullParserFactory;
  */
 public class ThemeManager {
 
-    private static final Logger logger = Logger.getLogger(ThemeManager.class.getName());
     private static final HashMap<String, Class<? extends Enum>> enums =
             new HashMap<String, Class<? extends Enum>>();
     
@@ -176,7 +175,7 @@ public class ThemeManager {
             start = next;
         }
         if(info == null) {
-            logger.warning("Could not find theme: " + themePath);
+            getLogger().warning("Could not find theme: " + themePath);
         }
         return info;
     }
@@ -188,7 +187,7 @@ public class ThemeManager {
     public Image getImage(String name) {
         Image img = imageManager.getImage(name);
         if(img == null) {
-            logger.warning("Could not find image: " + name);
+            getLogger().warning("Could not find image: " + name);
         }
         return img;
     }
@@ -612,6 +611,10 @@ public class ThemeManager {
             return info;
         }
         return null;
+    }
+
+    Logger getLogger() {
+        return Logger.getLogger(ThemeManager.class.getName());
     }
 
     class MathInterpreter extends AbstractMathInterpreter {

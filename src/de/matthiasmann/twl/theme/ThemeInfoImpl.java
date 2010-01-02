@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl.theme;
 
-import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.ThemeInfo;
 import java.util.HashMap;
 
@@ -95,7 +94,7 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
 
     @Override
     protected void missingParameter(String paramName) {
-        logger.warning("Parameter \"" + paramName + "\" not set for \"" + getThemePath() + "\"");
+        manager.getLogger().warning("Parameter \"" + paramName + "\" not set for \"" + getThemePath() + "\"");
     }
 
 }

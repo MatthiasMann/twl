@@ -59,8 +59,6 @@ import java.util.zip.InflaterInputStream;
  */
 public class PersistentMRUListModel<T extends Serializable> extends SimpleMRUListModel<T> {
 
-    private static final Logger logger = Logger.getLogger(PersistentMRUListModel.class.getName());
-
     private final Class<T> clazz;
     private final Preferences prefs;
     private final String prefKey;
@@ -133,7 +131,7 @@ public class PersistentMRUListModel<T extends Serializable> extends SimpleMRULis
             }
             return baos.toByteArray();
         } catch (IOException ex) {
-            logger.log(Level.SEVERE, "Unable to serialize MRU entry", ex);
+            getLogger().log(Level.SEVERE, "Unable to serialize MRU entry", ex);
             return new byte[0];
         }
     }
@@ -148,12 +146,12 @@ public class PersistentMRUListModel<T extends Serializable> extends SimpleMRULis
                 if(clazz.isInstance(obj)) {
                     return clazz.cast(obj);
                 }
-                logger.log(Level.WARNING, "Deserialized object of type " + obj.getClass() + " expected " + clazz);
+                getLogger().log(Level.WARNING, "Deserialized object of type " + obj.getClass() + " expected " + clazz);
             } finally {
                 close(iis);
             }
         } catch (Exception ex) {
-            logger.log(Level.SEVERE, "Unable to deserialize MRU entry", ex);
+            getLogger().log(Level.SEVERE, "Unable to deserialize MRU entry", ex);
         }
         return null;
     }
@@ -169,8 +167,11 @@ public class PersistentMRUListModel<T extends Serializable> extends SimpleMRULis
         try {
             c.close();
         } catch (IOException ex) {
-            logger.log(Level.WARNING, "exception while closing stream", ex);
+            getLogger().log(Level.WARNING, "exception while closing stream", ex);
         }
     }
 
+    Logger getLogger() {
+        return Logger.getLogger(PersistentMRUListModel.class.getName());
+    }
 }

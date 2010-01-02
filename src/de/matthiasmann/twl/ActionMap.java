@@ -146,7 +146,8 @@ public class ActionMap {
                 try {
                     method.invoke(target, params);
                 } catch (Exception ex) {
-                    Logger.getLogger(ActionMap.class.getName()).log(Level.SEVERE, null, ex);
+                    Logger.getLogger(ActionMap.class.getName()).log(Level.SEVERE,
+                            "Exception while invoking action handler", ex);
                 }
             }
         }

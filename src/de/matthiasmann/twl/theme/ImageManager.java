@@ -51,8 +51,6 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 class ImageManager {
 
-    private static final Logger logger = Logger.getLogger(ImageManager.class.getName());
-
     private final Renderer renderer;
     private final TreeMap<String, Image> images;
     private final TreeMap<String, MouseCursor> cursors;
@@ -523,7 +521,7 @@ class ImageManager {
         while(xpp.getEventType() == XmlPullParser.START_TAG) {
             if(lastRepeatsEndless && !hasWarned) {
                 hasWarned = true;
-                logger.warning("Animation frames after an endless repeat won't be displayed: " + xpp.getPositionDescription());
+                getLogger().warning("Animation frames after an endless repeat won't be displayed: " + xpp.getPositionDescription());
             }
             String tagName = xpp.getName();
             parseAnimElements(xpp, tagName, children);
@@ -587,7 +585,7 @@ class ImageManager {
         Texture texture = currentTexture;
         if(x >= texture.getWidth() || x+Math.abs(w) <= 0 ||
                 y >= texture.getHeight() || y+Math.abs(h) <= 0) {
-            logger.warning("texture partly outside of file: " + xpp.getPositionDescription());
+            getLogger().warning("texture partly outside of file: " + xpp.getPositionDescription());
         }
         return texture.getImage(x, y, w, h, tintColor, tiled);
     }
@@ -599,6 +597,10 @@ class ImageManager {
         params.h = ParserUtil.parseIntFromAttribute(xpp, "height");
     }
 
+    Logger getLogger() {
+        return Logger.getLogger(ImageManager.class.getName());
+    }
+    
     static class ImageParams {
         int x, y, w, h;
         Color tintColor;

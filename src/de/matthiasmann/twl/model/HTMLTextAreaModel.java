@@ -49,8 +49,6 @@ import org.xmlpull.v1.XmlPullParserFactory;
  */
 public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     
-    static final Logger logger = Logger.getLogger(HTMLTextAreaModel.class.getName());
-
     private final ArrayList<Element> elements;
     private String html;
     private boolean needToParse;
@@ -196,7 +194,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             }
             finishText();
         } catch(Exception ex) {
-            logger.log(Level.SEVERE, "Unable to parse XHTML document", ex);
+             getLogger().log(Level.SEVERE, "Unable to parse XHTML document", ex);
         }
     }
 
@@ -222,7 +220,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                        newStyle.changed = true;
                    }
                } catch (IllegalArgumentException ex) {
-                   logger.log(Level.SEVERE, null, ex);
+                    getLogger().log(Level.SEVERE, "Unable to parse CSS attribute: " + psp.getKey() + "=" + psp.getValue(), ex);
                }
            }
         }
@@ -324,6 +322,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         }
     }
 
+    Logger getLogger() {
+        return Logger.getLogger(HTMLTextAreaModel.class.getName());
+    }
+    
     static class CompositeReader extends Reader {
         private final String[] strings;
         private int nr;

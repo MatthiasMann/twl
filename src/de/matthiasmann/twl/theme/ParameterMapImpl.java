@@ -37,7 +37,6 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  *
@@ -45,9 +44,6 @@ import java.util.logging.Logger;
  */
 class ParameterMapImpl implements ParameterMap {
     
-    // use ThemeManager as logger
-    static final Logger logger = Logger.getLogger(ThemeManager.class.getName());
-
     final ThemeManager manager;
     final HashMap<String, Object> params;
 
@@ -168,16 +164,16 @@ class ParameterMapImpl implements ParameterMap {
 
 
     protected void wrongParameterType(String paramName, Class expectedType, Class foundType) {
-        logger.warning("Parameter \"" + paramName + "\" is a " +
+        manager.getLogger().warning("Parameter \"" + paramName + "\" is a " +
                 foundType.getSimpleName() + " expected a " + expectedType.getSimpleName());
     }
 
     protected void missingParameter(String paramName) {
-        logger.warning("Parameter \"" + paramName + "\" not set");
+        manager.getLogger().warning("Parameter \"" + paramName + "\" not set");
     }
     
     protected void replacingWithDifferentType(String paramName, Class oldType, Class newType) {
-        logger.warning("Paramter \"" + paramName + "\" of type " + oldType + " is replaced with type " + newType);
+        manager.getLogger().warning("Paramter \"" + paramName + "\" of type " + oldType + " is replaced with type " + newType);
     }
 
     void addParameters(Map<String, ?> params) {

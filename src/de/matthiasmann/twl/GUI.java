@@ -46,8 +46,6 @@ import org.lwjgl.input.Mouse;
  */
 public final class GUI extends Widget {
 
-    private static final Logger logger = Logger.getLogger(GUI.class.getName());
-
     public interface MouseIdleListener {
         public void mouseEnterIdle();
         public void mouseExitIdle();
@@ -1144,7 +1142,7 @@ public final class GUI extends Widget {
                 try {
                     callback.run();
                 } catch (Throwable ex) {
-                    logger.log(Level.SEVERE, "Exception in callback", ex);
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in callback", ex);
                 }
             }
         }

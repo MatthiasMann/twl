@@ -44,9 +44,6 @@ import java.util.logging.Logger;
  */
 public class ParameterListImpl implements ParameterList {
 
-    // use ThemeManager as logger
-    static final Logger logger = Logger.getLogger(ThemeManager.class.getName());
-
     final ThemeManager manager;
     final ArrayList<Object> params;
 
@@ -160,7 +157,7 @@ public class ParameterListImpl implements ParameterList {
     }
 
     protected void wrongParameterType(int idx, Class expectedType, Class foundType) {
-        logger.warning("Parameter at index " + idx + " is a " +
+        manager.getLogger().warning("Parameter at index " + idx + " is a " +
                 foundType.getSimpleName() + " expected a " + expectedType.getSimpleName());
     }
 }

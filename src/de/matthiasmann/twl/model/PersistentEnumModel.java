@@ -40,8 +40,6 @@ import java.util.prefs.Preferences;
  */
 public class PersistentEnumModel<T extends Enum<T>> extends AbstractEnumModel<T> {
 
-    private static final Logger logger = Logger.getLogger(PersistentEnumModel.class.getName());
-    
     private final Preferences prefs;
     private final String prefKey;
     
@@ -67,7 +65,7 @@ public class PersistentEnumModel<T extends Enum<T>> extends AbstractEnumModel<T>
             try {
                 storedValue = Enum.valueOf(enumClass, storedStr);
             } catch (IllegalArgumentException ex) {
-                logger.log(Level.WARNING, "Unable to parse value '" + storedStr + "' of key '" + prefKey + "' of type " + enumClass, ex);
+                Logger.getLogger(PersistentEnumModel.class.getName()).log(Level.WARNING, "Unable to parse value '" + storedStr + "' of key '" + prefKey + "' of type " + enumClass, ex);
             }
         }
         setValue(storedValue);

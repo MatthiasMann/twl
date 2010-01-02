@@ -58,8 +58,6 @@ import org.lwjgl.opengl.GL11;
  */
 public class LWJGLRenderer implements Renderer, LineRenderer {
 
-    private static final Logger logger = Logger.getLogger(LWJGLRenderer.class.getName());
-
     private final IntBuffer ib16;
 
     private int width;
@@ -210,14 +208,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             try {
                 format = LWJGLTexture.Format.valueOf(formatStr.toUpperCase());
             } catch(IllegalArgumentException ex) {
-                logger.warning("Unknown texture format: " + formatStr);
+                getLogger().warning("Unknown texture format: " + formatStr);
             }
         }
         if(filterStr != null) {
             try {
                 filter = LWJGLTexture.Filter.valueOf(filterStr.toUpperCase());
             } catch(IllegalArgumentException ex) {
-                logger.warning("Unknown texture format: " + filterStr);
+                getLogger().warning("Unknown texture filter: " + filterStr);
             }
         }
         return load(url, format, filter);
@@ -330,6 +328,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         result[3] = tintState.a*(color.getA()&255);
     }
 
+    Logger getLogger() {
+        return Logger.getLogger(LWJGLRenderer.class.getName());
+    }
+    
     static class TintState {
         private static final float ONE_OVER_255 = 1f / 255f;
 
