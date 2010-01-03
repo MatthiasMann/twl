@@ -413,6 +413,17 @@ public class DialogLayout extends Widget {
         return createSequentialGroup().addWidgets(widgets);
     }
 
+    /**
+     * Creates a sequential group and adds the specified groups.
+     *
+     * @see #createSequentialGroup()
+     * @param groups the groups to add
+     * @return a new sequential Group.
+     */
+    public Group createSequentialGroup(Group ... groups) {
+        return createSequentialGroup().addGroups(groups);
+    }
+
     @Override
     public void insertChild(Widget child, int index) throws IndexOutOfBoundsException {
         super.insertChild(child, index);
