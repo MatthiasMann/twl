@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -34,13 +34,15 @@ import java.util.Arrays;
 import java.util.Collection;
 
 /**
+ * A simple list model which manages it's content and provides method
+ * to modify that content.
  *
  * @param <T> The type of the list entries
  * @author Matthias Mann
  */
 public class SimpleChangableListModel<T> extends SimpleListModel<T> {
 
-    private ArrayList<T> content;
+    private final ArrayList<T> content;
 
     public SimpleChangableListModel() {
         this.content = new ArrayList<T>();

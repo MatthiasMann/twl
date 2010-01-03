@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,16 +30,27 @@
 package de.matthiasmann.twl.model;
 
 /**
- * A simple integer model
+ * A simple integer model. The value is not checked against the min/max values
+ *
  * @author Matthias Mann
  */
 public class SimpleIntegerModel extends HasCallback implements IntegerModel {
 
-    private int minValue;
-    private int maxValue;
+    private final int minValue;
+    private final int maxValue;
     private int value;
 
+    /**
+     * Creates a new integer model with the specified min/max and initial value
+     *
+     * @param minValue the minimum allowed value
+     * @param maxValue the maximum allowed value
+     * @param value the initial value
+     */
     public SimpleIntegerModel(int minValue, int maxValue, int value) {
+        if(maxValue < minValue) {
+            throw new IllegalArgumentException("maxValue < minValue");
+        }
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.value = value;
