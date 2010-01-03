@@ -240,7 +240,11 @@ public class ResizableFrame extends Widget {
     }
 
     protected void fadeToHide(int duration) {
-        allocateTint().fadeToHide(duration);
+        if(duration <= 0) {
+            setHardVisible(false);
+        } else {
+            allocateTint().fadeToHide(duration);
+        }
     }
 
     private TintAnimator allocateTint() {
