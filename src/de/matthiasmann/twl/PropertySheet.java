@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -45,11 +45,11 @@ import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 
 /**
- *
+ * A property sheet class
+ * 
  * @author Matthias Mann
  */
 public class PropertySheet extends TreeTable {
-    private static final Logger logger = Logger.getLogger(PropertySheet.class.getName());
 
     public interface PropertyEditor {
         public Widget getWidget();
@@ -63,7 +63,6 @@ public class PropertySheet extends TreeTable {
     }
 
     private final SimplePropertyList rootList;
-    private final TreeGenerator rootTreeGenerator;
     private final PropertyListCellRenderer subListRenderer;
     private final CellRenderer editorRenderer;
     private final TypeMapping<PropertyEditorFactory<?>> factories;
@@ -78,8 +77,7 @@ public class PropertySheet extends TreeTable {
         this.subListRenderer = new PropertyListCellRenderer();
         this.editorRenderer = new EditorRenderer();
         this.factories = new TypeMapping<PropertyEditorFactory<?>>();
-        this.rootTreeGenerator = new TreeGenerator(rootList, model);
-        rootList.addValueChangedCallback(rootTreeGenerator);
+        rootList.addValueChangedCallback(new TreeGenerator(rootList, model));
         registerPropertyEditorFactory(String.class, new StringEditorFactory());
     }
 
@@ -153,7 +151,7 @@ public class PropertySheet extends TreeTable {
                     return new LeafNode(parent, property, editor);
                 }
             } else {
-                logger.log(Level.WARNING, "No property editor factory for type {0}", type);
+                Logger.getLogger(PropertySheet.class.getName()).log(Level.WARNING, "No property editor factory for type {0}", type);
             }
             return null;
         }
