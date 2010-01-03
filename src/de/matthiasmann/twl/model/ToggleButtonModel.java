@@ -61,13 +61,11 @@ public class ToggleButtonModel extends SimpleButtonModel {
 
     @Override
     public void setSelected(boolean selected) {
-        if(selected != isSelected()) {
-            setStateBit(STATE_MASK_SELECTED, selected);
-        }
         if(model != null) {
             model.setValue(selected ^ invertModelState);
+        } else {
+            setSelectedState(selected);
         }
-        fireStateCallback();
     }
 
     @Override
@@ -106,7 +104,14 @@ public class ToggleButtonModel extends SimpleButtonModel {
     }
 
     void syncWithModel() {
-        setSelected(model.getValue() ^ invertModelState);
+        setSelectedState(model.getValue() ^ invertModelState);
+    }
+
+    private void setSelectedState(boolean selected) {
+        if(selected != isSelected()) {
+            setStateBit(STATE_MASK_SELECTED, selected);
+            fireStateCallback();
+        }
     }
     
     class ModelCallback implements Runnable {
