@@ -59,7 +59,7 @@ public class EditField extends Widget {
     }
 
     private final StringBuilder editBuffer;
-    private TextRenderer textRenderer;
+    private final TextRenderer textRenderer;
     private PasswordMasker passwordMasking;
     private Runnable modelChangeListener;
     private StringModel model;
@@ -71,7 +71,7 @@ public class EditField extends Widget {
     private int selectionEnd;
     private int maxTextLength = Short.MAX_VALUE;
 
-    private int desiredWidthinCharacters = 5;
+    private int columns = 5;
     private Image cursorImage;
     private Image selectionImage;
     private char passwordChar;
@@ -143,6 +143,24 @@ public class EditField extends Widget {
             passwordMasking = new PasswordMasker(editBuffer, passwordChar);
             updateText();
         }
+    }
+
+    public int getColumns() {
+        return columns;
+    }
+
+    /**
+     * This is used to determine the desired width of the EditField based on
+     * it's font and the character 'X'
+     * 
+     * @param columns number of characters
+     * @throws IllegalArgumentException if columns < 0
+     */
+    public void setColumns(int columns) {
+        if(columns < 0) {
+            throw new IllegalArgumentException("columns");
+        }
+        this.columns = columns;
     }
 
     public StringModel getModel() {
@@ -273,9 +291,14 @@ public class EditField extends Widget {
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
+        applayThemeEditField(themeInfo);
+    }
+
+    protected void applayThemeEditField(ThemeInfo themeInfo) {
         cursorImage = themeInfo.getImage("cursor");
         selectionImage = themeInfo.getImage("selection");
         autoCompletionHeight = themeInfo.getParameter("autocompletion-height", 100);
+        columns = themeInfo.getParameter("columns", 5);
         setPasswordChar((char)themeInfo.getParameter("passwordChar", '*'));
         setErrorMessage(errorMsg);  // update color
     }
@@ -295,10 +318,11 @@ public class EditField extends Widget {
     }
 
     private int computeInnerWidth() {
-        Font font = textRenderer.getFont();
-        if(font != null) {
-            int lineHeight = font.getLineHeight();
-            return lineHeight*desiredWidthinCharacters/2;
+        if(columns > 0) {
+            Font font = textRenderer.getFont();
+            if(font != null) {
+                return font.computeTextWidth("X")*columns;
+            }
         }
         return 0;
     }
