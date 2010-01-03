@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -330,6 +330,18 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     Logger getLogger() {
         return Logger.getLogger(LWJGLRenderer.class.getName());
+    }
+
+    int glGenTexture() {
+        ib16.clear().limit(1);
+        GL11.glGenTextures(ib16);
+        return ib16.get(0);
+    }
+
+    void glDeleteTexture(int id) {
+        ib16.clear();
+        ib16.put(id).flip();
+        GL11.glDeleteTextures(ib16);
     }
     
     static class TintState {

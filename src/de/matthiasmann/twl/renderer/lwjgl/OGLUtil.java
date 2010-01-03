@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,43 +29,18 @@
  */
 package de.matthiasmann.twl.renderer.lwjgl;
 
-import de.matthiasmann.twl.Color;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
 
 /**
  * A utility class to implement the GL11 based renderer
  * 
  * @author Matthias Mann
  */
-public class OGLUtil {
+final class OGLUtil {
 
     public static final int PAGE_SIZE = 4096;
     
-    static final IntBuffer ib16 = BufferUtils.createIntBuffer(16);
-
     private OGLUtil() {
-    }
-    
-    static IntBuffer getIntBuffer(int size) {
-        ib16.clear().limit(size);
-        return ib16;
-    }
-    
-    static int getInt(int idx) {
-        return ib16.get(idx);
-    }
-    
-    static IntBuffer wrap(int id) {
-        return getIntBuffer(1).put(0, id);
-    }
-    
-    public static int glGetInteger(int pname) {
-        ib16.clear();
-        GL11.glGetInteger(pname, ib16);
-        return ib16.get(0);
     }
     
     public static int divRoundUp(int value, int denum) {

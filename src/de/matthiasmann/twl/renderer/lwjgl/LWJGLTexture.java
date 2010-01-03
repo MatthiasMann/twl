@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -99,8 +99,7 @@ public class LWJGLTexture implements Texture, Resource {
             throw new IllegalArgumentException("size <= 0");
         }
         
-        GL11.glGenTextures(OGLUtil.getIntBuffer(1));
-        id = OGLUtil.getInt(0);
+        id = renderer.glGenTexture();
         if(id == 0) {
             throw new OpenGLException("failed to allocate texture ID");
         }
@@ -150,7 +149,7 @@ public class LWJGLTexture implements Texture, Resource {
         if(id != 0) {
             // make sure that our texture is not bound when we try to delete it
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, 0);
-            GL11.glDeleteTextures(OGLUtil.wrap(id));
+            renderer.glDeleteTexture(id);
             id = 0;
         }
     }
