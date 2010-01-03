@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -96,7 +96,7 @@ public abstract class StateExpression {
             si.pos++;
         }
 
-        if(children.size() == 0) {
+        if(children.isEmpty()) {
             si.unexpected();
         }
         
