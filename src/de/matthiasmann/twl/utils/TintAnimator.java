@@ -241,7 +241,7 @@ public class TintAnimator {
         }
 
         private long getCurrentTime() {
-            GUI gui = gui = owner.getGUI();
+            GUI gui = owner.getGUI();
             return (gui != null) ? gui.getTimeMillis() : 0;
         }
     }
