@@ -44,7 +44,7 @@ import org.xmlpull.v1.XmlPullParserException;
  *
  * @author Matthias Mann
  */
-public class ParserUtil {
+final class ParserUtil {
 
     private ParserUtil() {
     }

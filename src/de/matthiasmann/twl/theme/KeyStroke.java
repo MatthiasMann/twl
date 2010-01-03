@@ -37,7 +37,7 @@ import org.lwjgl.input.Keyboard;
  *
  * @author Matthias Mann
  */
-public class KeyStroke {
+final class KeyStroke {
 
     private static final int SHIFT = 1;
     private static final int CTRL = 2;
