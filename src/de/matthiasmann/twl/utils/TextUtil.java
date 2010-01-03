@@ -33,7 +33,7 @@ package de.matthiasmann.twl.utils;
  * Utilities for handling texts
  * @author Matthias Mann
  */
-public class TextUtil {
+public final class TextUtil {
 
     private TextUtil() {
     }
