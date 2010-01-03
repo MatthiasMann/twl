@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 200-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -35,10 +35,15 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 
 /**
+ * A utility class to transfer text to/from the system clipboard. It uses AWT.
  *
  * @author Matthias Mann
+ * @see Toolkit#getSystemClipboard()
  */
-public class Clipboard {
+public final class Clipboard {
+
+    private Clipboard() {
+    }
 
     public static String getClipboard() {
         try {
