@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -33,6 +33,7 @@ import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.utils.StateExpression;
 
 /**
  *
@@ -46,15 +47,18 @@ class ImageAdjustments implements Image, HasBorder {
     final int sizeOverwriteH;
     final int sizeOverwriteV;
     final boolean center;
+    final StateExpression condition;
 
     ImageAdjustments(Image image, Border border, Border inset,
-            int sizeOverwriteH, int sizeOverwriteV, boolean center) {
+            int sizeOverwriteH, int sizeOverwriteV,
+            boolean center, StateExpression condition) {
         this.image = image;
         this.border = border;
         this.inset = inset;
         this.sizeOverwriteH = sizeOverwriteH;
         this.sizeOverwriteV = sizeOverwriteV;
         this.center = center;
+        this.condition = condition;
     }
 
 
@@ -79,21 +83,23 @@ class ImageAdjustments implements Image, HasBorder {
     }
 
     public void draw(AnimationState as, int x, int y, int width, int height) {
-        if(inset != null) {
-            x += inset.getBorderLeft();
-            y += inset.getBorderTop();
-            width = Math.max(0, width - inset.getBorderLeft() - inset.getBorderRight());
-            height = Math.max(0, height - inset.getBorderTop() - inset.getBorderBottom());
+        if(condition == null || condition.evaluate(as)) {
+            if(inset != null) {
+                x += inset.getBorderLeft();
+                y += inset.getBorderTop();
+                width = Math.max(0, width - inset.getBorderLeft() - inset.getBorderRight());
+                height = Math.max(0, height - inset.getBorderTop() - inset.getBorderBottom());
+            }
+            if(center) {
+                final int w = Math.min(width, image.getWidth());
+                final int h = Math.min(height, image.getHeight());
+                x += (width - w) / 2;
+                y += (height - h) / 2;
+                width = w;
+                height = h;
+            }
+            image.draw(as, x, y, width, height);
         }
-        if(center) {
-            final int w = Math.min(width, image.getWidth());
-            final int h = Math.min(height, image.getHeight());
-            x += (width - w) / 2;
-            y += (height - h) / 2;
-            width = w;
-            height = h;
-        }
-        image.draw(as, x, y, width, height);
     }
 
     public void draw(AnimationState as, int x, int y) {
@@ -106,7 +112,7 @@ class ImageAdjustments implements Image, HasBorder {
 
     public Image createTintedVersion(Color color) {
         return new ImageAdjustments(image.createTintedVersion(color), border,
-                inset, sizeOverwriteH, sizeOverwriteV, center);
+                inset, sizeOverwriteH, sizeOverwriteV, center, condition);
     }
 
 }

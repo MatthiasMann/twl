@@ -174,16 +174,12 @@ class ImageManager {
     }
 
     private Image parseImage(XmlPullParser xpp, String tagName) throws XmlPullParserException, IOException {
-        StateExpression condition = ParserUtil.parseCondition(xpp);
-        Image image = parseImageNoCond(xpp, tagName);
-        if(condition != null) {
-            image = new ConditionImage(image, getBorder(image, null), condition);
-        }
-        return image;
+        ImageParams params = new ImageParams();
+        params.condition = ParserUtil.parseCondition(xpp);
+        return parseImageNoCond(xpp, tagName, params);
     }
 
-    private Image parseImageNoCond(XmlPullParser xpp, String tagName) throws XmlPullParserException, IOException {
-        ImageParams params = new ImageParams();
+    private Image parseImageNoCond(XmlPullParser xpp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
         params.tintColor = ParserUtil.parseColorFromAttribute(xpp, "tint", null);
         params.border = ParserUtil.parseBorderFromAttribute(xpp, "border");
         params.inset = ParserUtil.parseBorderFromAttribute(xpp, "inset");
@@ -194,8 +190,7 @@ class ImageManager {
         params.center = ParserUtil.parseBoolFromAttribute(xpp, "center", false);
         
         Image image = parseImageDelegate(xpp, tagName, params);
-        image = adjustImage(image, params);
-        return image;
+        return adjustImage(image, params);
     }
 
     private Image adjustImage(Image image, ImageParams params) {
@@ -208,9 +203,11 @@ class ImageManager {
         }
         Border imgBorder = getBorder(image, null);
         if((border != null && border != imgBorder) || params.inset != null ||
-                params.center || params.sizeOverwriteH >= 0 || params.sizeOverwriteV >= 0) {
+                params.center || params.condition != null ||
+                params.sizeOverwriteH >= 0 || params.sizeOverwriteV >= 0) {
             image = new ImageAdjustments(image, border, params.inset,
-                    params.sizeOverwriteH, params.sizeOverwriteV, params.center);
+                    params.sizeOverwriteH, params.sizeOverwriteV,
+                    params.center, params.condition);
         }
         return image;
     }
@@ -268,7 +265,7 @@ class ImageManager {
             xpp.require(XmlPullParser.START_TAG, null, null);
             StateExpression cond = ParserUtil.parseCondition(xpp);
             String tagName = xpp.getName();
-            Image image = parseImageNoCond(xpp, tagName);
+            Image image = parseImageNoCond(xpp, tagName, new ImageParams());
             stateImages.add(image);
             params.border = getBorder(image, params.border);
             xpp.require(XmlPullParser.END_TAG, null, tagName);
@@ -611,5 +608,6 @@ class ImageManager {
         int sizeOverwriteH = -1;
         int sizeOverwriteV = -1;
         boolean center;
+        StateExpression condition;
     }
 }
