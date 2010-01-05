@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -32,13 +32,12 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.HAlignment;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.FontCache;
+import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import org.lwjgl.opengl.GL11;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * A Bitmap Font class. Parses the output of AngelCode's BMFont tool.
@@ -92,56 +91,63 @@ public class BitmapFont {
     private final int lineHeight;
     private final int baseLine;
 
-    public BitmapFont(LWJGLRenderer renderer, XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
-        xpp.require(XmlPullParser.START_TAG, null, "font");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.START_TAG, null, "info");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.END_TAG, null, "info");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.START_TAG, null, "common");
-        lineHeight = Integer.parseInt(xpp.getAttributeValue(null, "lineHeight"));
-        baseLine = Integer.parseInt(xpp.getAttributeValue(null, "base"));
-        int numPages = Integer.parseInt(xpp.getAttributeValue(null, "pages"));
-        if(numPages != 1) {
+    public BitmapFont(LWJGLRenderer renderer, XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
+        xmlp.require(XmlPullParser.START_TAG, null, "font");
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.START_TAG, null, "info");
+        xmlp.ignoreOtherAttributes();
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.END_TAG, null, "info");
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.START_TAG, null, "common");
+        lineHeight = xmlp.parseIntFromAttribute("lineHeight");
+        baseLine = xmlp.parseIntFromAttribute("base");
+        if(xmlp.parseIntFromAttribute("pages", 1) != 1) {
             throw new UnsupportedOperationException("multi page fonts not supported");
         }
-        int packed = Integer.parseInt(xpp.getAttributeValue(null, "packed"));
-        if(packed != 0) {
+        if(xmlp.parseIntFromAttribute("packed", 0) != 0) {
             throw new UnsupportedOperationException("packed fonts not supported");
         }
-        xpp.nextTag();
-        xpp.require(XmlPullParser.END_TAG, null, "common");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.START_TAG, null, "pages");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.START_TAG, null, "page");
-        int pageId = Integer.parseInt(xpp.getAttributeValue(null, "id"));
+        xmlp.ignoreOtherAttributes();
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.END_TAG, null, "common");
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.START_TAG, null, "pages");
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.START_TAG, null, "page");
+        int pageId = Integer.parseInt(xmlp.getAttributeValue(null, "id"));
         if(pageId != 0) {
             throw new UnsupportedOperationException("only page id 0 supported");
         }
-        String textureName = xpp.getAttributeValue(null, "file");
+        String textureName = xmlp.getAttributeValue(null, "file");
         this.texture = renderer.load(new URL(baseUrl, textureName), LWJGLTexture.Format.ALPHA, LWJGLTexture.Filter.NEAREST);
-        xpp.nextTag();
-        xpp.require(XmlPullParser.END_TAG, null, "page");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.END_TAG, null, "pages");
-        xpp.nextTag();
-        xpp.require(XmlPullParser.START_TAG, null, "chars");
-        xpp.nextTag();
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.END_TAG, null, "page");
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.END_TAG, null, "pages");
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.START_TAG, null, "chars");
+        xmlp.ignoreOtherAttributes();
+        xmlp.nextTag();
         
         glyphs = new Glyph[PAGES][];
-        while(xpp.getEventType() != XmlPullParser.END_TAG) {
-            xpp.require(XmlPullParser.START_TAG, null, "char");
-            int idx = Integer.parseInt(xpp.getAttributeValue(null, "id"));
-            int x = Integer.parseInt(xpp.getAttributeValue(null, "x"));
-            int y = Integer.parseInt(xpp.getAttributeValue(null, "y"));
-            int w = Integer.parseInt(xpp.getAttributeValue(null, "width"));
-            int h = Integer.parseInt(xpp.getAttributeValue(null, "height"));
+        while(!xmlp.isEndTag()) {
+            xmlp.require(XmlPullParser.START_TAG, null, "char");
+            int idx = xmlp.parseIntFromAttribute("id");
+            int x = xmlp.parseIntFromAttribute("x");
+            int y = xmlp.parseIntFromAttribute("y");
+            int w = xmlp.parseIntFromAttribute("width");
+            int h = xmlp.parseIntFromAttribute("height");
+            if(xmlp.parseIntFromAttribute("page", 0) != 0) {
+                throw xmlp.error("Multiple pages not supported");
+            }
+            if(xmlp.parseIntFromAttribute("chnl", 0) != 0) {
+                throw xmlp.error("Multiple channels not supported");
+            }
             Glyph g = new Glyph(x, y, w, h, texture.getTexWidth(), texture.getTexHeight());
-            g.xoffset = Short.parseShort(xpp.getAttributeValue(null, "xoffset"));
-            g.yoffset = Short.parseShort(xpp.getAttributeValue(null, "yoffset"));
-            g.xadvance = Short.parseShort(xpp.getAttributeValue(null, "xadvance"));
+            g.xoffset = Short.parseShort(xmlp.getAttributeNotNull("xoffset"));
+            g.yoffset = Short.parseShort(xmlp.getAttributeNotNull("yoffset"));
+            g.xadvance = Short.parseShort(xmlp.getAttributeNotNull("xadvance"));
             if(idx <= Character.MAX_VALUE) {
                 Glyph[] page = glyphs[idx / PAGE_SIZE];
                 if(page == null) {
@@ -149,21 +155,22 @@ public class BitmapFont {
                 }
                 page[idx & (PAGE_SIZE-1)] = g;
             }
-            xpp.nextTag();
-            xpp.require(XmlPullParser.END_TAG, null, "char");
-            xpp.nextTag();
+            xmlp.nextTag();
+            xmlp.require(XmlPullParser.END_TAG, null, "char");
+            xmlp.nextTag();
         }
         
-        xpp.require(XmlPullParser.END_TAG, null, "chars");
-        xpp.nextTag();
-        if(xpp.getEventType() == XmlPullParser.START_TAG) {
-            xpp.require(XmlPullParser.START_TAG, null, "kernings");
-            xpp.nextTag();
-            while(xpp.getEventType() != XmlPullParser.END_TAG) {
-                xpp.require(XmlPullParser.START_TAG, null, "kerning");
-                int first = Integer.parseInt(xpp.getAttributeValue(null, "first"));
-                int second = Integer.parseInt(xpp.getAttributeValue(null, "second"));
-                int amount = Integer.parseInt(xpp.getAttributeValue(null, "amount"));
+        xmlp.require(XmlPullParser.END_TAG, null, "chars");
+        xmlp.nextTag();
+        if(xmlp.isStartTag()) {
+            xmlp.require(XmlPullParser.START_TAG, null, "kernings");
+            xmlp.ignoreOtherAttributes();
+            xmlp.nextTag();
+            while(!xmlp.isEndTag()) {
+                xmlp.require(XmlPullParser.START_TAG, null, "kerning");
+                int first = xmlp.parseIntFromAttribute("first");
+                int second = xmlp.parseIntFromAttribute("second");
+                int amount = xmlp.parseIntFromAttribute("amount");
                 if(first >= 0 && first <= Character.MAX_VALUE &&
                         second >= 0 && second <= Character.MAX_VALUE) {
                     Glyph g = getGlyph((char)first);
@@ -171,37 +178,25 @@ public class BitmapFont {
                         g.setKerning(second, amount);
                     }
                 }
-                xpp.nextTag();
-                xpp.require(XmlPullParser.END_TAG, null, "kerning");
-                xpp.nextTag();
+                xmlp.nextTag();
+                xmlp.require(XmlPullParser.END_TAG, null, "kerning");
+                xmlp.nextTag();
             }
-            xpp.require(XmlPullParser.END_TAG, null, "kernings");
-            xpp.nextTag();
+            xmlp.require(XmlPullParser.END_TAG, null, "kernings");
+            xmlp.nextTag();
         }
-        xpp.require(XmlPullParser.END_TAG, null, "font");
-        xpp.next();
-        if(xpp.getEventType() == XmlPullParser.TEXT) {
-            xpp.next();
-        }
+        xmlp.require(XmlPullParser.END_TAG, null, "font");
     }
 
     public static BitmapFont loadFont(LWJGLRenderer renderer, URL url) throws IOException {
-        if(url == null) {
-            throw new NullPointerException("url");
-        }
         try {
-            XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
-            factory.setNamespaceAware(false);
-            factory.setValidating(false);
-            XmlPullParser xpp = factory.newPullParser();
-            InputStream is = url.openStream();
+            XMLParser xmlp = new XMLParser(url);
             try {
-                xpp.setInput(is, "UTF8");
-                xpp.require(XmlPullParser.START_DOCUMENT, null, null);
-                xpp.nextTag();
-                return new BitmapFont(renderer, xpp, url);
+                xmlp.require(XmlPullParser.START_DOCUMENT, null, null);
+                xmlp.nextTag();
+                return new BitmapFont(renderer, xmlp, url);
             } finally {
-                is.close();
+                xmlp.close();
             }
         } catch (XmlPullParserException ex) {
             throw (IOException)(new IOException().initCause(ex));

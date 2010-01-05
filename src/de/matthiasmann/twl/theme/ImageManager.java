@@ -36,6 +36,7 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -71,26 +72,26 @@ class ImageManager {
         return images.get(name);
     }
 
-    Image getReferencedImage(XmlPullParser xpp) throws XmlPullParserException {
-        String ref = ParserUtil.getAttributeNotNull(xpp, "ref");
+    Image getReferencedImage(XMLParser xmlp) throws XmlPullParserException {
+        String ref = xmlp.getAttributeNotNull("ref");
         if(ref.endsWith(".*")) {
-            throw new XmlPullParserException("wildcard mapping not allowed", xpp, null);
+            throw xmlp.error("wildcard mapping not allowed");
         }
-        return getReferencedImage(xpp, ref);
+        return getReferencedImage(xmlp, ref);
     }
 
-    Image getReferencedImage(XmlPullParser xpp, String ref) throws XmlPullParserException {
+    Image getReferencedImage(XMLParser xmlp, String ref) throws XmlPullParserException {
         Image img = images.get(ref);
         if(img == null) {
-            throw new XmlPullParserException("referenced image \"" + ref + "\" not found", xpp, null);
+            throw xmlp.error("referenced image \"" + ref + "\" not found");
         }
         return img;
     }
 
-    MouseCursor getReferencedCursor(XmlPullParser xpp, String ref) throws XmlPullParserException {
+    MouseCursor getReferencedCursor(XMLParser xmlp, String ref) throws XmlPullParserException {
         MouseCursor cursor = getCursor(ref);
         if(cursor == null) {
-            throw new XmlPullParserException("referenced cursor \"" + ref + "\" not found", xpp, null);
+            throw xmlp.error("referenced cursor \"" + ref + "\" not found");
         }
         return cursor;
     }
@@ -107,11 +108,11 @@ class ImageManager {
         return ParserUtil.resolve(cursors, ref, name);
     }
 
-    void parseTextures(XmlPullParser xpp, URL baseUrl) throws XmlPullParserException, IOException {
-        xpp.require(XmlPullParser.START_TAG, null, "textures");
-        String fmt = xpp.getAttributeValue(null, "format");
-        String filter = xpp.getAttributeValue(null, "filter");
-        String fileName = ParserUtil.getAttributeNotNull(xpp, "file");
+    void parseTextures(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
+        xmlp.require(XmlPullParser.START_TAG, null, "textures");
+        String fmt = xmlp.getAttributeValue(null, "format");
+        String filter = xmlp.getAttributeValue(null, "filter");
+        String fileName = xmlp.getAttributeNotNull("file");
 
         try {
             Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
@@ -121,30 +122,29 @@ class ImageManager {
             this.currentTexture = texture;
 
             try {
-                xpp.nextTag();
-                while(xpp.getEventType() != XmlPullParser.END_TAG) {
-                    String name = ParserUtil.getAttributeNotNull(xpp, "name");
-                    ParserUtil.checkNameNotEmpty(name, xpp);
+                xmlp.nextTag();
+                while(!xmlp.isEndTag()) {
+                    String name = xmlp.getAttributeNotNull("name");
+                    ParserUtil.checkNameNotEmpty(name, xmlp);
                     if(images.containsKey(name)) {
-                        throw new XmlPullParserException("image \"" + name + "\" already defined", xpp, null);
+                        throw xmlp.error("image \"" + name + "\" already defined");
                     }
-                    String tagName = xpp.getName();
-                    if("cursor".equals(xpp.getName())) {
-                        parseCursor(xpp, name, texture);
+                    String tagName = xmlp.getName();
+                    if("cursor".equals(xmlp.getName())) {
+                        parseCursor(xmlp, name, texture);
                     } else {
-                        Image image = parseImage(xpp, tagName);
+                        Image image = parseImage(xmlp, tagName);
                         images.put(name, image);
                     }
-                    xpp.require(XmlPullParser.END_TAG, null, tagName);
-                    xpp.nextTag();
+                    xmlp.require(XmlPullParser.END_TAG, null, tagName);
+                    xmlp.nextTag();
                 }
             } finally {
                 texture.themeLoadingDone();
                 currentTexture = null;
             }
         } catch (Exception ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "Unable to load texture: " + fileName, xpp, ex).initCause(ex));
+            throw xmlp.error("Unable to load texture: " + fileName, ex);
         }
     }
 
@@ -155,41 +155,41 @@ class ImageManager {
         return border;
     }
 
-    private void parseCursor(XmlPullParser xpp, String name, Texture texture) throws IOException, XmlPullParserException {
-        String ref = xpp.getAttributeValue(null, "ref");
+    private void parseCursor(XMLParser xmlp, String name, Texture texture) throws IOException, XmlPullParserException {
+        String ref = xmlp.getAttributeValue(null, "ref");
         MouseCursor cursor;
         if(ref != null) {
             cursor = cursors.get(ref);
         } else {
             ImageParams imageParams = new ImageParams();
-            parseRectFromAttribute(xpp, imageParams);
-            int hotSpotX = ParserUtil.parseIntFromAttribute(xpp, "hotSpotX");
-            int hotSpotY = ParserUtil.parseIntFromAttribute(xpp, "hotSpotY");
+            parseRectFromAttribute(xmlp, imageParams);
+            int hotSpotX = xmlp.parseIntFromAttribute("hotSpotX");
+            int hotSpotY = xmlp.parseIntFromAttribute("hotSpotY");
             cursor = texture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY);
         }
         if(cursor != null) {
             cursors.put(name, cursor);
         }
-        xpp.nextTag();
+        xmlp.nextTag();
     }
 
-    private Image parseImage(XmlPullParser xpp, String tagName) throws XmlPullParserException, IOException {
+    private Image parseImage(XMLParser xmlp, String tagName) throws XmlPullParserException, IOException {
         ImageParams params = new ImageParams();
-        params.condition = ParserUtil.parseCondition(xpp);
-        return parseImageNoCond(xpp, tagName, params);
+        params.condition = ParserUtil.parseCondition(xmlp);
+        return parseImageNoCond(xmlp, tagName, params);
     }
 
-    private Image parseImageNoCond(XmlPullParser xpp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
-        params.tintColor = ParserUtil.parseColorFromAttribute(xpp, "tint", null);
-        params.border = ParserUtil.parseBorderFromAttribute(xpp, "border");
-        params.inset = ParserUtil.parseBorderFromAttribute(xpp, "inset");
-        params.repeatX = ParserUtil.parseBoolFromAttribute(xpp, "repeatX", false);
-        params.repeatY = ParserUtil.parseBoolFromAttribute(xpp, "repeatY", false);
-        params.sizeOverwriteH = ParserUtil.parseIntFromAttribute(xpp, "sizeOverwriteH", -1);
-        params.sizeOverwriteV = ParserUtil.parseIntFromAttribute(xpp, "sizeOverwriteV", -1);
-        params.center = ParserUtil.parseBoolFromAttribute(xpp, "center", false);
+    private Image parseImageNoCond(XMLParser xmlp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
+        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", null);
+        params.border = ParserUtil.parseBorderFromAttribute(xmlp, "border");
+        params.inset = ParserUtil.parseBorderFromAttribute(xmlp, "inset");
+        params.repeatX = xmlp.parseBoolFromAttribute("repeatX", false);
+        params.repeatY = xmlp.parseBoolFromAttribute("repeatY", false);
+        params.sizeOverwriteH = xmlp.parseIntFromAttribute("sizeOverwriteH", -1);
+        params.sizeOverwriteV = xmlp.parseIntFromAttribute("sizeOverwriteV", -1);
+        params.center = xmlp.parseBoolFromAttribute("center", false);
         
-        Image image = parseImageDelegate(xpp, tagName, params);
+        Image image = parseImageDelegate(xmlp, tagName, params);
         return adjustImage(image, params);
     }
 
@@ -212,64 +212,67 @@ class ImageManager {
         return image;
     }
 
-    private Image parseImageDelegate(XmlPullParser xpp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
+    private Image parseImageDelegate(XMLParser xmlp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
         if("texture".equals(tagName)) {
-            return parseTexture(xpp, params);
+            return parseTexture(xmlp, params);
         } else if("hvsplit".equals(tagName)) {
-            return parseHVSplit(xpp, params);
+            return parseHVSplit(xmlp, params);
         } else if("hsplit".equals(tagName)) {
-            return parseHSplit(xpp, params);
+            return parseHSplit(xmlp, params);
         } else if("vsplit".equals(tagName)) {
-            return parseVSplit(xpp, params);
+            return parseVSplit(xmlp, params);
         } else if("alias".equals(tagName)) {
-            return parseAlias(xpp);
+            return parseAlias(xmlp);
         } else if("composed".equals(tagName)) {
-            return parseComposed(xpp, params);
+            return parseComposed(xmlp, params);
         } else if("select".equals(tagName)) {
-            return parseStateSelect(xpp, params);
+            return parseStateSelect(xmlp, params);
         } else if("grid".equals(tagName)) {
-            return parseGrid(xpp, params);
+            return parseGrid(xmlp, params);
         } else if("animation".equals(tagName)) {
-            return parseAnimation(xpp, params);
+            return parseAnimation(xmlp, params);
         } else {
-            throw new XmlPullParserException("Unexpected '"+tagName+"'", xpp, null);
+            throw xmlp.error("Unexpected '"+tagName+"'");
         }
     }
 
-    private Image parseComposed(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
+    private Image parseComposed(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         ArrayList<Image> layers = new ArrayList<Image>();
-        xpp.nextTag();
-        while(xpp.getEventType() != XmlPullParser.END_TAG) {
-            xpp.require(XmlPullParser.START_TAG, null, null);
-            String tagName = xpp.getName();
-            Image image = parseImage(xpp, tagName);
+        xmlp.nextTag();
+        while(!xmlp.isEndTag()) {
+            xmlp.require(XmlPullParser.START_TAG, null, null);
+            String tagName = xmlp.getName();
+            Image image = parseImage(xmlp, tagName);
             layers.add(image);
             params.border = getBorder(image, params.border);
-            xpp.require(XmlPullParser.END_TAG, null, tagName);
-            xpp.nextTag();
+            xmlp.require(XmlPullParser.END_TAG, null, tagName);
+            xmlp.nextTag();
         }
-        if(layers.size() < 2) {
-            throw new XmlPullParserException("composed image needs atleast 2 layers", xpp, null);
+        switch (layers.size()) {
+            case 0:
+                return NONE;
+            case 1:
+                return layers.get(0);
+            default:
+                return new ComposedImage(
+                        layers.toArray(new Image[layers.size()]),
+                        params.border);
         }
-        Image image = new ComposedImage(
-                layers.toArray(new Image[layers.size()]),
-                params.border);
-        return image;
     }
 
-    private Image parseStateSelect(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
+    private Image parseStateSelect(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         ArrayList<Image> stateImages = new ArrayList<Image>();
         ArrayList<StateExpression> conditions = new ArrayList<StateExpression>();
-        xpp.nextTag();
-        while(xpp.getEventType() != XmlPullParser.END_TAG) {
-            xpp.require(XmlPullParser.START_TAG, null, null);
-            StateExpression cond = ParserUtil.parseCondition(xpp);
-            String tagName = xpp.getName();
-            Image image = parseImageNoCond(xpp, tagName, new ImageParams());
+        xmlp.nextTag();
+        while(!xmlp.isEndTag()) {
+            xmlp.require(XmlPullParser.START_TAG, null, null);
+            StateExpression cond = ParserUtil.parseCondition(xmlp);
+            String tagName = xmlp.getName();
+            Image image = parseImageNoCond(xmlp, tagName, new ImageParams());
             stateImages.add(image);
             params.border = getBorder(image, params.border);
-            xpp.require(XmlPullParser.END_TAG, null, tagName);
-            xpp.nextTag();
+            xmlp.require(XmlPullParser.END_TAG, null, tagName);
+            xmlp.nextTag();
             if(cond != null) {
                 conditions.add(cond);
             } else {
@@ -277,7 +280,7 @@ class ImageManager {
             }
         }
         if(conditions.size() < 1) {
-            throw new XmlPullParserException("state select image needs atleast 1 condition", xpp, null);
+            throw xmlp.error("state select image needs atleast 1 condition");
         }
         Image image = new StateSelectImage(
                 stateImages.toArray(new Image[stateImages.size()]),
@@ -286,40 +289,39 @@ class ImageManager {
         return image;
     }
 
-    private Image parseTexture(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
-        parseRectFromAttribute(xpp, params);
-        boolean tiled = ParserUtil.parseBoolFromAttribute(xpp, "tiled", false);
-        Image image = createImage(xpp, params.x, params.y, params.w, params.h, params.tintColor, tiled);
+    private Image parseTexture(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
+        parseRectFromAttribute(xmlp, params);
+        boolean tiled = xmlp.parseBoolFromAttribute("tiled", false);
+        Image image = createImage(xmlp, params.x, params.y, params.w, params.h, params.tintColor, tiled);
         params.tintColor = null;
         if(tiled) {
             params.repeatX = false;
             params.repeatY = false;
         }
-        xpp.nextTag();
+        xmlp.nextTag();
         return image;
     }
 
-    private Image parseAlias(XmlPullParser xpp) throws XmlPullParserException, XmlPullParserException, IOException {
-        Image image = getReferencedImage(xpp);
-        xpp.nextTag();
+    private Image parseAlias(XMLParser xmlp) throws XmlPullParserException, XmlPullParserException, IOException {
+        Image image = getReferencedImage(xmlp);
+        xmlp.nextTag();
         return image;
     }
 
-    private static int[] parseSplit(XmlPullParser xpp, String attribName, int width) throws XmlPullParserException {
+    private static int[] parseSplit(XMLParser xmlp, String attribName, int width) throws XmlPullParserException {
         try {
             int[] off = new int[4];
-            ParserUtil.parseIntArray(ParserUtil.getAttributeNotNull(xpp, attribName), off, 1, 2);
+            ParserUtil.parseIntArray(xmlp.getAttributeNotNull(attribName), off, 1, 2);
             off[3] = width;
             return off;
         } catch(NumberFormatException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "Unable to parse", xpp, ex).initCause(ex));
+            throw xmlp.error("Unable to parse", ex);
         }
     }
 
-    private static int[] parseSplit(XmlPullParser xpp, String attribName, int left, int right, int width) {
+    private static int[] parseSplit(XMLParser xmlp, String attribName, int left, int right, int width) {
         int[] off = new int[4];
-        String splitStr = xpp.getAttributeValue(null, attribName);
+        String splitStr = xmlp.getAttributeValue(null, attribName);
         if(splitStr != null) {
             ParserUtil.parseIntArray(splitStr, off, 1, 2);
         } else {
@@ -330,105 +332,104 @@ class ImageManager {
         return off;
     }
 
-    private void parseSubImages(XmlPullParser xpp, Image[] textures) throws XmlPullParserException, IOException {
+    private void parseSubImages(XMLParser xmlp, Image[] textures) throws XmlPullParserException, IOException {
         for(int i=0 ; i<textures.length ; i++) {
-            xpp.require(XmlPullParser.START_TAG, null, null);
-            String tagName = xpp.getName();
-            textures[i] = parseImage(xpp, tagName);
-            xpp.require(XmlPullParser.END_TAG, null, tagName);
-            xpp.nextTag();
+            xmlp.require(XmlPullParser.START_TAG, null, null);
+            String tagName = xmlp.getName();
+            textures[i] = parseImage(xmlp, tagName);
+            xmlp.require(XmlPullParser.END_TAG, null, tagName);
+            xmlp.nextTag();
         }
     }
 
-    private Image parseGrid(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
+    private Image parseGrid(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         try {
-            int[] weightsX = ParserUtil.parseIntArrayFromAttribute(xpp, "weightsX");
-            int[] weightsY = ParserUtil.parseIntArrayFromAttribute(xpp, "weightsY");
+            int[] weightsX = ParserUtil.parseIntArrayFromAttribute(xmlp, "weightsX");
+            int[] weightsY = ParserUtil.parseIntArrayFromAttribute(xmlp, "weightsY");
             Image[] textures = new Image[weightsX.length * weightsY.length];
-            xpp.nextTag();
-            parseSubImages(xpp, textures);
+            xmlp.nextTag();
+            parseSubImages(xmlp, textures);
             Image image = new GridImage(textures, weightsX, weightsY, params.border);
             return image;
         } catch(IllegalArgumentException ex) {
             ex.printStackTrace();
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "Invalid value", xpp, ex).initCause(ex));
+            throw xmlp.error("Invalid value", ex);
         }
     }
 
     private static final int[] SPLIT_WEIGHTS_3 = {0,1,0};
     private static final int[] SPLIT_WEIGHTS_1 = {1};
     
-    private Image parseHSplit(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
+    private Image parseHSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         Image[] textures = new Image[3];
-        if(xpp.getAttributeValue(null, "x") == null) {
-            xpp.nextTag();
-            parseSubImages(xpp, textures);
+        if(xmlp.getAttributeValue(null, "x") == null) {
+            xmlp.nextTag();
+            parseSubImages(xmlp, textures);
         } else {
-            parseRectFromAttribute(xpp, params);
+            parseRectFromAttribute(xmlp, params);
             int[] xoff;
             if(params.border != null) {
-                xoff = parseSplit(xpp, "splitx", params.border.getBorderLeft(),
+                xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(),
                         params.border.getBorderRight(), Math.abs(params.w));
             } else {
-                xoff = parseSplit(xpp, "splitx", Math.abs(params.w));
+                xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
             }
             for(int h=0 ; h<3 ; h++) {
                 int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
-                textures[h] = createImage(xpp,
+                textures[h] = createImage(xmlp,
                         params.x+xoff[h], params.y, imgW, params.h,
                         params.tintColor, false);
             }
             params.tintColor = null;
-            xpp.nextTag();
+            xmlp.nextTag();
         }
         Image image = new GridImage(textures, SPLIT_WEIGHTS_3, SPLIT_WEIGHTS_1, params.border);
         return image;
     }
 
-    private Image parseVSplit(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
+    private Image parseVSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         Image[] textures = new Image[3];
-        if(xpp.getAttributeValue(null, "x") == null) {
-            xpp.nextTag();
-            parseSubImages(xpp, textures);
+        if(xmlp.getAttributeValue(null, "x") == null) {
+            xmlp.nextTag();
+            parseSubImages(xmlp, textures);
         } else {
-            parseRectFromAttribute(xpp, params);
+            parseRectFromAttribute(xmlp, params);
             int[] yoff;
             if(params.border != null) {
-                yoff = parseSplit(xpp, "splity", params.border.getBorderTop(),
+                yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(),
                         params.border.getBorderBottom(), Math.abs(params.h));
             } else {
-                yoff = parseSplit(xpp, "splity", Math.abs(params.h));
+                yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
             }
             for(int v=0 ; v<3 ; v++) {
                 int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
-                textures[v] = createImage(xpp,
+                textures[v] = createImage(xmlp,
                         params.x, params.y+yoff[v], params.w, imgH,
                         params.tintColor, false);
             }
             params.tintColor = null;
-            xpp.nextTag();
+            xmlp.nextTag();
         }
         Image image = new GridImage(textures, SPLIT_WEIGHTS_1, SPLIT_WEIGHTS_3, params.border);
         return image;
     }
 
 
-    private Image parseHVSplit(XmlPullParser xpp, ImageParams params) throws IOException, XmlPullParserException {
+    private Image parseHVSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         Image[] textures = new Image[9];
-        if(xpp.getAttributeValue(null, "x") == null) {
-            xpp.nextTag();
-            parseSubImages(xpp, textures);
+        if(xmlp.getAttributeValue(null, "x") == null) {
+            xmlp.nextTag();
+            parseSubImages(xmlp, textures);
         } else {
-            parseRectFromAttribute(xpp, params);
-            boolean noCenter = ParserUtil.parseBoolFromAttribute(xpp, "nocenter", false);
+            parseRectFromAttribute(xmlp, params);
+            boolean noCenter = xmlp.parseBoolFromAttribute("nocenter", false);
             int[] xoff, yoff;
             if(params.border != null) {
-                xoff = parseSplit(xpp, "splitx", params.border.getBorderLeft(), params.border.getBorderRight(), Math.abs(params.w));
-                yoff = parseSplit(xpp, "splity", params.border.getBorderTop(), params.border.getBorderBottom(), Math.abs(params.h));
+                xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(), params.border.getBorderRight(), Math.abs(params.w));
+                yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(), params.border.getBorderBottom(), Math.abs(params.h));
             } else {
-                xoff = parseSplit(xpp, "splitx", Math.abs(params.w));
-                yoff = parseSplit(xpp, "splity", Math.abs(params.h));
+                xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
+                yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
             }
             for(int v=0 ; v<3 ; v++) {
                 for(int h=0 ; h<3 ; h++) {
@@ -437,73 +438,73 @@ class ImageManager {
                     if(noCenter && h == 1 && v == 1) {
                         textures[v*3+h] = new EmptyImage(imgW, imgH);
                     } else {
-                        textures[v*3+h] = createImage(xpp,
+                        textures[v*3+h] = createImage(xmlp,
                                 params.x+xoff[h], params.y+yoff[v], imgW, imgH,
                                 params.tintColor, false);
                     }
                 }
             }
             params.tintColor = null;
-            xpp.nextTag();
+            xmlp.nextTag();
         }
         Image image = new GridImage(textures, SPLIT_WEIGHTS_3, SPLIT_WEIGHTS_3, params.border);
         return image;
     }
 
-    private void parseAnimElements(XmlPullParser xpp, String tagName, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
+    private void parseAnimElements(XMLParser xmlp, String tagName, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
         if("repeat".equals(tagName)) {
-            frames.add(parseAnimRepeat(xpp));
+            frames.add(parseAnimRepeat(xmlp));
         } else if("frame".equals(tagName)) {
-            frames.add(parseAnimFrame(xpp));
+            frames.add(parseAnimFrame(xmlp));
         } else if("frames".equals(tagName)) {
-            parseAnimFrames(xpp, frames);
+            parseAnimFrames(xmlp, frames);
         } else {
-            throw new XmlPullParserException("Unexpected " + tagName, xpp, null);
+            throw xmlp.unexpected();
         }
     }
 
-    private AnimatedImage.Img parseAnimFrame(XmlPullParser xpp) throws XmlPullParserException, IOException {
-        int duration = ParserUtil.parseIntFromAttribute(xpp, "duration");
+    private AnimatedImage.Img parseAnimFrame(XMLParser xmlp) throws XmlPullParserException, IOException {
+        int duration = xmlp.parseIntFromAttribute("duration");
         if(duration < 0) {
             throw new IllegalArgumentException("duration must be >= 0 ms");
         }
-        Color tint = ParserUtil.parseColorFromAttribute(xpp, "tint", Color.WHITE);
-        Image image = getReferencedImage(xpp);
+        Color tint = ParserUtil.parseColorFromAttribute(xmlp, "tint", Color.WHITE);
+        Image image = getReferencedImage(xmlp);
         AnimatedImage.Img img = new AnimatedImage.Img(duration, image, tint);
-        xpp.nextTag();
+        xmlp.nextTag();
         return img;
     }
 
-    private void parseAnimFrames(XmlPullParser xpp, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
+    private void parseAnimFrames(XMLParser xmlp, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
         ImageParams params = new ImageParams();
-        parseRectFromAttribute(xpp, params);
-        int duration = ParserUtil.parseIntFromAttribute(xpp, "duration");
+        parseRectFromAttribute(xmlp, params);
+        int duration = xmlp.parseIntFromAttribute("duration");
         if(duration < 1) {
             throw new IllegalArgumentException("duration must be >= 1 ms");
         }
-        int count = ParserUtil.parseIntFromAttribute(xpp, "count");
+        int count = xmlp.parseIntFromAttribute("count");
         if(count < 1) {
             throw new IllegalArgumentException("count must be >= 1");
         }
-        Color tint = ParserUtil.parseColorFromAttribute(xpp, "tint", Color.WHITE);
-        int xOffset = ParserUtil.parseIntFromAttribute(xpp, "offsetx", 0);
-        int yOffset = ParserUtil.parseIntFromAttribute(xpp, "offsety", 0);
+        Color tint = ParserUtil.parseColorFromAttribute(xmlp, "tint", Color.WHITE);
+        int xOffset = xmlp.parseIntFromAttribute("offsetx", 0);
+        int yOffset = xmlp.parseIntFromAttribute("offsety", 0);
         if(count > 1 && (xOffset == 0 && yOffset == 0)) {
             throw new IllegalArgumentException("offsets required for multiple frames");
         }
         for(int i=0 ; i<count ; i++) {
-            Image image = createImage(xpp, params.x, params.y, params.w, params.h, Color.WHITE, false);
+            Image image = createImage(xmlp, params.x, params.y, params.w, params.h, Color.WHITE, false);
             AnimatedImage.Img img = new AnimatedImage.Img(duration, image, tint);
             frames.add(img);
             params.x += xOffset;
             params.y += yOffset;
         }
 
-        xpp.nextTag();
+        xmlp.nextTag();
     }
 
-    private AnimatedImage.Repeat parseAnimRepeat(XmlPullParser xpp) throws XmlPullParserException, IOException {
-        String strRepeatCount = xpp.getAttributeValue(null, "count");
+    private AnimatedImage.Repeat parseAnimRepeat(XMLParser xmlp) throws XmlPullParserException, IOException {
+        String strRepeatCount = xmlp.getAttributeValue(null, "count");
         int repeatCount = 0;
         if(strRepeatCount != null) {
             repeatCount = Integer.parseInt(strRepeatCount);
@@ -514,20 +515,20 @@ class ImageManager {
         boolean lastRepeatsEndless = false;
         boolean hasWarned = false;
         ArrayList<AnimatedImage.Element> children = new ArrayList<AnimatedImage.Element>();
-        xpp.nextTag();
-        while(xpp.getEventType() == XmlPullParser.START_TAG) {
+        xmlp.nextTag();
+        while(xmlp.isStartTag()) {
             if(lastRepeatsEndless && !hasWarned) {
                 hasWarned = true;
-                getLogger().warning("Animation frames after an endless repeat won't be displayed: " + xpp.getPositionDescription());
+                getLogger().warning("Animation frames after an endless repeat won't be displayed: " + xmlp.getPositionDescription());
             }
-            String tagName = xpp.getName();
-            parseAnimElements(xpp, tagName, children);
+            String tagName = xmlp.getName();
+            parseAnimElements(xmlp, tagName, children);
             AnimatedImage.Element e = children.get(children.size()-1);
             lastRepeatsEndless =
                     (e instanceof AnimatedImage.Repeat) &&
                     ((AnimatedImage.Repeat)e).repeatCount == 0;
-            xpp.require(XmlPullParser.END_TAG, null, tagName);
-            xpp.nextTag();
+            xmlp.require(XmlPullParser.END_TAG, null, tagName);
+            xmlp.nextTag();
         }
         return new AnimatedImage.Repeat(children.toArray(new AnimatedImage.Element[children.size()]), repeatCount);
     }
@@ -550,10 +551,10 @@ class ImageManager {
         return null;
     }
 
-    private Image parseAnimation(XmlPullParser xpp, ImageParams params) throws XmlPullParserException, IOException {
+    private Image parseAnimation(XMLParser xmlp, ImageParams params) throws XmlPullParserException, IOException {
         try {
-            String timeSource = ParserUtil.getAttributeNotNull(xpp, "timeSource");
-            AnimatedImage.Repeat root = parseAnimRepeat(xpp);
+            String timeSource = xmlp.getAttributeNotNull("timeSource");
+            AnimatedImage.Repeat root = parseAnimRepeat(xmlp);
             if(params.border == null) {
                 params.border = getBorder(root);
             }
@@ -562,12 +563,11 @@ class ImageManager {
             params.tintColor = null;
             return image;
         } catch(IllegalArgumentException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "Unable to parse", xpp, ex).initCause(ex));
+            throw xmlp.error("Unable to parse", ex);
         }
     }
 
-    private Image createImage(XmlPullParser xpp, int x, int y, int w, int h, Color tintColor, boolean tiled) {
+    private Image createImage(XMLParser xmlp, int x, int y, int w, int h, Color tintColor, boolean tiled) {
         if(w == 0 || h == 0) {
             return new EmptyImage(Math.abs(w), Math.abs(h));
         }
@@ -582,16 +582,16 @@ class ImageManager {
         Texture texture = currentTexture;
         if(x >= texture.getWidth() || x+Math.abs(w) <= 0 ||
                 y >= texture.getHeight() || y+Math.abs(h) <= 0) {
-            getLogger().warning("texture partly outside of file: " + xpp.getPositionDescription());
+            getLogger().warning("texture partly outside of file: " + xmlp.getPositionDescription());
         }
         return texture.getImage(x, y, w, h, tintColor, tiled);
     }
     
-    private void parseRectFromAttribute(XmlPullParser xpp, ImageParams params) throws XmlPullParserException {
-        params.x = ParserUtil.parseIntFromAttribute(xpp, "x");
-        params.y = ParserUtil.parseIntFromAttribute(xpp, "y");
-        params.w = ParserUtil.parseIntFromAttribute(xpp, "width");
-        params.h = ParserUtil.parseIntFromAttribute(xpp, "height");
+    private void parseRectFromAttribute(XMLParser xmlp, ImageParams params) throws XmlPullParserException {
+        params.x = xmlp.parseIntFromAttribute("x");
+        params.y = xmlp.parseIntFromAttribute("y");
+        params.w = xmlp.parseIntFromAttribute("width");
+        params.h = xmlp.parseIntFromAttribute("height");
     }
 
     Logger getLogger() {

@@ -32,11 +32,11 @@ package de.matthiasmann.twl.theme;
 import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.XMLParser;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.SortedMap;
-import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 /**
@@ -49,102 +49,33 @@ final class ParserUtil {
     private ParserUtil() {
     }
 
-    static void checkNameNotEmpty(final String name, XmlPullParser xpp) throws XmlPullParserException {
+    static void checkNameNotEmpty(final String name, XMLParser xmlp) throws XmlPullParserException {
         if(name == null) {
-            throw new XmlPullParserException("missing 'name' on '" + xpp.getName() + "'", xpp, null);
+            throw xmlp.error("missing 'name' on '" + xmlp.getName() + "'");
         }
         if(name.length() == 0) {
-            throw new XmlPullParserException("empty name not allowed", xpp, null);
+            throw xmlp.error("empty name not allowed");
         }
         if("none".equals(name)) {
-            throw new XmlPullParserException("can't use reserved name \"none\"", xpp, null);
+            throw xmlp.error("can't use reserved name \"none\"");
         }
         if(name.indexOf('*') >= 0) {
-            throw new XmlPullParserException("'*' is not allowed in names", xpp, null);
+            throw xmlp.error("'*' is not allowed in names");
         }
         if(name.indexOf('/') >= 0) {
-            throw new XmlPullParserException("'/' is not allowed in names", xpp, null);
+            throw xmlp.error("'/' is not allowed in names");
         }
     }
 
-    static<E extends Enum<E>> E parseEnum(XmlPullParser xpp, Class<E> enumClazz, String value) throws XmlPullParserException {
-        try {
-            return Enum.valueOf(enumClazz, value.toUpperCase());
-        } catch (IllegalArgumentException ex) {
-        }
-        try {
-            return Enum.valueOf(enumClazz, value);
-        } catch (IllegalArgumentException ex) {
-        }
-        throw new XmlPullParserException("Unknown enum value \"" + value
-                + "\" for enum class " + enumClazz, xpp, null);
-    }
-    
-    static boolean parseBool(XmlPullParser xpp, String value) throws XmlPullParserException {
-        if("true".equals(value)) {
-            return true;
-        } else if("false".equals(value)) {
-            return false;
-        } else {
-            throw new XmlPullParserException("boolean value must be 'true' or 'false'", xpp, null);
-        }
-    }
-    
-    static void missingAttribute(XmlPullParser xpp, String attribute) throws XmlPullParserException {
-        throw new XmlPullParserException("missing '" + attribute + "' on '" + xpp.getName() + "'", xpp, null);
-    }
-
-    static String getAttributeNotNull(XmlPullParser xpp, String attribute) throws XmlPullParserException {
-        String value = xpp.getAttributeValue(null, attribute);
-        if(value == null) {
-            missingAttribute(xpp, attribute);
-        }
-        return value;
-    }
-    
-    static boolean parseBoolFromAttribute(XmlPullParser xpp, String attribName) throws XmlPullParserException {
-        return parseBool(xpp, getAttributeNotNull(xpp, attribName));
-    }
-    
-    static boolean parseBoolFromAttribute(XmlPullParser xpp, String attribName, boolean defaultValue) throws XmlPullParserException {
-        String value = xpp.getAttributeValue(null, attribName);
-        if(value == null) {
-            return defaultValue;
-        }
-        return parseBool(xpp, value);
-    }
-
-    static int parseIntFromAttribute(XmlPullParser xpp, String attribName) throws XmlPullParserException {
-        try {
-            return Integer.parseInt(getAttributeNotNull(xpp, attribName));
-        } catch(NumberFormatException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    ex.getMessage(), xpp, ex).initCause(ex));
-        }
-    }
-
-    static int parseIntFromAttribute(XmlPullParser xpp, String attribName, int defaultValue) throws XmlPullParserException {
-        try {
-            String value = xpp.getAttributeValue(null, attribName);
-            if(value == null) {
-                return defaultValue;
-            }
-            return Integer.parseInt(value);
-        } catch(NumberFormatException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    ex.getMessage(), xpp, ex).initCause(ex));
-        }
-    }
-    
-    static Border parseBorderFromAttribute(XmlPullParser xpp, String attribute) throws XmlPullParserException {
-        String value = xpp.getAttributeValue(null, attribute);
+    static Border parseBorderFromAttribute(XMLParser xmlp, String attribute) throws XmlPullParserException {
+        String value = xmlp.getAttributeValue(null, attribute);
         if(value == null) {
             return null;
         }
-        return parseBorder(xpp, value);
+        return parseBorder(xmlp, value);
     }
 
-    static Border parseBorder(XmlPullParser xpp, String value) throws XmlPullParserException {
+    static Border parseBorder(XMLParser xmlp, String value) throws XmlPullParserException {
         try {
             int elements = countElements(value);
             int values[] = new int[elements];
@@ -158,32 +89,30 @@ final class ParserUtil {
             case 4:
                 return new Border(values[0], values[1], values[2], values[3]);
             default:
-                throw new XmlPullParserException("Unsupported border format", xpp, null);
+                throw xmlp.error("Unsupported border format");
             }
         } catch (NumberFormatException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "Unable to parse border size", xpp, ex).initCause(ex));
+            throw xmlp.error("Unable to parse border size", ex);
         }
     }
 
-    static Color parseColorFromAttribute(XmlPullParser xpp, String attribute, Color defaultColor) throws XmlPullParserException {
-        String value = xpp.getAttributeValue(null, attribute);
+    static Color parseColorFromAttribute(XMLParser xmlp, String attribute, Color defaultColor) throws XmlPullParserException {
+        String value = xmlp.getAttributeValue(null, attribute);
         if(value == null) {
             return defaultColor;
         }
-        return parseColor(xpp, value);
+        return parseColor(xmlp, value);
     }
 
-    static Color parseColor(XmlPullParser xpp, String value) throws XmlPullParserException {
+    static Color parseColor(XMLParser xmlp, String value) throws XmlPullParserException {
         try {
             Color color = Color.parserColor(value);
             if(color == null) {
-                throw new XmlPullParserException("Unknown color name: " + value, xpp, null);
+                throw xmlp.error("Unknown color name: " + value);
             }
             return color;
         } catch(NumberFormatException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "unable to parse color code", xpp, ex).initCause(ex));
+            throw xmlp.error("unable to parse color code", ex);
         }
     }
     
@@ -203,13 +132,12 @@ final class ParserUtil {
         return name;
     }
 
-    static int[] parseIntArrayFromAttribute(XmlPullParser xpp, String attribute) throws XmlPullParserException {
+    static int[] parseIntArrayFromAttribute(XMLParser xmlp, String attribute) throws XmlPullParserException {
         try {
-            String value = getAttributeNotNull(xpp, attribute);
+            String value = xmlp.getAttributeNotNull(attribute);
             return parseIntArray(value);
         } catch(NumberFormatException ex) {
-            throw (XmlPullParserException)(new XmlPullParserException(
-                    "Unable to parse", xpp, ex).initCause(ex));
+            throw xmlp.error("Unable to parse", ex);
         }
     }
 
@@ -264,27 +192,18 @@ final class ParserUtil {
 
         return result;
     }
-
-    static Map<String, String> getAttributeMap(XmlPullParser xpp) {
-        HashMap<String, String> attribs = new HashMap<String, String>();
-        for(int i=0,n=xpp.getAttributeCount() ; i<n ; i++) {
-            attribs.put(xpp.getAttributeName(i), xpp.getAttributeValue(i));
-        }
-        return attribs;
-    }
     
-    static StateExpression parseCondition(XmlPullParser xpp) throws XmlPullParserException {
-        String expression = xpp.getAttributeValue(null, "if");
+    static StateExpression parseCondition(XMLParser xmlp) throws XmlPullParserException {
+        String expression = xmlp.getAttributeValue(null, "if");
         boolean negate = expression == null;
         if(expression == null) {
-            expression = xpp.getAttributeValue(null, "unless");
+            expression = xmlp.getAttributeValue(null, "unless");
         }
         if(expression != null) {
             try {
                 return StateExpression.parse(expression, negate);
             } catch(ParseException ex) {
-                throw (XmlPullParserException)(new XmlPullParserException(
-                        "Unable to parse condition", xpp, ex).initCause(ex));
+                throw xmlp.error("Unable to parse condition", ex);
             }
         }
         return null;
