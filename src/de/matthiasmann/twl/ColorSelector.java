@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.AbstractFloatModel;
 import de.matthiasmann.twl.model.ColorModel;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.Image;
@@ -46,6 +47,7 @@ public class ColorSelector extends DialogLayout {
     private float[] colorValues;
     private int alpha;
     private ColorArea1D[] areas;
+    private ColorValueModel[] colorValueModels;
 
     public ColorSelector(ColorModel colorModel) {
         alpha = 255;
@@ -104,26 +106,34 @@ public class ColorSelector extends DialogLayout {
         Group horz = createSequentialGroup().addGap();
         Group vertLabels = createParallelGroup();
         Group vertAreas = createParallelGroup();
+        Group vertAdjuster = createParallelGroup();
 
+        colorValueModels = new ColorValueModel[colorModel.getNumComponents()];
         areas = new ColorArea1D[colorModel.getNumComponents()];
         
         for(int component=0 ; component<colorModel.getNumComponents() ; component++) {
+            ColorValueModel colorValueModel = new ColorValueModel(component);
             Label label = new Label(colorModel.getComponentName(component));
             ColorArea1D area = new ColorArea1D(component);
+            ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModel);
 
+            colorValueModels[component] = colorValueModel;
             areas[component] = area;
             
             horz.addGroup(createParallelGroup(
                     createSequentialGroup().addGap().addWidget(label).addGap(),
-                    createSequentialGroup().addGap().addWidget(area).addGap()));
+                    createSequentialGroup().addGap().addWidget(area).addGap(),
+                    createSequentialGroup().addGap().addWidget(vaf).addGap()));
             vertLabels.addWidget(label);
             vertAreas.addWidget(area);
+            vertAdjuster.addWidget(vaf);
 
             label.setLabelFor(area);
         }
 
         setHorizontalGroup(horz.addGap());
-        setVerticalGroup(createSequentialGroup().addGap().addGroup(vertLabels).addGroup(vertAreas).addGap());
+        setVerticalGroup(createSequentialGroup().addGap()
+                .addGroups(vertLabels).addGroup(vertAreas).addGroup(vertAdjuster).addGap());
     }
 
     protected void updateAllColorAreas(int exclude) {
@@ -132,12 +142,44 @@ public class ColorSelector extends DialogLayout {
                 if(i != exclude) {
                     areas[i].needsUpdate = true;
                 }
+                if(i == exclude || exclude < 0) {
+                    colorValueModels[i].fireCallback();
+                }
             }
         }
     }
 
     private static final int IMAGE_SIZE = 64;
 
+    class ColorValueModel extends AbstractFloatModel {
+        private final int component;
+
+        public ColorValueModel(int component) {
+            this.component = component;
+        }
+
+        public float getMaxValue() {
+            return colorModel.getMaxValue(component);
+        }
+
+        public float getMinValue() {
+            return colorModel.getMinValue(component);
+        }
+
+        public float getValue() {
+            return colorValues[component];
+        }
+
+        public void setValue(float value) {
+            colorValues[component] = value;
+            updateAllColorAreas(component);
+        }
+
+        void fireCallback() {
+            doCallback();
+        }
+    }
+    
     class ColorArea1D extends Widget {
         private final ByteBuffer imgData;
         private final IntBuffer imgDataInt;
