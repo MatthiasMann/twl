@@ -32,6 +32,7 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.Rect;
 import de.matthiasmann.twl.renderer.CacheContext;
+import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Font;
@@ -40,6 +41,7 @@ import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -49,7 +51,9 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.EXTTextureRectangle;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GLContext;
 
 /**
  * A renderer using only GL11 features
@@ -59,6 +63,7 @@ import org.lwjgl.opengl.GL11;
 public class LWJGLRenderer implements Renderer, LineRenderer {
 
     private final IntBuffer ib16;
+    private final int maxTextureSize;
 
     private int width;
     private int height;
@@ -71,15 +76,20 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private LWJGLCacheContext cacheContext;
 
     final ArrayList<Integer> textureDLs;
+    final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintState tintState;
 
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
         this.textureDLs = new ArrayList<Integer>();
+        this.dynamicImages = new ArrayList<LWJGLDynamicImage>();
         this.tintStateRoot = new TintState();
         this.tintState = tintStateRoot;
         syncViewportSize();
 
+        GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE, ib16);
+        maxTextureSize = ib16.get(0);
+        
         int minCursorSize = Cursor.getMinCursorSize();
         IntBuffer tmp = BufferUtils.createIntBuffer(minCursorSize * minCursorSize);
         emptyCursor = new Cursor(minCursorSize, minCursorSize,
@@ -223,6 +233,43 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public LineRenderer getLineRenderer() {
         return this;
+    }
+
+    public DynamicImage createDynamicImage(int width, int height) {
+        if(width <= 0) {
+            throw new IllegalArgumentException("width");
+        }
+        if(height <= 0) {
+            throw new IllegalArgumentException("height");
+        }
+        if(width > maxTextureSize || height > maxTextureSize) {
+            return null;
+        }
+
+        boolean useTextureRectangle = GLContext.getCapabilities().GL_EXT_texture_rectangle;
+
+        int proxyTarget = useTextureRectangle ?
+            EXTTextureRectangle.GL_PROXY_TEXTURE_RECTANGLE_EXT : GL11.GL_PROXY_TEXTURE_2D;
+
+        GL11.glTexImage2D(proxyTarget, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
+        ib16.clear();
+        GL11.glGetTexLevelParameter(proxyTarget, 0, GL11.GL_TEXTURE_WIDTH, ib16);
+        if(ib16.get(0) != width) {
+            return null;
+        }
+
+        int target = useTextureRectangle ?
+            EXTTextureRectangle.GL_TEXTURE_RECTANGLE_EXT : GL11.GL_TEXTURE_2D;
+        int id = glGenTexture();
+
+        GL11.glBindTexture(target, id);
+        GL11.glTexImage2D(target, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+
+        LWJGLDynamicImage image = new LWJGLDynamicImage(this, target, id, width, height, Color.WHITE);
+        dynamicImages.add(image);
+        return image;
     }
 
     public void setClipRect(Rect rect) {

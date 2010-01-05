@@ -114,10 +114,24 @@ public interface Renderer {
     public Texture loadTexture(URL url, String format, String filter) throws IOException;
     
     /**
-     * Returns the line renderer
-     * @return the line renderer
+     * Returns the line renderer. If line rendering is not supported then this method returns null.
+     *
+     * This is an optional operation.
+     *
+     * @return the line renderer or null if not supported.
      */
     public LineRenderer getLineRenderer();
+
+    /**
+     * Creates a dynamic image with undefined content.
+     * 
+     * This is an optional operation.
+     * 
+     * @param width the width of the image
+     * @param height the height of the image
+     * @return a new dynamic image or null if the image could not be created
+     */
+    public DynamicImage createDynamicImage(int width, int height);
 
     /**
      * Sets the clipping area for all rendering operations.
@@ -127,6 +141,18 @@ public interface Renderer {
 
     public void setCursor(MouseCursor cursor);
 
+    /**
+     * Pushes a new tint color on the tint stack. The current tint color is
+     * multiplied by the new tint color.
+     *
+     * For every call of {@code pushGlobalTintColor} a call to {@code popGlobalTintColor}
+     * must be made.
+     * 
+     * @param r red, must be 0.0f &lt;= r &lt;= 1.0f
+     * @param g green, must be 0.0f &lt;= g &lt;= 1.0f
+     * @param b blue, must be 0.0f &lt;= b &lt;= 1.0f
+     * @param a alpha, must be 0.0f &lt;= a &lt;= 1.0f
+     */
     public void pushGlobalTintColor(float r, float g, float b, float a);
 
     public void popGlobalTintColor();
