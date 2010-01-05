@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -44,10 +44,15 @@ import org.lwjgl.input.Keyboard;
  */
 public abstract class ValueAdjuster extends Widget {
 
+    private static final int INITIAL_DELAY = 300;
+    private static final int REPEAT_DELAY = 75;
+    
     private final DraggableButton label;
     private final EditField editField;
     private final Button decButton;
     private final Button incButton;
+    private final Runnable timerCallback;
+    private Timer timer;
 
     private int width;
     
@@ -62,19 +67,22 @@ public abstract class ValueAdjuster extends Widget {
         editField.setTheme("valueEdit");
         decButton.setTheme("decButton");
         incButton.setTheme("incButton");
-        
-        decButton.addCallback(new Runnable() {
+
+        Runnable cbUpdateTimer = new Runnable() {
             public void run() {
-                cancelEdit();
-                doDecrement();
+                updateTimer();
             }
-        });
-        incButton.addCallback(new Runnable() {
+        };
+
+        timerCallback = new Runnable() {
             public void run() {
-                cancelEdit();
-                doIncrement();
+                timer.setDelay(REPEAT_DELAY);
+                onTimer();
             }
-        });
+        };
+
+        decButton.getModel().addStateCallback(cbUpdateTimer);
+        incButton.getModel().addStateCallback(cbUpdateTimer);
         label.addCallback(new Runnable() {
             public void run() {
                 startEdit();
@@ -206,6 +214,47 @@ public abstract class ValueAdjuster extends Widget {
     
     protected void setDisplayText(String text) {
         label.setText(text);
+    }
+
+    void onTimer() {
+        if(incButton.getModel().isArmed()) {
+            cancelEdit();
+            doIncrement();
+        } else if(decButton.getModel().isArmed()) {
+            cancelEdit();
+            doDecrement();
+        }
+    }
+
+    void updateTimer() {
+        if(timer != null) {
+            if(incButton.getModel().isArmed() || decButton.getModel().isArmed()) {
+                if(!timer.isRunning()) {
+                    onTimer();
+                    timer.setDelay(INITIAL_DELAY);
+                    timer.start();
+                }
+            } else {
+                timer.stop();
+            }
+        }
+    }
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        timer = gui.createTimer();
+        timer.setCallback(timerCallback);
+        timer.setContinuous(true);
+    }
+
+    @Override
+    protected void beforeRemoveFromGUI(GUI gui) {
+        super.beforeRemoveFromGUI(gui);
+        if(timer != null) {
+            timer.stop();
+        }
+        timer = null;
     }
 
     @Override
