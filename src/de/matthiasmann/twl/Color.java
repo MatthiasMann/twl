@@ -70,19 +70,33 @@ public class Color {
     }
 
     /**
-     * Creates a new color object from an integer.
+     * Creates a new color object from an integer in ARGB order.
+     * 
      * bits  0- 7 are blue
      * bits  8-15 are green
      * bits 16-23 are red
      * bits 24-31 are alpha
      * 
-     * @param rgba the color value as integer
+     * @param argb the color value as integer
      */
-    public Color(int rgba) {
-        this.r = (byte)(rgba >> 16);
-        this.g = (byte)(rgba >>  8);
-        this.b = (byte)(rgba      );
-        this.a = (byte)(rgba >> 24);
+    public Color(int argb) {
+        this.a = (byte)(argb >> 24);
+        this.r = (byte)(argb >> 16);
+        this.g = (byte)(argb >>  8);
+        this.b = (byte)(argb      );
+    }
+
+    /**
+     * Converts this color into an integer in ARGB format
+     *
+     * @return the color value as integer
+     * @see #Color(int)
+     */
+    public int toARGB() {
+        return ((a & 255) << 24) |
+                ((r & 255) << 16) |
+                ((g & 255) <<  8) |
+                ((b & 255)      );
     }
 
     public byte getR() {
