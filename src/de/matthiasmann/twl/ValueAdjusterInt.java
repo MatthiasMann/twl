@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -174,7 +174,7 @@ public class ValueAdjusterInt extends ValueAdjuster {
     
     private void syncWithModel() {
         cancelEdit();
-        setValue(model.getValue());
+        this.value = model.getValue();
         setDisplayText();
     }
     
