@@ -116,8 +116,8 @@ public class DialogLayout extends Widget {
     protected boolean addDefaultGaps = true;
     protected boolean redoDefaultGaps;
 
-    protected Group horz;
-    protected Group vert;
+    private Group horz;
+    private Group vert;
 
     /**
      * Debugging aid. Captures the stack trace where one of the group was last assigned.
