@@ -51,6 +51,7 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
 import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.EXTTextureRectangle;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
@@ -246,8 +247,16 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             return null;
         }
 
-        boolean useTextureRectangle = GLContext.getCapabilities().GL_EXT_texture_rectangle;
+        ContextCapabilities caps = GLContext.getCapabilities();
+        boolean useTextureRectangle = caps.GL_EXT_texture_rectangle || caps.GL_ARB_texture_rectangle;
 
+        if(!useTextureRectangle && !caps.GL_ARB_texture_non_power_of_two) {
+            if((width & (width-1)) != 0 || (height & (height-1)) != 0) {
+                return null;
+            }
+        }
+
+        // ARB and EXT versions use the same enum !
         int proxyTarget = useTextureRectangle ?
             EXTTextureRectangle.GL_PROXY_TEXTURE_RECTANGLE_EXT : GL11.GL_PROXY_TEXTURE_2D;
 
@@ -258,14 +267,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             return null;
         }
 
+        // ARB and EXT versions use the same enum !
         int target = useTextureRectangle ?
             EXTTextureRectangle.GL_TEXTURE_RECTANGLE_EXT : GL11.GL_TEXTURE_2D;
         int id = glGenTexture();
 
         GL11.glBindTexture(target, id);
         GL11.glTexImage2D(target, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+        GL11.glTexParameteri(target, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+        GL11.glTexParameteri(target, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 
         LWJGLDynamicImage image = new LWJGLDynamicImage(this, target, id, width, height, Color.WHITE);
         dynamicImages.add(image);

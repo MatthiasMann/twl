@@ -48,7 +48,9 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
     private int id;
     
     public LWJGLDynamicImage(LWJGLRenderer renderer, int target, int id, int width, int height, Color tintColor) {
-        super(0, 0, width, height, width, height);
+        super(0, 0, width, height,
+                (target == GL11.GL_TEXTURE_2D) ? width : 1f,
+                (target == GL11.GL_TEXTURE_2D) ? height : 1f);
         
         this.renderer = renderer;
         this.tintColor = tintColor;
