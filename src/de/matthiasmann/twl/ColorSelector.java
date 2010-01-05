@@ -33,6 +33,7 @@ import de.matthiasmann.twl.model.AbstractFloatModel;
 import de.matthiasmann.twl.model.ColorModel;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.utils.CallbackSupport;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
@@ -46,8 +47,9 @@ public class ColorSelector extends DialogLayout {
     private ColorModel colorModel;
     private float[] colorValues;
     private int alpha;
-    private ColorArea1D[] areas;
     private ColorValueModel[] colorValueModels;
+    private boolean useColorArea2D = true;
+    private Runnable[] callbacks;
 
     public ColorSelector(ColorModel colorModel) {
         alpha = 255;
@@ -89,7 +91,7 @@ public class ColorSelector extends DialogLayout {
     public void setColor(Color color) {
         alpha = color.getA() & 255;
         colorValues = colorModel.fromRGB(color.toARGB() & 0xFFFFFF);
-        updateAllColorAreas(-1);
+        updateAllColorAreas();
     }
 
     public void setDefaultColor() {
@@ -97,9 +99,36 @@ public class ColorSelector extends DialogLayout {
         for(int i=0 ; i<colorModel.getNumComponents() ; i++) {
             colorValues[i] = colorModel.getDefaultValue(i);
         }
-        updateAllColorAreas(-1);
+        updateAllColorAreas();
+    }
+
+    public boolean isUseColorArea2D() {
+        return useColorArea2D;
+    }
+
+    public void setUseColorArea2D(boolean useColorArea2D) {
+        if(this.useColorArea2D != useColorArea2D) {
+            this.useColorArea2D = useColorArea2D;
+            createColorAreas();
+        }
+    }
+
+    public void addCallback(Runnable cb) {
+        callbacks = CallbackSupport.addCallbackToList(callbacks, cb, Runnable.class);
+    }
+
+    public void removeCallback(Runnable cb) {
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
+    }
+
+    protected void fireCallbacks() {
+        CallbackSupport.fireCallbacks(callbacks);
     }
     
+    protected int getNumComponents() {
+        return colorModel.getNumComponents();
+    }
+
     protected void createColorAreas() {
         removeAllChildren();
 
@@ -108,18 +137,36 @@ public class ColorSelector extends DialogLayout {
         Group vertAreas = createParallelGroup();
         Group vertAdjuster = createParallelGroup();
 
-        colorValueModels = new ColorValueModel[colorModel.getNumComponents()];
-        areas = new ColorArea1D[colorModel.getNumComponents()];
-        
-        for(int component=0 ; component<colorModel.getNumComponents() ; component++) {
-            ColorValueModel colorValueModel = new ColorValueModel(component);
+        int numComponents = getNumComponents();
+
+        colorValueModels = new ColorValueModel[numComponents];
+        for(int component=0 ; component<numComponents ; component++) {
+            colorValueModels[component] = new ColorValueModel(component);
+        }
+
+        int component = 0;
+
+        if(useColorArea2D) {
+            for(; component+1 < numComponents ; component+=2) {
+                Label label = new Label(colorModel.getComponentName(component) +
+                        "/" + colorModel.getComponentName(component+1));
+                ColorArea2D area = new ColorArea2D(component, component+1);
+
+                horz.addGroup(createParallelGroup(
+                        createSequentialGroup().addGap().addWidget(label).addGap(),
+                        createSequentialGroup().addGap().addWidget(area).addGap()));
+                vertLabels.addWidget(label);
+                vertAreas.addWidget(area);
+
+                label.setLabelFor(area);
+            }
+        }
+
+        for( ; component<numComponents ; component++) {
             Label label = new Label(colorModel.getComponentName(component));
             ColorArea1D area = new ColorArea1D(component);
-            ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModel);
+            ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModels[component]);
 
-            colorValueModels[component] = colorValueModel;
-            areas[component] = area;
-            
             horz.addGroup(createParallelGroup(
                     createSequentialGroup().addGap().addWidget(label).addGap(),
                     createSequentialGroup().addGap().addWidget(area).addGap(),
@@ -136,16 +183,12 @@ public class ColorSelector extends DialogLayout {
                 .addGroups(vertLabels).addGroup(vertAreas).addGroup(vertAdjuster).addGap());
     }
 
-    protected void updateAllColorAreas(int exclude) {
-        if(areas != null) {
-            for(int i=0 ; i<areas.length ; i++) {
-                if(i != exclude) {
-                    areas[i].needsUpdate = true;
-                }
-                if(i == exclude || exclude < 0) {
-                    colorValueModels[i].fireCallback();
-                }
+    protected void updateAllColorAreas() {
+        if(colorValueModels != null) {
+            for(ColorValueModel cvm : colorValueModels) {
+                cvm.fireCallback();
             }
+            fireCallbacks();
         }
     }
 
@@ -172,30 +215,27 @@ public class ColorSelector extends DialogLayout {
 
         public void setValue(float value) {
             colorValues[component] = value;
-            updateAllColorAreas(component);
+            doCallback();
+            fireCallbacks();
         }
 
         void fireCallback() {
             doCallback();
         }
     }
-    
-    class ColorArea1D extends Widget {
-        private final ByteBuffer imgData;
-        private final IntBuffer imgDataInt;
-        private final int component;
 
-        private DynamicImage img;
-        private Image cursorImage;
+    abstract class ColorArea extends Widget implements Runnable {
+        final ByteBuffer imgData;
+        final IntBuffer imgDataInt;
+
+        DynamicImage img;
+        Image cursorImage;
         boolean needsUpdate;
 
-        public ColorArea1D(int component) {
-            imgData = ByteBuffer.allocateDirect(IMAGE_SIZE * 4);
+        public ColorArea(int size) {
+            imgData = ByteBuffer.allocateDirect(size);
             imgData.order(ByteOrder.BIG_ENDIAN);
             imgDataInt = imgData.asIntBuffer();
-            
-            this.component = component;
-            this.needsUpdate = true;
         }
 
         @Override
@@ -204,22 +244,21 @@ public class ColorSelector extends DialogLayout {
             cursorImage = themeInfo.getImage("cursor");
         }
 
+        abstract void createImage(GUI gui);
+        abstract void updateImage();
+        abstract void handleMouse(int x, int y);
+
         @Override
         protected void paintWidget(GUI gui) {
             if(img == null) {
-                img = gui.getRenderer().createDynamicImage(1, IMAGE_SIZE);
+                createImage(gui);
+                needsUpdate = true;
             }
             if(img != null) {
                 if(needsUpdate) {
                     updateImage();
                 }
                 img.draw(getAnimationState(), getInnerX(), getInnerY(), getInnerWidth(), getInnerHeight());
-            }
-            if(cursorImage != null) {
-                float minValue = colorModel.getMinValue(component);
-                float maxValue = colorModel.getMaxValue(component);
-                int pos = (int)((colorValues[component] - minValue) * (getInnerHeight()-1) / (maxValue - minValue) + 0.5f);
-                cursorImage.draw(getAnimationState(), getInnerX(), getInnerY() + pos, getInnerWidth(), 1);
             }
         }
 
@@ -232,7 +271,58 @@ public class ColorSelector extends DialogLayout {
             }
         }
 
-        private void updateImage() {
+        @Override
+        protected boolean handleEvent(Event evt) {
+            switch (evt.getType()) {
+                case MOUSE_BTNDOWN:
+                case MOUSE_DRAGED:
+                    handleMouse(evt.getMouseX() - getInnerX(), evt.getMouseY() - getInnerY());
+                    return true;
+                default:
+                    if(evt.isMouseEvent()) {
+                        return true;
+                    }
+                    break;
+            }
+            return super.handleEvent(evt);
+        }
+
+        public void run() {
+            needsUpdate = true;
+        }
+    }
+    
+    class ColorArea1D extends ColorArea {
+        final int component;
+
+        public ColorArea1D(int component) {
+            super(IMAGE_SIZE * 4);
+
+            this.component = component;
+
+            for(int i=0,n=getNumComponents() ; i<n ; i++) {
+                if(i != component) {
+                    colorValueModels[i].addCallback(this);
+                }
+            }
+        }
+
+        @Override
+        protected void paintWidget(GUI gui) {
+            super.paintWidget(gui);
+            if(cursorImage != null) {
+                float minValue = colorModel.getMinValue(component);
+                float maxValue = colorModel.getMaxValue(component);
+                int pos = (int)((colorValues[component] - minValue) * (getInnerHeight()-1) / (maxValue - minValue) + 0.5f);
+                cursorImage.draw(getAnimationState(), getInnerX(), getInnerY() + pos, getInnerWidth(), 1);
+            }
+        }
+
+        protected void createImage(GUI gui) {
+            img = gui.getRenderer().createDynamicImage(1, IMAGE_SIZE);
+        }
+
+        protected void updateImage() {
             final float[] temp = ColorSelector.this.colorValues.clone();
 
             float x = colorModel.getMinValue(component);
@@ -249,25 +339,88 @@ public class ColorSelector extends DialogLayout {
         }
 
         @Override
-        protected boolean handleEvent(Event evt) {
-            switch (evt.getType()) {
-                case MOUSE_BTNDOWN:
-                case MOUSE_DRAGED: {
-                    float minValue = colorModel.getMinValue(component);
-                    float maxValue = colorModel.getMaxValue(component);
-                    int innerHeight = getInnerHeight();
-                    int pos = Math.max(0, Math.min(innerHeight, evt.getMouseY() - getInnerY()));
-                    colorValues[component] = minValue + (maxValue - minValue) * pos / innerHeight;
-                    updateAllColorAreas(component);
-                    return true;
+        void handleMouse(int x, int y) {
+            float minValue = colorModel.getMinValue(component);
+            float maxValue = colorModel.getMaxValue(component);
+            int innerHeight = getInnerHeight();
+            int pos = Math.max(0, Math.min(innerHeight, y));
+            float value = minValue + (maxValue - minValue) * pos / innerHeight;
+            colorValueModels[component].setValue(value);
+        }
+    }
+
+    class ColorArea2D extends ColorArea {
+        private final int componentX;
+        private final int componentY;
+
+        public ColorArea2D(int componentX, int componentY) {
+            super(IMAGE_SIZE * IMAGE_SIZE * 4);
+
+            this.componentX = componentX;
+            this.componentY = componentY;
+
+            for(int i=0,n=getNumComponents() ; i<n ; i++) {
+                if(i != componentX && i != componentY) {
+                    colorValueModels[i].addCallback(this);
                 }
-                default:
-                    if(evt.isMouseEvent()) {
-                        return true;
-                    }
-                    break;
             }
-            return super.handleEvent(evt);
+        }
+        @Override
+        protected void paintWidget(GUI gui) {
+            super.paintWidget(gui);
+            if(cursorImage != null) {
+                float minValueX = colorModel.getMinValue(componentX);
+                float maxValueX = colorModel.getMaxValue(componentX);
+                float minValueY = colorModel.getMinValue(componentY);
+                float maxValueY = colorModel.getMaxValue(componentY);
+                int posX = (int)((colorValues[componentX] - minValueX) * (getInnerWidth()-1) / (maxValueX - minValueX) + 0.5f);
+                int posY = (int)((colorValues[componentY] - minValueY) * (getInnerHeight()-1) / (maxValueY - minValueY) + 0.5f);
+                cursorImage.draw(getAnimationState(), getInnerX() + posX, getInnerY() + posY, 1, 1);
+            }
+        }
+
+        protected void createImage(GUI gui) {
+            img = gui.getRenderer().createDynamicImage(IMAGE_SIZE, IMAGE_SIZE);
+        }
+
+        protected void updateImage() {
+            final float[] temp = ColorSelector.this.colorValues.clone();
+
+            float x0 = colorModel.getMinValue(componentX);
+            float dx = (colorModel.getMaxValue(componentX) - x0) / (IMAGE_SIZE - 1);
+
+            float y = colorModel.getMinValue(componentY);
+            float dy = (colorModel.getMaxValue(componentY) - y) / (IMAGE_SIZE - 1);
+
+            for(int i=0,idx=0 ; i<IMAGE_SIZE ; i++) {
+                temp[componentY] = y;
+                float x = x0;
+                for(int j=0 ; j<IMAGE_SIZE ; j++) {
+                    temp[componentX] = x;
+                    imgDataInt.put(idx++, (colorModel.toRGB(temp) << 8) | 0xFF);
+                    x += dx;
+                }
+                y += dy;
+            }
+
+            img.update(imgData);
+            needsUpdate = false;
+        }
+
+        @Override
+        void handleMouse(int x, int y) {
+            float minValueX = colorModel.getMinValue(componentX);
+            float maxValueX = colorModel.getMaxValue(componentX);
+            float minValueY = colorModel.getMinValue(componentY);
+            float maxValueY = colorModel.getMaxValue(componentY);
+            int innerWidtht = getInnerWidth();
+            int innerHeight = getInnerHeight();
+            int posX = Math.max(0, Math.min(innerWidtht, x));
+            int posY = Math.max(0, Math.min(innerHeight, y));
+            float valueX = minValueX + (maxValueX - minValueX) * posX / innerWidtht;
+            float valueY = minValueY + (maxValueY - minValueY) * posY / innerHeight;
+            colorValueModels[componentX].setValue(valueX);
+            colorValueModels[componentY].setValue(valueY);
         }
     }
 }
