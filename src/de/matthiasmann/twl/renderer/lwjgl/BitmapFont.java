@@ -141,9 +141,7 @@ public class BitmapFont {
             if(xmlp.parseIntFromAttribute("page", 0) != 0) {
                 throw xmlp.error("Multiple pages not supported");
             }
-            if(xmlp.parseIntFromAttribute("chnl", 0) != 0) {
-                throw xmlp.error("Multiple channels not supported");
-            }
+            int chnl = xmlp.parseIntFromAttribute("chnl", 0);
             Glyph g = new Glyph(x, y, w, h, texture.getTexWidth(), texture.getTexHeight());
             g.xoffset = Short.parseShort(xmlp.getAttributeNotNull("xoffset"));
             g.yoffset = Short.parseShort(xmlp.getAttributeNotNull("yoffset"));
