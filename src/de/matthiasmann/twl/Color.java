@@ -37,7 +37,7 @@ import java.lang.reflect.Modifier;
  *
  * @author MannMat
  */
-public class Color {
+public final class Color {
 
     public static final Color BLACK = new Color(0xFF000000);
     public static final Color SILVER = new Color(0xFFC0C0C0);
@@ -200,6 +200,37 @@ public class Color {
             }
         }
         return Color.getColorByName(value);
+    }
+
+    /**
+     * Converts this color into it's hex string.
+     *
+     * If alpha is 255 then a string in "#RRGGBB" format is created,
+     * otherwise the "#AARRGGBB" format is created
+     *
+     * @return hex representation of this color
+     */
+    @Override
+    public String toString() {
+        if(a != -1) {
+            return String.format("#%08X", toARGB());
+        } else {
+            return String.format("#%06X", toARGB() & 0xFFFFFF);
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(!(obj instanceof Color)) {
+            return false;
+        }
+        final Color other = (Color)obj;
+        return this.toARGB() == other.toARGB();
+    }
+
+    @Override
+    public int hashCode() {
+        return toARGB();
     }
 
     public Color multiply(Color other) {
