@@ -101,4 +101,11 @@ class LWJGLCursor implements MouseCursor {
         return (a << 24) | (r << 16) | (g << 8) | b;
     }
 
+    void destroy() {
+        if(cursor != null) {
+            cursor.destroy();
+            cursor = null;
+        }
+    }
+
 }

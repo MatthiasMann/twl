@@ -1,11 +1,11 @@
 /*
  * Copyright (c) 2008-2010, Matthias Mann
- * 
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  *     * Neither the name of Matthias Mann nor the names of its contributors may
  *       be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -35,6 +35,7 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Resource;
 import de.matthiasmann.twl.renderer.Texture;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import org.lwjgl.opengl.EXTAbgr;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
@@ -44,7 +45,7 @@ import org.lwjgl.opengl.Util;
 
 /**
  * Simple texture implementation for TWL using LWJGL.
- * 
+ *
  * @author Matthias Mann
  */
 public class LWJGLTexture implements Texture, Resource {
@@ -57,7 +58,7 @@ public class LWJGLTexture implements Texture, Resource {
         RGB_SMALL(GL11.GL_RGB, GL11.GL_RGB5_A1, 3),
         RGBA(GL11.GL_RGBA, GL11.GL_RGBA8, 4),
         ABGR(EXTAbgr.GL_ABGR_EXT, GL11.GL_RGBA8, 4);
-        
+
         final int glFormat;
         final int glInternalFormat;
         final int pixelSize;
@@ -71,11 +72,11 @@ public class LWJGLTexture implements Texture, Resource {
             return pixelSize;
         }
     }
-    
+
     public enum Filter {
         NEAREST(GL11.GL_NEAREST),
         LINEAR(GL11.GL_LINEAR);
-        
+
         final int glValue;
         Filter(int value) {
             this.glValue = value;
@@ -90,15 +91,16 @@ public class LWJGLTexture implements Texture, Resource {
     private final int texHeight;
     private ByteBuffer texData;
     private Format texDataFmt;
-    
+    private ArrayList<LWJGLCursor> cursors;
+
     public LWJGLTexture(LWJGLRenderer renderer, int width, int height,
             ByteBuffer buf, Format fmt, Filter filter) {
         this.renderer = renderer;
-        
+
         if(width <= 0 || height <= 0) {
             throw new IllegalArgumentException("size <= 0");
         }
-        
+
         id = renderer.glGenTexture();
         if(id == 0) {
             throw new OpenGLException("failed to allocate texture ID");
@@ -118,7 +120,7 @@ public class LWJGLTexture implements Texture, Resource {
 
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, filter.glValue);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, filter.glValue);
-        
+
         this.texWidth = OGLUtil.roundUpPOT(width);
         this.texHeight = OGLUtil.roundUpPOT(height);
 
@@ -136,9 +138,9 @@ public class LWJGLTexture implements Texture, Resource {
                     fmt.glInternalFormat, texWidth, texHeight,
                     0, fmt.glFormat, GL11.GL_UNSIGNED_BYTE, buf);
         }
-        
+
         Util.checkGLError();
-        
+
         this.width = width;
         this.height = height;
         this.texData = buf;
@@ -152,12 +154,18 @@ public class LWJGLTexture implements Texture, Resource {
             renderer.glDeleteTexture(id);
             id = 0;
         }
+        if(cursors != null) {
+            for(LWJGLCursor cursor : cursors) {
+                cursor.destroy();
+            }
+            cursors.clear();
+        }
     }
-    
+
     public int getWidth() {
         return width;
     }
-    
+
     public int getHeight() {
         return height;
     }
@@ -169,7 +177,7 @@ public class LWJGLTexture implements Texture, Resource {
     public int getTexHeight() {
         return texHeight;
     }
-    
+
     boolean bind(Color color) {
         if(id != 0) {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
@@ -186,7 +194,7 @@ public class LWJGLTexture implements Texture, Resource {
         }
         return false;
     }
-    
+
     public Image getImage(int x, int y, int width, int height, Color tintColor, boolean tiled) {
         if(x < 0 || x >= getWidth()) {
             throw new IllegalArgumentException("x");
@@ -205,14 +213,21 @@ public class LWJGLTexture implements Texture, Resource {
         }
         return new TextureArea(this, x, y, width, height, tintColor, tiled);
     }
-    
+
     public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY) {
         if(renderer.isUseSWMouseCursors()) {
             return new SWCursor(this, x, y, width, height, hotSpotX, hotSpotY);
         }
         if(texData != null) {
-            return new LWJGLCursor(texData, texDataFmt, texDataFmt.getPixelSize() * this.width,
-                    x, y, width, height, hotSpotX, hotSpotY);
+            LWJGLCursor cursor = new LWJGLCursor(texData, texDataFmt,
+                    texDataFmt.getPixelSize() * this.width, x, y, width, height, hotSpotX, hotSpotY);
+
+            if(cursors == null) {
+                cursors = new ArrayList<LWJGLCursor>();
+            }
+            cursors.add(cursor);
+
+            return cursor;
         }
         return null;
     }
