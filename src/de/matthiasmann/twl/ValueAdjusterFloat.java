@@ -30,7 +30,10 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.FloatModel;
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.IllegalFormatException;
+import java.util.Locale;
 
 /**
  * A value adjuster for floats.
@@ -47,6 +50,7 @@ public class ValueAdjusterFloat extends ValueAdjuster {
     private FloatModel model;
     private Runnable modelCallback;
     private String format = "%.2f";
+    private Locale locale = Locale.ENGLISH;
 
     public ValueAdjusterFloat() {
         setTheme("valueadjuster");
@@ -133,10 +137,20 @@ public class ValueAdjusterFloat extends ValueAdjuster {
 
     public void setFormat(String format) throws IllegalFormatException {
         // test format
-        String.format(format, 42f);
+        String.format(locale, format, 42f);
         this.format = format;
     }
 
+    public Locale getLocale() {
+        return locale;
+    }
+
+    public void setLocale(Locale locale) {
+        if(locale == null) {
+            throw new NullPointerException("locale");
+        }
+        this.locale = locale;
+    }
 
     @Override
     protected String onEditStart() {
@@ -146,9 +160,9 @@ public class ValueAdjusterFloat extends ValueAdjuster {
     @Override
     protected boolean onEditEnd(String text) {
         try {
-            setValue(Float.parseFloat(text));
+            setValue(parseText(text));
             return true;
-        } catch (NumberFormatException ex) {
+        } catch (ParseException ex) {
             return false;
         }
     }
@@ -156,9 +170,9 @@ public class ValueAdjusterFloat extends ValueAdjuster {
     @Override
     protected String validateEdit(String text) {
         try {
-            Float.parseFloat(text);
+            parseText(text);
             return null;
-        } catch (NumberFormatException ex) {
+        } catch (ParseException ex) {
             return ex.toString();
         }
     }
@@ -189,7 +203,11 @@ public class ValueAdjusterFloat extends ValueAdjuster {
     }
 
     private String formatText() {
-        return String.format(format, value);
+        return String.format(locale, format, value);
+    }
+
+    private float parseText(String value) throws ParseException {
+        return NumberFormat.getNumberInstance(locale).parse(value).floatValue();
     }
 
     private void setDisplayText() {
