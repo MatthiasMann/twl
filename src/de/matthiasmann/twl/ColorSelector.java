@@ -31,7 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.AbstractFloatModel;
 import de.matthiasmann.twl.model.AbstractIntegerModel;
-import de.matthiasmann.twl.model.ColorModel;
+import de.matthiasmann.twl.model.ColorSpace;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.utils.CallbackSupport;
@@ -48,40 +48,36 @@ public class ColorSelector extends DialogLayout {
 
     private static final String[] ARGB_NAMES = {"Red", "Green", "Blue", "Alpha"};
 
-    private ColorModel colorModel;
+    private ColorSpace colorSpace;
     private float[] colorValues;
-    private int alpha;
     private ColorValueModel[] colorValueModels;
     private boolean useColorArea2D = true;
     private Runnable[] callbacks;
     private int currentColor;
     private ARGBModel[] argbModels;
 
-    public ColorSelector(ColorModel colorModel) {
-        alpha = 255;
+    public ColorSelector(ColorSpace colorSpace) {
+        currentColor = Color.WHITE.toARGB();
 
-        setColorModel(colorModel);
+        setColorSpace(colorSpace);
     }
 
-    public ColorModel getColorModel() {
-        return colorModel;
+    public ColorSpace getColorSpace() {
+        return colorSpace;
     }
 
-    public void setColorModel(ColorModel colorModel) {
+    public void setColorSpace(ColorSpace colorModel) {
         if(colorModel == null) {
             throw new NullPointerException("colorModel");
         }
-        if(this.colorModel != colorModel) {
-            Color color = null;
-            if(this.colorModel != null) {
-                color = getColor();
-            }
+        if(this.colorSpace != colorModel) {
+            boolean hasColor = this.colorSpace != null;
 
-            this.colorModel = colorModel;
+            this.colorSpace = colorModel;
             this.colorValues = new float[colorModel.getNumComponents()];
 
-            if(color != null) {
-                setColor(color);
+            if(hasColor) {
+                setColor(currentColor);
             } else {
                 setDefaultColor();
             }
@@ -99,9 +95,9 @@ public class ColorSelector extends DialogLayout {
     }
 
     public void setDefaultColor() {
-        alpha = 255;
-        for(int i=0 ; i<colorModel.getNumComponents() ; i++) {
-            colorValues[i] = colorModel.getDefaultValue(i);
+        currentColor = Color.WHITE.toARGB();
+        for(int i=0 ; i<colorSpace.getNumComponents() ; i++) {
+            colorValues[i] = colorSpace.getDefaultValue(i);
         }
         updateAllColorAreas();
     }
@@ -126,7 +122,7 @@ public class ColorSelector extends DialogLayout {
     }
 
     protected void colorChanged() {
-        currentColor = (alpha << 24) | colorModel.toRGB(colorValues);
+        currentColor = (currentColor & (0xFF << 24)) | colorSpace.toRGB(colorValues);
         CallbackSupport.fireCallbacks(callbacks);
         if(argbModels != null) {
             for(ARGBModel m : argbModels) {
@@ -136,13 +132,13 @@ public class ColorSelector extends DialogLayout {
     }
 
     protected void setColor(int argb) {
-        alpha = (argb >> 24) & 255;
-        colorValues = colorModel.fromRGB(argb & 0xFFFFFF);
+        currentColor = argb;
+        colorValues = colorSpace.fromRGB(argb & 0xFFFFFF);
         updateAllColorAreas();
     }
     
     protected int getNumComponents() {
-        return colorModel.getNumComponents();
+        return colorSpace.getNumComponents();
     }
 
     protected void createColorAreas() {
@@ -172,7 +168,7 @@ public class ColorSelector extends DialogLayout {
         for(int component=0 ; component<numComponents ; component++) {
             colorValueModels[component] = new ColorValueModel(component);
 
-            Label label = new Label(colorModel.getComponentName(component));
+            Label label = new Label(colorSpace.getComponentName(component));
             ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModels[component]);
             label.setLabelFor(vaf);
 
@@ -236,11 +232,11 @@ public class ColorSelector extends DialogLayout {
         }
 
         public float getMaxValue() {
-            return colorModel.getMaxValue(component);
+            return colorSpace.getMaxValue(component);
         }
 
         public float getMinValue() {
-            return colorModel.getMinValue(component);
+            return colorSpace.getMinValue(component);
         }
 
         public float getValue() {
@@ -373,8 +369,8 @@ public class ColorSelector extends DialogLayout {
         protected void paintWidget(GUI gui) {
             super.paintWidget(gui);
             if(cursorImage != null) {
-                float minValue = colorModel.getMinValue(component);
-                float maxValue = colorModel.getMaxValue(component);
+                float minValue = colorSpace.getMinValue(component);
+                float maxValue = colorSpace.getMaxValue(component);
                 int pos = (int)((colorValues[component] - maxValue) * (getInnerHeight()-1) / (minValue - maxValue) + 0.5f);
                 cursorImage.draw(getAnimationState(), getInnerX(), getInnerY() + pos, getInnerWidth(), 1);
             }
@@ -387,12 +383,12 @@ public class ColorSelector extends DialogLayout {
         protected void updateImage() {
             final float[] temp = ColorSelector.this.colorValues.clone();
 
-            float x = colorModel.getMaxValue(component);
-            float dx = (colorModel.getMinValue(component) - x) / (IMAGE_SIZE - 1);
+            float x = colorSpace.getMaxValue(component);
+            float dx = (colorSpace.getMinValue(component) - x) / (IMAGE_SIZE - 1);
 
             for(int i=0 ; i<IMAGE_SIZE ; i++) {
                 temp[component] = x;
-                imgDataInt.put(i, (colorModel.toRGB(temp) << 8) | 0xFF);
+                imgDataInt.put(i, (colorSpace.toRGB(temp) << 8) | 0xFF);
                 x += dx;
             }
 
@@ -402,8 +398,8 @@ public class ColorSelector extends DialogLayout {
 
         @Override
         void handleMouse(int x, int y) {
-            float minValue = colorModel.getMinValue(component);
-            float maxValue = colorModel.getMaxValue(component);
+            float minValue = colorSpace.getMinValue(component);
+            float maxValue = colorSpace.getMaxValue(component);
             int innerHeight = getInnerHeight();
             int pos = Math.max(0, Math.min(innerHeight, y));
             float value = maxValue + (minValue - maxValue) * pos / innerHeight;
@@ -431,10 +427,10 @@ public class ColorSelector extends DialogLayout {
         protected void paintWidget(GUI gui) {
             super.paintWidget(gui);
             if(cursorImage != null) {
-                float minValueX = colorModel.getMinValue(componentX);
-                float maxValueX = colorModel.getMaxValue(componentX);
-                float minValueY = colorModel.getMinValue(componentY);
-                float maxValueY = colorModel.getMaxValue(componentY);
+                float minValueX = colorSpace.getMinValue(componentX);
+                float maxValueX = colorSpace.getMaxValue(componentX);
+                float minValueY = colorSpace.getMinValue(componentY);
+                float maxValueY = colorSpace.getMaxValue(componentY);
                 int posX = (int)((colorValues[componentX] - maxValueX) * (getInnerWidth()-1) / (minValueX - maxValueX) + 0.5f);
                 int posY = (int)((colorValues[componentY] - maxValueY) * (getInnerHeight()-1) / (minValueY - maxValueY) + 0.5f);
                 cursorImage.draw(getAnimationState(), getInnerX() + posX, getInnerY() + posY, 1, 1);
@@ -448,18 +444,18 @@ public class ColorSelector extends DialogLayout {
         protected void updateImage() {
             final float[] temp = ColorSelector.this.colorValues.clone();
 
-            float x0 = colorModel.getMaxValue(componentX);
-            float dx = (colorModel.getMinValue(componentX) - x0) / (IMAGE_SIZE - 1);
+            float x0 = colorSpace.getMaxValue(componentX);
+            float dx = (colorSpace.getMinValue(componentX) - x0) / (IMAGE_SIZE - 1);
 
-            float y = colorModel.getMaxValue(componentY);
-            float dy = (colorModel.getMinValue(componentY) - y) / (IMAGE_SIZE - 1);
+            float y = colorSpace.getMaxValue(componentY);
+            float dy = (colorSpace.getMinValue(componentY) - y) / (IMAGE_SIZE - 1);
 
             for(int i=0,idx=0 ; i<IMAGE_SIZE ; i++) {
                 temp[componentY] = y;
                 float x = x0;
                 for(int j=0 ; j<IMAGE_SIZE ; j++) {
                     temp[componentX] = x;
-                    imgDataInt.put(idx++, (colorModel.toRGB(temp) << 8) | 0xFF);
+                    imgDataInt.put(idx++, (colorSpace.toRGB(temp) << 8) | 0xFF);
                     x += dx;
                 }
                 y += dy;
@@ -471,10 +467,10 @@ public class ColorSelector extends DialogLayout {
 
         @Override
         void handleMouse(int x, int y) {
-            float minValueX = colorModel.getMinValue(componentX);
-            float maxValueX = colorModel.getMaxValue(componentX);
-            float minValueY = colorModel.getMinValue(componentY);
-            float maxValueY = colorModel.getMaxValue(componentY);
+            float minValueX = colorSpace.getMinValue(componentX);
+            float maxValueX = colorSpace.getMaxValue(componentX);
+            float minValueY = colorSpace.getMinValue(componentY);
+            float maxValueY = colorSpace.getMaxValue(componentY);
             int innerWidtht = getInnerWidth();
             int innerHeight = getInnerHeight();
             int posX = Math.max(0, Math.min(innerWidtht, x));

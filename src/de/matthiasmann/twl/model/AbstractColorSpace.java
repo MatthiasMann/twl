@@ -30,16 +30,17 @@
 package de.matthiasmann.twl.model;
 
 /**
+ * An abstract class to make implementing color spaces a bit easier
  *
  * @author Matthias Mann
  */
-public abstract class AbstractColorModel implements ColorModel {
+public abstract class AbstractColorSpace implements ColorSpace {
 
-    private final String modelName;
+    private final String colorSpaceName;
     private final String[] names;
 
-    public AbstractColorModel(String modelName, String ... names) {
-        this.modelName = modelName;
+    public AbstractColorSpace(String colorSpaceName, String ... names) {
+        this.colorSpaceName = colorSpaceName;
         this.names = names;
     }
 
@@ -47,8 +48,8 @@ public abstract class AbstractColorModel implements ColorModel {
         return names[component];
     }
 
-    public String getModelName() {
-        return modelName;
+    public String getColorSpaceName() {
+        return colorSpaceName;
     }
 
     public int getNumComponents() {

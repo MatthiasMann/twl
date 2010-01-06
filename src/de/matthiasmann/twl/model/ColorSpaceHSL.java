@@ -30,12 +30,16 @@
 package de.matthiasmann.twl.model;
 
 /**
+ * A HSL (Hue, Saturation and Luminance) color space
+ *
+ * Hue is represented in degree from 0 to 360
+ * Saturation and Luminance in percent from 0 to 100
  *
  * @author Matthias Mann
  */
-public class ColorModelHSL extends AbstractColorModel {
+public class ColorSpaceHSL extends AbstractColorSpace {
 
-    public ColorModelHSL() {
+    public ColorSpaceHSL() {
         super("HSL", "Hue", "Saturation", "Lightness");
     }
 

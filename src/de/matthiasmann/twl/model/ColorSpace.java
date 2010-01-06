@@ -30,16 +30,16 @@
 package de.matthiasmann.twl.model;
 
 /**
- * A color model used by the color selector widget.
+ * A color space used by the color selector widget.
  *
  * It supports a variable number of color components.
  * It does not include an alpha channel.
  * 
  * @author Matthias Mann
  */
-public interface ColorModel {
+public interface ColorSpace {
 
-    public String getModelName();
+    public String getColorSpaceName();
 
     /**
      * Returns the number of component for this model. Must be >= 3.
@@ -93,7 +93,7 @@ public interface ColorModel {
     public int toRGB(float[] color);
 
     /**
-     * Converts the given RGB value into color values for this model.
+     * Converts the given RGB value into color values for this color space.
      *
      * @param rgb the RGB value
      * @return the color values corespondig to the RGB value
