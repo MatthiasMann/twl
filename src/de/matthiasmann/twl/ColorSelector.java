@@ -30,6 +30,7 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.AbstractFloatModel;
+import de.matthiasmann.twl.model.AbstractIntegerModel;
 import de.matthiasmann.twl.model.ColorModel;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.Image;
@@ -39,10 +40,13 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 
 /**
+ * A color selector widget
  *
  * @author Matthias Mann
  */
 public class ColorSelector extends DialogLayout {
+
+    private static final String[] ARGB_NAMES = {"Red", "Green", "Blue", "Alpha"};
 
     private ColorModel colorModel;
     private float[] colorValues;
@@ -50,10 +54,12 @@ public class ColorSelector extends DialogLayout {
     private ColorValueModel[] colorValueModels;
     private boolean useColorArea2D = true;
     private Runnable[] callbacks;
+    private int currentColor;
+    private ARGBModel[] argbModels;
 
     public ColorSelector(ColorModel colorModel) {
         alpha = 255;
-        
+
         setColorModel(colorModel);
     }
 
@@ -85,13 +91,11 @@ public class ColorSelector extends DialogLayout {
     }
 
     public Color getColor() {
-        return new Color((alpha << 24) | colorModel.toRGB(colorValues));
+        return new Color(currentColor);
     }
 
     public void setColor(Color color) {
-        alpha = color.getA() & 255;
-        colorValues = colorModel.fromRGB(color.toARGB() & 0xFFFFFF);
-        updateAllColorAreas();
+        setColor(color.toARGB());
     }
 
     public void setDefaultColor() {
@@ -121,8 +125,20 @@ public class ColorSelector extends DialogLayout {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
     }
 
-    protected void fireCallbacks() {
+    protected void colorChanged() {
+        currentColor = (alpha << 24) | colorModel.toRGB(colorValues);
         CallbackSupport.fireCallbacks(callbacks);
+        if(argbModels != null) {
+            for(ARGBModel m : argbModels) {
+                m.fireCallback();
+            }
+        }
+    }
+
+    protected void setColor(int argb) {
+        alpha = (argb >> 24) & 255;
+        colorValues = colorModel.fromRGB(argb & 0xFFFFFF);
+        updateAllColorAreas();
     }
     
     protected int getNumComponents() {
@@ -132,55 +148,73 @@ public class ColorSelector extends DialogLayout {
     protected void createColorAreas() {
         removeAllChildren();
 
-        Group horz = createSequentialGroup().addGap();
-        Group vertLabels = createParallelGroup();
-        Group vertAreas = createParallelGroup();
-        Group vertAdjuster = createParallelGroup();
+        // recreate models to make sure that no callback is left over
+        argbModels = new ARGBModel[4];
+        argbModels[0] = new ARGBModel(16);
+        argbModels[1] = new ARGBModel(8);
+        argbModels[2] = new ARGBModel(0);
+        argbModels[3] = new ARGBModel(24);
 
         int numComponents = getNumComponents();
+
+        Group horzAreas = createSequentialGroup().addGap();
+        Group vertAreas = createParallelGroup();
+
+        Group horzLabels = createParallelGroup();
+        Group horzAdjuster = createParallelGroup();
+
+        Group[] vertAdjuster = new Group[4 + numComponents];
+        for(int i=0 ; i<vertAdjuster.length ; i++) {
+            vertAdjuster[i] = createParallelGroup();
+        }
 
         colorValueModels = new ColorValueModel[numComponents];
         for(int component=0 ; component<numComponents ; component++) {
             colorValueModels[component] = new ColorValueModel(component);
+
+            Label label = new Label(colorModel.getComponentName(component));
+            ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModels[component]);
+            label.setLabelFor(vaf);
+
+            horzLabels.addWidget(label);
+            horzAdjuster.addWidget(vaf);
+            vertAdjuster[component].addWidget(label).addWidget(vaf);
+        }
+
+        for(int i=0 ; i<argbModels.length ; i++) {
+            Label label = new Label(ARGB_NAMES[i]);
+            ValueAdjusterInt vai = new ValueAdjusterInt(argbModels[i]);
+            label.setLabelFor(vai);
+
+            horzLabels.addWidget(label);
+            horzAdjuster.addWidget(vai);
+            vertAdjuster[numComponents + i].addWidget(label).addWidget(vai);
         }
 
         int component = 0;
 
         if(useColorArea2D) {
             for(; component+1 < numComponents ; component+=2) {
-                Label label = new Label(colorModel.getComponentName(component) +
-                        "/" + colorModel.getComponentName(component+1));
                 ColorArea2D area = new ColorArea2D(component, component+1);
 
-                horz.addGroup(createParallelGroup(
-                        createSequentialGroup().addGap().addWidget(label).addGap(),
-                        createSequentialGroup().addGap().addWidget(area).addGap()));
-                vertLabels.addWidget(label);
+                horzAreas.addWidget(area);
                 vertAreas.addWidget(area);
-
-                label.setLabelFor(area);
             }
         }
 
         for( ; component<numComponents ; component++) {
-            Label label = new Label(colorModel.getComponentName(component));
             ColorArea1D area = new ColorArea1D(component);
-            ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModels[component]);
 
-            horz.addGroup(createParallelGroup(
-                    createSequentialGroup().addGap().addWidget(label).addGap(),
-                    createSequentialGroup().addGap().addWidget(area).addGap(),
-                    createSequentialGroup().addGap().addWidget(vaf).addGap()));
-            vertLabels.addWidget(label);
+            horzAreas.addWidget(area);
             vertAreas.addWidget(area);
-            vertAdjuster.addWidget(vaf);
-
-            label.setLabelFor(area);
         }
 
-        setHorizontalGroup(horz.addGap());
-        setVerticalGroup(createSequentialGroup().addGap()
-                .addGroups(vertLabels).addGroup(vertAreas).addGroup(vertAdjuster).addGap());
+        setHorizontalGroup(createParallelGroup()
+                .addGroup(horzAreas.addGap())
+                .addGroup(createSequentialGroup(horzLabels, horzAdjuster).addGap()));
+        setVerticalGroup(createSequentialGroup()
+                .addGroup(vertAreas)
+                .addGroups(vertAdjuster).addGap());
     }
 
     protected void updateAllColorAreas() {
@@ -188,7 +222,7 @@ public class ColorSelector extends DialogLayout {
             for(ColorValueModel cvm : colorValueModels) {
                 cvm.fireCallback();
             }
-            fireCallbacks();
+            colorChanged();
         }
     }
 
@@ -216,7 +250,35 @@ public class ColorSelector extends DialogLayout {
         public void setValue(float value) {
             colorValues[component] = value;
             doCallback();
-            fireCallbacks();
+            colorChanged();
+        }
+
+        void fireCallback() {
+            doCallback();
+        }
+    }
+
+    class ARGBModel extends AbstractIntegerModel {
+        private final int startBit;
+
+        public ARGBModel(int startBit) {
+            this.startBit = startBit;
+        }
+
+        public int getMaxValue() {
+            return 255;
+        }
+
+        public int getMinValue() {
+            return 0;
+        }
+
+        public int getValue() {
+            return (currentColor >> startBit) & 255;
+        }
+
+        public void setValue(int value) {
+            setColor((currentColor & ~(255 << startBit)) | (value << startBit));
         }
 
         void fireCallback() {
@@ -313,7 +375,7 @@ public class ColorSelector extends DialogLayout {
             if(cursorImage != null) {
                 float minValue = colorModel.getMinValue(component);
                 float maxValue = colorModel.getMaxValue(component);
-                int pos = (int)((colorValues[component] - minValue) * (getInnerHeight()-1) / (maxValue - minValue) + 0.5f);
+                int pos = (int)((colorValues[component] - maxValue) * (getInnerHeight()-1) / (minValue - maxValue) + 0.5f);
                 cursorImage.draw(getAnimationState(), getInnerX(), getInnerY() + pos, getInnerWidth(), 1);
             }
         }
@@ -325,8 +387,8 @@ public class ColorSelector extends DialogLayout {
         protected void updateImage() {
             final float[] temp = ColorSelector.this.colorValues.clone();
 
-            float x = colorModel.getMinValue(component);
-            float dx = (colorModel.getMaxValue(component) - x) / (IMAGE_SIZE - 1);
+            float x = colorModel.getMaxValue(component);
+            float dx = (colorModel.getMinValue(component) - x) / (IMAGE_SIZE - 1);
 
             for(int i=0 ; i<IMAGE_SIZE ; i++) {
                 temp[component] = x;
@@ -344,7 +406,7 @@ public class ColorSelector extends DialogLayout {
             float maxValue = colorModel.getMaxValue(component);
             int innerHeight = getInnerHeight();
             int pos = Math.max(0, Math.min(innerHeight, y));
-            float value = minValue + (maxValue - minValue) * pos / innerHeight;
+            float value = maxValue + (minValue - maxValue) * pos / innerHeight;
             colorValueModels[component].setValue(value);
         }
     }
@@ -373,8 +435,8 @@ public class ColorSelector extends DialogLayout {
                 float maxValueX = colorModel.getMaxValue(componentX);
                 float minValueY = colorModel.getMinValue(componentY);
                 float maxValueY = colorModel.getMaxValue(componentY);
-                int posX = (int)((colorValues[componentX] - minValueX) * (getInnerWidth()-1) / (maxValueX - minValueX) + 0.5f);
-                int posY = (int)((colorValues[componentY] - minValueY) * (getInnerHeight()-1) / (maxValueY - minValueY) + 0.5f);
+                int posX = (int)((colorValues[componentX] - maxValueX) * (getInnerWidth()-1) / (minValueX - maxValueX) + 0.5f);
+                int posY = (int)((colorValues[componentY] - maxValueY) * (getInnerHeight()-1) / (minValueY - maxValueY) + 0.5f);
                 cursorImage.draw(getAnimationState(), getInnerX() + posX, getInnerY() + posY, 1, 1);
             }
         }
@@ -386,11 +448,11 @@ public class ColorSelector extends DialogLayout {
         protected void updateImage() {
             final float[] temp = ColorSelector.this.colorValues.clone();
 
-            float x0 = colorModel.getMinValue(componentX);
-            float dx = (colorModel.getMaxValue(componentX) - x0) / (IMAGE_SIZE - 1);
+            float x0 = colorModel.getMaxValue(componentX);
+            float dx = (colorModel.getMinValue(componentX) - x0) / (IMAGE_SIZE - 1);
 
-            float y = colorModel.getMinValue(componentY);
-            float dy = (colorModel.getMaxValue(componentY) - y) / (IMAGE_SIZE - 1);
+            float y = colorModel.getMaxValue(componentY);
+            float dy = (colorModel.getMinValue(componentY) - y) / (IMAGE_SIZE - 1);
 
             for(int i=0,idx=0 ; i<IMAGE_SIZE ; i++) {
                 temp[componentY] = y;
@@ -417,8 +479,8 @@ public class ColorSelector extends DialogLayout {
             int innerHeight = getInnerHeight();
             int posX = Math.max(0, Math.min(innerWidtht, x));
             int posY = Math.max(0, Math.min(innerHeight, y));
-            float valueX = minValueX + (maxValueX - minValueX) * posX / innerWidtht;
-            float valueY = minValueY + (maxValueY - minValueY) * posY / innerHeight;
+            float valueX = maxValueX + (minValueX - maxValueX) * posX / innerWidtht;
+            float valueY = maxValueY + (minValueY - maxValueY) * posY / innerHeight;
             colorValueModels[componentX].setValue(valueX);
             colorValueModels[componentY].setValue(valueY);
         }
