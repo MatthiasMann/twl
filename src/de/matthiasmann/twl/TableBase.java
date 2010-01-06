@@ -419,7 +419,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
         return true;
     }
-    
+
     protected final void checkRowIndex(int row) {
         if(row < 0 || row >= numRows) {
             throw new IndexOutOfBoundsException("row");

@@ -197,6 +197,11 @@ public abstract class ValueAdjuster extends Widget {
     }
 
     @Override
+    protected void widgetDisabled() {
+        cancelEdit();
+    }
+
+    @Override
     protected void layout() {
         int height = getInnerHeight();
         int y = getInnerY();

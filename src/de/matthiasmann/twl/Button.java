@@ -45,7 +45,6 @@ public class Button extends TextWidget {
     public static final String STATE_HOVER = "hover";
     public static final String STATE_PRESSED = "pressed";
     public static final String STATE_SELECTED = "selected";
-    public static final String STATE_DISABLED = "disabled";
 
     private final Runnable stateChangedCB;
     private ButtonModel model;
@@ -100,15 +99,14 @@ public class Button extends TextWidget {
         reapplyTheme();
     }
 
-    public void setEnabled(boolean enabled) {
-        model.setEnabled(enabled);
-        if(!enabled) {
-            disarm();
-        }
+    @Override
+    protected void widgetDisabled() {
+        disarm();
     }
 
-    public boolean isEnabled() {
-        return model.isEnabled();
+    @Override
+    public void setEnabled(boolean enabled) {
+        model.setEnabled(enabled);
     }
 
     public void addCallback(Runnable callback) {
@@ -182,14 +180,12 @@ public class Button extends TextWidget {
     }
 
     void modelStateChanged() {
-        boolean enabled = model.isEnabled();
+        super.setEnabled(model.isEnabled());
         AnimationState as = getAnimationState();
         as.setAnimationState(STATE_SELECTED, model.isSelected());
         as.setAnimationState(STATE_HOVER, model.isHover());
         as.setAnimationState(STATE_ARMED, model.isArmed());
         as.setAnimationState(STATE_PRESSED, model.isPressed());
-        as.setAnimationState(STATE_DISABLED, !enabled);
-        setCanAcceptKeyboardFocus(enabled);
     }
 
     void updateText() {

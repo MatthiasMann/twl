@@ -50,6 +50,7 @@ public class Widget {
     public static final String STATE_KEYBOARD_FOCUS = "keyboardFocus";
     public static final String STATE_HAS_OPEN_POPUPS = "hasOpenPopups";
     public static final String STATE_HAS_FOCUSED_CHILD = "hasFocusedChild";
+    public static final String STATE_DISABLED = "disabled";
     
     private static final int FOCUS_KEY = Keyboard.KEY_TAB;
     
@@ -62,6 +63,8 @@ public class Widget {
     private boolean visible = true;
     private boolean hasOpenPopup;
     private boolean layoutInvalid;
+    private boolean enabled = true;
+    private boolean locallyEnabled = true;
     private String theme;
     private ThemeManager themeManager;
     private Image background;
@@ -185,6 +188,40 @@ public class Widget {
                     parent.childHidden(this);
                 }
             }
+        }
+    }
+
+    /**
+     * Checks if this widget is enabled. Ignores the parents.
+     * @return true if this widget is enabled.
+     */
+    public final boolean isLocallyEnabled() {
+        return locallyEnabled;
+    }
+
+    /**
+     * Checks if this widget and all it's parents are enabled.
+     * If one of it's parents is disabled then it will return false.
+     *
+     * @return if this widget and all it's parents are enabled.
+     */
+    public final boolean isEnabled() {
+        return enabled;
+    }
+
+    /**
+     * Sets the enabled state of that widget. It is also exposed as animation
+     * state but with inverse polarity as {@code STATE_DISABLED}.
+     *
+     * On disabling the keyboard focus will be removed.
+     *
+     * @param enabled
+     */
+    public void setEnabled(boolean enabled) {
+        if(this.locallyEnabled != enabled) {
+            this.locallyEnabled = enabled;
+            recursivelyEnabledChanged(getGUI(),
+                    (parent != null) ? parent.enabled : true);
         }
     }
 
@@ -792,6 +829,7 @@ public class Widget {
         children.add(index, child);
         child.parent = this;
         adjustChildPosition(child, posX + borderLeft, posY + borderTop);
+        child.recursivelyEnabledChanged(null, enabled);
         GUI gui = getGUI();
         if(gui != null) {
             child.recursivelyAddToGUI(gui);
@@ -1220,6 +1258,15 @@ public class Widget {
         }
         return focusChild != null;
     }
+
+    /**
+     * If this widget currently has the keyboard focus, then the keyboard focus is removed.
+     */
+    protected void forfeitKeyboardFocus() {
+        if(parent != null && parent.focusChild == this) {
+            parent.requestKeyboardFocus(null);
+        }
+    }
     
     /**
      * Called when this widget is removed from the GUI tree.
@@ -1335,6 +1382,12 @@ public class Widget {
     }
 
     protected void keyboardFocusGained() {
+    }
+
+    /**
+     * This method is called when this widget has been disabled, either directly or one of it's parents.
+     */
+    protected void widgetDisabled() {
     }
 
     /**
@@ -1455,7 +1508,7 @@ public class Widget {
     private int collectFocusOrderList(ArrayList<Widget> list) {
         int idx = -1;
         for(Widget child : getKeyboardFocusOrder()) {
-            if(child.visible) {
+            if(child.visible && child.isEnabled()) {
                 if(child.canAcceptKeyboardFocus) {
                     if(child == focusChild) {
                         idx = list.size();
@@ -1502,10 +1555,12 @@ public class Widget {
      * @see #getY()
      */
     protected final Widget getChildAt(int x, int y) {
-        for(int i=children.size(); i-->0 ;) {
-            Widget child = children.get(i);
-            if(child.visible && child.isInside(x, y)) {
-                return child;
+        if(children != null) {
+            for(int i=children.size(); i-->0 ;) {
+                Widget child = children.get(i);
+                if(child.visible && child.isInside(x, y)) {
+                    return child;
+                }
             }
         }
         return null;
@@ -1538,6 +1593,7 @@ public class Widget {
         child.parent = null;
         child.destroy();
         adjustChildPosition(child, -posX, -posY);
+        child.recursivelyEnabledChanged(null, child.locallyEnabled);
     }
 
     private void recursivelyAddToGUI(GUI gui) {
@@ -1580,6 +1636,29 @@ public class Widget {
         }
     }
 
+    private void recursivelyEnabledChanged(GUI gui, boolean enabled) {
+        enabled &= locallyEnabled;
+        if(this.enabled != enabled) {
+            this.enabled = enabled;
+            if(!sharedAnimState) {
+                getAnimationState().setAnimationState(STATE_DISABLED, !enabled);
+            }
+            if(!enabled) {
+                if(gui != null) {
+                    gui.widgetDisabled(this);
+                }
+                widgetDisabled();
+                forfeitKeyboardFocus();
+            }
+            if(children != null) {
+                for(int i=children.size() ; i-->0 ;) {
+                    Widget child = children.get(i);
+                    child.recursivelyEnabledChanged(gui, enabled);
+                }
+            }
+        }
+    }
+    
     private void childHidden(Widget child) {
         if(focusChild == child) {
             recursivelyChildFocusLost(focusChild);
@@ -1761,7 +1840,9 @@ public class Widget {
                                 evt.getType() == Event.Type.MOUSE_EXITED) {
                             return child;
                         }
-                        if(evt.getType() == Event.Type.MOUSE_BTNDOWN && canAcceptKeyboardFocus()) {
+                        if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
+                                child.isEnabled() &&
+                                child.canAcceptKeyboardFocus()) {
                             requestKeyboardFocus(child);
                         }
                         Widget result = child.routeMouseEvent(evt);
@@ -1775,7 +1856,7 @@ public class Widget {
                 }
             }
         }
-        if(evt.getType() == Event.Type.MOUSE_BTNDOWN && canAcceptKeyboardFocus()) {
+        if(evt.getType() == Event.Type.MOUSE_BTNDOWN && isEnabled() && canAcceptKeyboardFocus()) {
             if(focusChild == null) {
                 requestKeyboardFocus();
             } else {
@@ -1786,12 +1867,23 @@ public class Widget {
             // no child has mouse over
             setMouseOverChild(null, evt);
         }
+        if(!isEnabled() && isMouseAction(evt)) {
+            return this;
+        }
         if(handleEvent(evt)) {
             return this;
         }
         return null;
     }
-    
+
+    static boolean isMouseAction(Event evt) {
+        Event.Type type = evt.getType();
+        return type == Event.Type.MOUSE_BTNDOWN ||
+                type == Event.Type.MOUSE_BTNUP ||
+                type == Event.Type.MOUSE_CLICKED ||
+                type == Event.Type.MOUSE_DRAGED;
+    }
+
     void routePopupEvent(Event evt) {
         handleEvent(evt);
         if(children != null) {

@@ -643,7 +643,9 @@ public final class GUI extends Widget {
         event.dragEvent = dragActive;
 
         if(target != null) {
-            target.handleEvent(event);
+            if(target.isEnabled() || !isMouseAction(event)) {
+                target.handleEvent(event);
+            }
             return target;
         } else {
             assert !dragActive;
@@ -727,23 +729,36 @@ public final class GUI extends Widget {
         }
     }
 
+    void closeIfPopup(Widget widget) {
+        if(widget instanceof PopupWindow) {
+            closePopup((PopupWindow)widget);
+        }
+    }
+
     void widgetHidden(Widget widget) {
+        closeIfPopup(widget);
         closePopupFromWidgets(widget);
         if(isOwner(tooltipOwner, widget)) {
             hideTooltip();
         }
+        closeInfoFromWidget(widget);
+    }
+
+    void widgetDisabled(Widget widget) {
+        closeIfPopup(widget);
+        closeInfoFromWidget(widget);
+    }
+
+    void closeInfoFromWidget(Widget widget) {
         if(activeInfoWindow != null) {
-            if(isOwner(activeInfoWindow.getOwner(), widget)) {
+            if(activeInfoWindow == widget ||
+                    isOwner(activeInfoWindow.getOwner(), widget)) {
                 closeInfo(activeInfoWindow);
             }
         }
     }
 
     void openInfo(InfoWindow info) {
-        if(info == null) {
-            throw new NullPointerException("info");
-        }
-
         int idx = getNumChildren()-2;
         super.removeChild(idx);
         super.insertChild(info, idx);
@@ -751,10 +766,6 @@ public final class GUI extends Widget {
     }
 
     void closeInfo(InfoWindow info) {
-        if(info == null) {
-            throw new NullPointerException("info");
-        }
-
         if(info == activeInfoWindow) {
             int idx = getNumChildren()-2;
             super.removeChild(idx);

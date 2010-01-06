@@ -74,6 +74,9 @@ public class PopupWindow extends Widget {
     public boolean openPopup() {
         GUI gui = owner.getGUI();
         if(gui != null) {
+            // a popup can't be invisible or disabled when it should open
+            setVisible(true);
+            setEnabled(true);
             // owner's hasOpenPopups flag is handled by GUI
             gui.openPopup(this);
             requestKeyboardFocus();
