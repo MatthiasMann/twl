@@ -66,7 +66,7 @@ public class SplitPane extends Widget {
         splitter.setListener(new DraggableButton.DragListener() {
             int initialPos;
             public void dragStarted() {
-                initialPos = getSplitPosition();
+                initialPos = computRealSplitPos();
             }
             public void dragged(int deltaX, int deltaY) {
                 SplitPane.this.dragged(initialPos, deltaX, deltaY);
@@ -199,15 +199,7 @@ public class SplitPane extends Widget {
 
         int innerX = getInnerX();
         int innerY = getInnerY();
-        int splitPos;
-
-        if(splitPosition == CENTER) {
-            splitPos = getMaxSplitPosition()/2;
-        } else if(reverseSplitPosition) {
-            splitPos = getMaxSplitPosition() - clamp(splitPosition);
-        } else {
-            splitPos = clamp(splitPosition);
-        }
+        int splitPos = computRealSplitPos();
 
         switch(direction) {
         case HORIZONTAL:
@@ -237,6 +229,16 @@ public class SplitPane extends Widget {
                 b.setSize(innerWidth, Math.max(0, getInnerBottom()-splitter.getBottom()));
             }
             break;
+        }
+    }
+
+    private int computRealSplitPos() {
+        if(splitPosition == CENTER) {
+            return getMaxSplitPosition()/2;
+        } else if(reverseSplitPosition) {
+            return getMaxSplitPosition() - clamp(splitPosition);
+        } else {
+            return clamp(splitPosition);
         }
     }
 
