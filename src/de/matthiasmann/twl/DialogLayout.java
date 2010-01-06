@@ -923,7 +923,19 @@ public class DialogLayout extends Widget {
 
         @Override
         int getMaxSize(int axis) {
-            return 0;
+            int size = 0;
+            boolean hasMax = false;
+            for(int i=0,n=springs.size() ; i<n ; i++) {
+                Spring s = springs.get(i);
+                int max = s.getMaxSize(axis);
+                if(max > 0) {
+                    size += max;
+                    hasMax = true;
+                } else {
+                    size += s.getPrefSize(axis);
+                }
+            }
+            return hasMax ? size : 0;
         }
         
         /**
