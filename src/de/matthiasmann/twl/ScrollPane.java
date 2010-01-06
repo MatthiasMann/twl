@@ -110,8 +110,8 @@ public class ScrollPane extends Widget {
             this.content = null;
         }
         if(content != null) {
-            contentArea.add(content);
             this.content = content;
+            contentArea.add(content);
         }
     }
 
@@ -444,6 +444,8 @@ public class ScrollPane extends Widget {
     }
 
     class ContentArea extends Widget {
+        private boolean inInvalidateLayout;
+
         ContentArea() {
             setClip(true);
             setTheme("");
@@ -456,7 +458,14 @@ public class ScrollPane extends Widget {
 
         @Override
         public void invalidateLayout() {
-            ScrollPane.this.updateScrollbarSizes();
+            if(!inInvalidateLayout) {
+                try {
+                    inInvalidateLayout = true;
+                    ScrollPane.this.updateScrollbarSizes();
+                } finally {
+                    inInvalidateLayout = false;
+                }
+            }
         }
 
         @Override
