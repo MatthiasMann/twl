@@ -75,8 +75,8 @@ public class DesktopArea extends Widget {
         for(int i=0,n=getNumChildren() ; i<n ; i++) {
             Widget w = getChild(i);
             w.setSize(
-                    Math.min(width, w.getWidth()),
-                    Math.min(height, w.getHeight()));
+                    Math.min(Math.max(width, w.getMinWidth()), w.getWidth()),
+                    Math.min(Math.max(height, w.getMinHeight()), w.getHeight()));
             w.setPosition(
                     Math.max(left, Math.min(right - w.getWidth(), w.getX())),
                     Math.max(top, Math.min(bottom - w.getHeight(), w.getY())));
