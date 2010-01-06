@@ -66,6 +66,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private final IntBuffer ib16;
     private final int maxTextureSize;
 
+    private int viewportX;
+    private int viewportY;
     private int width;
     private int height;
     private boolean hasScissor;
@@ -155,6 +157,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     public void syncViewportSize() {
         ib16.clear();
         GL11.glGetInteger(GL11.GL_VIEWPORT, ib16);
+        viewportX = ib16.get(0);
+        viewportY = ib16.get(1);
         width = ib16.get(2);
         height = ib16.get(3);
     }
@@ -287,7 +291,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             GL11.glDisable(GL11.GL_SCISSOR_TEST);
             hasScissor = false;
         } else {
-            GL11.glScissor(rect.getX(), getHeight() - rect.getBottom(), rect.getWidth(), rect.getHeight());
+            GL11.glScissor(viewportX + rect.getX(), viewportY + getHeight() - rect.getBottom(), rect.getWidth(), rect.getHeight());
             if(!hasScissor) {
                 GL11.glEnable(GL11.GL_SCISSOR_TEST);
                 hasScissor = true;
