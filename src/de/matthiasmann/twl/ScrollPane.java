@@ -471,5 +471,10 @@ public class ScrollPane extends Widget {
         @Override
         protected void sizeChanged() {
         }
+
+        @Override
+        public void invalidateLayoutTree() {
+            invalidateLayout();
+        }
     }
 }

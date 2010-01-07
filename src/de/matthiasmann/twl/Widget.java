@@ -636,6 +636,19 @@ public class Widget {
     }
 
     /**
+     * Invalidates this widget and calls it's parent's {@code invalidateLayoutTree}
+     *
+     * A widget which does not depend on the size of it's child widgets
+     * (like ScrollPane) should not propagte that call futher up.
+     */
+    public void invalidateLayoutTree() {
+        invalidateLayout();
+        if(parent != null) {
+            parent.invalidateLayoutTree();
+        }
+    }
+    
+    /**
      * Calls layout() if the layout is marked invalid.
      * @see #invalidateLayout()
      * @see #layout()
