@@ -1091,7 +1091,7 @@ public final class GUI extends Widget {
         Runnable callback;
 
         public boolean isRunning() {
-            return counter > 0;
+            return counter > 0 || (continuous && counter == TIMER_COUNTER_IN_CALLBACK);
         }
 
         public void setDelay(int delay) {
@@ -1139,6 +1139,7 @@ public final class GUI extends Widget {
                 doCallback();
                 if(doStop && counter != TIMER_COUNTER_DO_START) {
                     counter = 0;
+                    activeTimers.remove(this);
                     return false;
                 } else {
                     // timer is already running
