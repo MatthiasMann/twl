@@ -83,6 +83,9 @@ public class EditField extends Widget {
     private InfoWindow autoCompletionWindow;
     private boolean autoCompletionWantKeys;
     private int autoCompletionHeight = 100;
+
+    private InfoWindow errorInfoWindow;
+    private Label errorInfoLabel;
     
     public EditField() {
         this.editBuffer = new StringBuilder();
@@ -310,6 +313,9 @@ public class EditField extends Widget {
         if(autoCompletionWindow != null) {
             layoutAutocompletionWindow();
         }
+        if(errorInfoWindow != null) {
+            layoutErrorInfoWindow();
+        }
     }
 
     private void layoutAutocompletionWindow() {
@@ -367,6 +373,13 @@ public class EditField extends Widget {
             if(gui != null) {
                 gui.requestToolTipUpdate(this);
             }
+        }
+        if(errorMsg != null) {
+            if(hasKeyboardFocus()) {
+                openErrorInfoWindow();
+            }
+        } else if(errorInfoWindow != null) {
+            errorInfoWindow.closeInfo();
         }
     }
 
@@ -703,6 +716,40 @@ public class EditField extends Widget {
                     cursorImage.getWidth(), textRenderer.getFont().getLineHeight());
         }
         super.paintOverlay(gui);
+    }
+
+    private void openErrorInfoWindow() {
+        if(autoCompletionWindow == null || !autoCompletionWindow.isOpen()) {
+            if(errorInfoWindow == null) {
+                errorInfoLabel = new Label();
+                errorInfoWindow = new InfoWindow(this);
+                errorInfoWindow.setTheme("editfield-errorinfowindow");
+                errorInfoWindow.add(errorInfoLabel);
+            }
+            errorInfoLabel.setText(errorMsg.toString());
+            errorInfoWindow.openInfo();
+            layoutErrorInfoWindow();
+        }
+    }
+
+    private void layoutErrorInfoWindow() {
+        errorInfoWindow.setSize(getWidth(), errorInfoWindow.getPreferredHeight());
+        errorInfoWindow.setPosition(getX(), getBottom());
+    }
+
+    @Override
+    protected void keyboardFocusGained() {
+        if(errorMsg != null) {
+            openErrorInfoWindow();
+        }
+    }
+
+    @Override
+    protected void keyboardFocusLost() {
+        super.keyboardFocusLost();
+        if(errorInfoWindow != null) {
+            errorInfoWindow.closeInfo();
+        }
     }
 
     protected class ModelChangeListener implements Runnable {
