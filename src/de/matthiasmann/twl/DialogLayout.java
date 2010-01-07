@@ -770,6 +770,33 @@ public class DialogLayout extends Widget {
         }
 
         /**
+         * Adds several widgets to this group, inderting the specified gap in between.
+         * Each widget also gets an animation state set depending on it's position.
+         *
+         * The state gapName+"First" is set to true for widgets[0] and false for all others
+         * The state gapName+"Last" is set to true for widgets[n-1] and false for all others
+         *
+         * @param gapName the name of the gap to insert between widgets
+         * @param widgets The widgets which should be added.
+         * @return this Group
+         */
+        public Group addWidgetsWithGap(String gapName, Widget ... widgets) {
+            String stateFirst = gapName.concat("First");
+            String stateLast = gapName.concat("Last");
+            for(int i=0,n=widgets.length ; i<n ;i++) {
+                if(i > 0) {
+                    addGap(gapName);
+                }
+                Widget w = widgets[i];
+                addWidget(w);
+                AnimationState as = w.getAnimationState();
+                as.setAnimationState(stateFirst, i == 0);
+                as.setAnimationState(stateLast, i == n-1);
+            }
+            return this;
+        }
+        
+        /**
          * Adds a generic gap. Can use symbolic gap names.
          *
          * @param min the minimum size in pixels or a symbolic constant
