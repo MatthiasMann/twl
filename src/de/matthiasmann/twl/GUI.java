@@ -568,7 +568,7 @@ public final class GUI extends Widget {
         event.keyRepeated = false;
 
         keyEventTime = curTime;
-        if(event.keyCode != Keyboard.KEY_NONE) {
+        if(event.keyCode != Keyboard.KEY_NONE || event.keyChar != Keyboard.CHAR_NONE) {
             setModifiers(event.keyCode, pressed);
 
             if(pressed) {
