@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -140,6 +140,14 @@ public interface Renderer {
     public void setClipRect(Rect rect);
 
     public void setCursor(MouseCursor cursor);
+
+    /**
+     * Sets the mouse position for SW mouse cursor rendering
+     * 
+     * @param mouseX X mouse position
+     * @param mouseY Y mouse position
+     */
+    public void setMousePosition(int mouseX, int mouseY);
 
     /**
      * Pushes a new tint color on the tint stack. The current tint color is

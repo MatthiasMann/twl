@@ -387,7 +387,7 @@ public final class GUI extends Widget {
 
     public void setCursor() {
         Widget widget = getWidgetUnderMouse();
-        if(widget != null) {
+        if(widget != null && widget.isEnabled()) {
             MouseCursor cursor = widget.getMouseCursor();
             renderer.setCursor(cursor);
         }
@@ -642,6 +642,8 @@ public final class GUI extends Widget {
         event.type = type;
         event.dragEvent = dragActive;
 
+        renderer.setMousePosition(event.mouseX, event.mouseY);
+        
         if(target != null) {
             if(target.isEnabled() || !isMouseAction(event)) {
                 target.handleEvent(event);

@@ -76,6 +76,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private boolean useQuadsForLines;
     private boolean useSWMouseCursors;
     private SWCursor swCursor;
+    private int mouseX;
+    private int mouseY;
     private LWJGLCacheContext cacheContext;
 
     final ArrayList<Integer> textureDLs;
@@ -190,7 +192,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public void endRendering() {
         if(swCursor != null) {
-            swCursor.render(Mouse.getX(), height-Mouse.getY());
+            swCursor.render(mouseX, mouseY);
         }
         GL11.glPopMatrix();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
@@ -315,6 +317,11 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         } catch(LWJGLException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public void setMousePosition(int mouseX, int mouseY) {
+        this.mouseX = mouseX;
+        this.mouseY = mouseY;
     }
 
     public LWJGLTexture load(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
