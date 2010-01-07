@@ -43,7 +43,11 @@ public abstract class StateExpression {
     public abstract boolean evaluate(AnimationState as);
 
     public static StateExpression parse(String exp, boolean negate) throws ParseException {
-        StateExpression expr = parse(new StringIterator(exp));
+        StringIterator si = new StringIterator(exp);
+        StateExpression expr = parse(si);
+        if(si.hasMore()) {
+            si.unexpected();
+        }
         expr.negate ^= negate;
         return expr;
     }
@@ -52,7 +56,10 @@ public abstract class StateExpression {
         ArrayList<StateExpression> children = new ArrayList<StateExpression>();
         char kind = ' ';
         
-        while(si.skipSpaces()) {
+        for(;;) {
+            if(!si.skipSpaces()) {
+                si.unexpected();
+            }
             char ch = si.peek();
             boolean negate = ch == '!';
             if(negate) {
@@ -91,7 +98,7 @@ public abstract class StateExpression {
             if(children.size() == 1) {
                 kind = ch;
             } else if(kind != ch) {
-                si.unexpected();
+                si.expect(kind);
             }
             si.pos++;
         }
@@ -133,17 +140,21 @@ public abstract class StateExpression {
         }
 
         void expect(char what) throws ParseException {
-            if(peek() != what) {
-                throw new ParseException("Expected '"+what+"' got '"+peek()+"' at " + pos, pos);
+            if(!hasMore() || peek() != what) {
+                throw new ParseException("Expected '"+what+"' got " + describePosition(), pos);
             }
             pos++;
         }
 
         void unexpected() throws ParseException {
-            if(pos == str.length()) {
-                throw new ParseException("Unexpected end of expression", pos);
+            throw new ParseException("Unexpected " + describePosition(), pos);
+        }
+
+        String describePosition() {
+            if(pos >= str.length()) {
+                return "Unexpected end of expression";
             }
-            throw new ParseException("Unexpected '"+peek()+"' at " + pos, pos);
+            return "'"+peek()+"' at " + (pos+1);
         }
 
         boolean skipSpaces() {
