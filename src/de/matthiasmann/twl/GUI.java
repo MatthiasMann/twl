@@ -653,7 +653,7 @@ public final class GUI extends Widget {
             assert !dragActive;
             Widget widget = null;
             if(activeInfoWindow != null) {
-                if(setMouseOverChild(activeInfoWindow, event)) {
+                if(activeInfoWindow.isMouseInside(event) && setMouseOverChild(activeInfoWindow, event)) {
                     widget = activeInfoWindow;
                 }
             }
