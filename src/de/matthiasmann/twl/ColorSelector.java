@@ -205,6 +205,7 @@ public class ColorSelector extends DialogLayout {
             vertAreas.addWidget(area);
         }
 
+        setVerticalGroup(null);
         setHorizontalGroup(createParallelGroup()
                 .addGroup(horzAreas.addGap())
                 .addGroup(createSequentialGroup(horzLabels, horzAdjuster).addGap()));
