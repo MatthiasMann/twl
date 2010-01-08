@@ -61,6 +61,7 @@ public class ScrollPane extends Widget {
     private Dimension hscrollbarOffset = Dimension.ZERO;
     private Dimension vscrollbarOffset = Dimension.ZERO;
     private Dimension contentScrollbarSpacing = Dimension.ZERO;
+    private boolean inLayout;
 
     public ScrollPane() {
         this(null);
@@ -278,6 +279,18 @@ public class ScrollPane extends Widget {
     }
 
     @Override
+    public void validateLayout() {
+        if(!inLayout) {
+            try {
+                inLayout = true;
+                super.validateLayout();
+            } finally {
+                inLayout = false;
+            }
+        }
+    }
+
+    @Override
     protected void layout() {
         if(content != null) {
             int innerWidth = getInnerWidth();
@@ -357,7 +370,7 @@ public class ScrollPane extends Widget {
             scrollbarH.setPosition(getInnerX() + scrollbarHX, getInnerY() + scrollbarHY);
             scrollbarH.setPageSize(Math.max(1, availWidth));
             scrollbarH.setStepSize(Math.max(1, availWidth / 10));
-            
+
             scrollbarV.setVisible(visibleV);
             scrollbarV.setSize(Math.max(0, innerWidth - scrollbarVX), Math.max(0, scrollbarHY - scrollbarVY));
             scrollbarV.setPosition(getInnerX() + scrollbarVX, getInnerY() + scrollbarVY);
@@ -369,7 +382,7 @@ public class ScrollPane extends Widget {
                 dragButton.setSize(Math.max(0, innerWidth - scrollbarVX), Math.max(0, innerHeight - scrollbarHY));
                 dragButton.setPosition(getInnerX() + scrollbarVX, getInnerY() + scrollbarHY);
             }
-            
+
             contentArea.setPosition(getInnerX(), getInnerY());
             contentArea.setSize(availWidth, availHeight);
             if(content instanceof Scrollable) {
@@ -444,8 +457,6 @@ public class ScrollPane extends Widget {
     }
 
     class ContentArea extends Widget {
-        private boolean inInvalidateLayout;
-
         ContentArea() {
             setClip(true);
             setTheme("");
@@ -458,14 +469,7 @@ public class ScrollPane extends Widget {
 
         @Override
         public void invalidateLayout() {
-            if(!inInvalidateLayout) {
-                try {
-                    inInvalidateLayout = true;
-                    ScrollPane.this.updateScrollbarSizes();
-                } finally {
-                    inInvalidateLayout = false;
-                }
-            }
+            ScrollPane.this.invalidateLayout();
         }
 
         @Override
