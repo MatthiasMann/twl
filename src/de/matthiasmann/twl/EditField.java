@@ -87,8 +87,20 @@ public class EditField extends Widget {
 
     private InfoWindow errorInfoWindow;
     private Label errorInfoLabel;
-    
-    public EditField() {
+
+    /**
+     * Creates a new EditField with an optional parent animation state.
+     *
+     * Unlike other widgets which use the passed animation state directly,
+     * the EditField always creates it's animation state with the passed
+     * one as parent.
+     *
+     * @param parentAnimationState
+     * @see AnimationState#AnimationState(de.matthiasmann.twl.AnimationState) 
+     */
+    public EditField(AnimationState parentAnimationState) {
+        super(new AnimationState(parentAnimationState));
+        
         this.editBuffer = new StringBuilder();
         this.textRenderer = new TextRenderer(getAnimationState());
         this.passwordChar = '*';
@@ -104,6 +116,10 @@ public class EditField extends Widget {
         addActionMapping("copy", "copyToClipboard");
         addActionMapping("paste", "pasteFromClipboard");
         addActionMapping("selectAll", "selectAll");
+    }
+
+    public EditField() {
+        this(null);
     }
 
     public void addCallback(Callback cb) {

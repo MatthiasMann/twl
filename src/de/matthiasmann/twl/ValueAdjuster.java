@@ -58,10 +58,11 @@ public abstract class ValueAdjuster extends Widget {
     private int width;
     
     public ValueAdjuster() {
-        this.label = new DraggableButton();
-        this.editField = new EditField();
-        this.decButton = new Button();
-        this.incButton = new Button();
+        this.label = new DraggableButton(new AnimationState(getAnimationState()));
+        // EditField always inherits from the passed animation state
+        this.editField = new EditField(getAnimationState());
+        this.decButton = new Button(new AnimationState(getAnimationState()));
+        this.incButton = new Button(new AnimationState(getAnimationState()));
         
         label.setClip(true);
         label.setTheme("valueDisplay");
@@ -130,6 +131,7 @@ public abstract class ValueAdjuster extends Widget {
             editField.setText(onEditStart());
             editField.setVisible(true);
             editField.requestKeyboardFocus();
+            editField.selectAll();
             label.setVisible(false);
         }
     }
@@ -226,7 +228,7 @@ public abstract class ValueAdjuster extends Widget {
         editField.setSize(labelWidth, height);
         editField.setPosition(labelX, y);
     }
-
+    
     protected void setDisplayText() {
         label.setText(displayPrefix.concat(formatText()));
     }
