@@ -80,6 +80,7 @@ public class Button extends TextWidget {
             model = new SimpleButtonModel();
         }
         setModel(model);
+        setCanAcceptKeyboardFocus(true);
     }
 
     public ButtonModel getModel() {
