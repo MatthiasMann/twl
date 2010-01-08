@@ -43,11 +43,25 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
     private int stateTableSize;
     private GUI gui;
 
+    /**
+     * Create a new animation state with optional parent.
+     *
+     * When a parent animation state is set, then any request for a state which
+     * has not been set (to either true or false) in this instance are forwarded
+     * to the parent.
+     *
+     * @param parent the parent animation state or null
+     */
     public AnimationState(AnimationState parent) {
         this.parent = parent;
         this.stateTable = new State[16];
     }
 
+    /**
+     * Creates a new animation state without parent
+     *
+     * @see #AnimationState(de.matthiasmann.twl.AnimationState) 
+     */
     public AnimationState() {
         this(null);
     }
