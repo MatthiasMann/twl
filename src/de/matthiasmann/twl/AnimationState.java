@@ -37,12 +37,19 @@ import de.matthiasmann.twl.utils.HashEntry;
  */
 public class AnimationState implements de.matthiasmann.twl.renderer.AnimationState {
 
+    private final AnimationState parent;
+    
     private State[] stateTable;
     private int stateTableSize;
     private GUI gui;
 
-    public AnimationState() {
+    public AnimationState(AnimationState parent) {
+        this.parent = parent;
         this.stateTable = new State[16];
+    }
+
+    public AnimationState() {
+        this(null);
     }
 
     public void setGUI(GUI gui) {
@@ -68,6 +75,9 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         if(state != null) {
             return (int)Math.min(Integer.MAX_VALUE, getCurrentTime() - state.lastChangedTime);
         }
+        if(parent != null) {
+            return parent.getAnimationTime(stateName);
+        }
         return (int)getCurrentTime() & ((1<<31)-1);
     }
 
@@ -81,6 +91,9 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         State state = HashEntry.get(stateTable, stateName);
         if(state != null) {
             return state.active;
+        }
+        if(parent != null) {
+            return parent.getAnimationState(stateName);
         }
         return false;
     }
