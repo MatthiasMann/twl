@@ -115,6 +115,7 @@ public class DialogLayout extends Widget {
 
     protected boolean addDefaultGaps = true;
     protected boolean redoDefaultGaps;
+    protected boolean blockInvalidateLayoutTree;
 
     private Group horz;
     private Group vert;
@@ -126,6 +127,14 @@ public class DialogLayout extends Widget {
 
     final HashMap<Widget, WidgetSpring> widgetSprings;
 
+    /**
+     * Creates a new DialogLayout widget.
+     *
+     * Initially both the horizontal and the vertical group are null.
+     * 
+     * @see #setHorizontalGroup(de.matthiasmann.twl.DialogLayout.Group)
+     * @see #setVerticalGroup(de.matthiasmann.twl.DialogLayout.Group)
+     */
     public DialogLayout() {
         widgetSprings = new HashMap<Widget, WidgetSpring>();
         collectDebugStack();
@@ -142,7 +151,16 @@ public class DialogLayout extends Widget {
      * Every widget must be part of both horizontal and vertical group.
      * Otherwise a IllegalStateException is thrown at layout time.
      *
+     * If you want to change both horizontal and vertical group then
+     * it's recommended to set the other group first to null:
+     * <pre>
+     * setVerticalGroup(null);
+     * setHorizontalGroup(newHorzGroup);
+     * setVerticalGroup(newVertGroup);
+     * </pre>
+     *
      * @param g the group used for the X axis
+     * @see #setVerticalGroup(de.matthiasmann.twl.DialogLayout.Group)
      */
     public void setHorizontalGroup(Group g) {
         if(g != null) {
@@ -151,6 +169,7 @@ public class DialogLayout extends Widget {
         this.horz = g;
         this.redoDefaultGaps = true;
         collectDebugStack();
+        maybeInvalidateLayoutTree();
     }
 
     public Group getVerticalGroup() {
@@ -165,6 +184,7 @@ public class DialogLayout extends Widget {
      * Otherwise a IllegalStateException is thrown at layout time.
      *
      * @param g the group used for the Y axis
+     * @see #setHorizontalGroup(de.matthiasmann.twl.DialogLayout.Group) 
      */
     public void setVerticalGroup(Group g) {
         if(g != null) {
@@ -173,6 +193,7 @@ public class DialogLayout extends Widget {
         this.vert = g;
         this.redoDefaultGaps = true;
         collectDebugStack();
+        maybeInvalidateLayoutTree();
     }
 
     public Dimension getSmallGap() {
@@ -181,7 +202,7 @@ public class DialogLayout extends Widget {
 
     public void setSmallGap(Dimension smallGap) {
         this.smallGap = smallGap;
-        invalidateLayout();
+        maybeInvalidateLayoutTree();
     }
 
     public Dimension getMediumGap() {
@@ -190,7 +211,7 @@ public class DialogLayout extends Widget {
 
     public void setMediumGap(Dimension mediumGap) {
         this.mediumGap = mediumGap;
-        invalidateLayout();
+        maybeInvalidateLayoutTree();
     }
 
     public Dimension getLargeGap() {
@@ -199,7 +220,7 @@ public class DialogLayout extends Widget {
 
     public void setLargeGap(Dimension largeGap) {
         this.largeGap = largeGap;
-        invalidateLayout();
+        maybeInvalidateLayoutTree();
     }
 
     public Dimension getDefaultGap() {
@@ -208,7 +229,7 @@ public class DialogLayout extends Widget {
 
     public void setDefaultGap(Dimension defaultGap) {
         this.defaultGap = defaultGap;
-        invalidateLayout();
+        maybeInvalidateLayoutTree();
     }
 
     public boolean isAddDefaultGaps() {
@@ -231,7 +252,7 @@ public class DialogLayout extends Widget {
         if(horz != null && vert != null) {
             horz.removeDefaultGaps();
             vert.removeDefaultGaps();
-            invalidateLayout();
+            maybeInvalidateLayoutTree();
         }
     }
 
@@ -242,7 +263,7 @@ public class DialogLayout extends Widget {
         if(horz != null && vert != null) {
             horz.addDefaultGap();
             vert.addDefaultGap();
-            invalidateLayout();
+            maybeInvalidateLayoutTree();
         }
     }
 
@@ -253,11 +274,17 @@ public class DialogLayout extends Widget {
     }
 
     protected void applyThemeDialogLayout(ThemeInfo themeInfo) {
-        setSmallGap(themeInfo.getParameterValue("smallGap", true, Dimension.class, Dimension.ZERO));
-        setMediumGap(themeInfo.getParameterValue("mediumGap", true, Dimension.class, Dimension.ZERO));
-        setLargeGap(themeInfo.getParameterValue("largeGap", true, Dimension.class, Dimension.ZERO));
-        setDefaultGap(themeInfo.getParameterValue("defaultGap", true, Dimension.class, Dimension.ZERO));
-        namedGaps = themeInfo.getParameterMap("namedGaps");
+        try {
+            blockInvalidateLayoutTree = true;
+            setSmallGap(themeInfo.getParameterValue("smallGap", true, Dimension.class, Dimension.ZERO));
+            setMediumGap(themeInfo.getParameterValue("mediumGap", true, Dimension.class, Dimension.ZERO));
+            setLargeGap(themeInfo.getParameterValue("largeGap", true, Dimension.class, Dimension.ZERO));
+            setDefaultGap(themeInfo.getParameterValue("defaultGap", true, Dimension.class, Dimension.ZERO));
+            namedGaps = themeInfo.getParameterMap("namedGaps");
+        } finally {
+            blockInvalidateLayoutTree = false;
+        }
+        invalidateLayoutTree();
     }
 
     @Override
@@ -330,7 +357,13 @@ public class DialogLayout extends Widget {
     protected void prepare() {
         if(redoDefaultGaps) {
             if(addDefaultGaps) {
-                addDefaultGaps();
+                try {
+                    blockInvalidateLayoutTree = true;
+                    removeDefaultGaps();
+                    addDefaultGaps();
+                } finally {
+                    blockInvalidateLayoutTree = false;
+                }
             }
             redoDefaultGaps = false;
         }
@@ -353,7 +386,7 @@ public class DialogLayout extends Widget {
             throw ex;
         }
         if((getWidth() < horz.getMinSize(AXIS_X) || getHeight() < vert.getMinSize(AXIS_Y))) {
-            invalidateParentLayout();
+            invalidateLayoutTree();
         }
     }
 
@@ -440,6 +473,8 @@ public class DialogLayout extends Widget {
         if(vert != null) {
             vert.recheckWidgets();
         }
+        redoDefaultGaps = true;
+        maybeInvalidateLayoutTree();
     }
 
     @Override
@@ -452,9 +487,17 @@ public class DialogLayout extends Widget {
         if(vert != null) {
             vert.recheckWidgets();
         }
+        redoDefaultGaps = true;
+        maybeInvalidateLayoutTree();
         return widget;
     }
 
+    protected void maybeInvalidateLayoutTree() {
+        if(horz != null && vert != null && !blockInvalidateLayoutTree) {
+            invalidateLayoutTree();
+        }
+    }
+    
     public static class Gap {
         public final int min;
         public final int preferred;
@@ -773,16 +816,16 @@ public class DialogLayout extends Widget {
          * Adds several widgets to this group, inderting the specified gap in between.
          * Each widget also gets an animation state set depending on it's position.
          *
-         * The state gapName+"First" is set to true for widgets[0] and false for all others
-         * The state gapName+"Last" is set to true for widgets[n-1] and false for all others
+         * The state gapName+"NotFirst" is set to false for widgets[0] and true for all others
+         * The state gapName+"NotLast" is set to false for widgets[n-1] and true for all others
          *
          * @param gapName the name of the gap to insert between widgets
          * @param widgets The widgets which should be added.
          * @return this Group
          */
         public Group addWidgetsWithGap(String gapName, Widget ... widgets) {
-            String stateFirst = gapName.concat("First");
-            String stateLast = gapName.concat("Last");
+            String stateNotFirst = gapName.concat("NotFirst");
+            String stateNotLast = gapName.concat("NotLast");
             for(int i=0,n=widgets.length ; i<n ;i++) {
                 if(i > 0) {
                     addGap(gapName);
@@ -790,8 +833,8 @@ public class DialogLayout extends Widget {
                 Widget w = widgets[i];
                 addWidget(w);
                 AnimationState as = w.getAnimationState();
-                as.setAnimationState(stateFirst, i == 0);
-                as.setAnimationState(stateLast, i == n-1);
+                as.setAnimationState(stateNotFirst, i > 0);
+                as.setAnimationState(stateNotLast, i < n-1);
             }
             return this;
         }
