@@ -56,10 +56,16 @@ public class ValueAdjusterInt extends ValueAdjuster {
     }
 
     public int getMaxValue() {
+        if(model != null) {
+            maxValue = model.getMaxValue();
+        }
         return maxValue;
     }
 
     public int getMinValue() {
+        if(model != null) {
+            minValue = model.getMinValue();
+        }
         return minValue;
     }
 
@@ -77,11 +83,7 @@ public class ValueAdjusterInt extends ValueAdjuster {
     }
 
     public void setValue(int value) {
-        if(value > maxValue) {
-            value = maxValue;
-        } else if(value < minValue) {
-            value = minValue;
-        }
+        value = Math.max(getMinValue(), Math.min(getMaxValue(), value));
         if(this.value != value) {
             this.value = value;
             if(model != null) {
