@@ -45,6 +45,7 @@ public class EditField extends Widget {
 
     public static final String STATE_ERROR = "error";
     public static final String STATE_READONLY = "readonly";
+    public static final String STATE_HOVER = "hover";
     
     public interface Callback {
         /**
@@ -414,6 +415,11 @@ public class EditField extends Widget {
     @Override
     public boolean handleEvent(Event evt) {
         boolean selectPressed = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
+
+        if(evt.isMouseEvent()) {
+            boolean hover = (evt.getType() != Event.Type.MOUSE_EXITED) && isMouseInside(evt);
+            getAnimationState().setAnimationState(STATE_HOVER, hover);
+        }
 
         if(evt.isMouseDragEvent()) {
             if(evt.getType() == Event.Type.MOUSE_DRAGED &&
