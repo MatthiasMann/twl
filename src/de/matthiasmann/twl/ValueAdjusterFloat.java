@@ -202,16 +202,13 @@ public class ValueAdjusterFloat extends ValueAdjuster {
         setValue(value + stepSize);
     }
 
-    private String formatText() {
+    @Override
+    protected String formatText() {
         return String.format(locale, format, value);
     }
 
     private float parseText(String value) throws ParseException {
         return NumberFormat.getNumberInstance(locale).parse(value).floatValue();
-    }
-
-    private void setDisplayText() {
-        setDisplayText(formatText());
     }
 
     private void syncWithModel() {

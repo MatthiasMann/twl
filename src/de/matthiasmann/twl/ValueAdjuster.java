@@ -54,6 +54,7 @@ public abstract class ValueAdjuster extends Widget {
     private final Runnable timerCallback;
     private Timer timer;
 
+    private String displayPrefix = "";
     private int width;
     
     public ValueAdjuster() {
@@ -112,6 +113,15 @@ public abstract class ValueAdjuster extends Widget {
         add(incButton);
         setCanAcceptKeyboardFocus(true);
         setDepthFocusTraversal(false);
+    }
+
+    public String getDisplayPrefix() {
+        return displayPrefix;
+    }
+
+    public void setDisplayPrefix(String displayPrefix) {
+        this.displayPrefix = displayPrefix;
+        setDisplayText();
     }
 
     public void startEdit() {
@@ -216,10 +226,12 @@ public abstract class ValueAdjuster extends Widget {
         editField.setSize(labelWidth, height);
         editField.setPosition(labelX, y);
     }
-    
-    protected void setDisplayText(String text) {
-        label.setText(text);
+
+    protected void setDisplayText() {
+        label.setText(displayPrefix.concat(formatText()));
     }
+
+    protected abstract String formatText();
 
     void onTimer() {
         if(incButton.getModel().isArmed()) {

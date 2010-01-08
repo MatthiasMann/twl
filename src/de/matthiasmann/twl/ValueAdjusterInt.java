@@ -164,14 +164,11 @@ public class ValueAdjusterInt extends ValueAdjuster {
         setValue(value + 1);
     }
 
-    private String formatText() {
+    @Override
+    protected String formatText() {
         return Integer.toString(value);
     }
 
-    private void setDisplayText() {
-        setDisplayText(formatText());
-    }
-    
     private void syncWithModel() {
         cancelEdit();
         this.value = model.getValue();
