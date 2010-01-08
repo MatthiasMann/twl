@@ -58,11 +58,11 @@ public abstract class ValueAdjuster extends Widget {
     private int width;
     
     public ValueAdjuster() {
-        this.label = new DraggableButton(new AnimationState(getAnimationState()));
+        this.label = new DraggableButton(getAnimationState(), true);
         // EditField always inherits from the passed animation state
         this.editField = new EditField(getAnimationState());
-        this.decButton = new Button(new AnimationState(getAnimationState()));
-        this.incButton = new Button(new AnimationState(getAnimationState()));
+        this.decButton = new Button(getAnimationState(), true);
+        this.incButton = new Button(getAnimationState(), true);
         
         label.setClip(true);
         label.setTheme("valueDisplay");

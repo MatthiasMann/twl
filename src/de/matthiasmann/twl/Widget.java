@@ -97,10 +97,25 @@ public class Widget {
     private boolean depthFocusTraversal = true;
     
     public Widget() {
-        this(null);
+        this(null, false);
     }
 
+    /**
+     * Creates a Widget with a shared animation state
+     *
+     * @param animState the animation state to share, can be null
+     */
     public Widget(AnimationState animState) {
+        this(animState, false);
+    }
+
+    /**
+     * Creates a Widget with a shared or inherited animation state
+     *
+     * @param animState the animation state to share or inherit, can be null
+     * @param inherit true if the animation state should be inherited false for sharing
+     */
+    public Widget(AnimationState animState, boolean inherit) {
         // determine the default theme name from the class name of this instance
         // eg class Label => "label"
         Class clazz = getClass();
@@ -109,8 +124,8 @@ public class Widget {
             clazz = clazz.getSuperclass();
         } while (theme.length() == 0 && clazz != null);
 
-        if(animState == null) {
-            this.animState = new AnimationState();
+        if(animState == null || inherit) {
+            this.animState = new AnimationState(animState);
             this.sharedAnimState = false;
         } else {
             this.animState = animState;

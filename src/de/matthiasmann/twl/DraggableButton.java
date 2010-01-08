@@ -77,8 +77,23 @@ public class DraggableButton extends Button {
     public DraggableButton() {
     }
 
+    /**
+     * Creates a DraggableButton with a shared animation state
+     *
+     * @param animState the animation state to share, can be null
+     */
     public DraggableButton(AnimationState animState) {
         super(animState);
+    }
+
+    /**
+     * Creates a DraggableButton with a shared or inherited animation state
+     *
+     * @param animState the animation state to share or inherit, can be null
+     * @param inherit true if the animation state should be inherited false for sharing
+     */
+    public DraggableButton(AnimationState animState, boolean inherit) {
+        super(animState, inherit);
     }
 
     public boolean isDragActive() {

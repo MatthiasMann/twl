@@ -53,24 +53,56 @@ public class Button extends TextWidget {
     private String themeTooltip;
 
     public Button() {
-        this(null, null);
+        this(null, false, null);
     }
 
     public Button(ButtonModel model) {
-        this(null, model);
+        this(null, false, model);
     }
 
+    /**
+     * Creates a Button with a shared animation state
+     *
+     * @param animState the animation state to share, can be null
+     */
     public Button(AnimationState animState) {
-        this(animState, null);
+        this(animState, false, null);
+    }
+
+    /**
+     * Creates a Button with a shared or inherited animation state
+     *
+     * @param animState the animation state to share or inherit, can be null
+     * @param inherit true if the animation state should be inherited false for sharing
+     */
+    public Button(AnimationState animState, boolean inherit) {
+        this(animState, inherit, null);
     }
 
     public Button(String text) {
-        this(null, null);
+        this(null, false, null);
         setText(text);
     }
-    
+
+    /**
+     * Creates a Button with a shared animation state
+     *
+     * @param animState the animation state to share, can be null
+     * @param model the button behavior model, if null a SimpleButtonModel is created
+     */
     public Button(AnimationState animState, ButtonModel model) {
-        super(animState);
+        this(animState, false, model);
+    }
+
+    /**
+     * Creates a Button with a shared or inherited animation state
+     *
+     * @param animState the animation state to share or inherit, can be null
+     * @param inherit true if the animation state should be inherited false for sharing
+     * @param model the button behavior model, if null a SimpleButtonModel is created
+     */
+    public Button(AnimationState animState, boolean inherit, ButtonModel model) {
+        super(animState, inherit);
         this.stateChangedCB = new Runnable() {
             public void run() {
                 modelStateChanged();

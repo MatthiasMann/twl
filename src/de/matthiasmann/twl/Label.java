@@ -50,11 +50,26 @@ public class Label extends TextWidget {
     private CallbackWithReason[] callbacks;
     
     public Label() {
-        this((AnimationState)null);
+        this((AnimationState)null, false);
     }
 
+    /**
+     * Creates a Label with a shared animation state
+     *
+     * @param animState the animation state to share, can be null
+     */
     public Label(AnimationState animState) {
-        super(animState);
+        this(animState, false);
+    }
+
+    /**
+     * Creates a Label with a shared or inherited animation state
+     *
+     * @param animState the animation state to share or inherit, can be null
+     * @param inherit true if the animation state should be inherited false for sharing
+     */
+    public Label(AnimationState animState, boolean inherit) {
+        super(animState, inherit);
     }
 
     public Label(String text) {

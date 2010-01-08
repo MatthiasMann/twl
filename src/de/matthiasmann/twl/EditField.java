@@ -99,7 +99,7 @@ public class EditField extends Widget {
      * @see AnimationState#AnimationState(de.matthiasmann.twl.AnimationState) 
      */
     public EditField(AnimationState parentAnimationState) {
-        super(new AnimationState(parentAnimationState));
+        super(parentAnimationState, true);
         
         this.editBuffer = new StringBuilder();
         this.textRenderer = new TextRenderer(getAnimationState());

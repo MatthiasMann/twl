@@ -55,11 +55,26 @@ public class TextWidget extends Widget {
     private Alignment alignment = Alignment.TOPLEFT;
 
     public TextWidget() {
-        this(null);
+        this(null, false);
     }
 
+    /**
+     * Creates a TextWidget with a shared animation state
+     *
+     * @param animState the animation state to share, can be null
+     */
     public TextWidget(AnimationState animState) {
-        super(animState);
+        this(animState, false);
+    }
+    
+    /**
+     * Creates a TextWidget with a shared or inherited animation state
+     *
+     * @param animState the animation state to share or inherit, can be null
+     * @param inherit true if the animation state should be inherited false for sharing
+     */
+    public TextWidget(AnimationState animState, boolean inherit) {
+        super(animState, inherit);
         this.text = "";
     }
 
