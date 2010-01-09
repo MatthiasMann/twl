@@ -139,7 +139,7 @@ public class PropertySheet extends TreeTable {
     }
 
     @SuppressWarnings("unchecked")
-	TreeTableNode createNode(TreeTableNode parent, Property<?> property) {
+    TreeTableNode createNode(TreeTableNode parent, Property<?> property) {
         if(property.getType() == PropertyList.class) {
             return new ListNode(parent, property);
         } else {
@@ -375,7 +375,6 @@ public class PropertySheet extends TreeTable {
         }
     }
     static class StringEditorFactory implements PropertyEditorFactory<String> {
-        @SuppressWarnings("unchecked")
         public PropertyEditor createEditor(Property<String> property) {
             return new StringEditor(property);
         }

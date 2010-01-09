@@ -130,7 +130,6 @@ class ParameterMapImpl implements ParameterMap {
     }
 
     public <E extends Enum<E>> E getParameter(String name, E defaultValue) {
-        @SuppressWarnings("unchecked")
         Class<E> enumType = defaultValue.getDeclaringClass();
         E value = getParameterValue(name, true, enumType);
         if(value != null) {

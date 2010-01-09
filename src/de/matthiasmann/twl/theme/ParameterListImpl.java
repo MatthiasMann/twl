@@ -36,7 +36,6 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import java.util.ArrayList;
-import java.util.logging.Logger;
 
 /**
  *
@@ -134,7 +133,6 @@ public class ParameterListImpl implements ParameterList {
     }
 
     public <E extends Enum<E>> E getParameter(int idx, E defaultValue) {
-        @SuppressWarnings("unchecked")
         Class<E> enumType = defaultValue.getDeclaringClass();
         E value = getParameterValue(idx, enumType);
         if(value != null) {
