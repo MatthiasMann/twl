@@ -156,7 +156,7 @@ public class ThemeManager {
         if(!enumClazz.isEnum()) {
             throw new IllegalArgumentException("not an enum class");
         }
-        Class curClazz = enums.get(name);
+        Class<?> curClazz = enums.get(name);
         if(curClazz != null && curClazz != enumClazz) {
             throw new IllegalArgumentException("Enum type name \"" + name +
                     "\" is already in use by " + curClazz);

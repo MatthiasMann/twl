@@ -156,7 +156,7 @@ public class ParameterListImpl implements ParameterList {
         return clazz.cast(value);
     }
 
-    protected void wrongParameterType(int idx, Class expectedType, Class foundType) {
+    protected void wrongParameterType(int idx, Class<?> expectedType, Class<?> foundType) {
         manager.getLogger().warning("Parameter at index " + idx + " is a " +
                 foundType.getSimpleName() + " expected a " + expectedType.getSimpleName());
     }

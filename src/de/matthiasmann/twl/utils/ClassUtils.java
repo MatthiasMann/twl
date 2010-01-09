@@ -57,7 +57,7 @@ public class ClassUtils {
         return mappedClass != null ? mappedClass : clazz;
     }
 
-    public static boolean isParamCompatible(Class type, Object obj) {
+    public static boolean isParamCompatible(Class<?> type, Object obj) {
         if(obj == null && !type.isPrimitive()) {
             return true;
         }
@@ -65,7 +65,7 @@ public class ClassUtils {
         return type.isInstance(obj);
     }
 
-    public static boolean isParamsCompatible(Class[] types, Object[] params) {
+    public static boolean isParamsCompatible(Class<?>[] types, Object[] params) {
         if(types.length != params.length) {
             return false;
         }

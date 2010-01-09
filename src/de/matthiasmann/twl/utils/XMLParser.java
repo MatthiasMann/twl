@@ -55,7 +55,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
  */
 public class XMLParser implements Closeable {
 
-    private static final Class[] XPP_CLASS = {XmlPullParser.class};
+    private static final Class<?>[] XPP_CLASS = {XmlPullParser.class};
     
     private final XmlPullParser xpp;
     private final String source;

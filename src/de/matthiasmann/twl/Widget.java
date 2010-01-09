@@ -118,7 +118,7 @@ public class Widget {
     public Widget(AnimationState animState, boolean inherit) {
         // determine the default theme name from the class name of this instance
         // eg class Label => "label"
-        Class clazz = getClass();
+        Class<?> clazz = getClass();
         do {
             theme = clazz.getSimpleName().toLowerCase();
             clazz = clazz.getSuperclass();
