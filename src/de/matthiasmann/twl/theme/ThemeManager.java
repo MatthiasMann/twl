@@ -62,8 +62,8 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 public class ThemeManager {
 
-    private static final HashMap<String, Class<? extends Enum>> enums =
-            new HashMap<String, Class<? extends Enum>>();
+    private static final HashMap<String, Class<? extends Enum<?>>> enums =
+            new HashMap<String, Class<? extends Enum<?>>>();
     
     static {
         registerEnumType("alignment", Alignment.class);
@@ -152,7 +152,7 @@ public class ThemeManager {
         }
     }
     
-    public static<E extends Enum> void registerEnumType(String name, Class<E> enumClazz) {
+    public static<E extends Enum<E>> void registerEnumType(String name, Class<E> enumClazz) {
         if(!enumClazz.isEnum()) {
             throw new IllegalArgumentException("not an enum class");
         }
@@ -427,7 +427,7 @@ public class ThemeManager {
             xmlp.require(XmlPullParser.END_TAG, null, valueTagName);
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
-            if(value instanceof Map) {
+            if(value instanceof Map<?,?>) {
                 return (Map<String, ?>)value;
             }
             ParserUtil.checkNameNotEmpty(name, xmlp);

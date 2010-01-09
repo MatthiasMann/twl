@@ -39,7 +39,7 @@ import org.lwjgl.input.Keyboard;
  *
  * @author Matthias Mann
  */
-public class ListBox extends Widget {
+public class ListBox<T> extends Widget {
 
     public static final int NO_SELECTION = -1;
     public static final int DEFAULT_CELL_HEIGHT = 20;
@@ -68,7 +68,7 @@ public class ListBox extends Widget {
     private final ChangeListener modelCallback;
     private final Scrollbar scrollbar;
     private ListBoxDisplay[] labels;
-    private ListModel model;
+    private ListModel<T> model;
     private int cellHeight = DEFAULT_CELL_HEIGHT;
     private int cellWidth = SINGLE_COLUMN;
     private boolean rowMajor = true;
@@ -80,7 +80,7 @@ public class ListBox extends Widget {
     private int selected = NO_SELECTION;
     private int numEntries;
     private boolean needUpdate;
-    private CallbackWithReason[] callbacks;
+    private CallbackWithReason<?>[] callbacks;
     
     public ListBox() {
         LImpl li = new LImpl();
@@ -97,16 +97,16 @@ public class ListBox extends Widget {
         setDepthFocusTraversal(false);
     }
 
-    public ListBox(ListModel model) {
+    public ListBox(ListModel<T> model) {
         this();
         setModel(model);
     }
 
-    public ListModel getModel() {
+    public ListModel<T> getModel() {
         return model;
     }
 
-    public void setModel(ListModel model) {
+    public void setModel(ListModel<T> model) {
         if(this.model != model) {
             if(this.model != null) {
                 this.model.removeChangeListener(modelCallback);
@@ -560,7 +560,7 @@ public class ListBox extends Widget {
         public static final String STATE_SELECTED = "selected";
 
         private boolean selected;
-        private CallbackWithReason[] callbacks;
+        private CallbackWithReason<?>[] callbacks;
 
         public ListBoxLabel() {
             setClip(true);

@@ -94,7 +94,7 @@ public class FileSelector extends DialogLayout {
     private final Button btnRefresh;
     private final Button btnShowFolders;
     private final Button btnShowHidden;
-    private final ComboBox fileFilterBox;
+    private final ComboBox<String> fileFilterBox;
     private final FileFiltersModel fileFiltersModel;
     private final EditFieldAutoCompletionWindow autoCompletion;
 
@@ -208,7 +208,7 @@ public class FileSelector extends DialogLayout {
 
         activeFileFilter = AllFilesFilter;
         fileFiltersModel = new FileFiltersModel();
-        fileFilterBox = new ComboBox(fileFiltersModel);
+        fileFilterBox = new ComboBox<String>(fileFiltersModel);
         fileFilterBox.setTheme("fileFiltersBox");
         fileFilterBox.setComputeWidthFromModel(true);
         fileFilterBox.setVisible(false);
@@ -514,7 +514,7 @@ public class FileSelector extends DialogLayout {
 
     void showFolderMRU() {
         final PopupWindow popup = new PopupWindow(this);
-        final ListBox listBox = new ListBox(folderMRU);
+        final ListBox<String> listBox = new ListBox<String>(folderMRU);
         popup.setTheme("fileselector-folderMRUpopup");
         popup.add(listBox);
         if(popup.openPopup()) {
@@ -537,7 +537,7 @@ public class FileSelector extends DialogLayout {
     void showFilesMRU() {
         final PopupWindow popup = new PopupWindow(this);
         final DialogLayout layout = new DialogLayout();
-        final ListBox listBox = new ListBox(filesMRU);
+        final ListBox<String> listBox = new ListBox<String>(filesMRU);
         final Button popupBtnOk = new Button();
         final Button popupBtnCancel = new Button();
         popupBtnOk.setTheme("buttonOk");

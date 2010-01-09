@@ -92,7 +92,7 @@ public class CombinedListModel<T> extends SimpleListModel<T> {
         }
     }
     
-    public int findSubList(ListModel model) {
+    public int findSubList(ListModel<T> model) {
         for(int i=0 ; i<sublists.size() ; i++) {
             Sublist sl = sublists.get(i);
             if(sl.list == model) {
@@ -114,7 +114,7 @@ public class CombinedListModel<T> extends SimpleListModel<T> {
         }
     }
     
-    public boolean removeSubList(ListModel model) {
+    public boolean removeSubList(ListModel<T> model) {
         int index = findSubList(model);
         if(index >= 0) {
             removeSubList(index);

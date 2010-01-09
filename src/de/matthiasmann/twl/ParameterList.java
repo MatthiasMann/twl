@@ -96,7 +96,7 @@ public interface ParameterList {
 
     public Color getParameter(int idx, Color defaultValue);
 
-    public <E extends Enum> E getParameter(int idx, E defaultValue);
+    public <E extends Enum<E>> E getParameter(int idx, E defaultValue);
 
     /**
      * Retrives a parameter.

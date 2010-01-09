@@ -40,12 +40,12 @@ import org.lwjgl.input.Keyboard;
  *
  * @author Matthias Mann
  */
-public class ComboBox extends ComboBoxBase {
+public class ComboBox<T> extends ComboBoxBase {
 
     private static final int INVALID_WIDTH = -1;
     
     private final ComboboxLabel label;
-    private final ListBox listbox;
+    private final ListBox<T> listbox;
 
     private Runnable[] selectionChangedListeners;
 
@@ -53,14 +53,14 @@ public class ComboBox extends ComboBoxBase {
     private boolean computeWidthFromModel;
     private int modelWidth = INVALID_WIDTH;
     
-    public ComboBox(ListModel model) {
+    public ComboBox(ListModel<T> model) {
         this();
         setModel(model);
     }
     
     public ComboBox() {
         this.label = new ComboboxLabel(getAnimationState());
-        this.listbox = new ComboboxListbox();
+        this.listbox = new ComboboxListbox<T>();
         
         label.addCallback(new CallbackWithReason<Label.CallbackReason>() {
             public void callback(CallbackReason reason) {
@@ -100,7 +100,7 @@ public class ComboBox extends ComboBoxBase {
         CallbackSupport.fireCallbacks(selectionChangedListeners);
     }
 
-    public void setModel(ListModel model) {
+    public void setModel(ListModel<T> model) {
         unregisterModelChangeListener();
         listbox.setModel(model);
         if(computeWidthFromModel) {
@@ -108,7 +108,7 @@ public class ComboBox extends ComboBoxBase {
         }
     }
 
-    public ListModel getModel() {
+    public ListModel<T> getModel() {
         return listbox.getModel();
     }
 
@@ -137,7 +137,7 @@ public class ComboBox extends ComboBoxBase {
     }
 
     private void registerModelChangeListener() {
-        final ListModel model = getModel();
+        final ListModel<?> model = getModel();
         if(model != null) {
             modelWidth = INVALID_WIDTH;
             if(modelChangeListener == null) {
@@ -149,7 +149,7 @@ public class ComboBox extends ComboBoxBase {
 
     private void unregisterModelChangeListener() {
         if(modelChangeListener != null) {
-            final ListModel model = getModel();
+            final ListModel<T> model = getModel();
             if(model != null) {
                 model.removeChangeListener(modelChangeListener);
             }
@@ -303,7 +303,7 @@ public class ComboBox extends ComboBoxBase {
         }
     }
 
-    static class ComboboxListbox extends ListBox {
+    static class ComboboxListbox<T> extends ListBox<T> {
         public ComboboxListbox() {
             setTheme("listbox");
         }

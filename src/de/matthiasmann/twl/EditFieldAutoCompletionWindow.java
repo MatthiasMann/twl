@@ -47,7 +47,7 @@ import org.lwjgl.input.Keyboard;
 public class EditFieldAutoCompletionWindow extends InfoWindow {
 
     private final ResultListModel listModel;
-    private final ListBox listBox;
+    private final ListBox<String> listBox;
 
     private boolean captureKeys;
     private AutoCompletionDataSource dataSource;
@@ -66,7 +66,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         super(editField);
 
         this.listModel = new ResultListModel();
-        this.listBox = new ListBox(listModel);
+        this.listBox = new ListBox<String>(listModel);
         
         add(listBox);
 

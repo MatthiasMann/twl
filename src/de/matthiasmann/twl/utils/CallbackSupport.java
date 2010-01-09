@@ -101,9 +101,9 @@ public class CallbackSupport {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends Enum<T>> void fireCallbacks(CallbackWithReason[] callbacks, T reason) {
+    public static <T extends Enum<T>> void fireCallbacks(CallbackWithReason<?>[] callbacks, T reason) {
         if(callbacks != null) {
-            for(CallbackWithReason cb : callbacks) {
+            for(CallbackWithReason<?> cb : callbacks) {
                 ((CallbackWithReason<T>)cb).callback(reason);
             }
         }

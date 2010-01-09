@@ -382,13 +382,13 @@ public class PropertySheet extends TreeTable {
     }
 
     public static class ComboBoxEditor<T> implements PropertyEditor, Runnable {
-        protected final ComboBox comboBox;
+        protected final ComboBox<T> comboBox;
         protected final Property<T> property;
         protected final ListModel<T> model;
 
         public ComboBoxEditor(Property<T> property, ListModel<T> model) {
             this.property = property;
-            this.comboBox = new ComboBox(model);
+            this.comboBox = new ComboBox<T>(model);
             this.model = model;
             comboBox.addCallback(this);
             resetValue();

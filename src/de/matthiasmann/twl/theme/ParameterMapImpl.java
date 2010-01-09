@@ -129,7 +129,7 @@ class ParameterMapImpl implements ParameterMap {
         return defaultValue;
     }
 
-    public <E extends Enum> E getParameter(String name, E defaultValue) {
+    public <E extends Enum<E>> E getParameter(String name, E defaultValue) {
         @SuppressWarnings("unchecked")
         Class<E> enumType = defaultValue.getDeclaringClass();
         E value = getParameterValue(name, true, enumType);
@@ -163,7 +163,7 @@ class ParameterMapImpl implements ParameterMap {
     }
 
 
-    protected void wrongParameterType(String paramName, Class expectedType, Class foundType) {
+    protected void wrongParameterType(String paramName, Class<?> expectedType, Class<?> foundType) {
         manager.getLogger().warning("Parameter \"" + paramName + "\" is a " +
                 foundType.getSimpleName() + " expected a " + expectedType.getSimpleName());
     }
@@ -172,7 +172,7 @@ class ParameterMapImpl implements ParameterMap {
         manager.getLogger().warning("Parameter \"" + paramName + "\" not set");
     }
     
-    protected void replacingWithDifferentType(String paramName, Class oldType, Class newType) {
+    protected void replacingWithDifferentType(String paramName, Class<?> oldType, Class<?> newType) {
         manager.getLogger().warning("Paramter \"" + paramName + "\" of type " + oldType + " is replaced with type " + newType);
     }
 
@@ -182,8 +182,8 @@ class ParameterMapImpl implements ParameterMap {
             Object value = e.getValue();
             Object old = this.params.put(paramName, value);
             if(old != null) {
-                Class oldClass = old.getClass();
-                Class newClass = (value != null) ? value.getClass() : null;
+                Class<?> oldClass = old.getClass();
+                Class<?> newClass = (value != null) ? value.getClass() : null;
 
                 if(oldClass != newClass) {
                     replacingWithDifferentType(paramName, oldClass, newClass);

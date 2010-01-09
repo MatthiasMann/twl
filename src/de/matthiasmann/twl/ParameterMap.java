@@ -94,7 +94,7 @@ public interface ParameterMap {
 
     public Color getParameter(String name, Color defaultValue);
 
-    public <E extends Enum> E getParameter(String name, E defaultValue);
+    public <E extends Enum<E>> E getParameter(String name, E defaultValue);
 
     /**
      * Retrives a parameter.

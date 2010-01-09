@@ -46,7 +46,7 @@ import org.lwjgl.input.Keyboard;
 public class FolderBrowser extends Widget {
 
     private final FileSystemModel fsm;
-    private final ListBox listbox;
+    private final ListBox<Object> listbox;
     private final FolderModel model;
     private final BoxLayout curFolderGroup;
     private Runnable[] selectionChangedCallbacks;
@@ -66,7 +66,7 @@ public class FolderBrowser extends Widget {
         
         this.fsm = fsm;
         this.model = new FolderModel();
-        this.listbox = new ListBox(model);
+        this.listbox = new ListBox<Object>(model);
         this.curFolderGroup = new BoxLayout();
         
         curFolderGroup.setTheme("currentpathbox");
@@ -252,7 +252,7 @@ public class FolderBrowser extends Widget {
         }
     }
     
-    class FolderModel extends SimpleListModel {
+    class FolderModel extends SimpleListModel<Object> {
         private Object[] folders = new Object[0];
         private final Logger logger = Logger.getLogger(FolderModel.class.getName());
 

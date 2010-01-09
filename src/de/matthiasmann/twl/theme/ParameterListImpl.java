@@ -133,7 +133,7 @@ public class ParameterListImpl implements ParameterList {
         return defaultValue;
     }
 
-    public <E extends Enum> E getParameter(int idx, E defaultValue) {
+    public <E extends Enum<E>> E getParameter(int idx, E defaultValue) {
         @SuppressWarnings("unchecked")
         Class<E> enumType = defaultValue.getDeclaringClass();
         E value = getParameterValue(idx, enumType);

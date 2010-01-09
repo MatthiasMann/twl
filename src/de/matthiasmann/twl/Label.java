@@ -47,7 +47,7 @@ public class Label extends TextWidget {
     
     private boolean autoSize = true;
     private Widget labelFor;
-    private CallbackWithReason[] callbacks;
+    private CallbackWithReason<?>[] callbacks;
     
     public Label() {
         this((AnimationState)null, false);
