@@ -29,14 +29,15 @@
  */
 package de.matthiasmann.twl.theme;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.ParameterList;
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  *
@@ -130,7 +131,6 @@ class ParameterMapImpl implements ParameterMap {
     }
 
     public <E extends Enum<E>> E getParameter(String name, E defaultValue) {
-        @SuppressWarnings("unchecked")
         Class<E> enumType = defaultValue.getDeclaringClass();
         E value = getParameterValue(name, true, enumType);
         if(value != null) {
