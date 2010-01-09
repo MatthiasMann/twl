@@ -138,14 +138,14 @@ public class PropertySheet extends TreeTable {
         }
     }
 
-    TreeTableNode createNode(TreeTableNode parent, Property<?> property) {
+    @SuppressWarnings("unchecked")
+	TreeTableNode createNode(TreeTableNode parent, Property<?> property) {
         if(property.getType() == PropertyList.class) {
             return new ListNode(parent, property);
         } else {
             Class<?> type = property.getType();
             PropertyEditorFactory factory = factories.get(type);
             if(factory != null) {
-                @SuppressWarnings("unchecked")
                 PropertyEditor editor = factory.createEditor(property);
                 if(editor != null) {
                     return new LeafNode(parent, property, editor);
