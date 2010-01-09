@@ -265,7 +265,7 @@ public class TextArea extends Widget {
 
             if(lastCurY != curY) {
                 // call outside of inLayoutCode range
-                invalidateParentLayout();
+                invalidateLayoutTree();
             }
         }
     }

@@ -1322,18 +1322,6 @@ public class Widget {
     }
 
     /**
-     * Called when the parent container needs to adjust it's layout because
-     * the min/pref/max sizes of this widget have changed.
-     * 
-     * @see #invalidateLayout()
-     */
-    protected void invalidateParentLayout() {
-        if(parent != null) {
-            parent.invalidateLayout();
-        }
-    }
-
-    /**
      * Called when the position of this widget was changed.
      * The default implementation does nothing.
      * 

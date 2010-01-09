@@ -243,7 +243,7 @@ public class BoxLayout extends Widget {
                 x -= spacing;
             }
             if(container.getInnerRight() != x) {
-                container.invalidateParentLayout();
+                container.invalidateLayoutTree();
             }
         }
     }
@@ -279,7 +279,7 @@ public class BoxLayout extends Widget {
                 y -= spacing;
             }
             if(container.getInnerBottom() != y) {
-                container.invalidateParentLayout();
+                container.invalidateLayoutTree();
             }
         }
     }

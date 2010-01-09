@@ -362,7 +362,7 @@ public class ScrollPane extends Widget {
             }
 
             if(visibleH != scrollbarH.isVisible() || visibleV != scrollbarV.isVisible()) {
-                invalidateParentLayout();
+                invalidateLayoutTree();
             }
 
             scrollbarH.setVisible(visibleH);

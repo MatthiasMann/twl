@@ -189,7 +189,7 @@ public class ComboBox<T> extends ComboBoxBase {
             label.setText(getModelData(selected));
         }
         if(!computeWidthFromModel) {
-            invalidateParentLayout();
+            invalidateLayoutTree();
         }
     }
 
@@ -225,7 +225,7 @@ public class ComboBox<T> extends ComboBoxBase {
     void invalidateModelWidth() {
         if(computeWidthFromModel) {
             modelWidth = INVALID_WIDTH;
-            invalidateParentLayout();
+            invalidateLayoutTree();
         }
     }
 
@@ -244,7 +244,7 @@ public class ComboBox<T> extends ComboBoxBase {
             }
             if(newModelWidth > modelWidth) {
                 modelWidth = newModelWidth;
-                invalidateParentLayout();
+                invalidateLayoutTree();
             }
         }
     }

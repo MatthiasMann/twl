@@ -308,8 +308,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         checkColumnIndex(column);
         columnHeaders[column].setColumnWidth(width);    // store passed width
         if(columnModel.update(column)) {
-            invalidateLayout();
-            invalidateParentLayout();
+            invalidateLayoutTree();
         }
     }
 
@@ -1084,8 +1083,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
         updateAllCellWidgets = true;
         updateAllColumnWidth = true;
-        invalidateLayout();
-        invalidateParentLayout();
+        invalidateLayoutTree();
     }
 
     protected void modelAllChanged() {
@@ -1110,7 +1108,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected void modelRowChanged(int row) {
         if(rowModel != null) {
             if(autoSizeRow(row)) {
-                invalidateParentLayout();
+                invalidateLayoutTree();
             }
         }
         for(int col=0 ; col<numColumns ; col++) {
@@ -1131,7 +1129,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
         invalidateLayout();
         if(rowHeightChanged) {
-            invalidateParentLayout();
+            invalidateLayoutTree();
         }
     }
 
@@ -1168,8 +1166,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         if(selectionManager != null) {
             selectionManager.rowsInserted(row, count);
         }
-        invalidateLayout();
-        invalidateParentLayout();
+        invalidateLayoutTree();
     }
 
     protected void modelRowsDeleted(int row, int count) {
@@ -1191,8 +1188,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         if(selectionManager != null) {
             selectionManager.rowsDeleted(row, count);
         }
-        invalidateLayout();
-        invalidateParentLayout();
+        invalidateLayoutTree();
     }
 
     protected void modelColumnsInserted(int column, int count) {
@@ -1226,8 +1222,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 sp.setScrollPositionX(scrollPosX + columnsEnd - columnsStart);
             }
         }
-        invalidateLayout();
-        invalidateParentLayout();
+        invalidateLayoutTree();
     }
 
     protected void modelColumnsDeleted(int column, int count) {
@@ -1253,8 +1248,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         columnHeaders = newColumnHeaders;
         updateColumnHeaderNumbers();
         
-        invalidateLayout();
-        invalidateParentLayout();
+        invalidateLayoutTree();
     }
 
     protected void modelColumnHeaderChanged(int column) {
