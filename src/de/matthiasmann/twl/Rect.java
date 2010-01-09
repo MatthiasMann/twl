@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,7 +30,7 @@
 package de.matthiasmann.twl;
 
 /**
- * An immutable rectangle class.
+ * An mutable rectangle class.
  *
  * @author Matthias Mann
  */
@@ -47,6 +47,10 @@ public class Rect {
     public Rect(int x, int y, int w, int h) {
         setXYWH(x, y, w, h);
     }
+
+    public Rect(Rect src) {
+        set(src.getX(), src.getY(), src.getRight(), src.getBottom());
+    }
     
     public void setXYWH(int x, int y, int w, int h) {
         this.x0 = x;
@@ -61,7 +65,13 @@ public class Rect {
         this.x1 = x1;
         this.y1 = y1;
     }
-    
+
+    /**
+     * Computes the intersection of this rectangle with the other rectangle.
+     * If they don't overlapp then this rect will be set to zero width and height.
+     *
+     * @param other The other rectangle to compute the intersection with
+     */
     public void intersect(Rect other) {
         x0 = Math.max(x0, other.x0);
         y0 = Math.max(y0, other.y0);
