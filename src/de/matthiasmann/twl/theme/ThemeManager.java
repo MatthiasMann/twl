@@ -94,8 +94,8 @@ public class ThemeManager {
         this.themes = new HashMap<String, ThemeInfoImpl>();
         this.inputMaps = new HashMap<String, InputMapImpl>();
         this.constants = new HashMap<String, Object>();
-        this.emptyMap = new ParameterMapImpl(this);
-        this.emptyList = new ParameterListImpl(this);
+        this.emptyMap = new ParameterMapImpl(this, null);
+        this.emptyList = new ParameterListImpl(this, null);
         this.mathInterpreter = new MathInterpreter();
 
         insertDefaultConstants();
@@ -266,7 +266,7 @@ public class ThemeManager {
                         defaultFont = font;
                     }
                 } else if("constantDef".equals(tagName)) {
-                    insertConstant(name, parseParam(xmlp, baseUrl, "constantDef"));
+                    insertConstant(name, parseParam(xmlp, baseUrl, "constantDef", null));
                 } else {
                     throw xmlp.unexpected();
                 }
@@ -395,7 +395,7 @@ public class ThemeManager {
                 final String tagName = xmlp.getName();
                 final String name = xmlp.getAttributeValue(null, "name");
                 if("param".equals(tagName)) {
-                    Map<String, ?> entries = parseParam(xmlp, baseUrl, "param");
+                    Map<String, ?> entries = parseParam(xmlp, baseUrl, "param", ti);
                     ti.params.putAll(entries);
                 } else if("theme".equals(tagName)) {
                     if(name.length() == 0) {
@@ -417,13 +417,13 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Map<String, ?> parseParam(XMLParser xmlp, URL baseUrl, String tagName) throws XmlPullParserException, IOException {
+    private Map<String, ?> parseParam(XMLParser xmlp, URL baseUrl, String tagName, ThemeInfoImpl parent) throws XmlPullParserException, IOException {
         try {
             xmlp.require(XmlPullParser.START_TAG, null, tagName);
             String name = xmlp.getAttributeValue(null, "name");
             xmlp.nextTag();
             String valueTagName = xmlp.getName();
-            Object value = parseValue(xmlp, valueTagName, name, baseUrl);
+            Object value = parseValue(xmlp, valueTagName, name, baseUrl, parent);
             xmlp.require(XmlPullParser.END_TAG, null, valueTagName);
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
@@ -437,12 +437,12 @@ public class ThemeManager {
         }
     }
 
-    private ParameterListImpl parseList(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
-        ParameterListImpl result = new ParameterListImpl(this);
+    private ParameterListImpl parseList(XMLParser xmlp, URL baseUrl, ThemeInfoImpl parent) throws XmlPullParserException, IOException {
+        ParameterListImpl result = new ParameterListImpl(this, parent);
         xmlp.nextTag();
         while(xmlp.isStartTag()) {
             String tagName = xmlp.getName();
-            Object obj = parseValue(xmlp, tagName, null, baseUrl);
+            Object obj = parseValue(xmlp, tagName, null, baseUrl, parent);
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
             result.params.add(obj);
             xmlp.nextTag();
@@ -450,12 +450,12 @@ public class ThemeManager {
         return result;
     }
     
-    private ParameterMapImpl parseMap(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException, NumberFormatException {
-        ParameterMapImpl result = new ParameterMapImpl(this);
+    private ParameterMapImpl parseMap(XMLParser xmlp, URL baseUrl, ThemeInfoImpl parent) throws XmlPullParserException, IOException, NumberFormatException {
+        ParameterMapImpl result = new ParameterMapImpl(this, parent);
         xmlp.nextTag();
         while(xmlp.isStartTag()) {
             String tagName = xmlp.getName();
-            Map<String, ?> params = parseParam(xmlp, baseUrl, "param");
+            Map<String, ?> params = parseParam(xmlp, baseUrl, "param", parent);
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
             result.addParameters(params);
             xmlp.nextTag();
@@ -464,13 +464,13 @@ public class ThemeManager {
     }
 
     @SuppressWarnings("unchecked")
-    private Object parseValue(XMLParser xmlp, String tagName, String wildcardName, URL baseUrl) throws XmlPullParserException, IOException, NumberFormatException {
+    private Object parseValue(XMLParser xmlp, String tagName, String wildcardName, URL baseUrl, ThemeInfoImpl parent) throws XmlPullParserException, IOException, NumberFormatException {
         try {
             if("list".equals(tagName)) {
-                return parseList(xmlp, baseUrl);
+                return parseList(xmlp, baseUrl, parent);
             }
             if("map".equals(tagName)) {
-                return parseMap(xmlp, baseUrl);
+                return parseMap(xmlp, baseUrl, parent);
             }
             if("inputMapDef".equals(tagName)) {
                 return parseInputMap(xmlp);

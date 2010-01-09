@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -42,13 +42,12 @@ import java.util.Map;
  *
  * @author Matthias Mann
  */
-class ParameterMapImpl implements ParameterMap {
+class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
     
-    final ThemeManager manager;
     final HashMap<String, Object> params;
 
-    public ParameterMapImpl(ThemeManager manager) {
-        this.manager = manager;
+    ParameterMapImpl(ThemeManager manager, ThemeInfoImpl parent) {
+        super(manager, parent);
         this.params = new HashMap<String, Object>();
     }
 
@@ -164,15 +163,17 @@ class ParameterMapImpl implements ParameterMap {
 
     protected void wrongParameterType(String paramName, Class<?> expectedType, Class<?> foundType) {
         manager.getLogger().warning("Parameter \"" + paramName + "\" is a " +
-                foundType.getSimpleName() + " expected a " + expectedType.getSimpleName());
+                foundType.getSimpleName() + " expected a " +
+                expectedType.getSimpleName() + getParentDescription());
     }
 
     protected void missingParameter(String paramName) {
-        manager.getLogger().warning("Parameter \"" + paramName + "\" not set");
+        manager.getLogger().warning("Parameter \"" + paramName + "\" not set" + getParentDescription());
     }
     
     protected void replacingWithDifferentType(String paramName, Class<?> oldType, Class<?> newType) {
-        manager.getLogger().warning("Paramter \"" + paramName + "\" of type " + oldType + " is replaced with type " + newType);
+        manager.getLogger().warning("Paramter \"" + paramName + "\" of type " +
+                oldType + " is replaced with type " + newType + getParentDescription());
     }
 
     void addParameters(Map<String, ?> params) {

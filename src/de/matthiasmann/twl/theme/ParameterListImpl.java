@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -41,13 +41,12 @@ import java.util.ArrayList;
  *
  * @author Matthias Mann
  */
-public class ParameterListImpl implements ParameterList {
+public class ParameterListImpl extends ThemeChildImpl implements ParameterList {
 
-    final ThemeManager manager;
     final ArrayList<Object> params;
 
-    public ParameterListImpl(ThemeManager manager) {
-        this.manager = manager;
+    ParameterListImpl(ThemeManager manager, ThemeInfoImpl parent) {
+        super(manager, parent);
         this.params = new ArrayList<Object>();
     }
 
@@ -156,6 +155,7 @@ public class ParameterListImpl implements ParameterList {
 
     protected void wrongParameterType(int idx, Class<?> expectedType, Class<?> foundType) {
         manager.getLogger().warning("Parameter at index " + idx + " is a " +
-                foundType.getSimpleName() + " expected a " + expectedType.getSimpleName());
+                foundType.getSimpleName() + " expected a " +
+                expectedType.getSimpleName() + getParentDescription());
     }
 }

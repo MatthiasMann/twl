@@ -40,15 +40,13 @@ import java.util.HashMap;
 class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
 
     private final String name;
-    final ThemeInfoImpl parent;
     final HashMap<String, ThemeInfoImpl> children;
     boolean maybeUsedFromWildcard;
     String wildcardImportPath;
 
     public ThemeInfoImpl(ThemeManager manager, String name, ThemeInfoImpl parent) {
-        super(manager);
+        super(manager, parent);
         this.name = name;
-        this.parent = parent;
         this.children = new HashMap<String, ThemeInfoImpl>();
     }
 
