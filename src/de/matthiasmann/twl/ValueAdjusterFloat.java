@@ -194,12 +194,12 @@ public class ValueAdjusterFloat extends ValueAdjuster {
 
     @Override
     protected void doDecrement() {
-        setValue(value - stepSize);
+        setValue(value - getStepSize());
     }
 
     @Override
     protected void doIncrement() {
-        setValue(value + stepSize);
+        setValue(value + getStepSize());
     }
 
     @Override
