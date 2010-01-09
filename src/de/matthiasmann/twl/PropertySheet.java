@@ -375,7 +375,6 @@ public class PropertySheet extends TreeTable {
         }
     }
     static class StringEditorFactory implements PropertyEditorFactory<String> {
-        @SuppressWarnings("unchecked")
         public PropertyEditor createEditor(Property<String> property) {
             return new StringEditor(property);
         }
