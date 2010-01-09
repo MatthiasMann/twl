@@ -6,3 +6,6 @@
 ^dist/.*
 ^build/.*
 ^nbproject/private/.*
+^libs/progressbar\.png$
+^libs/TWLLogo\.png$
+^TWL-findbugs\.xml$
