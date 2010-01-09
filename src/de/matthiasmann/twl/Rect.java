@@ -118,4 +118,8 @@ public class Rect {
     public int getCenterY() {
         return (y0 + y1) / 2;
     }
+
+    public Dimension getSize() {
+        return new Dimension(getWidth(), getHeight());
+    }
 }
