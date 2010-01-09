@@ -80,13 +80,13 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private int mouseY;
     private LWJGLCacheContext cacheContext;
 
-    final ArrayList<Integer> textureDLs;
+    final ArrayList<TextureArea> textureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintState tintState;
 
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
-        this.textureDLs = new ArrayList<Integer>();
+        this.textureAreas = new ArrayList<TextureArea>();
         this.dynamicImages = new ArrayList<LWJGLDynamicImage>();
         this.tintStateRoot = new TintState();
         this.tintState = tintStateRoot;
@@ -148,11 +148,11 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         }
         this.cacheContext = lwjglCC;
         try {
-            for(int id : textureDLs) {
-                GL11.glDeleteLists(id, 1);
+            for(TextureArea ta : textureAreas) {
+                ta.destroyRepeatCache();
             }
         } finally {
-            textureDLs.clear();
+            textureAreas.clear();
         }
     }
     

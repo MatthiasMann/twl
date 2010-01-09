@@ -222,11 +222,16 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
 
     private void createRepeatCache() {
         repeatCacheID = GL11.glGenLists(1);
-        texture.renderer.textureDLs.add(repeatCacheID);
+        texture.renderer.textureAreas.add(this);
 
         GL11.glNewList(repeatCacheID, GL11.GL_COMPILE);
         drawRepeat(0, 0, REPEAT_CACHE_SIZE, REPEAT_CACHE_SIZE);
         GL11.glEndList();
+    }
+
+    void destroyRepeatCache() {
+        GL11.glDeleteLists(repeatCacheID, 1);
+        repeatCacheID = -1;
     }
     
     int getX() {
