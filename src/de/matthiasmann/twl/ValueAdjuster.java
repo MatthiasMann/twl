@@ -54,7 +54,9 @@ public abstract class ValueAdjuster extends Widget {
     private final Runnable timerCallback;
     private Timer timer;
 
-    private String displayPrefix = "";
+    private String displayPrefix;
+    private String displayPrefixTheme = "";
+    private boolean useMouseWheel = true;
     private int width;
     
     public ValueAdjuster() {
@@ -120,9 +122,30 @@ public abstract class ValueAdjuster extends Widget {
         return displayPrefix;
     }
 
+    /**
+     * Sets the display prefix which is displayed before the value.
+     *
+     * If this is property is null then the value from the theme is used,
+     * otherwise this one.
+     *
+     * @param displayPrefix the prefix or null
+     */
     public void setDisplayPrefix(String displayPrefix) {
         this.displayPrefix = displayPrefix;
         setDisplayText();
+    }
+
+    public boolean isUseMouseWheel() {
+        return useMouseWheel;
+    }
+
+    /**
+     * Controls if the ValueAdjuster should respond to the mouse wheel or not
+     *
+     * @param useMouseWheel true if the mouse wheel is used
+     */
+    public void setUseMouseWheel(boolean useMouseWheel) {
+        this.useMouseWheel = useMouseWheel;
     }
 
     public void startEdit() {
@@ -147,7 +170,13 @@ public abstract class ValueAdjuster extends Widget {
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
+        applyThemeValueAdjuster(themeInfo);
+    }
+
+    protected void applyThemeValueAdjuster(ThemeInfo themeInfo) {
         width = themeInfo.getParameter("width", 100);
+        displayPrefixTheme = themeInfo.getParameter("displayPrefix", "");
+        useMouseWheel = themeInfo.getParameter("useMouseWheel", useMouseWheel);
     }
 
     @Override
@@ -230,7 +259,8 @@ public abstract class ValueAdjuster extends Widget {
     }
     
     protected void setDisplayText() {
-        label.setText(displayPrefix.concat(formatText()));
+        String prefix = (displayPrefix != null) ? displayPrefix : displayPrefixTheme;
+        label.setText(prefix.concat(formatText()));
     }
 
     protected abstract String formatText();
@@ -296,7 +326,7 @@ public abstract class ValueAdjuster extends Widget {
                 }
                 return true;
             }
-        } else if(!editField.isVisible() && evt.getType() == Event.Type.MOUSE_WHEEL) {
+        } else if(!editField.isVisible() && useMouseWheel && evt.getType() == Event.Type.MOUSE_WHEEL) {
             if(evt.getMouseWheelDelta() < 0) {
                 doDecrement();
             } else if(evt.getMouseWheelDelta() > 0) {
