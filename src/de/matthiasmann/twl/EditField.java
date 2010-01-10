@@ -542,6 +542,9 @@ public class EditField extends Widget {
                 return true;
             }
             break;
+
+        case MOUSE_WHEEL:
+            return false;
         }
 
         return evt.isMouseEvent();
