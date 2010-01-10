@@ -148,6 +148,12 @@ public abstract class ValueAdjuster extends Widget {
         this.useMouseWheel = useMouseWheel;
     }
 
+    @Override
+    public void setTooltipContent(Object tooltipContent) {
+        super.setTooltipContent(tooltipContent);
+        label.setTooltipContent(tooltipContent);
+    }
+
     public void startEdit() {
         if(label.isVisible()) {
             editField.setErrorMessage(null);
