@@ -43,6 +43,10 @@ public class ColorSpaceHSL extends AbstractColorSpace {
         super("HSL", "Hue", "Saturation", "Lightness");
     }
 
+    public String getComponentShortName(int component) {
+        return "HSL".substring(component, component+1);
+    }
+
     public float getMaxValue(int component) {
         return (component == 0) ? 360f : 100f;
     }

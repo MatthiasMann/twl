@@ -56,6 +56,15 @@ public interface ColorSpace {
     public String getComponentName(int component);
 
     /**
+     * A short version of the component name for use in UIs. For best results
+     * all short names should have the same length.
+     * 
+     * @param component the color component index
+     * @return the name of the color component
+     */
+    public String getComponentShortName(int component);
+
+    /**
      * Returns the minimum allowed value for the specified component.
      *
      * @param component the color component index
