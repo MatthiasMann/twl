@@ -37,7 +37,16 @@ import org.lwjgl.input.Keyboard;
  *
  * While other widgets have a parent/child relationship, popup windows have
  * only have a owner.
+ *
+ * When a popup window is open it will block all mouse and keyboard events to
+ * the UI layer of it's owner. This includes the owner, all it's children, all
+ * siblings and parents etc.
+ *
+ * If the popup window is hidden or disabled it will close instead.
  * 
+ * When the owner is hidden (either directly or indirectly) or removed from
+ * the GUI tree then the popup is also closed.
+ *
  * To use a PopupWindow construct it with your widget as owner and add the
  * content widget. Call {@code openPopup} to make it visible.
  *
@@ -108,6 +117,8 @@ public class PopupWindow extends Widget {
      * Opens the popup window with it's current size and position.
      * In order for this to work the owner must be part of the GUI tree.
      *
+     * When a popup window is shown it is always visible and enabled.
+     * 
      * @return true if the popup window could be opened.
      * @see #getOwner() 
      * @see #getGUI()
@@ -116,8 +127,8 @@ public class PopupWindow extends Widget {
         GUI gui = owner.getGUI();
         if(gui != null) {
             // a popup can't be invisible or disabled when it should open
-            setVisible(true);
-            setEnabled(true);
+            super.setVisible(true);
+            super.setEnabled(true);
             // owner's hasOpenPopups flag is handled by GUI
             gui.openPopup(this);
             requestKeyboardFocus();
