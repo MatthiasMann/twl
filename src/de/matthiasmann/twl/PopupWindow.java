@@ -35,7 +35,19 @@ import org.lwjgl.input.Keyboard;
  * A generic popup window.
  * Must not be added as a child to another Widget.
  *
+ * While other widgets have a parent/child relationship, popup windows have
+ * only have a owner.
+ * 
+ * To use a PopupWindow construct it with your widget as owner and add the
+ * content widget. Call {@code openPopup} to make it visible.
+ *
+ * Only one widget should be added as child to a popup window. This widget
+ * will occupy the whole inner area. If more then one widget is added then
+ * they will overlap.
+ *
  * @author Matthias Mann
+ * @see #openPopup()
+ * @see #layoutChildrenFullInnerArea()
  */
 public class PopupWindow extends Widget {
 
@@ -43,7 +55,12 @@ public class PopupWindow extends Widget {
 
     private boolean closeOnClickedOutside = true;
     private boolean closeOnEscape = true;
-    
+
+    /**
+     * Creates a new popup window.
+     *
+     * @param owner The owner of this popup
+     */
     public PopupWindow(Widget owner) {
         if(owner == null) {
             throw new NullPointerException("owner");
@@ -59,6 +76,15 @@ public class PopupWindow extends Widget {
         return closeOnClickedOutside;
     }
 
+    /**
+     * Controls if this popup window should close when a mouse click
+     * happens outside of it's area. This is useful for context menus or
+     * drop down combo boxes.
+     *
+     * Default is true.
+     *
+     * @param closeOnClickedOutside true if it should close on clicks outside it's area
+     */
     public void setCloseOnClickedOutside(boolean closeOnClickedOutside) {
         this.closeOnClickedOutside = closeOnClickedOutside;
     }
@@ -67,10 +93,25 @@ public class PopupWindow extends Widget {
         return closeOnEscape;
     }
 
+    /**
+     * Controls if this popup should close when the escape key is pressed.
+     *
+     * Default is true.
+     *
+     * @param closeOnEscape true if it should close on escape
+     */
     public void setCloseOnEscape(boolean closeOnEscape) {
         this.closeOnEscape = closeOnEscape;
     }
 
+    /**
+     * Opens the popup window with it's current size and position.
+     * In order for this to work the owner must be part of the GUI tree.
+     *
+     * @return true if the popup window could be opened.
+     * @see #getOwner() 
+     * @see #getGUI()
+     */
     public boolean openPopup() {
         GUI gui = owner.getGUI();
         if(gui != null) {
@@ -85,7 +126,13 @@ public class PopupWindow extends Widget {
         }
         return false;
     }
-    
+
+    /**
+     * Opens the popup window, calls {@code adjustSize} and centers the popup on
+     * the screen.
+     *
+     * @see #adjustSize() 
+     */
     public void openPopupCentered() {
         if(openPopup()) {
             adjustSize();
@@ -94,7 +141,10 @@ public class PopupWindow extends Widget {
                     getParent().getInnerY() + (getParent().getInnerHeight() - getHeight())/2);
         }
     }
-    
+
+    /**
+     * Closes this popup window. Keyboard focus is transfered to it's owner.
+     */
     public void closePopup() {
         GUI gui = getGUI();
         if(gui != null) {
@@ -103,7 +153,11 @@ public class PopupWindow extends Widget {
             owner.requestKeyboardFocus();
         }
     }
-    
+
+    /**
+     * Checks if theis popup window is currently open
+     * @return true if it is open
+     */
     public boolean isOpen() {
         return getParent() != null;
     }
@@ -144,14 +198,31 @@ public class PopupWindow extends Widget {
     }
 
     @Override
-    protected boolean isMouseInside(Event evt) {
+    protected final boolean isMouseInside(Event evt) {
         return true;    // :P
     }
 
+    /**
+     * Called when escape if pressed and {@code closeOnEscape} is enabled.
+     * Also called by the default implementation of {@code mouseClickedOutside}
+     * when {@code closeOnClickedOutside} is active.
+     *
+     * @see #setCloseOnEscape(boolean)
+     * @see #mouseClickedOutside(de.matthiasmann.twl.Event)
+     */
     protected void requestPopupClose() {
         closePopup();
     }
 
+    /**
+     * Called when a mouse click happened outside the popup window area.
+     *
+     * The default implementation calls {@code requestPopupClose} when
+     * {@code closeOnClickedOutside} is active.
+     *
+     * @param evt The click event
+     * @see #setCloseOnClickedOutside(boolean) 
+     */
     protected void mouseClickedOutside(Event evt) {
         if(closeOnClickedOutside) {
             requestPopupClose();
