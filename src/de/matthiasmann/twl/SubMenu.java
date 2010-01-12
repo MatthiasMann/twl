@@ -72,7 +72,7 @@ public class SubMenu extends Button {
     protected PopupMenu getParentPopupMenu() {
         Widget parent = getParent();
         if(!(parent instanceof PopupMenu)) {
-            throw new IllegalStateException("MenuItem must only be added to a PopupMenu");
+            return null;
         }
         return (PopupMenu)parent;
     }

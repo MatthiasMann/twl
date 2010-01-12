@@ -95,7 +95,7 @@ public class PopupMenu extends PopupWindow {
     @Override
     protected void mouseClickedOutside(Event evt) {
         PopupMenu m = this;
-        while(!m.isInside(evt.getMouseX(), evt.getMouseY())) {
+        while(m != null && !m.isInside(evt.getMouseX(), evt.getMouseY())) {
             m.closePopup();
             Widget o = m.getOwner();
             if(o instanceof SubMenu) {
@@ -123,7 +123,7 @@ public class PopupMenu extends PopupWindow {
     
     void closeAllPopupMenus() {
         PopupMenu m = this;
-        for(;;) {
+        while(m != null) {
             m.closePopup();
             Widget o = m.getOwner();
             if(o instanceof SubMenu) {
