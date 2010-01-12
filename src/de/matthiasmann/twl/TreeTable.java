@@ -101,12 +101,22 @@ public class TreeTable extends TableBase {
         applyCellRendererTheme(nodeRenderer);
     }
 
+    /**
+     * Computes the row for the given node in the TreeTable.
+     *
+     * @param node the node to locate
+     * @return the row in the table or -1 if the node is not visible
+     */
     public int getRowFromNode(TreeTableNode node) {
         int position = -1;
         TreeTableNode parent = node.getParent();
         while(parent != null) {
             NodeState ns = HashEntry.get(nodeStateTable, parent);
             int idx = parent.getChildIndex(node);
+            if(idx < 0) {
+                // node is not part of the tree
+                return -1;
+            }
             if(ns.childSizes == null) {
                 if(ns.expanded) {
                     ns.initChildSizes();
