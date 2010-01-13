@@ -112,6 +112,10 @@ public class TreeTable extends TableBase {
         TreeTableNode parent = node.getParent();
         while(parent != null) {
             NodeState ns = HashEntry.get(nodeStateTable, parent);
+            if(ns == null) {
+                // parent was not yet expanded, or not part of tree
+                return -1;
+            }
             int idx = parent.getChildIndex(node);
             if(idx < 0) {
                 // node is not part of the tree
