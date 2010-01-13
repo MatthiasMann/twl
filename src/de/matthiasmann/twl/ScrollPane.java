@@ -283,6 +283,9 @@ public class ScrollPane extends Widget {
         if(!inLayout) {
             try {
                 inLayout = true;
+                if(content != null) {
+                    content.validateLayout();
+                }
                 super.validateLayout();
             } finally {
                 inLayout = false;

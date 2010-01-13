@@ -333,6 +333,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public void scrollToRow(int row) {
         ScrollPane scrollPane = ScrollPane.getContainingScrollPane(this);
         if(scrollPane != null && numRows > 0) {
+            scrollPane.validateLayout();
             int rowStart = getRowStartPosition(row);
             if(rowStart < scrollPosY) {
                 scrollPane.setScrollPositionY(rowStart);
