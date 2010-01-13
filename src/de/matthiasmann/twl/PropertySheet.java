@@ -235,7 +235,7 @@ public class PropertySheet extends TreeTable {
         public ListNode(TreeTableNode parent, Property<?> property) {
             super(parent, property);
             this.treeGenerator = new TreeGenerator(
-                    (PropertyList)property.getValue(), this);
+                    (PropertyList)property.getPropertyValue(), this);
             treeGenerator.run();
         }
         public Object getData(int column) {
@@ -361,7 +361,7 @@ public class PropertySheet extends TreeTable {
                 resetValue();
             } else if(!property.isReadOnly()) {
                 try {
-                    property.setValue(editField.getText());
+                    property.setPropertyValue(editField.getText());
                     editField.setErrorMessage(null);
                 } catch (IllegalArgumentException ex) {
                     editField.setErrorMessage(ex.getMessage());
@@ -369,7 +369,7 @@ public class PropertySheet extends TreeTable {
             }
         }
         private void resetValue() {
-            editField.setText(property.getValue());
+            editField.setText(property.getPropertyValue());
             editField.setErrorMessage(null);
             editField.setReadOnly(property.isReadOnly());
         }
@@ -409,12 +409,12 @@ public class PropertySheet extends TreeTable {
             } else {
                 int idx = comboBox.getSelected();
                 if(idx >= 0) {
-                    property.setValue(model.getEntry(idx));
+                    property.setPropertyValue(model.getEntry(idx));
                 }
             }
         }
         protected void resetValue() {
-            comboBox.setSelected(findEntry(property.getValue()));
+            comboBox.setSelected(findEntry(property.getPropertyValue()));
         }
         protected int findEntry(T value) {
             for(int i=0,n=model.getNumEntries() ; i<n ; i++) {

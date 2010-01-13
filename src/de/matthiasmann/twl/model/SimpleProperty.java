@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -66,7 +66,11 @@ public class SimpleProperty<T> extends AbstractProperty<T> {
         this.readOnly = readOnly;
     }
 
-    public T getValue() {
+    public boolean canBeNull() {
+        return false;
+    }
+
+    public T getPropertyValue() {
         return value;
     }
 
@@ -75,20 +79,17 @@ public class SimpleProperty<T> extends AbstractProperty<T> {
      * 
      * @param value the new value for the property
      * @throws IllegalArgumentException is not thrown but part of the Property interface
+     * @throws NullPointerException if value is null and canBeNull returned false
+     * @see #canBeNull()
      */
-    public void setValue(T value) throws IllegalArgumentException {
-        this.value = value;
-    }
-
-    /**
-     * Call this method to change the property value from application code.
-     * Callbacks will be fired to update the UI
-     *
-     * @param value the new value for the property
-     */
-    public void setValueFromCode(T value) {
-        this.value = value;
-        fireValueChangedCallback();
+    public void setPropertyValue(T value) throws IllegalArgumentException {
+        if(value == null && !canBeNull()) {
+            throw new NullPointerException("value");
+        }
+        if(this.value != value) {
+            this.value = value;
+            fireValueChangedCallback();
+        }
     }
 
     public Class<T> getType() {

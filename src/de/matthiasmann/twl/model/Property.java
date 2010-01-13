@@ -53,10 +53,18 @@ public interface Property<T> {
     public boolean isReadOnly();
 
     /**
+     * Returns true if this property can be set to null. This is similar to
+     * a SQL null.
+     * 
+     * @return true if this property can be null
+     */
+    public boolean canBeNull();
+
+    /**
      * Retrieves the current property value
      * @return the current property value
      */
-    public T getValue();
+    public T getPropertyValue();
 
     /**
      * Changes the property value. If the value is invalid then an
@@ -65,8 +73,10 @@ public interface Property<T> {
      *
      * @param value The new value
      * @throws IllegalArgumentException if the new value can't be accepted
+     * @throws NullPointerException if value is null and canBeNull returned false
+     * @see #canBeNull()
      */
-    public void setValue(T value) throws IllegalArgumentException;
+    public void setPropertyValue(T value) throws IllegalArgumentException;
 
     /**
      * Returns the type of the property. This is used to select an
