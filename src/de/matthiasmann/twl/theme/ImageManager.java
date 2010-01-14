@@ -362,54 +362,44 @@ class ImageManager {
     
     private Image parseHSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         Image[] textures = new Image[3];
-        if(xmlp.getAttributeValue(null, "x") == null) {
-            xmlp.nextTag();
-            parseSubImages(xmlp, textures);
+        parseRectFromAttribute(xmlp, params);
+        int[] xoff;
+        if(params.border != null) {
+            xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(),
+                    params.border.getBorderRight(), Math.abs(params.w));
         } else {
-            parseRectFromAttribute(xmlp, params);
-            int[] xoff;
-            if(params.border != null) {
-                xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(),
-                        params.border.getBorderRight(), Math.abs(params.w));
-            } else {
-                xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
-            }
-            for(int h=0 ; h<3 ; h++) {
-                int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
-                textures[h] = createImage(xmlp,
-                        params.x+xoff[h], params.y, imgW, params.h,
-                        params.tintColor, false);
-            }
-            params.tintColor = null;
-            xmlp.nextTag();
+            xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
         }
+        for(int h=0 ; h<3 ; h++) {
+            int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
+            textures[h] = createImage(xmlp,
+                    params.x+xoff[h], params.y, imgW, params.h,
+                    params.tintColor, false);
+        }
+        params.tintColor = null;
+        xmlp.nextTag();
         Image image = new GridImage(textures, SPLIT_WEIGHTS_3, SPLIT_WEIGHTS_1, params.border);
         return image;
     }
 
     private Image parseVSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         Image[] textures = new Image[3];
-        if(xmlp.getAttributeValue(null, "x") == null) {
-            xmlp.nextTag();
-            parseSubImages(xmlp, textures);
+        parseRectFromAttribute(xmlp, params);
+        int[] yoff;
+        if(params.border != null) {
+            yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(),
+                    params.border.getBorderBottom(), Math.abs(params.h));
         } else {
-            parseRectFromAttribute(xmlp, params);
-            int[] yoff;
-            if(params.border != null) {
-                yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(),
-                        params.border.getBorderBottom(), Math.abs(params.h));
-            } else {
-                yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
-            }
-            for(int v=0 ; v<3 ; v++) {
-                int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
-                textures[v] = createImage(xmlp,
-                        params.x, params.y+yoff[v], params.w, imgH,
-                        params.tintColor, false);
-            }
-            params.tintColor = null;
-            xmlp.nextTag();
+            yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
         }
+        for(int v=0 ; v<3 ; v++) {
+            int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
+            textures[v] = createImage(xmlp,
+                    params.x, params.y+yoff[v], params.w, imgH,
+                    params.tintColor, false);
+        }
+        params.tintColor = null;
+        xmlp.nextTag();
         Image image = new GridImage(textures, SPLIT_WEIGHTS_1, SPLIT_WEIGHTS_3, params.border);
         return image;
     }
@@ -417,36 +407,31 @@ class ImageManager {
 
     private Image parseHVSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         Image[] textures = new Image[9];
-        if(xmlp.getAttributeValue(null, "x") == null) {
-            xmlp.nextTag();
-            parseSubImages(xmlp, textures);
+        parseRectFromAttribute(xmlp, params);
+        boolean noCenter = xmlp.parseBoolFromAttribute("nocenter", false);
+        int[] xoff, yoff;
+        if(params.border != null) {
+            xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(), params.border.getBorderRight(), Math.abs(params.w));
+            yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(), params.border.getBorderBottom(), Math.abs(params.h));
         } else {
-            parseRectFromAttribute(xmlp, params);
-            boolean noCenter = xmlp.parseBoolFromAttribute("nocenter", false);
-            int[] xoff, yoff;
-            if(params.border != null) {
-                xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(), params.border.getBorderRight(), Math.abs(params.w));
-                yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(), params.border.getBorderBottom(), Math.abs(params.h));
-            } else {
-                xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
-                yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
-            }
-            for(int v=0 ; v<3 ; v++) {
-                for(int h=0 ; h<3 ; h++) {
-                    int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
-                    int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
-                    if(noCenter && h == 1 && v == 1) {
-                        textures[v*3+h] = new EmptyImage(imgW, imgH);
-                    } else {
-                        textures[v*3+h] = createImage(xmlp,
-                                params.x+xoff[h], params.y+yoff[v], imgW, imgH,
-                                params.tintColor, false);
-                    }
+            xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
+            yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
+        }
+        for(int v=0 ; v<3 ; v++) {
+            for(int h=0 ; h<3 ; h++) {
+                int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
+                int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
+                if(noCenter && h == 1 && v == 1) {
+                    textures[v*3+h] = new EmptyImage(imgW, imgH);
+                } else {
+                    textures[v*3+h] = createImage(xmlp,
+                            params.x+xoff[h], params.y+yoff[v], imgW, imgH,
+                            params.tintColor, false);
                 }
             }
-            params.tintColor = null;
-            xmlp.nextTag();
         }
+        params.tintColor = null;
+        xmlp.nextTag();
         Image image = new GridImage(textures, SPLIT_WEIGHTS_3, SPLIT_WEIGHTS_3, params.border);
         return image;
     }

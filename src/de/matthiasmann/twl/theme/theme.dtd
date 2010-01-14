@@ -12,13 +12,13 @@
     format  CDATA #REQUIRED
     filter  CDATA #IMPLIED>
 
-<!ELEMENT hvsplit (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage)*>
+<!ELEMENT hvsplit EMPTY>
 <!ATTLIST hvsplit
     name            CDATA #IMPLIED
-    x               CDATA #IMPLIED
-    y               CDATA #IMPLIED
-    width           CDATA #IMPLIED
-    height          CDATA #IMPLIED
+    x               CDATA #REQUIRED
+    y               CDATA #REQUIRED
+    width           CDATA #REQUIRED
+    height          CDATA #REQUIRED
     splitx          CDATA #IMPLIED
     splity          CDATA #IMPLIED
     border          CDATA #IMPLIED
@@ -33,13 +33,13 @@
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
-<!ELEMENT hsplit (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage)*>
+<!ELEMENT hsplit EMPTY>
 <!ATTLIST hsplit
     name            CDATA #IMPLIED
-    x               CDATA #IMPLIED
-    y               CDATA #IMPLIED
-    width           CDATA #IMPLIED
-    height          CDATA #IMPLIED
+    x               CDATA #REQUIRED
+    y               CDATA #REQUIRED
+    width           CDATA #REQUIRED
+    height          CDATA #REQUIRED
     splitx          CDATA #IMPLIED
     border          CDATA #IMPLIED
     tint            CDATA #IMPLIED
@@ -52,13 +52,13 @@
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
-<!ELEMENT vsplit (hvsplit|hsplit|vsplit|texture|alias|composed|select|grid|animation|repeatImage)*>
+<!ELEMENT vsplit EMPTY>
 <!ATTLIST vsplit
     name            CDATA #IMPLIED
-    x               CDATA #IMPLIED
-    y               CDATA #IMPLIED
-    width           CDATA #IMPLIED
-    height          CDATA #IMPLIED
+    x               CDATA #REQUIRED
+    y               CDATA #REQUIRED
+    width           CDATA #REQUIRED
+    height          CDATA #REQUIRED
     splity          CDATA #IMPLIED
     border          CDATA #IMPLIED
     tint            CDATA #IMPLIED
