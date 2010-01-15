@@ -35,12 +35,10 @@ import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.utils.CallbackSupport;
-import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
 import de.matthiasmann.twl.utils.SparseGrid;
 import de.matthiasmann.twl.utils.SparseGrid.Entry;
 import de.matthiasmann.twl.utils.TypeMapping;
-import java.util.ArrayList;
 
 /**
  * Base class for Table and TreeTable
@@ -119,10 +117,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         public void positionWidget(Widget widget, int x, int y, int w, int h);
     }
 
-    public interface CachableCellWidgetCreator extends CellWidgetCreator {
-        public String getCacheTag(int row, int column);
-    }
-
     public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
     public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
     public static final String STATE_ROW_SELECTED = "rowSelected";
@@ -143,7 +137,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected TableColumnHeaderModel columnHeaderModel;
     protected SizeSequence rowModel;
     protected boolean hasCellWidgetCreators;
-    protected WidgetCache[] widgetCacheTable;
     protected ColumnHeader[] columnHeaders;
     protected TableSelectionManager selectionManager;
     protected Callback[] callbacks;
@@ -770,25 +763,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         autoSizeAllRows = false;
     }
 
-    protected WidgetCache getWidgetCache(String tag) {
-        if(widgetCacheTable == null) {
-            widgetCacheTable = new WidgetCache[16];
-        }
-        WidgetCache widgetCache = HashEntry.get(widgetCacheTable, tag);
-        if(widgetCache == null) {
-            widgetCache = new WidgetCache(tag);
-            HashEntry.insertEntry(widgetCacheTable, widgetCache);
-        }
-        return widgetCache;
-    }
-    
-    protected void removeCellWidget(Widget widget, WidgetCache cache) {
+    protected void removeCellWidget(Widget widget) {
         int idx = cellWidgetContainer.getChildIndex(widget);
         if(idx >= 0) {
             cellWidgetContainer.removeChild(idx);
-        }
-        if(cache != null) {
-            cache.put(widget);
         }
     }
 
@@ -796,12 +774,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         CellWidgetCreator cwc = (CellWidgetCreator)getCellRenderer(row, column, null);
         Widget widget = widgetEntry.widget;
 
-        if(widget == null && widgetEntry.cache != null) {
-            widget = widgetEntry.cache.get();
-            widget = cwc.updateWidget(widget);
-            widgetEntry.widget = widget;
-        }
-        
         if(widget != null) {
             if(widget.getParent() != cellWidgetContainer) {
                 cellWidgetContainer.insertChild(widget, cellWidgetContainer.getNumChildren());
@@ -819,7 +791,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected void updateCellWidget(int row, int column) {
         WidgetEntry we = (WidgetEntry)widgetGrid.get(row, column);
         Widget oldWidget = (we != null) ? we.widget : null;
-        WidgetCache oldCache = (we != null) ? we.cache : null;
         Widget newWidget = null;
 
         TreeTableNode rowNode = getNodeFromRow(row);
@@ -829,41 +800,26 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             if(we != null && we.creator != cellWidgetCreator) {
                 // the cellWidgetCreator has changed for this cell
                 // discard the old widget
-                removeCellWidget(oldWidget, oldCache);
+                removeCellWidget(oldWidget);
                 oldWidget = null;
-                oldCache = null;
             }
-            if(cellWidgetCreator instanceof CachableCellWidgetCreator) {
-                CachableCellWidgetCreator ccwc = (CachableCellWidgetCreator)cellWidgetCreator;
+            newWidget = cellWidgetCreator.updateWidget(oldWidget);
+            if(newWidget != null) {
                 if(we == null) {
                     we = new WidgetEntry();
                     widgetGrid.set(row, column, we);
                 }
+                we.widget = newWidget;
                 we.creator = cellWidgetCreator;
-                we.cache = getWidgetCache(ccwc.getCacheTag(row, column));
-                we.widget = null;
-            } else {
-                newWidget = cellWidgetCreator.updateWidget(oldWidget);
-                if(newWidget != null) {
-                    if(we == null) {
-                        we = new WidgetEntry();
-                        widgetGrid.set(row, column, we);
-                    }
-                    we.widget = newWidget;
-                    we.creator = cellWidgetCreator;
-                    we.cache = null;
-                }
             }
+        }
 
-            if(newWidget == null && we != null && we.cache == null) {
-                widgetGrid.remove(row, column);
-            }
-        } else if(we != null) {
+        if(newWidget == null && we != null) {
             widgetGrid.remove(row, column);
         }
         
         if(oldWidget != null && newWidget != oldWidget) {
-            removeCellWidget(oldWidget, oldCache);
+            removeCellWidget(oldWidget);
         }
     }
 
@@ -1084,7 +1040,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             removeAllCellWidgets();
             widgetGrid.clear();
         }
-        widgetCacheTable = null;
 
         if(rowModel != null) {
             autoSizeAllRows = true;
@@ -1315,7 +1270,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             WidgetEntry widgetEntry = (WidgetEntry)e;
             Widget widget = widgetEntry.widget;
             if(widget != null) {
-                removeCellWidget(widget, widgetEntry.cache);
+                removeCellWidget(widget);
                 widgetEntry.widget = null;
             }
         }
@@ -1400,28 +1355,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     static class WidgetEntry extends SparseGrid.Entry {
         Widget widget;
         CellWidgetCreator creator;
-        WidgetCache cache;
-    }
-
-    protected static class WidgetCache extends HashEntry<String, WidgetCache> {
-        private final ArrayList<Widget> widgets;
-
-        protected WidgetCache(String key) {
-            super(key);
-            this.widgets = new ArrayList<Widget>();
-        }
-
-        public Widget get() {
-            int size = widgets.size();
-            if(size > 0) {
-                return widgets.remove(size - 1);
-            }
-            return null;
-        }
-
-        public void put(Widget widget) {
-            widgets.add(widget);
-        }
     }
 
     public static class StringCellRenderer extends TextWidget implements CellRenderer {

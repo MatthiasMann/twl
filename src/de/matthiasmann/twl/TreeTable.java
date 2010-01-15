@@ -33,6 +33,7 @@ import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
+import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.HashEntry;
 import de.matthiasmann.twl.utils.SizeSequence;
 
@@ -394,6 +395,7 @@ public class TreeTable extends TableBase {
         boolean hasNoChildren;
         SizeSequence childSizes;
         NodeState[] children;
+        Runnable[] callbacks;
         int level;
 
         public NodeState(TreeTableNode key, NodeState parent) {
@@ -410,9 +412,11 @@ public class TreeTable extends TableBase {
         }
 
         public void addCallback(Runnable callback) {
+            callbacks = CallbackSupport.addCallbackToList(callbacks, callback, Runnable.class);
         }
 
         public void removeCallback(Runnable callback) {
+            callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
         }
 
         public boolean getValue() {
@@ -423,6 +427,7 @@ public class TreeTable extends TableBase {
             if(this.expanded != value) {
                 this.expanded = value;
                 expandedChanged(this);
+                CallbackSupport.fireCallbacks(callbacks);
             }
         }
 
@@ -516,7 +521,7 @@ public class TreeTable extends TableBase {
         }
     }
 
-    class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CachableCellWidgetCreator {
+    class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CellWidgetCreator {
         private NodeState nodeState;
 
         public Widget updateWidget(Widget existingWidget) {
@@ -544,10 +549,6 @@ public class TreeTable extends TableBase {
             this.nodeState = nodeState;
             setSubRenderer(data);
             level = nodeState.level;
-        }
-
-        public String getCacheTag(int row, int column) {
-            return "treeButton";
         }
     }
 }
