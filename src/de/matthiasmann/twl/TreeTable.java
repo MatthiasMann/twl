@@ -181,6 +181,20 @@ public class TreeTable extends TableBase {
             }
         }
     }
+
+    public boolean isRowExpanded(int row) {
+        checkRowIndex(row);
+        TreeTableNode node = getNodeFromRow(row);
+        NodeState ns = HashEntry.get(nodeStateTable, node);
+        return (ns != null) && ns.expanded;
+    }
+
+    public void setRowExpanded(int row, boolean expanded) {
+        checkRowIndex(row);
+        TreeTableNode node = getNodeFromRow(row);
+        NodeState state = getOrCreateNodeState(node);
+        state.setValue(expanded);
+    }
     
     protected NodeState getOrCreateNodeState(TreeTableNode node) {
         NodeState ns = HashEntry.get(nodeStateTable, node);
