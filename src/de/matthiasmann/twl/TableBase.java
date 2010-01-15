@@ -1271,7 +1271,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             Widget widget = widgetEntry.widget;
             if(widget != null) {
                 removeCellWidget(widget);
-                widgetEntry.widget = null;
             }
         }
     }
