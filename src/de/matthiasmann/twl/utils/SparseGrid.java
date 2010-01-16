@@ -273,7 +273,7 @@ public class SparseGrid {
             int cmp = c.compare(row, column);
             if(cmp == 0) {
                 removeAt(pos);
-                if(pos == size) {
+                if(pos == size && size > 0) {
                     updateRowColumn();
                 }
                 return c;
