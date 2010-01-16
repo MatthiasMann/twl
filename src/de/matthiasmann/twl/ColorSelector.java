@@ -215,6 +215,38 @@ public class ColorSelector extends DialogLayout {
         super.layout();
     }
 
+    @Override
+    public int getMinWidth() {
+        if(recreateLayout) {
+            createColorAreas();
+        }
+        return super.getMinWidth();
+    }
+
+    @Override
+    public int getMinHeight() {
+        if(recreateLayout) {
+            createColorAreas();
+        }
+        return super.getMinHeight();
+    }
+
+    @Override
+    public int getPreferredInnerWidth() {
+        if(recreateLayout) {
+            createColorAreas();
+        }
+        return super.getPreferredInnerWidth();
+    }
+
+    @Override
+    public int getPreferredInnerHeight() {
+        if(recreateLayout) {
+            createColorAreas();
+        }
+        return super.getPreferredInnerHeight();
+    }
+
     protected void createColorAreas() {
         recreateLayout = false;
         setVerticalGroup(null); // stop layout engine while we create new rules
