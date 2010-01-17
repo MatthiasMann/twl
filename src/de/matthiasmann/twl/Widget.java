@@ -1509,8 +1509,10 @@ public class Widget {
      * @param child A child widget
      */
     protected void layoutChildrenFullInnerArea() {
-        for(Widget child : children) {
-            layoutChildFullInnerArea(child);
+        if(children != null) {
+            for(int i=0,n=children.size() ; i<n ; i++) {
+                layoutChildFullInnerArea(children.get(i));
+            }
         }
     }
 
