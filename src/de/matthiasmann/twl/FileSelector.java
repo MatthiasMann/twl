@@ -623,13 +623,13 @@ public class FileSelector extends DialogLayout {
         public void addFileFilter(NamedFileFilter filter) {
             int index = filters.size();
             filters.add(filter);
-            fireEntriesInserted(index, 1);
+            fireEntriesInserted(index, index);
         }
         public void removeFileFilter(NamedFileFilter filter) {
             int idx = filters.indexOf(filter);
             if(idx >= 0) {
                 filters.remove(idx);
-                fireEntriesDeleted(idx, 1);
+                fireEntriesDeleted(idx, idx);
             }
         }
         private void removeAll() {
