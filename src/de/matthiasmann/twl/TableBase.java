@@ -1257,11 +1257,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             return setSize(index, width);
         }
         void computeColumnHeaderLayout() {
-            DialogLayout.SequentialGroup g = (DialogLayout.SequentialGroup)(new DialogLayout()).createSequentialGroup();
-            for(ColumnHeader h : columnHeaders) {
-                g.addSpring(h.spring);
+            if(columnHeaders != null) {
+                DialogLayout.SequentialGroup g = (DialogLayout.SequentialGroup)(new DialogLayout()).createSequentialGroup();
+                for(ColumnHeader h : columnHeaders) {
+                    g.addSpring(h.spring);
+                }
+                g.setSize(DialogLayout.AXIS_X, 0, getInnerWidth());
             }
-            g.setSize(DialogLayout.AXIS_X, 0, getInnerWidth());
         }
     }
 
