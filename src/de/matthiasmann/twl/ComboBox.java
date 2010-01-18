@@ -159,6 +159,7 @@ public class ComboBox<T> extends ComboBoxBase {
     @Override
     protected boolean openPopup() {
         if(super.openPopup()) {
+            popup.validateLayout();
             listbox.scrollToSelected();
             return true;
         }
