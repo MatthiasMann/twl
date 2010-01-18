@@ -1205,6 +1205,9 @@ public class Widget {
      * specified then the event is translated by the InputMap and
      * <code>handleKeyStrokeAction</code> is called when a mapping was found.
      *
+     * If the widget wants to receive mouse events then it must return true
+     * for the MOUSE_ENTERED event. Otherwise the mouse event is not send.
+     * 
      * @param evt The event - do not store this object - it may be reused
      * @return true if the widget handled this event
      * @see #setFocusKeyEnabled(boolean)
