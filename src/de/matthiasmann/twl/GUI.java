@@ -968,6 +968,26 @@ public final class GUI extends Widget {
         }
 
         @Override
+        public int getMinWidth() {
+            return BoxLayout.computeMinWidthVertical(this);
+        }
+
+        @Override
+        public int getMinHeight() {
+            return BoxLayout.computeMinHeightHorizontal(this);
+        }
+
+        @Override
+        public int getPreferredInnerWidth() {
+            return BoxLayout.computePreferredWidthVertical(this);
+        }
+
+        @Override
+        public int getPreferredInnerHeight() {
+            return BoxLayout.computePreferredHeightHorizontal(this);
+        }
+
+        @Override
         protected void layout() {
             layoutChildrenFullInnerArea();
         }
