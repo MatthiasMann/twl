@@ -154,7 +154,6 @@ public class Button extends TextWidget {
         return model.hasActionCallbacks();
     }
 
-    @Override
     public String getText() {
         return text;
     }
@@ -223,9 +222,9 @@ public class Button extends TextWidget {
 
     void updateText() {
         if(text == null) {
-            super.setText(TextUtil.notNull(themeText));
+            super.setCharSequence(TextUtil.notNull(themeText));
         } else {
-            super.setText(text);
+            super.setCharSequence(text);
         }
     }
 

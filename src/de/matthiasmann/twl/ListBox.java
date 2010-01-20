@@ -587,7 +587,7 @@ public class ListBox<T> extends Widget {
         }
 
         public void setData(Object data) {
-            setText((data == null) ? "" : data.toString());
+            setCharSequence((data == null) ? "" : data.toString());
         }
 
         public Widget getWidget() {

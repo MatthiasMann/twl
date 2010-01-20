@@ -101,7 +101,7 @@ public class TextWidget extends Widget {
      *
      * @param text The CharSequence to display
      */
-    protected void setText(CharSequence text) {
+    protected void setCharSequence(CharSequence text) {
         if(text == null) {
             throw new NullPointerException("text");
         }
@@ -112,7 +112,7 @@ public class TextWidget extends Widget {
         getAnimationState().resetAnimationTime(STATE_TEXT_CHANGED);
     }
 
-    protected CharSequence getText() {
+    protected CharSequence getCharSequence() {
         return text;
     }
 

@@ -1370,7 +1370,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         }
 
         public void setCellData(int row, int column, Object data) {
-            setText(String.valueOf(data));
+            setCharSequence(String.valueOf(data));
         }
 
         public int getColumnSpan() {

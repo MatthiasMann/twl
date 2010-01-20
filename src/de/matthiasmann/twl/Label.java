@@ -105,15 +105,14 @@ public class Label extends TextWidget {
         }
     }
 
-    @Override
     public String getText() {
-        return (String)super.getText();
+        return super.getCharSequence().toString();
     }
     
     public void setText(String text) {
         text = TextUtil.notNull(text);
         if(!text.equals(getText())) {
-            super.setText(text);
+            super.setCharSequence(text);
             if(autoSize) {
                 adjustSize();
             }

@@ -120,7 +120,7 @@ public class ResizableFrame extends Widget {
     public void setTitle(String title) {
         this.title = title;
         if(titleWidget != null) {
-            titleWidget.setText(title);
+            titleWidget.setCharSequence(title);
         }
     }
 
@@ -304,7 +304,7 @@ public class ResizableFrame extends Widget {
                 titleWidget = new TextWidget(getAnimationState());
                 titleWidget.setTheme("title");
                 titleWidget.setMouseCursor(cursors[DragMode.POSITION.ordinal()]);
-                titleWidget.setText(title);
+                titleWidget.setCharSequence(title);
                 titleWidget.setClip(true);
             }
             if(titleWidget.getParent() == null) {

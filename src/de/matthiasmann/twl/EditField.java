@@ -603,7 +603,7 @@ public class EditField extends Widget {
         if(model != null) {
             model.setValue(getText());
         }
-        textRenderer.setText(passwordMasking != null ? passwordMasking : editBuffer);
+        textRenderer.setCharSequence(passwordMasking != null ? passwordMasking : editBuffer);
         checkTextWidth();
         scrollToCursor(false);
         doCallback(Keyboard.KEY_NONE);
