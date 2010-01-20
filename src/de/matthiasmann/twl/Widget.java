@@ -34,6 +34,9 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.matthiasmann.twl.utils.TintAnimator;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,6 +76,7 @@ public class Widget {
     private InputMap inputMap;
     private ActionMap actionMap;
     private TintAnimator tintAnimator;
+    private PropertyChangeSupport propertyChangeSupport;
 
     private final AnimationState animState;
     private final boolean sharedAnimState;
@@ -130,6 +134,52 @@ public class Widget {
         } else {
             this.animState = animState;
             this.sharedAnimState = true;
+        }
+    }
+
+    /**
+     * Add a PropertyChangeListener for all properties.
+     *
+     * @param listener The PropertyChangeListener to be added
+     * @see PropertyChangeSupport#addPropertyChangeListener(java.beans.PropertyChangeListener)
+     */
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        createPropertyChangeSupport().addPropertyChangeListener(listener);
+    }
+
+    /**
+     * Add a PropertyChangeListener for a specific property.
+     *
+     * @param propertyName The name of the property to listen on
+     * @param listener The PropertyChangeListener to be added
+     * @see PropertyChangeSupport#addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 
+     */
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        createPropertyChangeSupport().addPropertyChangeListener(propertyName, listener);
+    }
+
+    /**
+     * Remove a PropertyChangeListener.
+     *
+     * @param listener The PropertyChangeListener to be removed
+     * @see PropertyChangeSupport#removePropertyChangeListener(java.beans.PropertyChangeListener) 
+     */
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        if(propertyChangeSupport != null) {
+            propertyChangeSupport.removePropertyChangeListener(listener);
+        }
+    }
+
+    /**
+     * Remove a PropertyChangeListener.
+     *
+     * @param propertyName The name of the property that was listened on
+     * @param listener The PropertyChangeListener to be removed
+     * @see PropertyChangeSupport#removePropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 
+     */
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        if(propertyChangeSupport != null) {
+            propertyChangeSupport.removePropertyChangeListener(propertyName, listener);
         }
     }
     
@@ -242,7 +292,12 @@ public class Widget {
 
     /**
      * Returns the absolute X coordinate of widget in it's tree
+     *
+     * This property can be bound and fires PropertyChangeEvent
+     *
      * @return the absolute X coordinate of widget in it's tree
+     * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
      */
     public final int getX() {
         return posX;
@@ -251,7 +306,12 @@ public class Widget {
 
     /**
      * Returns the absolute Y coordinate of widget in it's tree
+     *
+     * This property can be bound and fires PropertyChangeEvent
+     *
      * @return the absolute Y coordinate of widget in it's tree
+     * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
      */
     public final int getY() {
         return posY;
@@ -259,7 +319,12 @@ public class Widget {
     
     /**
      * Returns the width of this widget
+     *
+     * This property can be bound and fires PropertyChangeEvent
+     *
      * @return the width of this widget
+     * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener)
      */
     public final int getWidth() {
         return width;
@@ -267,7 +332,12 @@ public class Widget {
 
     /**
      * Returns the height of this widget
+     *
+     * This property can be bound and fires PropertyChangeEvent
+     *
      * @return the height of this widget
+     * @see #addPropertyChangeListener(java.beans.PropertyChangeListener)
+     * @see #addPropertyChangeListener(java.lang.String, java.beans.PropertyChangeListener) 
      */
     public final int getHeight() {
         return height;
@@ -352,8 +422,10 @@ public class Widget {
      * Changes the position of this widget.
      * Negative position is allowed.
      * 
-     * If position has changed then it updates the position of all children
-     * before calling positionChanged.
+     * When the position has changed then
+     * - positions of all children are updated
+     * - positionChanged is called
+     * - PropertyChangeEvent are fired for "x" and "y"
      * 
      * NOTE: Position is absolute in the widget's tree.
      * 
@@ -376,6 +448,11 @@ public class Widget {
             }
             
             positionChanged();
+
+            if(propertyChangeSupport != null) {
+                firePropertyChange("x", x - deltaX, x);
+                firePropertyChange("y", y - deltaY, y);
+            }
             return true;
         }
         return false;
@@ -389,6 +466,7 @@ public class Widget {
      * When the size has changed then
      * - the parent widget's childChangedSize is called
      * - sizeChanged is called
+     * - PropertyChangeEvent are fired for "width" and "height"
      * 
      * @param width The new width (including border)
      * @param height The new height (including border)
@@ -401,7 +479,9 @@ public class Widget {
         if(width < 0 || height < 0) {
             throw new IllegalArgumentException("negative size");
         }
-        if(this.width != width || this.height != height) {
+        int oldWidth = this.width;
+        int oldHeight = this.height;
+        if(oldWidth != width || oldHeight != height) {
             this.width = width;
             this.height = height;
 
@@ -410,6 +490,10 @@ public class Widget {
             }
 
             sizeChanged();
+            if(propertyChangeSupport != null) {
+                firePropertyChange("width", oldWidth, width);
+                firePropertyChange("height", oldHeight, height);
+            }
             return true;
         }
         return false;
@@ -1597,6 +1681,60 @@ public class Widget {
         tintAnimator.update();
     }
 
+    /**
+     * Fire an existing PropertyChangeEvent to any registered listeners.
+     *
+     * @param evt The PropertyChangeEvent object
+     * @see PropertyChangeSupport#firePropertyChange(java.beans.PropertyChangeEvent)
+     */
+    protected final void firePropertyChange(PropertyChangeEvent evt) {
+        if(propertyChangeSupport != null) {
+            propertyChangeSupport.firePropertyChange(evt);
+        }
+    }
+
+    /**
+     * Report a bound property update to any registered listeners.
+     *
+     * @param propertyName The programmatic name of the property that was changed
+     * @param oldValue The old value of the property
+     * @param newValue The new value of the property
+     * @see PropertyChangeSupport#firePropertyChange(java.lang.String, boolean, boolean)
+     */
+    protected final void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+        if(propertyChangeSupport != null) {
+            propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
+    }
+
+    /**
+     * Report a bound property update to any registered listeners.
+     *
+     * @param propertyName The programmatic name of the property that was changed
+     * @param oldValue The old value of the property
+     * @param newValue The new value of the property
+     * @see PropertyChangeSupport#firePropertyChange(java.lang.String, int, int) 
+     */
+    protected final void firePropertyChange(String propertyName, int oldValue, int newValue) {
+        if(propertyChangeSupport != null) {
+            propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
+    }
+
+    /**
+     * Report a bound property update to any registered listeners.
+     *
+     * @param propertyName The programmatic name of the property that was changed
+     * @param oldValue The old value of the property
+     * @param newValue The new value of the property
+     * @see PropertyChangeSupport#firePropertyChange(java.lang.String, java.lang.Object, java.lang.Object)
+     */
+    protected final void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        if(propertyChangeSupport != null) {
+            propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+        }
+    }
+
     //
     // start of internal stuff
     //
@@ -1981,4 +2119,10 @@ public class Widget {
         }
     }
 
+    private PropertyChangeSupport createPropertyChangeSupport() {
+        if(propertyChangeSupport == null) {
+            propertyChangeSupport = new PropertyChangeSupport(this);
+        }
+        return propertyChangeSupport;
+    }
 }
