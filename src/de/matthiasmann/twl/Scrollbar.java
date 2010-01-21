@@ -163,11 +163,13 @@ public class Scrollbar extends Widget {
         setValue(current, true);
     }
 
-    public void setValue(int current, boolean fireCallbacks) {
-        current = range(current);
-        if(this.value != current) {
-            this.value = current;
+    public void setValue(int value, boolean fireCallbacks) {
+        value = range(value);
+        int oldValue = this.value;
+        if(oldValue != value) {
+            this.value = value;
             setThumbPos();
+            firePropertyChange("value", oldValue, value);
             if(fireCallbacks) {
                 doCallback();
             }
@@ -191,6 +193,9 @@ public class Scrollbar extends Widget {
     }
 
     public void setMinMaxValue(int minValue, int maxValue) {
+        if(maxValue < minValue) {
+            throw new IllegalArgumentException("maxValue < minValue");
+        }
         this.minValue = minValue;
         this.maxValue = maxValue;
         this.value = range(value);
