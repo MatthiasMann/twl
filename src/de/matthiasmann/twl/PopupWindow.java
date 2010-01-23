@@ -184,6 +184,18 @@ public class PopupWindow extends Widget {
     }
 
     @Override
+    public int getPreferredWidth() {
+        int parentWidth = (getParent() != null) ? getParent().getInnerWidth() : Short.MAX_VALUE;
+        return Math.min(parentWidth, super.getPreferredWidth());
+    }
+
+    @Override
+    public int getPreferredHeight() {
+        int parentHeight = (getParent() != null) ? getParent().getInnerHeight() : Short.MAX_VALUE;
+        return Math.min(parentHeight, super.getPreferredHeight());
+    }
+
+    @Override
     protected void layout() {
         layoutChildrenFullInnerArea();
     }
