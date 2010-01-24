@@ -682,51 +682,39 @@ public class TextArea extends Widget {
         while(idx < textEnd) {
             nextLine(false);
 
-            int tabIdx = text.indexOf('\t', idx);
-            if(tabIdx >= 0 && tabIdx < textEnd) {
-                int count = font.computeVisibleGlpyhs(text, idx, tabIdx, getRemaining());
-                if(count == tabIdx - idx) {
-                    StringBuilder sb = new StringBuilder();
-                    do {
-                        sb.append(text, idx, tabIdx);
-                        for(int i=sb.length()&7 ; i<8 ; i++) {
-                            sb.append(' ');
-                        }
-                        count = font.computeVisibleGlpyhs(sb, 0, sb.length(), getRemaining());
-                        if(count < sb.length()) {
-                            LText lt = new LText(font, sb.toString(), 0, count, te.getVerticalAlignment());
-
-                            lt.x = curX;
-                            curX += lt.width;
-                            layout.add(lt);
-                            nextLine(false);
-
-                            sb.delete(0, sb.length());
-                        }
-                        idx = tabIdx + 1;
-                        tabIdx = text.indexOf('\t', idx);
-                    } while(tabIdx >= 0 && tabIdx < textEnd);
-                    
-                    if(sb.length() > 0) {
-                        sb.append(text, idx, textEnd);
-                        text = sb.toString();
-                        idx = 0;
-                        textEnd = text.length();
+            while(idx < textEnd) {
+                if(text.charAt(idx) == '\t') {
+                    idx++;
+                    int tabX = computeNextTabStop(font);
+                    if(tabX < lineWidth) {
+                        curX = tabX;
+                    } else if(!isAtStartOfLine()) {
+                        break;
                     }
-                    continue;
                 }
+
+                int tabIdx = text.indexOf('\t', idx);
+                int end = textEnd;
+                if(tabIdx >= 0 && tabIdx < textEnd) {
+                    end = tabIdx;
+                }
+
+                if(end > idx) {
+                    int count = font.computeVisibleGlpyhs(text, idx, end, getRemaining());
+                    if(count == 0 && !isAtStartOfLine()) {
+                        break;
+                    }
+
+                    end = idx + Math.max(1, count);
+
+                    LText lt = new LText(font, text, idx, end, te.getVerticalAlignment());
+                    lt.x = curX;
+                    curX += lt.width;
+                    layout.add(lt);
+                }
+
+                idx = end;
             }
-            
-            int count = font.computeVisibleGlpyhs(text, idx, textEnd, getRemaining());
-            int end = idx + Math.max(1, count);
-
-            LText lt = new LText(font, text, idx, end, te.getVerticalAlignment());
-
-            lt.x = curX;
-            curX += lt.width;
-            layout.add(lt);
-
-            idx = end;
         }
     }
 
@@ -740,6 +728,12 @@ public class TextArea extends Widget {
 
     private boolean isBreak(char ch) {
         return Character.isWhitespace(ch) || isPunctuation(ch);
+    }
+
+    private int computeNextTabStop(Font font) {
+        int x = curX - lineStartX + font.getSpaceWidth();
+        int tabSize = 8 * font.getSpaceWidth();
+        return curX + tabSize - (x % tabSize);
     }
 
     static abstract class LElement {
