@@ -29,7 +29,7 @@
  */
 package de.matthiasmann.twl.model;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 
 /**
@@ -52,16 +52,22 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     public void setText(String text) {
-        element = new HTMLTextAreaModel.TextElementImpl(EMPTY_STYLE, text, true, true);
+        setText(text, true);
+    }
+
+    public void setText(String text, boolean preformatted) {
+        HTMLTextAreaModel.StyleInfo style = EMPTY_STYLE;
+        if(preformatted) {
+            style = new HTMLTextAreaModel.StyleInfo(style);
+            style.pre = true;
+        }
+        element = new HTMLTextAreaModel.TextElementImpl(style, text, true, true);
         doCallback();
     }
 
     public Iterator<Element> iterator() {
-        ArrayList<Element> result = new ArrayList<Element>(1);
-        if(element != null) {
-            result.add(element);
-        }
-        return result.iterator();
+        return ((element != null)
+                ? Collections.<Element>singletonList(element)
+                : Collections.<Element>emptyList()).iterator();
     }
-
 }

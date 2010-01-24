@@ -259,6 +259,16 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 return true;
             }
         }
+        if("white-space".equals(key)) {
+            if("pre".equals(value)) {
+                style.pre = true;
+                return true;
+            }
+            if("normal".equals(value)) {
+                style.pre = false;
+                return true;
+            }
+        }
         return false;
     }
 
@@ -371,6 +381,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         HAlignment halignment;
         VAlignment valignment;
         String fontName;
+        boolean pre;
         boolean changed;
 
         StyleInfo() {
@@ -385,6 +396,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             this.halignment = src.halignment;
             this.valignment = src.valignment;
             this.fontName = src.fontName;
+            this.pre = src.pre;
         }
     }
 
@@ -442,6 +454,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public String getFontName() {
             return style.fontName;
+        }
+
+        public boolean isPreformatted() {
+            return style.pre;
         }
     }
 

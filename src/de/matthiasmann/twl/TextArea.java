@@ -576,7 +576,11 @@ public class TextArea extends Widget {
         int idx = 0;
         while(idx < text.length()) {
             int end = TextUtil.indexOf(text, '\n', idx);
-            layoutText(te, font, text, idx, end);
+            if(te.isPreformatted()) {
+                layoutTextPre(te, font, text, idx, end);
+            } else {
+                layoutText(te, font, text, idx, end);
+            }
             
             if(end < text.length() && text.charAt(end) == '\n') {
                 end++;
@@ -669,6 +673,60 @@ public class TextArea extends Widget {
             while(idx < textEnd && isSkip(text.charAt(idx))) {
                 idx++;
             }
+        }
+    }
+
+    private void layoutTextPre(TextAreaModel.TextElement te, Font font,
+            String text, int textStart, int textEnd) {
+        int idx = textStart;
+        while(idx < textEnd) {
+            nextLine(false);
+
+            int tabIdx = text.indexOf('\t', idx);
+            if(tabIdx >= 0 && tabIdx < textEnd) {
+                int count = font.computeVisibleGlpyhs(text, idx, tabIdx, getRemaining());
+                if(count == tabIdx - idx) {
+                    StringBuilder sb = new StringBuilder();
+                    do {
+                        sb.append(text, idx, tabIdx);
+                        for(int i=sb.length()&7 ; i<8 ; i++) {
+                            sb.append(' ');
+                        }
+                        count = font.computeVisibleGlpyhs(sb, 0, sb.length(), getRemaining());
+                        if(count < sb.length()) {
+                            LText lt = new LText(font, sb.toString(), 0, count, te.getVerticalAlignment());
+
+                            lt.x = curX;
+                            curX += lt.width;
+                            layout.add(lt);
+                            nextLine(false);
+
+                            sb.delete(0, sb.length());
+                        }
+                        idx = tabIdx + 1;
+                        tabIdx = text.indexOf('\t', idx);
+                    } while(tabIdx >= 0 && tabIdx < textEnd);
+                    
+                    if(sb.length() > 0) {
+                        sb.append(text, idx, textEnd);
+                        text = sb.toString();
+                        idx = 0;
+                        textEnd = text.length();
+                    }
+                    continue;
+                }
+            }
+            
+            int count = font.computeVisibleGlpyhs(text, idx, textEnd, getRemaining());
+            int end = idx + Math.max(1, count);
+
+            LText lt = new LText(font, text, idx, end, te.getVerticalAlignment());
+
+            lt.x = curX;
+            curX += lt.width;
+            layout.add(lt);
+
+            idx = end;
         }
     }
 

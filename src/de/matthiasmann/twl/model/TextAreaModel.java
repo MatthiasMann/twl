@@ -110,6 +110,12 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return true if this element ends the current paragraph.
          */
         public boolean isParagraphEnd();
+
+        /**
+         * Returns true if this element is a preformatted text (&lt;pre/&gt;)
+         * @return true if this element is a preformatted text
+         */
+        public boolean isPreformatted();
     }
 
     public interface ImageElement extends Element {
