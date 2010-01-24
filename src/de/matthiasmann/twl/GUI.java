@@ -708,7 +708,7 @@ public final class GUI extends Widget {
     boolean hasOpenPopups(Widget owner) {
         for(int i=getNumChildren()-2 ; i-->1 ;) {
             PopupWindow popup = (PopupWindow)getChild(i);
-            if(popup.getOwner() == popup.getOwner()) {
+            if(popup.getOwner() == owner) {
                 return true;
             }
         }
