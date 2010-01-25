@@ -78,12 +78,6 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the margin to the right border.
          */
         public int getMarginRight();
-
-        /**
-         * Returns the indentation for the first line of the text.
-         * @return the indentation for the first line of the text.
-         */
-        public int getTextIndent();
     }
 
     public interface TextElement extends Element {
@@ -98,6 +92,12 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the text.
          */
         public String getText();
+
+        /**
+         * Returns the indentation for the first line of the text.
+         * @return the indentation for the first line of the text.
+         */
+        public int getTextIndent();
 
         /**
          * Returns true if this element starts a new paragraph.
@@ -136,6 +136,16 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
     public interface WidgetElement extends Element {
         public String getWidgetName();
         public String getWidgetParam();
+    }
+
+    public interface ListElement extends Element, Iterable<Element> {
+        /**
+         * Returns the image used for the bullet.
+         * 
+         * @param style a ParameterMap which can be used to lookup images.
+         * @return the image object for the bullet.
+         */
+        public Image getBulletImage(ParameterMap style);
     }
 
     /**

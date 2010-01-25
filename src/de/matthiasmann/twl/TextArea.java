@@ -241,15 +241,8 @@ public class TextArea extends Widget {
             try {
                 clearLayout();
                 if(model != null) {
-                    for(TextAreaModel.Element e : model) {
-                        if(e instanceof TextAreaModel.TextElement) {
-                            layout((TextAreaModel.TextElement)e);
-                        } else if(e instanceof  TextAreaModel.ImageElement) {
-                            layout((TextAreaModel.ImageElement)e);
-                        } else if(e instanceof  TextAreaModel.WidgetElement) {
-                            layout((TextAreaModel.WidgetElement)e);
-                        }
-                    }
+                    layoutElements(model);
+                    
                     // finish the last line
                     nextLine(false);
 
@@ -457,6 +450,23 @@ public class TextArea extends Widget {
         }
     }
 
+    private void layoutElements(Iterable<TextAreaModel.Element> elements) {
+        for(TextAreaModel.Element e : elements) {
+            if(e instanceof TextAreaModel.TextElement) {
+                layout((TextAreaModel.TextElement)e);
+            } else if(e instanceof  TextAreaModel.ImageElement) {
+                layout((TextAreaModel.ImageElement)e);
+            } else if(e instanceof  TextAreaModel.WidgetElement) {
+                layout((TextAreaModel.WidgetElement)e);
+            } else if(e instanceof TextAreaModel.ListElement) {
+                layout((TextAreaModel.ListElement)e);
+            } else {
+                Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE,
+                        "Unknown Element subclass: " + e.getClass());
+            }
+        }
+    }
+    
     private void layout(TextAreaModel.ImageElement ie) {
         if(images == null) {
             return;
@@ -492,7 +502,10 @@ public class TextArea extends Widget {
     }
 
     private void layout(TextAreaModel.Element e, LWidget lw) {
-        final TextAreaModel.HAlignment align = e.getHorizontalAlignment();
+        layout(e, lw, e.getHorizontalAlignment());
+    }
+
+    private void layout(TextAreaModel.Element e, LWidget lw, TextAreaModel.HAlignment align) {
         if(align != TextAreaModel.HAlignment.INLINE) {
             nextLine(false);
         }
@@ -715,6 +728,28 @@ public class TextArea extends Widget {
 
                 idx = end;
             }
+        }
+    }
+
+    private void layout(TextAreaModel.ListElement le) {
+        Image image = (images != null) ? le.getBulletImage(images) : null;
+        if(image != null) {
+            LImage li = new LImage(image, null);
+            layout(le, li, TextAreaModel.HAlignment.LEFT);
+            
+            int imageHeight = li.height;
+            li.height = Short.MAX_VALUE;
+
+            layoutElements(le);
+            nextLine(false);
+
+            li.height = imageHeight;
+
+            objLeft.remove(li);
+            computeMargin();
+        } else {
+            layoutElements(le);
+            nextLine(false);
         }
     }
 

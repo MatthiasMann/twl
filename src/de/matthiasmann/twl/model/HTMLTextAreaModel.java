@@ -54,6 +54,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private boolean needToParse;
 
     private final ArrayList<StyleInfo> styleStack;
+    private final ArrayList<ListElementImpl> listStack;
     private final StringBuilder sb;
     private final int[] startLength;
 
@@ -63,6 +64,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
         this.styleStack = new ArrayList<StyleInfo>();
+        this.listStack = new ArrayList<ListElementImpl>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
     }
@@ -110,6 +112,15 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         return elements.iterator();
     }
 
+    private void addElement(Element e) {
+        int numOpenLists = listStack.size();
+        if(numOpenLists > 0) {
+            listStack.get(numOpenLists-1).elements.add(e);
+        } else {
+            elements.add(e);
+        }
+    }
+    
     private void parseHTML() {
         try {
             XmlPullParserFactory xppf = XmlPullParserFactory.newInstance();
@@ -122,6 +133,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
             styleStack.clear();
             styleStack.add(new StyleInfo());
+            listStack.clear();
             sb.delete(0, sb.length());
             paragraphStart = false;
             paragraphEnd = false;
@@ -139,7 +151,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         pushStyle(xpp, true);
                         String src = TextUtil.notNull(xpp.getAttributeValue(null, "src"));
                         String alt = xpp.getAttributeValue(null, "alt");
-                        elements.add(new ImageElementImpl(getStyle(), src, alt));
+                        addElement(new ImageElementImpl(getStyle(), src, alt));
                     }
                     if("br".equals(name)) {
                         sb.append("\n");
@@ -154,7 +166,15 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         pushStyle(xpp, true);
                         String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
                         String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
-                        elements.add(new WidgetElementImpl(getStyle(), btnName, btnParam));
+                        addElement(new WidgetElementImpl(getStyle(), btnName, btnParam));
+                    }
+                    if("li".equals(name)) {
+                        finishText();
+                        pushStyle(xpp, false);
+                        ListElementImpl lei = new ListElementImpl(getStyle());
+                        addElement(lei);
+                        listStack.add(lei);
+                        paragraphStart = true;
                     }
                     break;
                 }
@@ -170,6 +190,12 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         paragraphEnd = true;
                         finishText();
                         popStyle();
+                    }
+                    if("li".equals(name)) {
+                        paragraphEnd = true;
+                        finishText();
+                        popStyle();
+                        listStack.remove(listStack.size()-1);
                     }
                     if("button".equals(name)) {
                         popStyle();
@@ -269,6 +295,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 return true;
             }
         }
+        if("list-style-image".equals(key)) {
+            style.listStyleImage = value;
+            return true;
+        }
         return false;
     }
 
@@ -303,7 +333,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private void finishText() {
         if(sb.length() > 0 || paragraphStart || paragraphEnd) {
-            elements.add(new TextElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd));
+            addElement(new TextElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd));
             sb.delete(0, sb.length());
             paragraphStart = false;
             paragraphEnd = false;
@@ -381,12 +411,14 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         HAlignment halignment;
         VAlignment valignment;
         String fontName;
+        String listStyleImage;
         boolean pre;
         boolean changed;
 
         StyleInfo() {
             halignment = HAlignment.LEFT;
             valignment = VAlignment.BOTTOM;
+            listStyleImage = "ul-bullet";
         }
 
         StyleInfo(StyleInfo src) {
@@ -396,6 +428,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             this.halignment = src.halignment;
             this.valignment = src.valignment;
             this.fontName = src.fontName;
+            this.listStyleImage = src.listStyleImage;
             this.pre = src.pre;
         }
     }
@@ -413,10 +446,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public int getMarginRight() {
             return style.marginRight;
-        }
-
-        public int getTextIndent() {
-            return style.textIndent;
         }
 
         public HAlignment getHorizontalAlignment() {
@@ -450,6 +479,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public boolean isParagraphEnd() {
             return isParagraphEnd;
+        }
+
+        public int getTextIndent() {
+            return style.textIndent;
         }
 
         public String getFontName() {
@@ -500,5 +533,20 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     }
 
+    static class ListElementImpl extends ElementImpl implements ListElement {
+        private final ArrayList<Element> elements;
 
+        public ListElementImpl(StyleInfo style) {
+            super(style);
+            this.elements = new ArrayList<Element>();
+        }
+
+        public Image getBulletImage(ParameterMap styleMap) {
+            return styleMap.getImage(style.listStyleImage);
+        }
+
+        public Iterator<Element> iterator() {
+            return elements.iterator();
+        }
+    }
 }
