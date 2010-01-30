@@ -192,9 +192,9 @@ public final class Color {
                     return new Color((a << 24) | (r << 16) | (g << 8) | b);
                 }
                 case 7:
-                    return new Color(0xFF000000 | Integer.parseInt(value.substring(1), 16));
+                    return new Color(0xFF000000 | Integer.parseInt(hexcode, 16));
                 case 9:
-                    return new Color((int)Long.parseLong(value.substring(1), 16));
+                    return new Color((int)Long.parseLong(hexcode, 16));
                 default:
                     throw new NumberFormatException("Can't parse '" + value + "' as hex color");
             }
