@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -62,6 +62,7 @@ public class ScrollPane extends Widget {
     private Dimension vscrollbarOffset = Dimension.ZERO;
     private Dimension contentScrollbarSpacing = Dimension.ZERO;
     private boolean inLayout;
+    private boolean expandContentSize;
 
     public ScrollPane() {
         this(null);
@@ -114,6 +115,25 @@ public class ScrollPane extends Widget {
             this.content = content;
             contentArea.add(content);
         }
+    }
+
+    public boolean isExpandContentSize() {
+        return expandContentSize;
+    }
+
+    /**
+     * Control if the content size.
+     *
+     * If set to true then the content size will be the larger of it's perferred
+     * size and the size of the content area.
+     * If set to false then the content size will be it's preferred area.
+     *
+     * Default is false
+     * 
+     * @param expandContentSize true if the content should always cover the content area
+     */
+    public void setExpandContentSize(boolean expandContentSize) {
+        this.expandContentSize = expandContentSize;
     }
 
     public void updateScrollbarSizes() {
@@ -391,6 +411,9 @@ public class ScrollPane extends Widget {
             if(content instanceof Scrollable) {
                 content.setPosition(contentArea.getX(), contentArea.getY());
                 content.setSize(availWidth, availHeight);
+            } else if(expandContentSize) {
+                content.setSize(Math.max(availWidth, requiredWidth),
+                        Math.max(availHeight, requiredHeight));
             } else {
                 content.setSize(requiredWidth, requiredHeight);
             }
