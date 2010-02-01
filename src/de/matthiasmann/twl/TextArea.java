@@ -245,10 +245,6 @@ public class TextArea extends Widget {
                     
                     // finish the last line
                     nextLine(false);
-
-                    for(int i=0,n=layout.size() ; i<n ; i++) {
-                        layout.get(i).adjustWidget();
-                    }
                 }
             } finally {
                 inLayoutCode = false;
@@ -557,6 +553,8 @@ public class TextArea extends Widget {
             lw.y = curY;
             computeMargin();
         }
+
+        lw.adjustWidget();
     }
 
     private void layout(TextAreaModel.TextElement te) {
@@ -780,14 +778,13 @@ public class TextArea extends Widget {
 
         void draw(int offX, int offY) {}
         void destroy() {}
-        void adjustWidget() {}
     }
 
     class LText extends LElement {
-        Font font;
-        String text;
-        int start;
-        int end;
+        final Font font;
+        final String text;
+        final int start;
+        final int end;
         FontCache cache;
 
         public LText(Font font, String text, int start, int end,
@@ -826,17 +823,12 @@ public class TextArea extends Widget {
     }
 
     static class LWidget extends LElement {
-        Widget widget;
-
-        LWidget() {
-        }
+        final Widget widget;
 
         LWidget(Widget widget) {
             this.widget = widget;
-            this.widget.adjustSize();
         }
 
-        @Override
         void adjustWidget() {
             widget.setPosition(x + widget.getParent().getInnerX(), y + widget.getParent().getInnerY());
             widget.setSize(width, height);
@@ -845,17 +837,17 @@ public class TextArea extends Widget {
 
     static class LImage extends LWidget {
         LImage(Image img, String toolTip) {
-            widget = new LImageLabel();
+            super(new LImageLabel());
             widget.setTheme("image");
             widget.setBackground(img);
             widget.setTooltipContent(toolTip);
         }
+    }
 
-        static class LImageLabel extends Label {
-            @Override
-            protected void applyThemeBackground(ThemeInfo themeInfo) {
-                // don't load the background image
-            }
+    static class LImageLabel extends Label {
+        @Override
+        protected void applyThemeBackground(ThemeInfo themeInfo) {
+            // don't load the background image
         }
     }
 }
