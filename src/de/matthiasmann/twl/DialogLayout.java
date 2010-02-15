@@ -114,6 +114,7 @@ public class DialogLayout extends Widget {
     protected ParameterMap namedGaps;
 
     protected boolean addDefaultGaps = true;
+    protected boolean includeInvisibleWidgets = true;
     protected boolean redoDefaultGaps;
     protected boolean blockInvalidateLayoutTree;
 
@@ -267,6 +268,28 @@ public class DialogLayout extends Widget {
         }
     }
 
+    public boolean isIncludeInvisibleWidgets() {
+        return includeInvisibleWidgets;
+    }
+
+    /**
+     * Control whether invisible widgets should be included in the layout or
+     * not. If they are not included then the layout is recomputed when the
+     * visibility of a child widget changes.
+     *
+     * The default is true
+     *
+     * @param includeInvisibleWidgets If true then invisible widgets are included,
+     *      if false they don't contribute to the layout.
+     */
+    public void setIncludeInvisibleWidgets(boolean includeInvisibleWidgets) {
+        if(this.includeInvisibleWidgets != includeInvisibleWidgets) {
+            this.includeInvisibleWidgets = includeInvisibleWidgets;
+            this.redoDefaultGaps = true;
+            maybeInvalidateLayoutTree();
+        }
+    }
+
     private void collectDebugStack() {
         if(DEBUG_LAYOUT_GROUPS) {
             debugStackTrace = new Throwable("DialogLayout created/used here").fillInStackTrace();
@@ -368,7 +391,9 @@ public class DialogLayout extends Widget {
             redoDefaultGaps = false;
         }
         for(WidgetSpring s : widgetSprings.values()) {
-            s.prepare();
+            if(includeInvisibleWidgets || s.w.isVisible()) {
+                s.prepare();
+            }
         }
     }
 
@@ -377,7 +402,9 @@ public class DialogLayout extends Widget {
         vert.setSize(AXIS_Y, getInnerY(), getInnerHeight());
         try{
             for(WidgetSpring s : widgetSprings.values()) {
-                s.apply();
+                if(includeInvisibleWidgets || s.w.isVisible()) {
+                    s.apply();
+                }
             }
         }catch(IllegalStateException ex) {
             if(debugStackTrace != null && ex.getCause() == null) {
@@ -497,6 +524,14 @@ public class DialogLayout extends Widget {
             invalidateLayoutTree();
         }
     }
+
+    @Override
+    protected void childVisibilityChanged(Widget child) {
+        if(!includeInvisibleWidgets) {
+            redoDefaultGaps = true;
+            maybeInvalidateLayoutTree();
+        }
+    }
     
     public static class Gap {
         public final int min;
@@ -542,6 +577,10 @@ public class DialogLayout extends Widget {
         
         void collectAllSprings(HashSet<Spring> result) {
             result.add(this);
+        }
+
+        boolean isVisible() {
+            return true;
         }
     }
 
@@ -619,6 +658,11 @@ public class DialogLayout extends Widget {
             }
             w.setPosition(x, y);
             w.setSize(width, height);
+        }
+
+        @Override
+        boolean isVisible() {
+            return w.isVisible();
         }
 
         void invalidState() {
@@ -977,7 +1021,10 @@ public class DialogLayout extends Widget {
         int getMinSize(int axis) {
             int size = 0;
             for(int i=0,n=springs.size() ; i<n ; i++) {
-                size += springs.get(i).getMinSize(axis);
+                Spring s = springs.get(i);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    size += s.getMinSize(axis);
+                }
             }
             return size;
         }
@@ -986,7 +1033,10 @@ public class DialogLayout extends Widget {
         int getPrefSize(int axis) {
             int size = 0;
             for(int i=0,n=springs.size() ; i<n ; i++) {
-                size += springs.get(i).getPrefSize(axis);
+                Spring s = springs.get(i);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    size += s.getPrefSize(axis);
+                }
             }
             return size;
         }
@@ -997,12 +1047,14 @@ public class DialogLayout extends Widget {
             boolean hasMax = false;
             for(int i=0,n=springs.size() ; i<n ; i++) {
                 Spring s = springs.get(i);
-                int max = s.getMaxSize(axis);
-                if(max > 0) {
-                    size += max;
-                    hasMax = true;
-                } else {
-                    size += s.getPrefSize(axis);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    int max = s.getMaxSize(axis);
+                    if(max > 0) {
+                        size += max;
+                        hasMax = true;
+                    } else {
+                        size += s.getPrefSize(axis);
+                    }
                 }
             }
             return hasMax ? size : 0;
@@ -1017,11 +1069,13 @@ public class DialogLayout extends Widget {
                 boolean wasGap = true;
                 for(int i=0 ; i<springs.size() ; i++) {
                     Spring s = springs.get(i);
-                    boolean isGap = (s instanceof GapSpring) || (s instanceof NamedGapSpring);
-                    if(!isGap && !wasGap) {
-                        springs.add(i++, new GapSpring(DEFAULT_GAP, DEFAULT_GAP, DEFAULT_GAP, true));
+                    if(includeInvisibleWidgets || s.isVisible()) {
+                        boolean isGap = (s instanceof GapSpring) || (s instanceof NamedGapSpring);
+                        if(!isGap && !wasGap) {
+                            springs.add(i++, new GapSpring(DEFAULT_GAP, DEFAULT_GAP, DEFAULT_GAP, true));
+                        }
+                        wasGap = isGap;
                     }
-                    wasGap = isGap;
                 }
             }
             super.addDefaultGap();
@@ -1032,11 +1086,14 @@ public class DialogLayout extends Widget {
             int prefSize = getPrefSize(axis);
             if(size == prefSize) {
                 for(Spring s : springs) {
-                    int spref = s.getPrefSize(axis);
-                    s.setSize(axis, pos, spref);
-                    pos += spref;
+                    if(includeInvisibleWidgets || s.isVisible()) {
+                        int spref = s.getPrefSize(axis);
+                        s.setSize(axis, pos, spref);
+                        pos += spref;
+                    }
                 }
             } else if(springs.size() == 1) {
+                // no need to check visibility flag
                 Spring s = springs.get(0);
                 s.setSize(axis, pos, size);
             } else if(springs.size() > 1) {
@@ -1055,11 +1112,13 @@ public class DialogLayout extends Widget {
             int resizeable = 0;
             for(int i=0 ; i<springs.size() ; i++) {
                 Spring s = springs.get(i);
-                int sdelta = useMin
-                        ? s.getPrefSize(axis) - s.getMinSize(axis)
-                        : s.getMaxSize(axis) - s.getPrefSize(axis);
-                if(sdelta > 0)  {
-                    deltas[resizeable++] = new SpringDelta(i, sdelta);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    int sdelta = useMin
+                            ? s.getPrefSize(axis) - s.getMinSize(axis)
+                            : s.getMaxSize(axis) - s.getPrefSize(axis);
+                    if(sdelta > 0)  {
+                        deltas[resizeable++] = new SpringDelta(i, sdelta);
+                    }
                 }
             }
             if(resizeable > 0) {
@@ -1092,23 +1151,27 @@ public class DialogLayout extends Widget {
 
                 for(int i=0 ; i<springs.size() ; i++) {
                     Spring s = springs.get(i);
-                    int ssize = s.getPrefSize(axis) + sizes[i];
-                    s.setSize(axis, pos, ssize);
-                    pos += ssize;
+                    if(includeInvisibleWidgets || s.isVisible()) {
+                        int ssize = s.getPrefSize(axis) + sizes[i];
+                        s.setSize(axis, pos, ssize);
+                        pos += ssize;
+                    }
                 }
             } else {
                 for(Spring s : springs) {
-                    int ssize;
-                    if(useMin) {
-                        ssize = s.getMinSize(axis);
-                    } else {
-                        ssize = s.getMaxSize(axis);
-                        if(ssize == 0) {
-                            ssize = s.getPrefSize(axis);
+                    if(includeInvisibleWidgets || s.isVisible()) {
+                        int ssize;
+                        if(useMin) {
+                            ssize = s.getMinSize(axis);
+                        } else {
+                            ssize = s.getMaxSize(axis);
+                            if(ssize == 0) {
+                                ssize = s.getPrefSize(axis);
+                            }
                         }
+                        s.setSize(axis, pos, ssize);
+                        pos += ssize;
                     }
-                    s.setSize(axis, pos, ssize);
-                    pos += ssize;
                 }
             }
         }
@@ -1122,7 +1185,10 @@ public class DialogLayout extends Widget {
         int getMinSize(int axis) {
             int size = 0;
             for(int i=0,n=springs.size() ; i<n ; i++) {
-                size = Math.max(size, springs.get(i).getMinSize(axis));
+                Spring s = springs.get(i);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    size = Math.max(size, s.getMinSize(axis));
+                }
             }
             return size;
         }
@@ -1131,7 +1197,10 @@ public class DialogLayout extends Widget {
         int getPrefSize(int axis) {
             int size = 0;
             for(int i=0,n=springs.size() ; i<n ; i++) {
-                size = Math.max(size, springs.get(i).getPrefSize(axis));
+                Spring s = springs.get(i);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    size = Math.max(size, s.getPrefSize(axis));
+                }
             }
             return size;
         }
@@ -1140,7 +1209,10 @@ public class DialogLayout extends Widget {
         int getMaxSize(int axis) {
             int size = 0;
             for(int i=0,n=springs.size() ; i<n ; i++) {
-                size = Math.max(size, springs.get(i).getMaxSize(axis));
+                Spring s = springs.get(i);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    size = Math.max(size, s.getMaxSize(axis));
+                }
             }
             return size;
         }
@@ -1148,7 +1220,10 @@ public class DialogLayout extends Widget {
         @Override
         void setSize(int axis, int pos, int size) {
             for(int i=0,n=springs.size() ; i<n ; i++) {
-                springs.get(i).setSize(axis, pos, size);
+                Spring s = springs.get(i);
+                if(includeInvisibleWidgets || s.isVisible()) {
+                    s.setSize(axis, pos, size);
+                }
             }
         }
     }
