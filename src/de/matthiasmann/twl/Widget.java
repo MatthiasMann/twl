@@ -231,7 +231,7 @@ public class Widget {
      * This does not check if the widget is cliped or buired behind another widget.
      * @return the current visibility flag of this widget
      */
-    public boolean isVisible() {
+    public final boolean isVisible() {
         return visible;
     }
 
@@ -252,6 +252,9 @@ public class Widget {
                 if(parent != null) {
                     parent.childHidden(this);
                 }
+            }
+            if(parent != null) {
+                parent.childVisibilityChanged(this);
             }
         }
     }
@@ -1470,6 +1473,16 @@ public class Widget {
      */
     protected void childRemoved(Widget exChild) {
         invalidateLayout();
+    }
+
+    /**
+     * Called when the visibility state of a child was changed.
+     * The default implementation does nothing
+     * 
+     * @param child the child which changed it's visibility state
+     * @see #setVisible(boolean) 
+     */
+    protected void childVisibilityChanged(Widget child) {
     }
 
     /**
