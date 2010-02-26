@@ -38,17 +38,45 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * The action map class implements mappings from action names to methods using
+ * reflection.
  *
  * @author Matthias Mann
  */
 public class ActionMap {
 
+    /**
+     * Invocation flag
+     *
+     * Invoke the method on the first key pressed event.
+     *
+     * @see #addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     * @see #FLAG_ON_REPEAT
+     */
     public static final int FLAG_ON_PRESSED = 1;
+
+    /**
+     * Invocation flag
+     *
+     * Invoke the method on a key release event.
+     *
+     * @see #addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     */
     public static final int FLAG_ON_RELEASE = 2;
+
+    /**
+     * Invocation flag
+     *
+     * Invoke the method also on a repeated key pressed event.
+     *
+     * @see #addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     * @see #FLAG_ON_PRESSED
+     */
     public static final int FLAG_ON_REPEAT = 4;
 
     private Mapping[] mappings;
@@ -58,6 +86,15 @@ public class ActionMap {
         mappings = new Mapping[16];
     }
 
+    /**
+     * Invoke the mapping for the given action if one is defined and it's flags
+     * match the passed event.
+     * 
+     * @param action the action name
+     * @param event the event which caused the invocation
+     * @return true if a mapping was found, false if no mapping was found.
+     * @see #addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     */
     public boolean invoke(String action, Event event) {
         Mapping mapping = HashEntry.get(mappings, action);
         if(mapping != null) {
@@ -67,9 +104,31 @@ public class ActionMap {
         return false;
     }
 
-    public void addMapping(String action, Object target, String methodName, Object[] params, int flags) {
+    /**
+     * Add an action mapping for the specified action to the given public method.
+     *
+     * Parameters can be passed to the method to differentiate between different
+     * actions using the same handler method.
+     *
+     * NOTE: if multiple methods are compatible to the given parameters then it's
+     * undefined which method will be selected. No overload resolution is performed
+     * besides a simple parameter compatibility check.
+     *
+     * @param action the action name
+     * @param target the target object. If null then only static methods can be called.
+     * @param methodName the method name
+     * @param params parameters passed to the method
+     * @param flags flags to control on which events the method should be invoked
+     * @throws IllegalArgumentException if no matching method was found
+     * @see ClassUtils#isParamsCompatible(java.lang.Class<?>[], java.lang.Object[])
+     * @see #FLAG_ON_PRESSED
+     * @see #FLAG_ON_RELEASE
+     * @see #FLAG_ON_REPEAT
+     */
+    public void addMapping(String action, Object target, String methodName, Object[] params, int flags) throws IllegalArgumentException {
         for(Method m : target.getClass().getMethods()) {
-            if(m.getName().equals(methodName)) {
+            if(m.getName().equals(methodName) &&
+                    (target != null || Modifier.isStatic(m.getModifiers()))) {
                 if(ClassUtils.isParamsCompatible(m.getParameterTypes(), params)) {
                     addMappingImpl(action, target, m, params, flags);
                     return;
@@ -80,7 +139,13 @@ public class ActionMap {
     }
 
     public void addMapping(String action, Object target, Method method, Object[] params, int flags) {
-        if(method.getDeclaringClass().isInstance(target)) {
+        if(!Modifier.isPublic(method.getModifiers())) {
+            throw new IllegalArgumentException("Method is not public");
+        }
+        if(target == null && !Modifier.isStatic(method.getModifiers())) {
+            throw new IllegalArgumentException("Method is not static but target is null");
+        }
+        if(target != null && method.getDeclaringClass().isInstance(target)) {
             throw new IllegalArgumentException("method does not belong to target");
         }
         if(!ClassUtils.isParamsCompatible(method.getParameterTypes(), params)) {
@@ -89,6 +154,13 @@ public class ActionMap {
         addMappingImpl(action, target, method, params, flags);
     }
 
+    /**
+     * Add action mapping for all public methods of the specified class which
+     * are annotated with the {@code Action} annotation.
+     *
+     * @param target the target class
+     * @see Action
+     */
     public void addMapping(Object target) {
         for(Method m : target.getClass().getMethods()) {
             Action action = m.getAnnotation(Action.class);
@@ -109,18 +181,40 @@ public class ActionMap {
         }
     }
 
-    public void addMappingImpl(String action, Object target, Method method, Object[] params, int flags) {
+    protected void addMappingImpl(String action, Object target, Method method, Object[] params, int flags) {
         mappings = HashEntry.maybeResizeTable(mappings, numMappings++);
         HashEntry.insertEntry(mappings, new Mapping(action, target, method, params, flags));
     }
 
+    /**
+     * Annotation used for automatic handler registration
+     *
+     * @see #addMapping(java.lang.Object)
+     */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface Action {
+        /**
+         * Optional action name. If not specified then the method name is used
+         * as action
+         * @return the action name
+         */
         String name() default "";
+        /**
+         * Invoke the method on first key press events
+         * @return default true
+         */
         boolean onPressed() default true;
+        /**
+         * Invoke the method on key release events
+         * @return default false
+         */
         boolean onRelease() default false;
+        /**
+         * Invoke the method also on repeated key press events
+         * @return default false
+         */
         boolean onRepeat() default true;
     }
 

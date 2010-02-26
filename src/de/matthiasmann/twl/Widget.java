@@ -1177,10 +1177,19 @@ public class Widget {
         this.inputMap = inputMap;
     }
 
+    /**
+     * Returns the current action map. If now action map has been set then
+     * {@code null} is returned.
+     * @return the current action map or null.
+     */
     public ActionMap getActionMap() {
         return actionMap;
     }
 
+    /**
+     * Installs an action map for this widget.
+     * @param actionMap the new action map or null.
+     */
     public void setActionMap(ActionMap actionMap) {
         this.actionMap = actionMap;
     }
@@ -1254,6 +1263,22 @@ public class Widget {
         setInputMap(themeInfo.getParameterValue("inputMap", false, InputMap.class));
     }
 
+    /**
+     * Installs an action mapping for the given action in the current action map.
+     * If no action map is set then a new one will be created.
+     *
+     * The mapping will invoke a public method on {@code this} widget.
+     *
+     * This is equal to calling {@code addActionMapping} on {@code ActionMap} with
+     * {@code this} as target and {@code ActionMap.FLAG_ON_PRESSED} as flags.
+     *
+     * @param action the action name
+     * @param methodName the method name to invoke on this widget
+     * @param params optional parameters which can be passed to the method
+     * @see #getActionMap()
+     * @see ActionMap#addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     * @see #getInputMap()
+     */
     protected void addActionMapping(String action, String methodName, Object ... params) {
         if(actionMap == null) {
             actionMap = new ActionMap();
