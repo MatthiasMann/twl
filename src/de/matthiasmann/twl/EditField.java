@@ -513,7 +513,7 @@ public class EditField extends Widget {
                 }
                 return false;
             default:
-                return evt.hasKeyChar();
+                return evt.hasKeyChar() && ((evt.getModifiers() & ~Event.MODIFIER_SHIFT) == 0);
             }
 
         case MOUSE_BTNUP:
