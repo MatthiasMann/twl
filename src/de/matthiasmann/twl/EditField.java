@@ -320,7 +320,6 @@ public class EditField extends Widget {
         autoCompletionHeight = themeInfo.getParameter("autocompletion-height", 100);
         columns = themeInfo.getParameter("columns", 5);
         setPasswordChar((char)themeInfo.getParameter("passwordChar", '*'));
-        setErrorMessage(errorMsg);  // update color
     }
 
     @Override
@@ -488,7 +487,8 @@ public class EditField extends Widget {
                 }
                 return false;
             default:
-                if(evt.hasKeyChar()) {
+                // the only allowed modifier is shift
+                if(evt.hasKeyChar() && ((evt.getModifiers() & ~Event.MODIFIER_SHIFT) == 0)) {
                     insertChar(evt.getKeyChar());
                     return true;
                 }
