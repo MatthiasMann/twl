@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -67,6 +67,8 @@ public abstract class Event {
     public static final int MODIFIER_LBUTTON = 64;
     public static final int MODIFIER_RBUTTON = 128;
     public static final int MODIFIER_MBUTTON = 256;
+    public static final int MODIFIER_LALT = 512;
+    public static final int MODIFIER_RALT = 1024;
 
     /**
      * One of the shift keys is pressed
@@ -91,6 +93,12 @@ public abstract class Event {
      * @see #getModifiers()
      */
     public static final int MODIFIER_BUTTON = MODIFIER_LBUTTON | MODIFIER_MBUTTON | MODIFIER_RBUTTON;
+
+    /**
+     * One of the alt/menu keys is pressed
+     * @see #getModifiers()
+     */
+    public static final int MODIFIER_ALT = MODIFIER_LALT | MODIFIER_RALT;
 
     /**
      * Left mouse button - this is the primary mouse button

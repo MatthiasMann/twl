@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -42,6 +42,7 @@ final class KeyStroke {
     private static final int SHIFT = 1;
     private static final int CTRL = 2;
     private static final int META = 4;
+    private static final int ALT = 8;
     
     private final int modifier;
     private final int keyCode;
@@ -104,6 +105,8 @@ final class KeyStroke {
                 modifers |= SHIFT;
             } else if("meta".equalsIgnoreCase(part)) {
                 modifers |= META;
+            } else if("alt".equalsIgnoreCase(part)) {
+                modifers |= ALT;
             } else if("typed".equalsIgnoreCase(part)) {
                 typed = true;
             } else {
@@ -135,6 +138,9 @@ final class KeyStroke {
         }
         if((eventModifiers & Event.MODIFIER_META) != 0) {
             modifiers |= META;
+        }
+        if((eventModifiers & Event.MODIFIER_ALT) != 0) {
+            modifiers |= ALT;
         }
         return modifiers;
     }

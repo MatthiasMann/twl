@@ -913,6 +913,9 @@ public final class GUI extends Widget {
             case Keyboard.KEY_LCONTROL:
                 event.setModifier(Event.MODIFIER_LCTRL, pressed);
                 break;
+            case Keyboard.KEY_LMENU:
+                event.setModifier(Event.MODIFIER_LALT, pressed);
+                break;
             case Keyboard.KEY_RSHIFT:
                 event.setModifier(Event.MODIFIER_RSHIFT, pressed);
                 break;
@@ -921,6 +924,9 @@ public final class GUI extends Widget {
                 break;
             case Keyboard.KEY_RCONTROL:
                 event.setModifier(Event.MODIFIER_RCTRL, pressed);
+                break;
+            case Keyboard.KEY_RMENU:
+                event.setModifier(Event.MODIFIER_RALT, pressed);
                 break;
         }
     }
