@@ -104,13 +104,29 @@ public final class GUI extends Widget {
     
     private final ArrayList<TimerImpl> activeTimers;
     private final ArrayList<Runnable> invokeLaterQueue;
-    
+
+    /**
+     * Constructs a new GUI manager with the given renderer and a default root
+     * pane.
+     *
+     * This default root pane has no theme (eg "") and can't receive keyboard
+     * focus.
+     *
+     * @param renderer the renderer
+     * @see #GUI(de.matthiasmann.twl.Widget, de.matthiasmann.twl.renderer.Renderer)
+     */
     public GUI(Renderer renderer) {
         this(new Widget(), renderer);
         rootPane.setTheme("");
         rootPane.setFocusKeyEnabled(false);
     }
-    
+
+    /**
+     * Constructs a new GUI manager with the given renderer and root pane
+     * 
+     * @param rootPane the root pane
+     * @param renderer the renderer
+     */
     public GUI(Widget rootPane, Renderer renderer) {
         if(rootPane == null) {
             throw new NullPointerException("rootPane");
@@ -328,7 +344,14 @@ public final class GUI extends Widget {
         this.curTime = getTimeMillis();
         this.deltaTime = 0;
     }
-    
+
+    /**
+     * Updates the current time returned by {@code getCurrentTime} by calling
+     * {@code getTimeMillis} and computes the delta time since the last update.
+     *
+     * @see #getCurrentTime()
+     * @see #getTimeMillis()
+     */
     public void updateTime() {
         long newTime = getTimeMillis();
         deltaTime = Math.max(0, (int)(newTime - curTime));
@@ -343,7 +366,11 @@ public final class GUI extends Widget {
         }
         return time;
     }
-    
+
+    /**
+     * Updates all active timers with the delta time computed by {@code updateTime}
+     * @see #updateTime() 
+     */
     public void updateTimers() {
         for(int i=0 ; i<activeTimers.size() ;) {
             if(!activeTimers.get(i).tick(deltaTime)) {
@@ -355,6 +382,11 @@ public final class GUI extends Widget {
         deltaTime = 0;
     }
 
+    /**
+     * Invokes all queued {@code Runnable} objects.
+     * 
+     * @see #invokeLater(java.lang.Runnable) 
+     */
     public void invokeRunables() {
         Runnable[] runnables = null;
         synchronized(invokeLaterQueue) {
@@ -373,7 +405,14 @@ public final class GUI extends Widget {
             }
         }
     }
-    
+
+    /**
+     * Renders all visible widgets. Calls {@code startRenderering} before and
+     * {@code endRendering} after rendering all widgets.
+     *
+     * @see Renderer#startRenderering()
+     * @see Renderer#endRendering() 
+     */
     public void draw() {
         numClipRects = 0;
         
@@ -385,6 +424,11 @@ public final class GUI extends Widget {
         }
     }
 
+    /**
+     * Sets the cursor from the widget under the mouse
+     *
+     * @see Renderer#setCursor(de.matthiasmann.twl.renderer.MouseCursor) 
+     */
     public void setCursor() {
         Widget widget = getWidgetUnderMouse();
         if(widget != null && widget.isEnabled()) {
@@ -392,7 +436,16 @@ public final class GUI extends Widget {
             renderer.setCursor(cursor);
         }
     }
-    
+
+    /**
+     * Retrives all keyboard events from LWJGL's Keyboard class.
+     *
+     * Calls {@code handleKey} for every event.
+     * Calls {@code handleKeyRepeat} after all events have been processed.
+     *
+     * @see #handleKey(int, char, boolean)
+     * @see #handleKeyRepeat() 
+     */
     public void handleKeyboardInputLWJGL() {
         if(Keyboard.isCreated()) {
             while(Keyboard.next()) {
@@ -405,7 +458,17 @@ public final class GUI extends Widget {
             handleKeyRepeat();
         }
     }
-    
+
+    /**
+     * Retrives all mouse events from LWJGL's Mouse class.
+     *
+     * Calls {@code handleMouse} and if needed {@code handleMouseWheel} for every event.
+     * Calls {@code handleTooltips} after all events have been processed.
+     *
+     * @see #handleMouse(int, int, int, boolean)
+     * @see #handleMouseWheel(int)
+     * @see #handleTooltips() 
+     */
     public void handleMouseInputLWJGL() {
         if(Mouse.isCreated()) {
             while(Mouse.next()) {
@@ -561,7 +624,18 @@ public final class GUI extends Widget {
         sendMouseEvent(Event.Type.MOUSE_WHEEL,
                 dragActive ? lastMouseDownWidget : null);
     }
-    
+
+    /**
+     * A key was pressed or released. Keyboard events depend on the constants
+     * of LWJGL's Keybaord class.
+     *
+     * Repeated key presses should be handled by {@code handleKeyRepeat} and not this
+     * method so that the repeated flag is set correctly for the generated events.
+     * 
+     * @param keyCode the key code for this key or {@code Keyboard.KEY_NONE}
+     * @param keyChar the unicode character resulting from this event or {@code Keyboard.CHAR_NONE}
+     * @param pressed true if the key was pressed and false if it was released
+     */
     public final void handleKey(int keyCode, char keyChar, boolean pressed) {
         event.keyCode = keyCode;
         event.keyChar = keyChar;
@@ -585,6 +659,10 @@ public final class GUI extends Widget {
     
     /**
      * Must be called after calling handleKey().
+     *
+     * This method checks the time since the last key event and causes a repeated
+     * key press event to be generated.
+     * 
      * @see #handleKey(int, char, boolean) 
      */
     public final void handleKeyRepeat() {
@@ -600,7 +678,11 @@ public final class GUI extends Widget {
     }
     
     /**
-     * Must be called after calling handleMouse or handleMouseWheel
+     * Must be called after calling handleMouse or handleMouseWheel.
+     *
+     * This method displays a tooltip if the widget under mouse has a tooltip
+     * message and the mouse has not moved for a certain amount of time.
+     * 
      * @see #handleMouse(int, int, int, boolean) 
      * @see #handleMouseWheel(int)
      */
@@ -665,12 +747,12 @@ public final class GUI extends Widget {
         }
     }
 
-    private void sendEvent(Event.Type type) {
+    private boolean sendEvent(Event.Type type) {
         assert !type.isMouseEvent;
         popupEventOccured = false;
         event.type = type;
         event.dragEvent = false;
-        getTopPane().handleEvent(event);
+        return getTopPane().handleEvent(event);
     }
 
     private void sendPopupEvent(Event.Type type) {
