@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -256,8 +256,10 @@ public class Button extends TextWidget {
             switch (evt.getKeyCode()) {
             case Keyboard.KEY_RETURN:
             case Keyboard.KEY_SPACE:
-                model.setPressed(true);
-                model.setArmed(true);
+                if(!evt.isKeyRepeated()) {
+                    model.setPressed(true);
+                    model.setArmed(true);
+                }
                 return true;
             }
             break;
