@@ -425,6 +425,8 @@ public class TextArea extends Widget {
                 le.height = lineHeight;
                 break;
             }
+
+            le.adjustWidget();
         }
         lineStartIdx = layout.size();
         curY += lineHeight;
@@ -551,10 +553,9 @@ public class TextArea extends Widget {
             assert lineStartIdx == layout.size() - 1;
             lineStartIdx++;
             lw.y = curY;
+            lw.adjustWidget();
             computeMargin();
         }
-
-        lw.adjustWidget();
     }
 
     private void layout(TextAreaModel.TextElement te) {
@@ -776,6 +777,7 @@ public class TextArea extends Widget {
         int height;
         TextAreaModel.VAlignment valign;
 
+        void adjustWidget() {}
         void draw(int offX, int offY) {}
         void destroy() {}
     }
@@ -829,6 +831,7 @@ public class TextArea extends Widget {
             this.widget = widget;
         }
 
+        @Override
         void adjustWidget() {
             widget.setPosition(x + widget.getParent().getInnerX(), y + widget.getParent().getInnerY());
             widget.setSize(width, height);

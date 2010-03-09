@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -134,7 +134,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             styleStack.clear();
             styleStack.add(new StyleInfo());
             listStack.clear();
-            sb.delete(0, sb.length());
+            sb.setLength(0);
             paragraphStart = false;
             paragraphEnd = false;
 
@@ -334,7 +334,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private void finishText() {
         if(sb.length() > 0 || paragraphStart || paragraphEnd) {
             addElement(new TextElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd));
-            sb.delete(0, sb.length());
+            sb.setLength(0);
             paragraphStart = false;
             paragraphEnd = false;
         }
