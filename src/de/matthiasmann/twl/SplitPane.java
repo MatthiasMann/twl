@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -66,7 +66,7 @@ public class SplitPane extends Widget {
         splitter.setListener(new DraggableButton.DragListener() {
             int initialPos;
             public void dragStarted() {
-                initialPos = computeRealSplitPos();
+                initialPos = getSplitPosNoCenter();
             }
             public void dragged(int deltaX, int deltaY) {
                 SplitPane.this.dragged(initialPos, deltaX, deltaY);
@@ -199,7 +199,11 @@ public class SplitPane extends Widget {
 
         int innerX = getInnerX();
         int innerY = getInnerY();
-        int splitPos = computeRealSplitPos();
+        int splitPos = getSplitPosNoCenter();
+
+        if(reverseSplitPosition) {
+            splitPos = getMaxSplitPosition() - splitPos;
+        }
 
         switch(direction) {
         case HORIZONTAL:
@@ -232,11 +236,9 @@ public class SplitPane extends Widget {
         }
     }
 
-    private int computeRealSplitPos() {
+    int getSplitPosNoCenter() {
         if(splitPosition == CENTER) {
             return getMaxSplitPosition()/2;
-        } else if(reverseSplitPosition) {
-            return getMaxSplitPosition() - clamp(splitPosition);
         } else {
             return clamp(splitPosition);
         }
