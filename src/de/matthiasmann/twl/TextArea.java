@@ -452,9 +452,9 @@ public class TextArea extends Widget {
         for(TextAreaModel.Element e : elements) {
             if(e instanceof TextAreaModel.TextElement) {
                 layout((TextAreaModel.TextElement)e);
-            } else if(e instanceof  TextAreaModel.ImageElement) {
+            } else if(e instanceof TextAreaModel.ImageElement) {
                 layout((TextAreaModel.ImageElement)e);
-            } else if(e instanceof  TextAreaModel.WidgetElement) {
+            } else if(e instanceof TextAreaModel.WidgetElement) {
                 layout((TextAreaModel.WidgetElement)e);
             } else if(e instanceof TextAreaModel.ListElement) {
                 layout((TextAreaModel.ListElement)e);
@@ -616,6 +616,7 @@ public class TextArea extends Widget {
 
     private void layoutText(TextAreaModel.TextElement te, Font font,
             String text, int textStart, int textEnd) {
+        int idx = textStart;
         // trim start
         while(textStart < textEnd && isSkip(text.charAt(textStart))) {
             textStart++;
@@ -625,7 +626,14 @@ public class TextArea extends Widget {
             textEnd--;
         }
 
-        int idx = textStart;
+        // check if we skipped white spaces and the previous element in this
+        // row was not a text cell
+        if(textStart > idx && layout.size() > lineStartIdx &&
+                !(layout.get(layout.size()-1) instanceof LText)) {
+            curX += font.getSpaceWidth();
+        }
+
+        idx = textStart;
         while(idx < textEnd) {
             assert !Character.isSpaceChar(text.charAt(idx));
 
