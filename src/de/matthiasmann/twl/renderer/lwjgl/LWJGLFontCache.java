@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -45,6 +45,8 @@ public class LWJGLFontCache implements FontCache {
     private int id;
     private int width;
     private int height;
+    private int[] multiLineInfo;
+    private int numLines;
 
     LWJGLFontCache(LWJGLRenderer renderer, LWJGLFont font) {
         this.renderer = renderer;
@@ -59,6 +61,13 @@ public class LWJGLFontCache implements FontCache {
             GL11.glPushMatrix();
             GL11.glTranslatef(x+fontState.offsetX, y+fontState.offsetY, 0f);
             GL11.glCallList(id);
+            if(fontState.style != 0) {
+                if(numLines > 0) {
+                    font.drawLines(fontState, 0, 0, multiLineInfo, numLines);
+                } else {
+                    font.drawLine(fontState, 0, 0, width);
+                }
+            }
             GL11.glPopMatrix();
         }
     }
@@ -73,6 +82,7 @@ public class LWJGLFontCache implements FontCache {
     boolean startCompile() {
         if(id != 0) {
             GL11.glNewList(id, GL11.GL_COMPILE);
+            this.numLines = 0;
             return true;
         }
         return false;
@@ -82,6 +92,14 @@ public class LWJGLFontCache implements FontCache {
         GL11.glEndList();
         this.width = width;
         this.height = height;
+    }
+
+    int[] getMultiLineInfo(int numLines) {
+        if(multiLineInfo == null || multiLineInfo.length < numLines) {
+            multiLineInfo = new int[numLines];
+        }
+        this.numLines = numLines;
+        return multiLineInfo;
     }
 
     public int getHeight() {

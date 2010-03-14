@@ -299,7 +299,7 @@ public class BitmapFont {
     
     protected int drawMultiLineText(int x, int y, CharSequence str, int width, HAlignment align) {
         int start = 0;
-        int startY = y;
+        int numLines = 0;
         while(start < str.length()) {
             int lineEnd = TextUtil.indexOf(str, '\n', start);
             int xoff = 0;
@@ -313,8 +313,63 @@ public class BitmapFont {
             drawText(x + xoff, y, str, start, lineEnd);
             start = lineEnd + 1;
             y += lineHeight;
+            numLines++;
         }
-        return y - startY;
+        return numLines;
+    }
+
+    public void computeMultiLineInfo(CharSequence str, int width, HAlignment align, int[] multiLineInfo) {
+        int start = 0;
+        int idx = 0;
+        while(start < str.length()) {
+            int lineEnd = TextUtil.indexOf(str, '\n', start);
+            int lineWidth = computeTextWidth(str, start, lineEnd);
+            int xoff = width - lineWidth;
+            if(align == HAlignment.LEFT) {
+                xoff = 0;
+            } else if(align == HAlignment.CENTER) {
+                xoff /= 2;
+            }
+            multiLineInfo[idx++] = (lineWidth << 16) | (xoff & 0xFFFF);
+            start = lineEnd + 1;
+        }
+    }
+    
+    protected void beginLine() {
+        GL11.glDisable(GL11.GL_TEXTURE_2D);
+        GL11.glBegin(GL11.GL_QUADS);
+    }
+
+    protected void endLine() {
+        GL11.glEnd();
+        GL11.glEnable(GL11.GL_TEXTURE_2D);
+    }
+
+    public void drawMultiLineLines(int x, int y, int[] multiLineInfo, int numLines) {
+        beginLine();
+        try {
+            for(int i=0 ; i<numLines ; ++i) {
+                int info = multiLineInfo[i];
+                int xoff = x + (short)info;
+                int lineWidth = info >>> 16;
+                GL11.glVertex2i(xoff, y);
+                GL11.glVertex2i(xoff + lineWidth, y);
+                GL11.glVertex2i(xoff + lineWidth, y+1);
+                GL11.glVertex2i(xoff, y+1);
+                y += lineHeight;
+            }
+        } finally {
+            endLine();
+        }
+    }
+
+    public void drawLine(int x0, int y, int x1) {
+        beginLine();
+        GL11.glVertex2i(x0, y);
+        GL11.glVertex2i(x1, y);
+        GL11.glVertex2i(x1, y+1);
+        GL11.glVertex2i(x0, y+1);
+        endLine();
     }
     
     public int computeMultiLineTextWidth(CharSequence str) {
@@ -331,17 +386,18 @@ public class BitmapFont {
 
     public FontCache cacheMultiLineText(LWJGLFontCache cache, CharSequence str, int width, HAlignment align) {
         if(cache.startCompile()) {
-            int height = 0;
+            int numLines = 0;
             try {
                 if(prepare()) {
                     try {
-                        height = drawMultiLineText(0, 0, str, width, align);
+                        numLines = drawMultiLineText(0, 0, str, width, align);
                     } finally {
                         cleanup();
                     }
+                    computeMultiLineInfo(str, width, align, cache.getMultiLineInfo(numLines));
                 }
             } finally {
-                cache.endCompile(width, height);
+                cache.endCompile(width, numLines * lineHeight);
             }
             return cache;
         }
