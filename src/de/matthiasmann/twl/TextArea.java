@@ -34,6 +34,7 @@ import de.matthiasmann.twl.model.TextAreaModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -72,6 +73,8 @@ public class TextArea extends Widget {
     private ParameterMap images;
     private Font defaultFont;
     private Callback[] callbacks;
+    private MouseCursor mouseCursorNormal;
+    private MouseCursor mouseCursorLink;
 
     private final ArrayList<LElement> layout;
     private final ArrayList<LElement> objLeft;
@@ -196,9 +199,15 @@ public class TextArea extends Widget {
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
+        applyThemeTextArea(themeInfo);
+    }
+
+    protected void applyThemeTextArea(ThemeInfo themeInfo) {
         fonts = themeInfo.getParameterMap("fonts");
         images = themeInfo.getParameterMap("images");
         defaultFont = themeInfo.getFont("font");
+        mouseCursorNormal = themeInfo.getMouseCursor("mouseCursor");
+        mouseCursorLink = themeInfo.getMouseCursor("mouseCursor.link");
         forceRelayout();
     }
 
@@ -383,6 +392,12 @@ public class TextArea extends Widget {
             le = findElement(lastMouseX - getInnerX(), lastMouseY - getInnerY());
         }
         curLElementUnderMouse = le;
+        
+        if(le != null && le.element instanceof TextAreaModel.LinkElement) {
+            setMouseCursor(mouseCursorLink);
+        } else {
+            setMouseCursor(mouseCursorNormal);
+        }
     }
 
     void forceRelayout() {
