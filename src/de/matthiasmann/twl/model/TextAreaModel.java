@@ -118,6 +118,14 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         public boolean isPreformatted();
     }
 
+    public interface LinkElement extends TextElement {
+        /**
+         * Returns the href of the link.
+         * @return the href of the link.
+         */
+        public String getHREF();
+    }
+
     public interface ImageElement extends Element {
         /**
          * Returns the image for this image element.

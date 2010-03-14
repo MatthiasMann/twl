@@ -60,6 +60,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private boolean paragraphStart;
     private boolean paragraphEnd;
+    private String href;
 
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
@@ -137,6 +138,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             sb.setLength(0);
             paragraphStart = false;
             paragraphEnd = false;
+            href = null;
 
             int type;
             while((type=xpp.nextToken()) != XmlPullParser.END_DOCUMENT) {
@@ -176,6 +178,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         listStack.add(lei);
                         paragraphStart = true;
                     }
+                    if("a".equals(name)) {
+                        finishText();
+                        pushStyle(xpp, true);
+                        href = xpp.getAttributeValue(null, "href");
+                    }
                     break;
                 }
                 case XmlPullParser.END_TAG: {
@@ -199,6 +206,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     }
                     if("button".equals(name)) {
                         popStyle();
+                    }
+                    if("a".equals(name)) {
+                        finishText();
+                        popStyle();
+                        href = null;
                     }
                     break;
                 }
@@ -333,7 +345,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private void finishText() {
         if(sb.length() > 0 || paragraphStart || paragraphEnd) {
-            addElement(new TextElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd));
+            TextElementImpl e;
+            if(href != null) {
+                e = new LinkElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd, href);
+            } else {
+                e = new TextElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd);
+            }
+            addElement(e);
             sb.setLength(0);
             paragraphStart = false;
             paragraphEnd = false;
@@ -491,6 +509,19 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public boolean isPreformatted() {
             return style.pre;
+        }
+    }
+
+    static class LinkElementImpl extends TextElementImpl implements LinkElement {
+        private final String href;
+
+        public LinkElementImpl(StyleInfo style, String text, boolean isParagraphStart, boolean isParagraphEnd, String href) {
+            super(style, text, isParagraphStart, isParagraphEnd);
+            this.href = href;
+        }
+
+        public String getHREF() {
+            return href;
         }
     }
 

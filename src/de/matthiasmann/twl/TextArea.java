@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -34,12 +34,16 @@ import de.matthiasmann.twl.model.TextAreaModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.utils.CallbackSupport;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * A text area dor rendering complex text. Supports embedded images,
+ * bullet point lists, hyper links, multiple fonts, block text and
+ * embedded widgets.
  *
  * @author Matthias Mann
  */
@@ -49,6 +53,16 @@ public class TextArea extends Widget {
         public Widget resolveWidget(String name, String param);
     }
 
+    public interface Callback {
+        /**
+         * Called when a link has been clicked
+         * @param href the href of the link
+         */
+        public void handleLinkClicked(String href);
+    }
+
+    public static final String STATE_HOVER = "hover";
+    
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
     
@@ -57,6 +71,7 @@ public class TextArea extends Widget {
     private ParameterMap fonts;
     private ParameterMap images;
     private Font defaultFont;
+    private Callback[] callbacks;
 
     private final ArrayList<LElement> layout;
     private final ArrayList<LElement> objLeft;
@@ -74,6 +89,11 @@ public class TextArea extends Widget {
     private boolean inLayoutCode;
     private TextAreaModel.HAlignment textAlignment;
     private int lastWidth;
+
+    private int lastMouseX;
+    private int lastMouseY;
+    private boolean lastMouseInside;
+    private LElement curLElementUnderMouse;
 
     public TextArea() {
         this.widgets = new HashMap<String, Widget>();
@@ -165,6 +185,14 @@ public class TextArea extends Widget {
         forceRelayout();
     }
 
+    public void addCallback(Callback cb) {
+        callbacks = CallbackSupport.addCallbackToList(callbacks, cb, Callback.class);
+    }
+
+    public void removeCallback(Callback cb) {
+        callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
+    }
+
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
@@ -246,6 +274,7 @@ public class TextArea extends Widget {
                     // finish the last line
                     nextLine(false);
                 }
+                updateMouseHover();
             } finally {
                 inLayoutCode = false;
                 objLeft.clear();
@@ -261,12 +290,16 @@ public class TextArea extends Widget {
 
     @Override
     protected void paintWidget(GUI gui) {
+        final ArrayList<LElement> ll = layout;
         final int innerX = getInnerX();
         final int innerY = getInnerY();
+        final AnimationState as = getAnimationState();
+        final LElement hoverElement = curLElementUnderMouse;
 
-        for(int i=0,n=layout.size() ; i<n ; i++) {
-            LElement le = layout.get(i);
-            le.draw(innerX, innerY);
+        for(int i=0,n=ll.size() ; i<n ; i++) {
+            LElement le = ll.get(i);
+            as.setAnimationState(STATE_HOVER, hoverElement == le);
+            le.draw(innerX, innerY, as);
         }
     }
 
@@ -300,6 +333,56 @@ public class TextArea extends Widget {
         super.destroy();
         clearLayout();
         forceRelayout();
+    }
+
+    @Override
+    protected boolean handleEvent(Event evt) {
+        if(super.handleEvent(evt)) {
+            return true;
+        }
+
+        if(evt.isMouseEvent()) {
+            lastMouseInside = isMouseInside(evt);
+            lastMouseX = evt.getMouseX();
+            lastMouseY = evt.getMouseY();
+            updateMouseHover();
+
+            if(evt.getType() == Event.Type.MOUSE_WHEEL) {
+                return false;
+            }
+
+            if(evt.getType() == Event.Type.MOUSE_CLICKED) {
+                if(curLElementUnderMouse != null && (curLElementUnderMouse.element instanceof TextAreaModel.LinkElement)) {
+                    String href = ((TextAreaModel.LinkElement)curLElementUnderMouse.element).getHREF();
+                    if(callbacks != null) {
+                        for(Callback l : callbacks) {
+                            l.handleLinkClicked(href);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private LElement findElement(int x, int y) {
+        for(LElement le : layout) {
+            if(le.isInside(x, y)) {
+                return le;
+            }
+        }
+        return null;
+    }
+
+    private void updateMouseHover() {
+        LElement le = null;
+        if(lastMouseInside) {
+            le = findElement(lastMouseX - getInnerX(), lastMouseY - getInnerY());
+        }
+        curLElementUnderMouse = le;
     }
 
     void forceRelayout() {
@@ -410,7 +493,7 @@ public class TextArea extends Widget {
         
         for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
             LElement le = layout.get(idx);
-            switch(le.valign) {
+            switch(le.element.getVerticalAlignment()) {
             case BOTTOM:
                 le.y = curY + lineHeight - le.height;
                 break;
@@ -474,7 +557,7 @@ public class TextArea extends Widget {
             return;
         }
 
-        LImage li = new LImage(image, ie.getToolTip());
+        LImage li = new LImage(ie, image, ie.getToolTip());
         layout(ie, li);
     }
 
@@ -495,7 +578,7 @@ public class TextArea extends Widget {
             return;
         }
 
-        LWidget lw = new LWidget(widget);
+        LWidget lw = new LWidget(we, widget);
         layout(we, lw);
     }
 
@@ -509,7 +592,6 @@ public class TextArea extends Widget {
         }
 
         super.insertChild(lw.widget, getNumChildren());
-        lw.valign = e.getVerticalAlignment();
         lw.widget.adjustSize();
         lw.width = lw.widget.getWidth();
         lw.height = lw.widget.getHeight();
@@ -678,7 +760,7 @@ public class TextArea extends Widget {
             }
 
             if(idx < end) {
-                LText lt = new LText(font, text, idx, end, te.getVerticalAlignment());
+                LText lt = new LText(te, font, text, idx, end);
                 if(textAlignment == TextAreaModel.HAlignment.BLOCK && getRemaining() < lt.width) {
                     nextLine(false);
                 }
@@ -727,7 +809,7 @@ public class TextArea extends Widget {
 
                     end = idx + Math.max(1, count);
 
-                    LText lt = new LText(font, text, idx, end, te.getVerticalAlignment());
+                    LText lt = new LText(te, font, text, idx, end);
                     lt.x = curX;
                     curX += lt.width;
                     layout.add(lt);
@@ -741,7 +823,7 @@ public class TextArea extends Widget {
     private void layout(TextAreaModel.ListElement le) {
         Image image = (images != null) ? le.getBulletImage(images) : null;
         if(image != null) {
-            LImage li = new LImage(image, null);
+            LImage li = new LImage(le, image, null);
             layout(le, li, TextAreaModel.HAlignment.LEFT);
             
             int imageHeight = li.height;
@@ -779,33 +861,41 @@ public class TextArea extends Widget {
     }
 
     static abstract class LElement {
+        final TextAreaModel.Element element;
         int x;
         int y;
         int width;
         int height;
-        TextAreaModel.VAlignment valign;
+
+        public LElement(TextAreaModel.Element element) {
+            this.element = element;
+        }
 
         void adjustWidget() {}
-        void draw(int offX, int offY) {}
+        void draw(int offX, int offY, AnimationState as) {}
         void destroy() {}
+
+        boolean isInside(int x, int y) {
+            return (x >= this.x) && (x < this.x + this.width) &&
+                    (y >= this.y) && (y < this.y + this.height);
+        }
     }
 
-    class LText extends LElement {
+    static class LText extends LElement {
         final Font font;
         final String text;
         final int start;
         final int end;
         FontCache cache;
 
-        public LText(Font font, String text, int start, int end,
-                TextAreaModel.VAlignment valign) {
+        public LText(TextAreaModel.Element element, Font font, String text, int start, int end) {
+            super(element);
             this.font = font;
             this.text = text;
             this.start = start;
             this.end = end;
             this.cache = font.cacheText(null, text, start, end);
             this.height = font.getLineHeight();
-            this.valign = valign;
 
             if(cache != null) {
                 this.width = cache.getWidth();
@@ -815,11 +905,11 @@ public class TextArea extends Widget {
         }
 
         @Override
-        void draw(int offX, int offY) {
+        void draw(int offX, int offY, AnimationState as) {
             if(cache != null) {
-                cache.draw(getAnimationState(), x+offX, y+offY);
+                cache.draw(as, x+offX, y+offY);
             } else {
-                font.drawText(getAnimationState(), x+offX, y+offY, text, start, end);
+                font.drawText(as, x+offX, y+offY, text, start, end);
             }
         }
 
@@ -835,7 +925,8 @@ public class TextArea extends Widget {
     static class LWidget extends LElement {
         final Widget widget;
 
-        LWidget(Widget widget) {
+        public LWidget(TextAreaModel.Element element, Widget widget) {
+            super(element);
             this.widget = widget;
         }
 
@@ -847,8 +938,8 @@ public class TextArea extends Widget {
     }
 
     static class LImage extends LWidget {
-        LImage(Image img, String toolTip) {
-            super(new LImageLabel());
+        public LImage(TextAreaModel.Element element, Image img, String toolTip) {
+            super(element, new LImageLabel());
             widget.setTheme("image");
             widget.setBackground(img);
             widget.setTooltipContent(toolTip);
