@@ -492,8 +492,9 @@ public final class GUI extends Widget {
      * @param mouseY the new mouse Y coordinate
      * @param button the button that has been pressed/released or -1 if no button changed
      * @param pressed true if the button was pressed. Ignored if button is -1.
+     * @return true if the event was handled by a widget
      */
-    public final void handleMouse(int mouseX, int mouseY, int button, boolean pressed) {
+    public final boolean handleMouse(int mouseX, int mouseY, int button, boolean pressed) {
         mouseEventTime = curTime;
         event.mouseButton = button;
 
@@ -524,6 +525,8 @@ public final class GUI extends Widget {
             event.mouseY = mouseDownY;
         }
 
+        boolean handled = dragActive;
+
         if(!dragActive) {
             if(!isInside(mouseX, mouseY)) {
                 pressed = false;
@@ -534,7 +537,9 @@ public final class GUI extends Widget {
                 }
             } else if(!wasInside) {
                 wasInside = true;
-                sendMouseEvent(Event.Type.MOUSE_ENTERED, null);
+                if(sendMouseEvent(Event.Type.MOUSE_ENTERED, null) != null) {
+                    handled = true;
+                }
             }
         }
         
@@ -556,7 +561,9 @@ public final class GUI extends Widget {
                     sendMouseEvent(Event.Type.MOUSE_DRAGED, lastMouseDownWidget);
                 }
             } else if(prevButtonState == 0) {
-                sendMouseEvent(Event.Type.MOUSE_MOVED, null);
+                if(sendMouseEvent(Event.Type.MOUSE_MOVED, null) != null) {
+                    handled = true;
+                }
             }
         }
 
@@ -578,6 +585,10 @@ public final class GUI extends Widget {
                 if(lastMouseDownWidget != null) {
                     sendMouseEvent(Event.Type.MOUSE_BTNUP, lastMouseDownWidget);
                 }
+            }
+
+            if(lastMouseDownWidget != null) {
+                handled = true;
             }
 
             if(button == Event.MOUSE_LBUTTON && !popupEventOccured) {
@@ -612,17 +623,20 @@ public final class GUI extends Widget {
             dragActive = false;
             dragButton = -1;
         }
+
+        return handled;
     }
     
     /**
      * Mouse wheel has been turned. Must be called after handleMouse.
      * 
      * @param wheelDelta the normalized wheel delta
+     * @return true if the event was handled by a widget
      */
-    public final void handleMouseWheel(int wheelDelta) {
+    public final boolean handleMouseWheel(int wheelDelta) {
         event.mouseWheelDelta = wheelDelta;
-        sendMouseEvent(Event.Type.MOUSE_WHEEL,
-                dragActive ? lastMouseDownWidget : null);
+        return sendMouseEvent(Event.Type.MOUSE_WHEEL,
+                dragActive ? lastMouseDownWidget : null) != null;
     }
 
     /**
@@ -635,8 +649,9 @@ public final class GUI extends Widget {
      * @param keyCode the key code for this key or {@code Keyboard.KEY_NONE}
      * @param keyChar the unicode character resulting from this event or {@code Keyboard.CHAR_NONE}
      * @param pressed true if the key was pressed and false if it was released
+     * @return true if the event was handled by a widget
      */
-    public final void handleKey(int keyCode, char keyChar, boolean pressed) {
+    public final boolean handleKey(int keyCode, char keyChar, boolean pressed) {
         event.keyCode = keyCode;
         event.keyChar = keyChar;
         event.keyRepeated = false;
@@ -647,14 +662,16 @@ public final class GUI extends Widget {
 
             if(pressed) {
                 keyRepeatDelay = KEYREPEAT_INITIAL_DELAY;
-                sendEvent(Event.Type.KEY_PRESSED);
+                return sendEvent(Event.Type.KEY_PRESSED);
             } else {
                 keyRepeatDelay = NO_REPEAT;
-                sendEvent(Event.Type.KEY_RELEASED);
+                return sendEvent(Event.Type.KEY_RELEASED);
             }
         } else {
             keyRepeatDelay = NO_REPEAT;
         }
+
+        return false;
     }
     
     /**
