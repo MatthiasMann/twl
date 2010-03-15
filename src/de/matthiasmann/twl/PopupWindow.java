@@ -202,7 +202,7 @@ public class PopupWindow extends Widget {
     
     @Override
     protected final boolean handleEvent(Event evt) {
-        if(super.handleEvent(evt)) {
+        if(handleEventPopup(evt)) {
             return true;
         }
         if(evt.getType() == Event.Type.MOUSE_CLICKED &&
@@ -218,6 +218,10 @@ public class PopupWindow extends Widget {
         }
         // eat all events
         return true;
+    }
+
+    protected boolean handleEventPopup(Event evt) {
+        return super.handleEvent(evt);
     }
 
     @Override
