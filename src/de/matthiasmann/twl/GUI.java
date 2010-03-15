@@ -146,7 +146,6 @@ public final class GUI extends Widget {
         
         this.tooltipLabel = new Label();
         this.tooltipWindow = new TooltipWindow();
-        this.tooltipWindow.add(tooltipLabel);
         this.tooltipWindow.setVisible(false);
         
         this.activeTimers = new ArrayList<TimerImpl>();
@@ -905,6 +904,11 @@ public final class GUI extends Widget {
     private void hideTooltip() {
         tooltipWindow.setVisible(false);
         tooltipOwner = null;
+
+        // remove tooltip widget if it's not our label
+        if(tooltipLabel.getParent() != tooltipWindow) {
+            tooltipWindow.removeAllChildren();
+        }
     }
 
     private void setTooltip(int x, int y, Widget widget, Object content,
@@ -913,15 +917,27 @@ public final class GUI extends Widget {
             hideTooltip();
             return;
         }
-        
+
         if(content instanceof String) {
             String text = (String)content;
             if(text.length() == 0) {
                 hideTooltip();
                 return;
             }
+            if(tooltipLabel.getParent() != tooltipWindow) {
+                tooltipWindow.removeAllChildren();
+                tooltipWindow.add(tooltipLabel);
+            }
             tooltipLabel.setBackground(null);
             tooltipLabel.setText(text);
+            tooltipWindow.adjustSize();
+        } else if(content instanceof Widget) {
+            Widget tooltipWidget = (Widget)content;
+            if(tooltipWidget.getParent() != null && tooltipWidget.getParent() != tooltipWindow) {
+                throw new IllegalArgumentException("Content widget must not be added to another widget");
+            }
+            tooltipWindow.removeAllChildren();
+            tooltipWindow.add(tooltipWidget);
             tooltipWindow.adjustSize();
         } else {
             throw new IllegalArgumentException("Unsupported data type");
