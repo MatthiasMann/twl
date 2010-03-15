@@ -833,6 +833,7 @@ public class TextArea extends Widget {
                 idx = end;
             }
         }
+        nextLine(false);
     }
 
     private void layout(TextAreaModel.ListElement le) {

@@ -101,19 +101,31 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
 
         /**
          * Returns true if this element starts a new paragraph.
+         *
+         * Causes this element to start on a new line.
+         * 
          * @return true if this element starts a new paragraph.
          */
         public boolean isParagraphStart();
 
         /**
          * Returns true if this element ends the current paragraph.
+         *
+         * A blank line is inserted after this element.
+         * 
          * @return true if this element ends the current paragraph.
          */
         public boolean isParagraphEnd();
 
         /**
-         * Returns true if this element is a preformatted text (&lt;pre/&gt;)
+         * Returns true if this element is a preformatted text (similar to &lt;pre/&gt;)
+         *
+         * The text in this element will keep it's spaces and evaluate tabs.
+         * It will start on a new line and will complete the last line.
+         * It does not insert a blank line after the element - use isParagraphEnd() for that
+         *
          * @return true if this element is a preformatted text
+         * @see #isParagraphEnd()
          */
         public boolean isPreformatted();
     }
