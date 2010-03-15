@@ -778,10 +778,16 @@ public class Widget {
     
     /**
      * Changes the theme name of this widget - DOES NOT call applyTheme()
+     *
+     * If the theme name is empty then this widget won't receive theme data
+     * and is not included in the theme path, but it's children are still
+     * themed.
      * 
      * @param theme The new theme path element
      * @throws java.lang.NullPointerException if theme is null
-     * @see #applyTheme(ThemeManager)
+     * @see GUI#applyTheme(ThemeManager)
+     * @see #getThemePath()
+     * @see #isAbsoluteTheme(java.lang.String)
      */
     public void setTheme(String theme) {
         if(theme == null) {
@@ -792,7 +798,13 @@ public class Widget {
     
     /**
      * Returns this widget's theme path by concatinating the theme names
-     * from all parents separated by '.'
+     * from all parents separated by '.'.
+     *
+     * If a parent theme is empty then it will be ommited from the theme path.
+     *
+     * The theme path will start with the first absolute theme starting from
+     * this widget up to the GUI.
+     *
      * @return the effective theme path - can be empty
      */
     public final String getThemePath() {

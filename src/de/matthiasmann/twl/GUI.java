@@ -164,12 +164,13 @@ public final class GUI extends Widget {
     }
     
     /**
-     * Applies the active theme to this widget and it's children.
+     * Applies the specified theme to this UI tree.
      * If a widget in the tree has an empty theme name then it
      * is omitted from this process but it children are still processed.
      * 
      * @param themeManager the theme manager that should be used
      * @throws java.lang.NullPointerException if themeManager is null
+     * @see Widget#setTheme(java.lang.String)
      */
     @Override
     public void applyTheme(ThemeManager themeManager) {
