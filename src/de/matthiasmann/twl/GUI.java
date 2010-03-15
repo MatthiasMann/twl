@@ -1245,14 +1245,16 @@ public final class GUI extends Widget {
                 boolean doStop = !continuous;
                 counter = TIMER_COUNTER_IN_CALLBACK;
                 doCallback();
+                if(counter == TIMER_COUNTER_DO_STOP) {
+                    counter = 0;
+                    return false;
+                }
                 if(doStop && counter != TIMER_COUNTER_DO_START) {
                     counter = 0;
-                    activeTimers.remove(this);
                     return false;
-                } else {
-                    // timer is already running
-                    counter = Math.max(1, newCounter + delay);
                 }
+                // timer is already running
+                counter = Math.max(1, newCounter + delay);
             } else {
                 counter = newCounter;
             }
