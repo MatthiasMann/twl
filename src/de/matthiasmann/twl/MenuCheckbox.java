@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,51 +29,49 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.BooleanModel;
+import de.matthiasmann.twl.model.ToggleButtonModel;
+import java.beans.PropertyChangeEvent;
+
 /**
- * A button which opens a popup menu. Can be inserted in another popup menu.
  *
  * @author Matthias Mann
  */
-public class SubMenu extends Button {
+public class MenuCheckbox extends MenuElement {
 
-    private final PopupMenu popupMenu;
+    private BooleanModel model;
 
-    public SubMenu() {
-        this.popupMenu = new PopupMenu(this);
-        
-        addCallback(new Runnable() {
-            public void run() {
-                buttonAction();
-            }
-        });
+    public MenuCheckbox() {
     }
 
-    public SubMenu(String text) {
-        this();
-        setText(text);
+    public MenuCheckbox(String name, BooleanModel model) {
+        super(name);
+        this.model = model;
     }
 
-    public PopupMenu getPopupMenu() {
-        return popupMenu;
+    public BooleanModel getModel() {
+        return model;
+    }
+
+    public void setModel(BooleanModel model) {
+        BooleanModel oldModel = this.model;
+        this.model = model;
+        firePropertyChange("model", oldModel, model);
     }
 
     @Override
-    public void insertChild(Widget child, int index) throws IndexOutOfBoundsException {
-        if(child instanceof SubMenu) {
-            throw new IllegalArgumentException("SubMenu must be added to the contained PopupMenu");
-        }
-        super.insertChild(child, index);
+    protected Widget createMenuWidget(MenuManager mm, int level) {
+        MenuBtn btn = new MenuBtn() {
+            @Override
+            public void propertyChange(PropertyChangeEvent evt) {
+                super.propertyChange(evt);
+                ((ToggleButtonModel)getModel()).setModel(model);
+            }
+        };
+        btn.setModel(new ToggleButtonModel(model));
+        setWidgetTheme(btn, "checkbox");
+        btn.addCallback(mm.getCloseCallback());
+        return btn;
     }
 
-    protected void buttonAction() {
-        popupMenu.showPopup(getRight(), getY());
-    }
-
-    protected PopupMenu getParentPopupMenu() {
-        Widget parent = getParent();
-        if(!(parent instanceof PopupMenu)) {
-            return null;
-        }
-        return (PopupMenu)parent;
-    }
 }

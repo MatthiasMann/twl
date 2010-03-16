@@ -780,6 +780,12 @@ public final class GUI extends Widget {
         getTopPane().routePopupEvent(event);
     }
 
+    void resendLastMouseMove() {
+        if(!dragActive) {
+            sendMouseEvent(Event.Type.MOUSE_MOVED, null);
+        }
+    }
+    
     void openPopup(PopupWindow popup) {
         if(popup.getParent() == this) {
             closePopup(popup);

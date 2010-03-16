@@ -78,7 +78,7 @@ public class EditField extends Widget {
     private char passwordChar;
     private Object errorMsg;
     private Callback[] callbacks;
-    private PopupMenu popupMenu;
+    private Menu popupMenu;
     private boolean textLongerThenWidget;
 
     private InfoWindow autoCompletionWindow;
@@ -555,47 +555,35 @@ public class EditField extends Widget {
             popupMenu = createPopupMenu();
         }
         if(popupMenu != null) {
-            popupMenu.showPopup(evt.getMouseX(), evt.getMouseY());
+            popupMenu.openPopupMenu(this, evt.getMouseX(), evt.getMouseY());
         }
     }
 
-    protected PopupMenu createPopupMenu() {
-        Button btnCut = new Button("cut");
-        btnCut.addCallback(new Runnable() {
+    protected Menu createPopupMenu() {
+        Menu menu = new Menu();
+        menu.add("cut", new Runnable() {
             public void run() {
                 cutToClipboard();
             }
         });
-
-        Button btnCopy = new Button("copy");
-        btnCopy.addCallback(new Runnable() {
+        menu.add("copy", new Runnable() {
             public void run() {
                 copyToClipboard();
             }
         });
-
-        Button btnPaste = new Button("paste");
-        btnPaste.addCallback(new Runnable() {
+        menu.add("paste", new Runnable() {
             public void run() {
                 pasteFromClipboard();
             }
         });
-
-        Button btnClear = new Button("clear");
-        btnClear.addCallback(new Runnable() {
+        menu.addSpacer();
+        menu.add("clear", new Runnable() {
             public void run() {
                 if(!isReadOnly()) {
                     setText("");
                 }
             }
         });
-
-        PopupMenu menu = new PopupMenu(this);
-        menu.add(btnCut);
-        menu.add(btnCopy);
-        menu.add(btnPaste);
-        menu.addSpacer();
-        menu.add(btnClear);
         return menu;
     }
 

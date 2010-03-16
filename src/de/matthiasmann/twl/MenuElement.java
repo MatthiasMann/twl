@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
@@ -126,9 +127,36 @@ public abstract class MenuElement {
         }
     }
 
-    void setWidgetTheme(Widget w) {
+    void setWidgetTheme(Widget w, String defaultTheme) {
         if(theme != null) {
             w.setTheme(theme);
+        } else {
+            w.setTheme(defaultTheme);
         }
     }
+
+    class MenuBtn extends Button implements PropertyChangeListener {
+        public MenuBtn() {
+            super(MenuElement.this.getName());
+            setEnabled(MenuElement.this.isEnabled());
+        }
+
+        @Override
+        protected void afterAddToGUI(GUI gui) {
+            super.afterAddToGUI(gui);
+            MenuElement.this.addPropertyChangeListener(this);
+        }
+
+        @Override
+        protected void beforeRemoveFromGUI(GUI gui) {
+            MenuElement.this.removePropertyChangeListener(this);
+            super.beforeRemoveFromGUI(gui);
+        }
+
+        public void propertyChange(PropertyChangeEvent evt) {
+            setEnabled(MenuElement.this.isEnabled());
+            setText(MenuElement.this.getName());
+        }
+    }
+
 }

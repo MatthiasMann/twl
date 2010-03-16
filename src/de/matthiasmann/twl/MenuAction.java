@@ -59,14 +59,13 @@ public class MenuAction extends MenuElement {
 
     @Override
     protected Widget createMenuWidget(MenuManager mm, int level) {
-        Button b = new Button(getName());
-        setWidgetTheme(b);
+        Button b = new MenuBtn();
+        setWidgetTheme(b, "button");
 
         if(cb != null) {
             b.addCallback(cb);
         }
         b.addCallback(mm.getCloseCallback());
-        b.setEnabled(isEnabled());
         
         return b;
     }

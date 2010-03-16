@@ -38,8 +38,7 @@ public class MenuSpacer extends MenuElement {
     @Override
     protected Widget createMenuWidget(MenuManager mm, int level) {
         Widget w = new Widget();
-        w.setTheme("spacer");
-        setWidgetTheme(w);
+        setWidgetTheme(w, "spacer");
         return w;
     }
 

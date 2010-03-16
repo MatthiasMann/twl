@@ -128,9 +128,13 @@ public class MenuManager extends PopupWindow {
 
     @Override
     public void closePopup() {
+        GUI gui = getGUI();
         super.closePopup();
         removeAllChildren();
         popups.clear();
+        if(gui != null) {
+            gui.resendLastMouseMove();
+        }
     }
 
     @Override

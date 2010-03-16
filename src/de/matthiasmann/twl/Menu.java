@@ -29,8 +29,7 @@
  */
 package de.matthiasmann.twl;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
+import de.matthiasmann.twl.model.BooleanModel;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -87,6 +86,10 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         return add(new MenuAction(name, cb));
     }
 
+    public Menu add(String name, BooleanModel model) {
+        return add(new MenuCheckbox(name, model));
+    }
+    
     public Menu addSpacer() {
         return add(new MenuSpacer());
     }
@@ -95,7 +98,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
     protected Widget createMenuWidget(MenuManager mm, int level) {
         SubMenuBtn smb = new SubMenuBtn(mm, level);
         smb.setEnabled(isEnabled());
-        setWidgetTheme(smb);
+        setWidgetTheme(smb, "submenu");
         return smb;
     }
 
@@ -108,13 +111,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
 
     public Widget createMenuBar() {
         DialogLayout l = new DialogLayout();
-
-        String theme = getTheme();
-        if(theme != null) {
-            l.setTheme(theme);
-        } else {
-            l.setTheme("menubar");
-        }
+        setWidgetTheme(l, "menubar");
 
         MenuManager mm = new MenuManager(l, true);
         Widget[] widgets = createWidgets(mm, 0);
@@ -181,15 +178,12 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         }
     }
     
-    class SubMenuBtn extends Button implements Runnable, PropertyChangeListener {
+    class SubMenuBtn extends MenuBtn implements Runnable {
         private final MenuManager mm;
         private final int level;
         private Timer timer;
 
         public SubMenuBtn(MenuManager mm, int level) {
-            super(Menu.this.getName());
-            setTheme("submenu");
-            
             this.mm = mm;
             this.level = level;
             
@@ -210,14 +204,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         }
 
         @Override
-        protected void afterAddToGUI(GUI gui) {
-            super.afterAddToGUI(gui);
-            Menu.this.addPropertyChangeListener("enabled", this);
-        }
-
-        @Override
         protected void beforeRemoveFromGUI(GUI gui) {
-            Menu.this.removePropertyChangeListener("enabled", this);
             stopTimer();
             timer = null;
             super.beforeRemoveFromGUI(gui);
@@ -245,10 +232,6 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         public void run() {
             stopTimer();
             mm.openSubMenu(level, Menu.this, this, true);
-        }
-
-        public void propertyChange(PropertyChangeEvent evt) {
-            setEnabled(Menu.this.isEnabled());
         }
     }
 }
