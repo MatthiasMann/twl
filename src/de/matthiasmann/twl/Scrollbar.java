@@ -259,6 +259,10 @@ public class Scrollbar extends Widget {
         return btnDownRight.getModel().isArmed();
     }
 
+    public boolean isThumbDragged() {
+        return thumb.getModel().isPressed();
+    }
+
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
