@@ -44,6 +44,10 @@ public class MenuCheckbox extends MenuElement {
     public MenuCheckbox() {
     }
 
+    public MenuCheckbox(BooleanModel model) {
+        this.model = model;
+    }
+
     public MenuCheckbox(String name, BooleanModel model) {
         super(name);
         this.model = model;
