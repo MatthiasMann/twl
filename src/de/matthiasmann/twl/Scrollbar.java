@@ -263,6 +263,14 @@ public class Scrollbar extends Widget {
         return thumb.getModel().isPressed();
     }
 
+    public void setThumbTooltipContent(Object tooltipContent) {
+        thumb.setTooltipContent(tooltipContent);
+    }
+
+    public Object getThumbTooltipContent() {
+        return thumb.getTooltipContent();
+    }
+    
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
