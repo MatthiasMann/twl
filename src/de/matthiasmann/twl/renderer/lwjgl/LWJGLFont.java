@@ -77,6 +77,7 @@ public class LWJGLFont implements Font {
         int offsetX = parseInt(params.get("offsetX"), 0);
         int offsetY = parseInt(params.get("offsetY"), 0);
         int style = 0;
+        int underlineOffset = parseInt(params.get("underlineOffset"), 0);
         Color color = Color.parserColor(colorStr);
         if(color == null) {
             throw new IllegalArgumentException("unknown color name");
@@ -87,7 +88,7 @@ public class LWJGLFont implements Font {
         if(parseBoolean(params.get("linethrough"))) {
             style |= STYLE_LINETHROUGH;
         }
-        FontState p = new FontState(cond, color, offsetX, offsetY, style);
+        FontState p = new FontState(cond, color, offsetX, offsetY, style, underlineOffset);
         return p;
     }
 
@@ -168,16 +169,16 @@ public class LWJGLFont implements Font {
 
     void drawLines(FontState fontState, int x, int y, int[] info, int numLines) {
         if((fontState.style & STYLE_UNDERLINE) != 0) {
-            font.drawMultiLineLines(x, y + font.getBaseLine(), info, numLines);
+            font.drawMultiLineLines(x, y+font.getBaseLine()+fontState.underlineOffset, info, numLines);
         }
         if((fontState.style & STYLE_LINETHROUGH) != 0) {
-            font.drawMultiLineLines(x, y + font.getLineHeight()/2, info, numLines);
+            font.drawMultiLineLines(x, y+font.getLineHeight()/2, info, numLines);
         }
     }
 
     void drawLine(FontState fontState, int x, int y, int width) {
         if((fontState.style & STYLE_UNDERLINE) != 0) {
-            font.drawLine(x, y+font.getBaseLine(), x + width);
+            font.drawLine(x, y+font.getBaseLine()+fontState.underlineOffset, x + width);
         }
         if((fontState.style & STYLE_LINETHROUGH) != 0) {
             font.drawLine(x, y+font.getLineHeight()/2, x + width);
@@ -242,13 +243,15 @@ public class LWJGLFont implements Font {
         final int offsetX;
         final int offsetY;
         final int style;
+        final int underlineOffset;
 
-        public FontState(StateExpression condition, Color color, int offsetX, int offsetY, int style) {
+        public FontState(StateExpression condition, Color color, int offsetX, int offsetY, int style, int underlineOffset) {
             this.condition = condition;
             this.color = color;
             this.offsetX = offsetX;
             this.offsetY = offsetY;
             this.style = style;
+            this.underlineOffset = underlineOffset;
         }
     }
 }
