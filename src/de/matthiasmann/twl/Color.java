@@ -49,7 +49,7 @@ public final class Color {
     public static final Color FUCHSIA = new Color(0xFFFF00FF);
     public static final Color GREEN = new Color(0xFF008000);
     public static final Color LIME = new Color(0xFF00FF00);
-    public static final Color OLVIVE = new Color(0xFF808000);
+    public static final Color OLIVE = new Color(0xFF808000);
     public static final Color ORANGE = new Color(0xFFFFA500);
     public static final Color YELLOW = new Color(0xFFFFFF00);
     public static final Color NAVY = new Color(0xFF000080);
