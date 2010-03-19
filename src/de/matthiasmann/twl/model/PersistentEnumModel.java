@@ -44,6 +44,10 @@ public class PersistentEnumModel<T extends Enum<T>> extends AbstractEnumModel<T>
     private final String prefKey;
     
     private T value;
+
+    public PersistentEnumModel(Preferences prefs, String prefKey, T defaultValue) {
+        this(prefs, prefKey, defaultValue.getDeclaringClass(), defaultValue);
+    }
     
     public PersistentEnumModel(Preferences prefs, String prefKey, Class<T> enumClass, T defaultValue) {
         super(enumClass);
