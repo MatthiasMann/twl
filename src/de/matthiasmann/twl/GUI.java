@@ -102,7 +102,7 @@ public final class GUI extends Widget {
     private final Label tooltipLabel;
     private Widget tooltipOwner;
     
-    private final ArrayList<TimerImpl> activeTimers;
+    final ArrayList<TimerImpl> activeTimers;
     private final ArrayList<Runnable> invokeLaterQueue;
 
     /**

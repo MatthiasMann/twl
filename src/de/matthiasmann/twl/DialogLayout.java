@@ -746,7 +746,7 @@ public class DialogLayout extends Widget {
         }
     }
 
-    private static final Gap NO_GAP = new Gap(0,0,32767);
+    static final Gap NO_GAP = new Gap(0,0,32767);
 
     private class NamedGapSpring extends Spring {
         final String name;

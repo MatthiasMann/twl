@@ -287,17 +287,10 @@ public class BoxLayout extends Widget {
     @Override
     protected void layout() {
         if(getNumChildren() > 0) {
-            switch(direction) {
-            case HORIZONTAL:
+            if(direction == Direction.HORIZONTAL) {
                 layoutHorizontal(this, spacing, alignment, scroll);
-                break;
-                
-            case VERTICAL:
+            } else {
                 layoutVertical(this, spacing, alignment, scroll);
-                break;
-                
-            default:
-                throw new IllegalStateException(direction.toString());
             }
         }
     }

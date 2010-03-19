@@ -69,10 +69,10 @@ public class MenuCheckbox extends MenuElement {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
                 super.propertyChange(evt);
-                ((ToggleButtonModel)getModel()).setModel(model);
+                ((ToggleButtonModel)getModel()).setModel(MenuCheckbox.this.getModel());
             }
         };
-        btn.setModel(new ToggleButtonModel(model));
+        btn.setModel(new ToggleButtonModel(getModel()));
         setWidgetTheme(btn, "checkbox");
         btn.addCallback(mm.getCloseCallback());
         return btn;

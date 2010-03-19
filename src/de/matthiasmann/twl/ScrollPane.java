@@ -52,8 +52,8 @@ public class ScrollPane extends Widget {
         public void setScrollPosition(int scrollPosX, int scrollPosY);
     }
     
-    private final Scrollbar scrollbarH;
-    private final Scrollbar scrollbarV;
+    final Scrollbar scrollbarH;
+    final Scrollbar scrollbarV;
     private final ContentArea contentArea;
     private DraggableButton dragButton;
     private Widget content;

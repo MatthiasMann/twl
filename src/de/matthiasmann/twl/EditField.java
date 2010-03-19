@@ -59,7 +59,7 @@ public class EditField extends Widget {
         public void callback(int key);
     }
 
-    private final StringBuilder editBuffer;
+    final StringBuilder editBuffer;
     private final TextRenderer textRenderer;
     private PasswordMasker passwordMasking;
     private Runnable modelChangeListener;
@@ -67,14 +67,14 @@ public class EditField extends Widget {
     private boolean readOnly;
 
     private int cursorPos;
-    private int scrollPos;
-    private int selectionStart;
-    private int selectionEnd;
+    int scrollPos;
+    int selectionStart;
+    int selectionEnd;
     private int maxTextLength = Short.MAX_VALUE;
 
     private int columns = 5;
     private Image cursorImage;
-    private Image selectionImage;
+    Image selectionImage;
     private char passwordChar;
     private Object errorMsg;
     private Callback[] callbacks;

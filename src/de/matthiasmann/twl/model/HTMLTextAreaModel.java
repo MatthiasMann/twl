@@ -565,7 +565,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     static class ListElementImpl extends ElementImpl implements ListElement {
-        private final ArrayList<Element> elements;
+        final ArrayList<Element> elements;
 
         public ListElementImpl(StyleInfo style) {
             super(style);

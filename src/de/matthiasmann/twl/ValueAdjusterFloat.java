@@ -211,18 +211,9 @@ public class ValueAdjusterFloat extends ValueAdjuster {
         return NumberFormat.getNumberInstance(locale).parse(value).floatValue();
     }
 
-    private void syncWithModel() {
+    protected void syncWithModel() {
         cancelEdit();
         this.value = model.getValue();
         setDisplayText();
-    }
-
-    class ModelCallback implements Runnable {
-        ModelCallback() {
-        }
-
-        public void run() {
-            syncWithModel();
-        }
     }
 }

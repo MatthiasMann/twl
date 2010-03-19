@@ -78,7 +78,7 @@ public class ThemeManager {
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
     private final HashMap<String, InputMapImpl> inputMaps;
-    private final HashMap<String, Object> constants;
+    final HashMap<String, Object> constants;
     private final MathInterpreter mathInterpreter;
     private Font defaultFont;
     private Font firstFont;

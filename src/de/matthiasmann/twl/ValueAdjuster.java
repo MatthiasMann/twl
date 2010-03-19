@@ -80,35 +80,19 @@ public abstract class ValueAdjuster extends Widget {
 
         timerCallback = new Runnable() {
             public void run() {
-                timer.setDelay(REPEAT_DELAY);
-                onTimer();
+                onTimer(REPEAT_DELAY);
             }
         };
 
         decButton.getModel().addStateCallback(cbUpdateTimer);
         incButton.getModel().addStateCallback(cbUpdateTimer);
-        label.addCallback(new Runnable() {
-            public void run() {
-                startEdit();
-            }
-        });
-        label.setListener(new DraggableButton.DragListener() {
-            public void dragStarted() {
-                onDragStart();
-            }
-            public void dragged(int deltaX, int deltaY) {
-                onDragUpdate(deltaX);
-            }
-            public void dragStopped() {
-            }
-        });
+
+        CB cb = new CB();
+        label.addCallback(cb);
+        label.setListener(cb);
         
         editField.setVisible(false);
-        editField.addCallback(new EditField.Callback() {
-            public void callback(int key) {
-                handleEditCallback(key);
-            }
-        });
+        editField.addCallback(cb);
         
         add(label);
         add(editField);
@@ -267,7 +251,8 @@ public abstract class ValueAdjuster extends Widget {
 
     protected abstract String formatText();
 
-    void onTimer() {
+    void onTimer(int nextDelay) {
+        timer.setDelay(nextDelay);
         if(incButton.getModel().isArmed()) {
             cancelEdit();
             doIncrement();
@@ -281,8 +266,7 @@ public abstract class ValueAdjuster extends Widget {
         if(timer != null) {
             if(incButton.getModel().isArmed() || decButton.getModel().isArmed()) {
                 if(!timer.isRunning()) {
-                    onTimer();
-                    timer.setDelay(INITIAL_DELAY);
+                    onTimer(INITIAL_DELAY);
                     timer.start();
                 }
             } else {
@@ -365,6 +349,31 @@ public abstract class ValueAdjuster extends Widget {
             
         default:
             editField.setErrorMessage(validateEdit(editField.getText()));
+        }
+    }
+    
+    protected abstract void syncWithModel();
+    
+    class ModelCallback implements Runnable {
+        public void run() {
+            syncWithModel();
+        }
+    }
+
+    class CB implements Runnable, DraggableButton.DragListener, EditField.Callback {
+        public void run() {
+            startEdit();
+        }
+        public void dragStarted() {
+            onDragStart();
+        }
+        public void dragged(int deltaX, int deltaY) {
+            onDragUpdate(deltaX);
+        }
+        public void dragStopped() {
+        }
+        public void callback(int key) {
+            handleEditCallback(key);
         }
     }
 }

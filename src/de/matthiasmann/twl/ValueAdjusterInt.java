@@ -171,18 +171,10 @@ public class ValueAdjusterInt extends ValueAdjuster {
         return Integer.toString(value);
     }
 
-    private void syncWithModel() {
+    protected void syncWithModel() {
         cancelEdit();
         this.value = model.getValue();
         setDisplayText();
     }
     
-    class ModelCallback implements Runnable {
-        ModelCallback() {
-        }
-        
-        public void run() {
-            syncWithModel();
-        }
-    }
 }

@@ -417,7 +417,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
         final TintState prev;
         TintState next;
-        private float r,g,b,a;
+        float r,g,b,a;
 
         public TintState() {
             this.prev = this;

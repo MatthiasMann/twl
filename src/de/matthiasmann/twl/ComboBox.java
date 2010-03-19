@@ -50,8 +50,8 @@ public class ComboBox<T> extends ComboBoxBase {
     private Runnable[] selectionChangedListeners;
 
     private ListModel.ChangeListener modelChangeListener;
-    private boolean computeWidthFromModel;
-    private int modelWidth = INVALID_WIDTH;
+    boolean computeWidthFromModel;
+    int modelWidth = INVALID_WIDTH;
     
     public ComboBox(ListModel<T> model) {
         this();

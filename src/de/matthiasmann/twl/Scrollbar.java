@@ -122,8 +122,7 @@ public class Scrollbar extends Widget {
         
         timerCallback = new Runnable() {
             public void run() {
-                timer.setDelay(REPEAT_DELAY);
-                onTimer();
+                onTimer(REPEAT_DELAY);
             }
         };
         
@@ -388,7 +387,8 @@ public class Scrollbar extends Widget {
         return current;
     }
     
-    void onTimer() {
+    void onTimer(int nextDelay) {
+        timer.setDelay(nextDelay);
         if(trackClicked != 0) {
             int thumbPos;
             if(orientation == Orientation.HORIZONTAL) {
@@ -412,8 +412,7 @@ public class Scrollbar extends Widget {
                     btnUpLeft.getModel().isArmed() ||
                     btnDownRight.getModel().isArmed()) {
                 if(!timer.isRunning()) {
-                    onTimer();
-                    timer.setDelay(INITIAL_DELAY);
+                    onTimer(INITIAL_DELAY);
                     timer.start();
                 }
             } else {
