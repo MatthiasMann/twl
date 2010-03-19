@@ -50,21 +50,21 @@ public class OptionBooleanModel extends HasCallback implements BooleanModel {
      * Creates a new OptionBooleanModel with the specified IntegerModel and
      * option code.
      *
-     * @param opentionState the IntegerModel which stores the current active option
+     * @param optionState the IntegerModel which stores the current active option
      * @param optionCode the option code of this option in the IntegerModel
      */
-    public OptionBooleanModel(IntegerModel opentionState, int optionCode) {
-        if(opentionState == null) {
-            throw new NullPointerException("opentionState");
+    public OptionBooleanModel(IntegerModel optionState, int optionCode) {
+        if(optionState == null) {
+            throw new NullPointerException("optionState");
         }
-        if(optionCode < opentionState.getMinValue() ||
-                optionCode > opentionState.getMaxValue()) {
+        if(optionCode < optionState.getMinValue() ||
+                optionCode > optionState.getMaxValue()) {
             throw new IllegalArgumentException("optionCode");
         }
-        this.optionState = opentionState;
+        this.optionState = optionState;
         this.optionCode = optionCode;
-        this.value = opentionState.getValue() == optionCode;
-        opentionState.addCallback(new Runnable() {
+        this.value = optionState.getValue() == optionCode;
+        optionState.addCallback(new Runnable() {
             public void run() {
                 optionStateChanged();
             }
