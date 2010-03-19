@@ -311,10 +311,10 @@ public class EditField extends Widget {
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
-        applayThemeEditField(themeInfo);
+        applyThemeEditField(themeInfo);
     }
 
-    protected void applayThemeEditField(ThemeInfo themeInfo) {
+    protected void applyThemeEditField(ThemeInfo themeInfo) {
         cursorImage = themeInfo.getImage("cursor");
         selectionImage = themeInfo.getImage("selection");
         autoCompletionHeight = themeInfo.getParameter("autocompletion-height", 100);
