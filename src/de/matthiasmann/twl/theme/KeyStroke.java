@@ -43,6 +43,7 @@ final class KeyStroke {
     private static final int CTRL = 2;
     private static final int META = 4;
     private static final int ALT = 8;
+    private static final int CMD = 20;  // special: CMD is LMETA so META is also set ...
     
     private final int modifier;
     private final int keyCode;
@@ -105,6 +106,8 @@ final class KeyStroke {
                 modifers |= SHIFT;
             } else if("meta".equalsIgnoreCase(part)) {
                 modifers |= META;
+            } else if("cmd".equalsIgnoreCase(part)) {
+                modifers |= CMD;
             } else if("alt".equalsIgnoreCase(part)) {
                 modifers |= ALT;
             } else if("typed".equalsIgnoreCase(part)) {
@@ -138,6 +141,9 @@ final class KeyStroke {
         }
         if((eventModifiers & Event.MODIFIER_META) != 0) {
             modifiers |= META;
+        }
+        if((eventModifiers & Event.MODIFIER_LMETA) != 0) {
+            modifiers |= CMD;
         }
         if((eventModifiers & Event.MODIFIER_ALT) != 0) {
             modifiers |= ALT;
