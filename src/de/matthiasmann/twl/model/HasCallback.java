@@ -60,10 +60,14 @@ public class HasCallback {
     }
 
     /**
-     * Calls all callbacks in reverse order. The callback is allowed to
-     * remove itself from the list but not others.
-     * If a new callback is added while callbacks are executed then the
-     * new callback will not be called.
+     * Calls all registered callbacks.
+     *
+     * Callbacks can call {@code addCallback} or {@code removeCallback}.
+     * Modification to the callback list will only be visible to the next
+     * {@code doCallback} call.
+     *
+     * @see #addCallback(java.lang.Runnable)
+     * @see #removeCallback(java.lang.Runnable)
      */
     protected void doCallback() {
         CallbackSupport.fireCallbacks(callbacks);
