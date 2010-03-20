@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -40,6 +40,7 @@ import de.matthiasmann.twl.renderer.FontCache;
  */
 public class TextWidget extends Widget {
 
+    public static final String STATE_HOVER = "hover";
     public static final String STATE_TEXT_CHANGED = "textChanged";
     public static final String STATE_TEXT_SELECTION = "textSelection";
 
@@ -291,6 +292,12 @@ public class TextWidget extends Widget {
             }
         } else {
             destroy();
+        }
+    }
+
+    protected void handleMouseHover(Event evt) {
+        if(evt.isMouseEvent() && !hasSharedAnimationState()) {
+            getAnimationState().setAnimationState(STATE_HOVER, evt.getType() != Event.Type.MOUSE_EXITED);
         }
     }
 }

@@ -1132,6 +1132,21 @@ public class Widget {
     }
 
     /**
+     * Returns true if the animation state of this widget is shared with
+     * another widget.
+     * 
+     * A widget with a shared animation state should normally not modify
+     * the animation state itself. How a shared animation state is used
+     * depends on the widgets.
+     * 
+     * @return truen if it is shared
+     * @see #Widget(de.matthiasmann.twl.AnimationState) 
+     */
+    public boolean hasSharedAnimationState() {
+        return sharedAnimState;
+    }
+
+    /**
      * Returns the current tine animation object or null if none was set
      * @return the current tine animation object or null if none was set
      */

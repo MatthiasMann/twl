@@ -42,7 +42,6 @@ import org.lwjgl.input.Keyboard;
 public class Button extends TextWidget {
     
     public static final String STATE_ARMED = "armed";
-    public static final String STATE_HOVER = "hover";
     public static final String STATE_PRESSED = "pressed";
     public static final String STATE_SELECTED = "selected";
 

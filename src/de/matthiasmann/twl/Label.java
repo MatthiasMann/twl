@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -178,6 +178,7 @@ public class Label extends TextWidget {
 
     @Override
     public boolean handleEvent(Event evt) {
+        handleMouseHover(evt);
         if(evt.isMouseEvent()) {
             if(evt.getType() == Event.Type.MOUSE_CLICKED) {
                 handleClick(evt.getMouseClickCount() > 1);

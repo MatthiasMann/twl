@@ -624,6 +624,7 @@ public class ListBox<T> extends Widget {
 
         @Override
         protected boolean handleEvent(Event evt) {
+            handleMouseHover(evt);
             if(!evt.isMouseDragEvent()) {
                 if(handleListBoxEvent(evt)) {
                     return true;
