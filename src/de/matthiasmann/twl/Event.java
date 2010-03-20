@@ -184,6 +184,14 @@ public abstract class Event {
      */
     public abstract boolean hasKeyChar();
     
+    /**
+     * Checks if a characters is available and no keyboard modifiers are
+     * active (except these needed to generate that character).
+     * 
+     * @return true if it's a characzer without additional modifiers
+     */
+    public abstract boolean hasKeyCharNoModifiers();
+
     public abstract boolean isKeyRepeated();
     
     public abstract int getModifiers();

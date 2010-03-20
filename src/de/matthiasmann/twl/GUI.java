@@ -1190,6 +1190,15 @@ public final class GUI extends Widget {
             return type == Type.KEY_PRESSED && keyChar != Keyboard.CHAR_NONE;
         }
 
+        private static final int MODIFIER_ALTGR = MODIFIER_LCTRL | MODIFIER_RALT;
+        
+        @Override
+        public boolean hasKeyCharNoModifiers() {
+            return hasKeyChar() && (
+                    ((modifier & ~MODIFIER_SHIFT) == 0) ||
+                    ((modifier & ~MODIFIER_ALTGR) == 0));
+        }
+
         @Override
         public boolean isKeyRepeated() {
             return type == Type.KEY_PRESSED && keyRepeated;

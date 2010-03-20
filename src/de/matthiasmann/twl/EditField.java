@@ -427,13 +427,6 @@ public class EditField extends Widget {
         }
     }
 
-    /**
-     * Only allow shift and r-alt (AltGr on german keyboard) to enter text
-     * other modifiers are used for hot keys like ctrl-c etc
-     */
-    private static final int ALLOWED_CHAR_MODIFIERS =
-            Event.MODIFIER_RALT | Event.MODIFIER_SHIFT;
-
     @Override
     public boolean handleEvent(Event evt) {
         boolean selectPressed = (evt.getModifiers() & Event.MODIFIER_SHIFT) != 0;
@@ -494,7 +487,7 @@ public class EditField extends Widget {
                 }
                 return false;
             default:
-                if(evt.hasKeyChar() && ((evt.getModifiers() & ~ALLOWED_CHAR_MODIFIERS) == 0)) {
+                if(evt.hasKeyCharNoModifiers()) {
                     insertChar(evt.getKeyChar());
                     return true;
                 }
@@ -519,7 +512,7 @@ public class EditField extends Widget {
                 }
                 return false;
             default:
-                return evt.hasKeyChar() && ((evt.getModifiers() & ~ALLOWED_CHAR_MODIFIERS) == 0);
+                return evt.hasKeyCharNoModifiers();
             }
 
         case MOUSE_BTNUP:
