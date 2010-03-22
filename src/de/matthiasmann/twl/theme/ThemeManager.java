@@ -393,7 +393,7 @@ public class ThemeManager {
             while(!xmlp.isEndTag()) {
                 xmlp.require(XmlPullParser.START_TAG, null, null);
                 final String tagName = xmlp.getName();
-                final String name = xmlp.getAttributeValue(null, "name");
+                final String name = xmlp.getAttributeNotNull("name");
                 if("param".equals(tagName)) {
                     Map<String, ?> entries = parseParam(xmlp, baseUrl, "param", ti);
                     ti.params.putAll(entries);
@@ -420,7 +420,7 @@ public class ThemeManager {
     private Map<String, ?> parseParam(XMLParser xmlp, URL baseUrl, String tagName, ThemeInfoImpl parent) throws XmlPullParserException, IOException {
         try {
             xmlp.require(XmlPullParser.START_TAG, null, tagName);
-            String name = xmlp.getAttributeValue(null, "name");
+            String name = xmlp.getAttributeNotNull("name");
             xmlp.nextTag();
             String valueTagName = xmlp.getName();
             Object value = parseValue(xmlp, valueTagName, name, baseUrl, parent);
