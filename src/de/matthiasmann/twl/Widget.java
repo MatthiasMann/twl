@@ -288,6 +288,7 @@ public class Widget {
     public void setEnabled(boolean enabled) {
         if(this.locallyEnabled != enabled) {
             this.locallyEnabled = enabled;
+            firePropertyChange("locallyEnabled", !enabled, enabled);
             recursivelyEnabledChanged(getGUI(),
                     (parent != null) ? parent.enabled : true);
         }
@@ -1874,6 +1875,7 @@ public class Widget {
                 widgetDisabled();
                 forfeitKeyboardFocus();
             }
+            firePropertyChange("enabled", !enabled, enabled);
             if(children != null) {
                 for(int i=children.size() ; i-->0 ;) {
                     Widget child = children.get(i);
