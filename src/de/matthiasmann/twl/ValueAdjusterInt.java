@@ -99,18 +99,12 @@ public class ValueAdjusterInt extends ValueAdjuster {
 
     public void setModel(IntegerModel model) {
         if(this.model != model) {
-            if(this.model != null) {
-                this.model.removeCallback(modelCallback);
-            }
+            removeModelCallback();
             this.model = model;
             if(model != null) {
-                if(modelCallback == null) {
-                    modelCallback = new ModelCallback();
-                }
-                model.addCallback(modelCallback);
                 this.minValue = model.getMinValue();
                 this.maxValue = model.getMaxValue();
-                syncWithModel();
+                addModelCallback();
             }
         }
     }
@@ -176,5 +170,32 @@ public class ValueAdjusterInt extends ValueAdjuster {
         this.value = model.getValue();
         setDisplayText();
     }
-    
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        addModelCallback();
+    }
+
+    @Override
+    protected void beforeRemoveFromGUI(GUI gui) {
+        removeModelCallback();
+        super.beforeRemoveFromGUI(gui);
+    }
+
+    protected void removeModelCallback() {
+        if(model != null && modelCallback != null) {
+            model.removeCallback(modelCallback);
+        }
+    }
+
+    protected void addModelCallback() {
+        if(model != null && getGUI() != null) {
+            if(modelCallback == null) {
+                modelCallback = new ModelCallback();
+            }
+            model.addCallback(modelCallback);
+            syncWithModel();
+        }
+    }
 }

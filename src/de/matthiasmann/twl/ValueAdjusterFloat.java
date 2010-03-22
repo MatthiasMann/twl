@@ -115,18 +115,15 @@ public class ValueAdjusterFloat extends ValueAdjuster {
 
     public void setModel(FloatModel model) {
         if(this.model != model) {
+            removeModelCallback();
             if(this.model != null) {
                 this.model.removeCallback(modelCallback);
             }
             this.model = model;
             if(model != null) {
-                if(modelCallback == null) {
-                    modelCallback = new ModelCallback();
-                }
-                model.addCallback(modelCallback);
                 this.minValue = model.getMinValue();
                 this.maxValue = model.getMaxValue();
-                syncWithModel();
+                addModelCallback();
             }
         }
     }
@@ -215,5 +212,33 @@ public class ValueAdjusterFloat extends ValueAdjuster {
         cancelEdit();
         this.value = model.getValue();
         setDisplayText();
+    }
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        addModelCallback();
+    }
+
+    @Override
+    protected void beforeRemoveFromGUI(GUI gui) {
+        removeModelCallback();
+        super.beforeRemoveFromGUI(gui);
+    }
+
+    protected void removeModelCallback() {
+        if(model != null && modelCallback != null) {
+            model.removeCallback(modelCallback);
+        }
+    }
+
+    protected void addModelCallback() {
+        if(model != null && getGUI() != null) {
+            if(modelCallback == null) {
+                modelCallback = new ModelCallback();
+            }
+            model.addCallback(modelCallback);
+            syncWithModel();
+        }
     }
 }
