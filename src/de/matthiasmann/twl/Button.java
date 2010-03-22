@@ -122,13 +122,19 @@ public class Button extends TextWidget {
         if(model == null) {
             throw new NullPointerException("model");
         }
+        boolean isConnected = getGUI() != null;
         if(this.model != null) {
+            if(isConnected) {
+                this.model.disconnect();
+            }
             this.model.removeStateCallback(stateChangedCB);
         }
         this.model = model;
         this.model.addStateCallback(stateChangedCB);
+        if(isConnected) {
+            this.model.connect();
+        }
         modelStateChanged();
-        reapplyTheme();
     }
 
     @Override
@@ -173,6 +179,22 @@ public class Button extends TextWidget {
         themeText = themeInfo.getParameterValue("text", false, String.class);
         themeTooltip = themeInfo.getParameterValue("tooltip", false, String.class);
         updateText();
+    }
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        if(model != null) {
+            model.connect();
+        }
+    }
+
+    @Override
+    protected void beforeRemoveFromGUI(GUI gui) {
+        if(model != null) {
+            model.disconnect();
+        }
+        super.beforeRemoveFromGUI(gui);
     }
 
     @Override

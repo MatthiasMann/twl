@@ -42,6 +42,7 @@ public class ToggleButtonModel extends SimpleButtonModel {
     private BooleanModel model;
     private Runnable modelCallback;
     private boolean invertModelState;
+    private boolean isConnected;
     
     public ToggleButtonModel() {
     }
@@ -85,17 +86,9 @@ public class ToggleButtonModel extends SimpleButtonModel {
     public void setModel(BooleanModel model, boolean invertModelState) {
         this.invertModelState = invertModelState;
         if(this.model != model) {
-            if(this.model != null) {
-                this.model.removeCallback(modelCallback);
-            }
+            removeModelCallback();
             this.model = model;
-            if(model != null) {
-                if(modelCallback == null) {
-                    modelCallback = new ModelCallback();
-                }
-                model.addCallback(modelCallback);
-                syncWithModel();
-            }
+            addModelCallback();
         }
     }
 
@@ -105,6 +98,34 @@ public class ToggleButtonModel extends SimpleButtonModel {
 
     void syncWithModel() {
         setSelectedState(model.getValue() ^ invertModelState);
+    }
+
+    @Override
+    public void connect() {
+        isConnected = true;
+        addModelCallback();
+    }
+
+    @Override
+    public void disconnect() {
+        isConnected = false;
+        removeModelCallback();
+    }
+
+    private void addModelCallback() {
+        if(model != null && isConnected) {
+            if(modelCallback == null) {
+                modelCallback = new ModelCallback();
+            }
+            model.addCallback(modelCallback);
+            syncWithModel();
+        }
+    }
+
+    private void removeModelCallback() {
+        if(model != null) {
+            model.removeCallback(modelCallback);
+        }
     }
 
     private void setSelectedState(boolean selected) {

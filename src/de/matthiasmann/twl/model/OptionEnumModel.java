@@ -40,12 +40,10 @@ package de.matthiasmann.twl.model;
  * @author Matthias Mann
  * @param <T> The enum class
  */
-public class OptionEnumModel<T extends Enum<T>> extends HasCallback implements BooleanModel {
+public class OptionEnumModel<T extends Enum<T>> extends AbstractOptionModel {
 
     private final EnumModel<T> optionState;
     private final T optionCode;
-
-    private boolean value;
 
     public OptionEnumModel(EnumModel<T> optionState, T optionCode) {
         if(optionState == null) {
@@ -57,16 +55,10 @@ public class OptionEnumModel<T extends Enum<T>> extends HasCallback implements B
 
         this.optionState = optionState;
         this.optionCode = optionCode;
-        this.value = optionState.getValue() == optionCode;
-        optionState.addCallback(new Runnable() {
-            public void run() {
-                optionStateChanged();
-            }
-        });
     }
 
     public boolean getValue() {
-        return value;
+        return optionState.getValue() == optionCode;
     }
 
     /**
@@ -83,12 +75,14 @@ public class OptionEnumModel<T extends Enum<T>> extends HasCallback implements B
         }
     }
 
-    protected void optionStateChanged() {
-        boolean active = optionState.getValue() == optionCode;
-        if(value != active) {
-            value = active;
-            doCallback();
-        }
+    @Override
+    protected void installSrcCallback(Runnable cb) {
+        optionState.addCallback(cb);
     }
 
+    @Override
+    protected void removeSrcCallback(Runnable cb) {
+        optionState.removeCallback(cb);
+    }
+    
 }

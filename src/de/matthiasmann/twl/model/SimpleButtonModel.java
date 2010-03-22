@@ -143,5 +143,11 @@ public class SimpleButtonModel implements ButtonModel {
     public void removeStateCallback(Runnable callback) {
         stateCallbacks = CallbackSupport.removeCallbackFromList(stateCallbacks, callback);
     }
+
+    public void connect() {
+    }
+
+    public void disconnect() {
+    }
     
 }

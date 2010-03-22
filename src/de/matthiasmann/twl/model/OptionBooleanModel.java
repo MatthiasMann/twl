@@ -39,12 +39,10 @@ package de.matthiasmann.twl.model;
  *
  * @author Matthias Mann
  */
-public class OptionBooleanModel extends HasCallback implements BooleanModel {
+public class OptionBooleanModel extends AbstractOptionModel {
 
     private final IntegerModel optionState;
     private final int optionCode;
-
-    private boolean value;
 
     /**
      * Creates a new OptionBooleanModel with the specified IntegerModel and
@@ -63,16 +61,10 @@ public class OptionBooleanModel extends HasCallback implements BooleanModel {
         }
         this.optionState = optionState;
         this.optionCode = optionCode;
-        this.value = optionState.getValue() == optionCode;
-        optionState.addCallback(new Runnable() {
-            public void run() {
-                optionStateChanged();
-            }
-        });
     }
 
     public boolean getValue() {
-        return value;
+        return optionState.getValue() == optionCode;
     }
 
     /**
@@ -89,11 +81,13 @@ public class OptionBooleanModel extends HasCallback implements BooleanModel {
         }
     }
 
-    protected void optionStateChanged() {
-        boolean active = optionState.getValue() == optionCode;
-        if(value != active) {
-            value = active;
-            doCallback();
-        }
+    @Override
+    protected void installSrcCallback(Runnable cb) {
+        optionState.addCallback(cb);
+    }
+
+    @Override
+    protected void removeSrcCallback(Runnable cb) {
+        optionState.removeCallback(cb);
     }
 }
