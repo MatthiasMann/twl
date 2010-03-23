@@ -149,7 +149,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
 
     DialogLayout createPopup(MenuManager mm, int level, Widget btn) {
         Widget[] widgets = createWidgets(mm, level);
-        MenuPopup popup = new MenuPopup(btn);
+        MenuPopup popup = new MenuPopup(btn, level);
         if(popupTheme != null) {
             popup.setTheme(popupTheme);
         }
@@ -160,9 +160,11 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
 
     static class MenuPopup extends DialogLayout {
         private final Widget btn;
+        final int level;
 
-        MenuPopup(Widget btn) {
+        MenuPopup(Widget btn, int level) {
             this.btn = btn;
+            this.level = level;
         }
 
         @Override
@@ -176,12 +178,16 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
             btn.getAnimationState().setAnimationState(STATE_HAS_OPEN_MENUS, false);
             super.beforeRemoveFromGUI(gui);
         }
+
+        @Override
+        protected boolean handleEvent(Event evt) {
+            return super.handleEvent(evt) || (evt.isMouseEvent() && evt.getType() != Event.Type.MOUSE_WHEEL);
+        }
     }
     
     class SubMenuBtn extends MenuBtn implements Runnable {
         private final MenuManager mm;
         private final int level;
-        private Timer timer;
 
         public SubMenuBtn(MenuManager mm, int level) {
             this.mm = mm;
@@ -190,47 +196,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
             addCallback(this);
         }
 
-        @Override
-        public boolean handleEvent(Event evt) {
-            if(evt.getType() == Event.Type.MOUSE_ENTERED) {
-                if((level > 0 || mm.isOpen()) && !mm.isSubMenuOpen(Menu.this)) {
-                    startTimer();
-                }
-            }
-            if(evt.getType() == Event.Type.MOUSE_EXITED) {
-                stopTimer();
-            }
-            return super.handleEvent(evt);
-        }
-
-        @Override
-        protected void beforeRemoveFromGUI(GUI gui) {
-            stopTimer();
-            timer = null;
-            super.beforeRemoveFromGUI(gui);
-        }
-
-        private void startTimer() {
-            if(timer == null) {
-                GUI gui = getGUI();
-                if(gui == null) {
-                    return;
-                }
-                timer = gui.createTimer();
-            }
-            timer.setCallback(this);
-            timer.setDelay(300);
-            timer.start();
-        }
-
-        private void stopTimer() {
-            if(timer != null) {
-                timer.stop();
-            }
-        }
-
         public void run() {
-            stopTimer();
             mm.openSubMenu(level, Menu.this, this, true);
         }
     }

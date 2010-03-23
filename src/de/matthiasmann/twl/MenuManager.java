@@ -40,7 +40,11 @@ public class MenuManager extends PopupWindow {
     private final boolean isMenuBar;
     private final IdentityHashMap<MenuElement, Widget> popups;
     private final Runnable closeCB;
+    private final Runnable timerCB;
+
     private boolean mouseOverOwner;
+    private Widget lastMouseOverWidget;
+    private Timer timer;
 
     public MenuManager(Widget owner, boolean isMenuBar) {
         super(owner);
@@ -49,6 +53,11 @@ public class MenuManager extends PopupWindow {
         this.closeCB = new Runnable() {
             public void run() {
                 closePopup();
+            }
+        };
+        this.timerCB = new Runnable() {
+            public void run() {
+                popupTimer();
             }
         };
     }
@@ -64,6 +73,12 @@ public class MenuManager extends PopupWindow {
         }
         return false;
     }
+
+    void closeSubMenu(int level) {
+        while(getNumChildren() > level) {
+            closeSubMenu();
+        }
+    }
     
     Widget openSubMenu(int level, Menu menu, Widget btn, boolean setPosition) {
         Widget popup = popups.get(menu);
@@ -73,9 +88,7 @@ public class MenuManager extends PopupWindow {
         }
 
         if(popup.getParent() == this) {
-            while(getNumChildren() > level+1) {
-                closeSubMenu();
-            }
+            closeSubMenu(level+1);
             return popup;
         }
 
@@ -128,6 +141,7 @@ public class MenuManager extends PopupWindow {
 
     @Override
     public void closePopup() {
+        stopTimer();
         GUI gui = getGUI();
         super.closePopup();
         removeAllChildren();
@@ -138,21 +152,36 @@ public class MenuManager extends PopupWindow {
     }
 
     @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        timer = gui.createTimer();
+        timer.setDelay(300);
+        timer.setCallback(timerCB);
+    }
+
+    @Override
     protected void layout() {
     }
 
     @Override
     Widget routeMouseEvent(Event evt) {
-        Widget w = super.routeMouseEvent(evt);
-        if(w == this && isMenuBar && getOwner().isMouseInside(evt)) {
-            Widget w2 = getOwner().routeMouseEvent(evt);
-            if(w2 != null) {
+        mouseOverOwner = false;
+        Widget widget = super.routeMouseEvent(evt);
+        if(widget == this && isMenuBar && getOwner().isMouseInside(evt)) {
+            Widget menuBarWidget = getOwner().routeMouseEvent(evt);
+            if(menuBarWidget != null) {
                 mouseOverOwner = true;
-                return w2;
+                widget = menuBarWidget;
             }
         }
-        mouseOverOwner = false;
-        return w;
+
+        Widget mouseOverWidget = getWidgetUnderMouse();
+        if(lastMouseOverWidget != mouseOverWidget) {
+            lastMouseOverWidget = mouseOverWidget;
+            startTimer();
+        }
+        
+        return widget;
     }
 
     @Override
@@ -176,5 +205,33 @@ public class MenuManager extends PopupWindow {
             return getOwner().getWidgetUnderMouse();
         }
         return super.getWidgetUnderMouse();
+    }
+
+    void popupTimer() {
+        if(lastMouseOverWidget instanceof Menu.SubMenuBtn) {
+            ((Menu.SubMenuBtn)lastMouseOverWidget).run();
+        } else {
+            // search for the MenuPopup containing this widget
+            // it knows which menu level we need to close
+            for(Widget w=lastMouseOverWidget ; w!=null ; w=w.getParent()) {
+                if(w instanceof Menu.MenuPopup) {
+                    closeSubMenu(((Menu.MenuPopup)w).level);
+                    break;
+                }
+            }
+        }
+    }
+
+    void startTimer() {
+        if(timer != null) {
+            timer.stop();
+            timer.start();
+        }
+    }
+    
+    void stopTimer() {
+        if(timer != null) {
+            timer.stop();
+        }
     }
 }
