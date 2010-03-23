@@ -260,8 +260,14 @@ public class Widget {
     }
 
     /**
-     * Checks if this widget is enabled. Ignores the parents.
-     * @return true if this widget is enabled.
+     * Returns the local enabled state of this widget.
+     * 
+     * If one of it's parents is disabled then this widget will also be
+     * disabled even when it's local enabled state is true.
+     *
+     * @return the local enabled state.
+     * @see #isEnabled()
+     * @see #setEnabled(boolean)
      */
     public final boolean isLocallyEnabled() {
         return locallyEnabled;
@@ -270,20 +276,37 @@ public class Widget {
     /**
      * Checks if this widget and all it's parents are enabled.
      * If one of it's parents is disabled then it will return false.
+     * 
+     * This is the effective enabled state which is also represented as
+     * animation state with inverse polarity {@code STATE_DISABLED}
      *
-     * @return if this widget and all it's parents are enabled.
+     * If a widget is disabled it will not receive keyboard or mouse events
+     * except {@code MOUSE_ENTERED} and {@code MOUSE_EXITED}
+     *
+     * @return the effective enabled state
+     * @see #isEnabled()
+     * @see #setEnabled(boolean)
      */
     public final boolean isEnabled() {
         return enabled;
     }
 
     /**
-     * Sets the enabled state of that widget. It is also exposed as animation
-     * state but with inverse polarity as {@code STATE_DISABLED}.
+     * Sets the local enabled state of that widget. The effective enabled state
+     * of the widget is the effective enabled state of it's parent and it's
+     * local enabled state.
+     *
+     * The effective enabled state is exposed as animation state but with
+     * inverse polarity as {@code STATE_DISABLED}.
      *
      * On disabling the keyboard focus will be removed.
      *
-     * @param enabled
+     * If a widget is disabled it will not receive keyboard or mouse events
+     * except {@code MOUSE_ENTERED} and {@code MOUSE_EXITED}
+     *
+     * @param enabled true if the widget should be locally enabled
+     * @see #isEnabled()
+     * @see #isLocallyEnabled()
      */
     public void setEnabled(boolean enabled) {
         if(this.locallyEnabled != enabled) {
