@@ -1119,6 +1119,16 @@ public class Widget {
         }
         return false;
     }
+
+    /**
+     * If this widget currently has the keyboard focus, then the keyboard focus is removed.
+     * The focus wull be transferred to the parent widget.
+     */
+    public void giveupKeyboardFocus() {
+        if(parent != null && parent.focusChild == this) {
+            parent.requestKeyboardFocus(null);
+        }
+    }
     
     /**
      * Checks if this widget has the keyboard focus
@@ -1451,15 +1461,6 @@ public class Widget {
             animState.setAnimationState(STATE_HAS_FOCUSED_CHILD, focusChild != null);
         }
         return focusChild != null;
-    }
-
-    /**
-     * If this widget currently has the keyboard focus, then the keyboard focus is removed.
-     */
-    protected void forfeitKeyboardFocus() {
-        if(parent != null && parent.focusChild == this) {
-            parent.requestKeyboardFocus(null);
-        }
     }
     
     /**
@@ -1896,7 +1897,7 @@ public class Widget {
                     gui.widgetDisabled(this);
                 }
                 widgetDisabled();
-                forfeitKeyboardFocus();
+                giveupKeyboardFocus();
             }
             firePropertyChange("enabled", !enabled, enabled);
             if(children != null) {
