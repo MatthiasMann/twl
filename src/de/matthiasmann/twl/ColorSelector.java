@@ -39,6 +39,7 @@ import de.matthiasmann.twl.utils.TintAnimator;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
+import org.lwjgl.input.Keyboard;
 
 /**
  * A color selector widget
@@ -59,9 +60,11 @@ public class ColorSelector extends DialogLayout {
     private boolean useColorArea2D = true;
     private boolean showPreview = false;
     private boolean useLabels = true;
+    private boolean showHexEditField = false;
     private Runnable[] callbacks;
     private int currentColor;
     private ARGBModel[] argbModels;
+    private EditField hexColorEditField;
     private TintAnimator previewTintAnimator;
     private boolean recreateLayout;
 
@@ -115,6 +118,7 @@ public class ColorSelector extends DialogLayout {
             colorValues[i] = colorSpace.getDefaultValue(i);
         }
         updateAllColorAreas();
+        colorChanged();
     }
 
     public boolean isUseColorArea2D() {
@@ -158,6 +162,24 @@ public class ColorSelector extends DialogLayout {
         }
     }
 
+    public boolean isShowHexEditField() {
+        return showHexEditField;
+    }
+
+    /**
+     * Includes an edit field which allows to edit the color hex values in ARGB.
+     * Default is false.
+     *
+     * @param showHexEditField true if the edit field should be shown
+     */
+    public void setShowHexEditField(boolean showHexEditField) {
+        if(this.showHexEditField != showHexEditField) {
+            this.showHexEditField = showHexEditField;
+            recreateLayout = true;
+            invalidateLayout();
+        }
+    }
+
     public boolean isUseLabels() {
         return useLabels;
     }
@@ -195,6 +217,7 @@ public class ColorSelector extends DialogLayout {
         if(previewTintAnimator != null) {
             previewTintAnimator.setColor(getColor());
         }
+        updateHexEditField();
     }
 
     protected void setColor(int argb) {
@@ -337,6 +360,10 @@ public class ColorSelector extends DialogLayout {
             vertAreas.addWidget(area);
         }
 
+        if(showHexEditField && hexColorEditField == null) {
+            createHexColorEditField();
+        }
+
         if(showPreview) {
             if(previewTintAnimator == null) {
                 previewTintAnimator = new TintAnimator(new TintAnimator.GUITimeSource(this), getColor());
@@ -359,16 +386,39 @@ public class ColorSelector extends DialogLayout {
             label.setTheme("previewLabel");
             label.setLabelFor(preview);
 
-            horzAreas.addGroup(createParallelGroup().addWidget(label).addWidget(preview));
-            vertAreas.addGroup(createSequentialGroup().addGap().addWidget(label).addWidget(preview));
+            Group horz = createParallelGroup();
+            Group vert = createSequentialGroup();
+
+            horzAreas.addGroup(horz.addWidget(label).addWidget(preview));
+            vertAreas.addGroup(vert.addGap().addWidget(label).addWidget(preview));
+
+            if(showHexEditField) {
+                horz.addWidget(hexColorEditField);
+                vert.addGap().addWidget(hexColorEditField);
+            }
         }
 
-        setHorizontalGroup(createParallelGroup()
+        Group horzMainGroup = createParallelGroup()
                 .addGroup(horzAreas.addGap())
-                .addGroup(horzControlls));
-        setVerticalGroup(createSequentialGroup()
+                .addGroup(horzControlls);
+        Group vertMainGroup = createSequentialGroup()
                 .addGroup(vertAreas)
-                .addGroups(vertAdjuster).addGap());
+                .addGroups(vertAdjuster);
+
+        if(showHexEditField) {
+            if(hexColorEditField == null) {
+                createHexColorEditField();
+            }
+            
+            if(!showPreview) {
+                horzMainGroup.addWidget(hexColorEditField);
+                vertMainGroup.addWidget(hexColorEditField);
+            }
+
+            updateHexEditField();
+        }
+        setHorizontalGroup(horzMainGroup);
+        setVerticalGroup(vertMainGroup.addGap());
     }
 
     protected void updateAllColorAreas() {
@@ -380,6 +430,65 @@ public class ColorSelector extends DialogLayout {
         }
     }
 
+    private void createHexColorEditField() {
+        hexColorEditField = new EditField() {
+            @Override
+            protected void insertChar(char ch) {
+                if(isValid(ch)) {
+                    super.insertChar(ch);
+                }
+            }
+
+            @Override
+            public void insertText(String str) {
+                for(int i=0,n=str.length() ; i<n ; i++) {
+                    if(!isValid(str.charAt(i))) {
+                        StringBuilder sb = new StringBuilder(str);
+                        for(int j=n ; j-- >= i ;) {
+                            if(!isValid(sb.charAt(j))) {
+                                sb.deleteCharAt(j);
+                            }
+                        }
+                        str = sb.toString();
+                        break;
+                    }
+                }
+                super.insertText(str);
+            }
+
+            private boolean isValid(char ch) {
+                int digit = Character.digit(ch, 16);
+                return digit >= 0 && digit < 16;
+            }
+        };
+        hexColorEditField.setTheme("hexColorEditField");
+        hexColorEditField.setColumns(8);
+        hexColorEditField.addCallback(new EditField.Callback() {
+            public void callback(int key) {
+                if(key == Keyboard.KEY_ESCAPE) {
+                    updateHexEditField();
+                    return;
+                }
+                Color color = null;
+                try {
+                    color = Color.parserColor("#".concat(hexColorEditField.getText()));
+                    hexColorEditField.setErrorMessage(null);
+                } catch(Exception ex) {
+                    hexColorEditField.setErrorMessage("Invalid color format");
+                }
+                if(key == Keyboard.KEY_RETURN && color != null) {
+                    setColor(color);
+                }
+            }
+        });
+    }
+
+    void updateHexEditField() {
+        if(hexColorEditField != null) {
+            hexColorEditField.setText(String.format("%08X", currentColor));
+        }
+    }
+    
     private static final int IMAGE_SIZE = 64;
 
     class ColorValueModel extends AbstractFloatModel {
