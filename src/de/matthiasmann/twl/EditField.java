@@ -70,6 +70,8 @@ public class EditField extends Widget {
     int scrollPos;
     int selectionStart;
     int selectionEnd;
+    boolean pendingScrollToCursor;
+    boolean pendingScrollToCursorForce;
     private int maxTextLength = Short.MAX_VALUE;
 
     private int columns = 5;
@@ -651,8 +653,14 @@ public class EditField extends Widget {
     }
 
     protected void scrollToCursor(boolean force) {
-        int xpos = textRenderer.computeRelativeCursorPositionX(cursorPos);
         int renderWidth = textRenderer.getWidth() - 5;
+        if(renderWidth <= 0) {
+            pendingScrollToCursor = true;
+            pendingScrollToCursorForce = force;
+            return;
+        }
+        pendingScrollToCursor = false;
+        int xpos = textRenderer.computeRelativeCursorPositionX(cursorPos);
         if(xpos < scrollPos + 5) {
             scrollPos = Math.max(0, xpos - 5);
         } else if(force || xpos - scrollPos > renderWidth) {
@@ -779,6 +787,9 @@ public class EditField extends Widget {
 
         @Override
         protected void paintWidget(GUI gui) {
+            if(pendingScrollToCursor) {
+                scrollToCursor(pendingScrollToCursorForce);
+            }
             lastTextX = computeTextX();
             if(hasSelection() && hasFocusOrPopup()) {
                 if(selectionImage != null) {
