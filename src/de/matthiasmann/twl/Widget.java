@@ -216,7 +216,13 @@ public class Widget {
 
     /**
      * Returns the GUI root of this widget tree if it has one.
+     *
+     * Once a widget is added (indirectly) to a GUI object it will be part of
+     * that GUI tree.
+     *
      * @return the GUI root or null if the root is not a GUI instance.
+     * @see #afterAddToGUI(de.matthiasmann.twl.GUI)
+     * @see #beforeRemoveFromGUI(de.matthiasmann.twl.GUI)
      */
     public final GUI getGUI() {
         Widget root = getRootWidget();
@@ -441,7 +447,7 @@ public class Widget {
      * @param y the Y coordinate to test
      * @return true if it was inside
      */
-    public final boolean isInside(int x, int y) {
+    public boolean isInside(int x, int y) {
         return (x >= posX) && (y >= posY) && (x < posX + width) && (y < posY + height);
     }
 
@@ -453,13 +459,18 @@ public class Widget {
      * - positions of all children are updated
      * - positionChanged is called
      * - PropertyChangeEvent are fired for "x" and "y"
-     * 
+     *
+     * This method should only be called from within the layout() method of the
+     * parent. Otherwise it could lead to bad interaction with theming and result
+     * in a wrong position after the theme has been applied.
+     *
      * NOTE: Position is absolute in the widget's tree.
-     * 
+     *
      * @param x The new x position
      * @param y The new y position
      * @return true if the position was changed, false if new position == old position
      * @see #positionChanged()
+     * @see #layout()
      */
     public boolean setPosition(int x, int y) {
         int deltaX = x - posX;
@@ -494,13 +505,18 @@ public class Widget {
      * - the parent widget's childChangedSize is called
      * - sizeChanged is called
      * - PropertyChangeEvent are fired for "width" and "height"
-     * 
+     *
+     * This method should only be called from within the layout() method of the
+     * parent. Otherwise it could lead to bad interaction with theming and result
+     * in a wrong size after the theme has been applied.
+     *
      * @param width The new width (including border)
      * @param height The new height (including border)
      * @return true if the size was changed, false if new size == old size
      * @throws java.lang.IllegalArgumentException if the size is negative
      * @see #sizeChanged()
      * @see #childChangedSize(Widget)
+     * @see #layout()
      */
     public boolean setSize(int width, int height) {
         if(width < 0 || height < 0) {
@@ -845,7 +861,15 @@ public class Widget {
 
     /**
      * Sets whether paint() must be clipped to this Widget or not.
-     * 
+     *
+     * Clipping is performed for the whole widget and all it's children.
+     * The clip area is the outer area of the widget (it does include the border).
+     *
+     * If the widget theme has effects which extend outside of the widget (like
+     * shadow or glow) then clipping will also clip the this effect. A work
+     * around is to not apply clipping to the widget itself but to a child
+     * which will act as a clip container - this child may not need a theme.
+     *
      * @param clip true if clipping must be used - default is false
      **/
     public void setClip(boolean clip) {
