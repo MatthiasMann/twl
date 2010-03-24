@@ -140,11 +140,6 @@ public class Label extends TextWidget {
     }
 
     protected void applyThemeLabel(ThemeInfo themeInfo) {
-        Object themeTooltip = themeInfo.getParameterValue("tooltip", false);
-        if(themeTooltip != null) {
-            setTooltipContent(themeTooltip);
-        }
-        
         String themeText = themeInfo.getParameterValue("text", false, String.class);
         if(themeText != null) {
             setText(themeText);

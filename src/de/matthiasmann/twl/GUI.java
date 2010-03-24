@@ -711,7 +711,7 @@ public final class GUI extends Widget {
                         event.mouseX + TOOLTIP_OFFSET_X,
                         event.mouseY + TOOLTIP_OFFSET_Y,
                         widgetUnderMouse,
-                        widgetUnderMouse.getTooltipContent(),
+                        widgetUnderMouse.getTooltipContentAt(event.mouseX, event.mouseY),
                         Alignment.BOTTOMLEFT);
             } else {
                 hideTooltip();

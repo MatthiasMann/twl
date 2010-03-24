@@ -73,6 +73,7 @@ public class Widget {
     private Image background;
     private Image overlay;
     private Object tooltipContent;
+    private Object themeTooltipContent;
     private InputMap inputMap;
     private ActionMap actionMap;
     private TintAnimator tintAnimator;
@@ -1221,10 +1222,8 @@ public class Widget {
     }
 
     /**
-     * Automatic tooltip support.
-     * This function is called when the mouse is idle over the widget for a certain time.
-     *
-     * @return the tooltip message or null if no tooltip is desired.
+     * Returns the currently set tooltip content.
+     * @return the currently set tooltip content. Can be null.
      */
     public Object getTooltipContent() {
         return tooltipContent;
@@ -1235,15 +1234,14 @@ public class Widget {
      * it's refreshed with the new content.
      *
      * @param tooltipContent the new tooltip content.
+     * @see #updateTooltip()
+     * @see #getTooltipContent()
      */
     public void setTooltipContent(Object tooltipContent) {
         this.tooltipContent = tooltipContent;
-        GUI gui = getGUI();
-        if(gui != null) {
-            gui.requestToolTipUpdate(this);
-        }
+        updateTooltip();
     }
-
+    
     /**
      * Returns the current input map.
      * @return the current input map or null.
@@ -1314,6 +1312,7 @@ public class Widget {
         applyThemeMaxSize(themeInfo);
         applyThemeMouseCursor(themeInfo);
         applyThemeInputMap(themeInfo);
+        applyThemeTooltip(themeInfo);
     }
 
     protected void applyThemeBackground(ThemeInfo themeInfo) {
@@ -1346,6 +1345,57 @@ public class Widget {
 
     protected void applyThemeInputMap(ThemeInfo themeInfo) {
         setInputMap(themeInfo.getParameterValue("inputMap", false, InputMap.class));
+    }
+
+    protected void applyThemeTooltip(ThemeInfo themeInfo) {
+        themeTooltipContent = themeInfo.getParameterValue("tooltip", false);
+        if(tooltipContent == null) {
+            updateTooltip();
+        }
+    }
+
+    protected Object getThemeTooltipContent() {
+        return themeTooltipContent;
+    }
+
+    /**
+     * Automatic tooltip support.
+     *
+     * This function is called when the mouse is idle over the widget for a certain time.
+     *
+     * The default implementation returns the result from {@code getTooltipContent}
+     * if it is non null, otherwise the result from {@code getThemeTooltipContent}
+     * is returned.
+     *
+     * This method is not called if the tooltip is already open and the mouse is
+     * moved but does not leave this widget. If the tooltip depends on the mouse
+     * position then {@code updateTooltip} must be called from {@code handleEvent}.
+     *
+     * @param mouseX the mouse X coordinate
+     * @param mouseY the mouse Y coordinate
+     * @return the tooltip message or null if no tooltip is specified.
+     * @see #updateTooltip()
+     */
+    protected Object getTooltipContentAt(int mouseX, int mouseY) {
+        Object content = getTooltipContent();
+        if(content == null) {
+            content = getThemeTooltipContent();
+        }
+        return content;
+    }
+
+    /**
+     * Called by setTooltipContent and applyThemeTooltip.
+     * If this widget currently has an open tooltip then this tooltip is updated
+     * to show the new content.
+     *
+     * @see #getTooltipContent()
+     */
+    protected void updateTooltip() {
+        GUI gui = getGUI();
+        if(gui != null) {
+            gui.requestToolTipUpdate(this);
+        }
     }
 
     /**
