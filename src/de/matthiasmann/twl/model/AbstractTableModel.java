@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -38,6 +38,10 @@ import de.matthiasmann.twl.utils.CallbackSupport;
 public abstract class AbstractTableModel extends AbstractTableColumnHeaderModel implements TableModel {
 
     private ChangeListener[] callbacks;
+
+    public Object getTooltipContent(int row, int column) {
+        return null;
+    }
 
     public void addChangeListener(ChangeListener listener) {
         callbacks = CallbackSupport.addCallbackToList(callbacks, listener, ChangeListener.class);

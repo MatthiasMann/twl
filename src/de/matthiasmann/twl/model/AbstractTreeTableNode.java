@@ -49,7 +49,11 @@ public abstract class AbstractTreeTableNode implements TreeTableNode {
         assert getTreeTableModel() != null;
     }
 
-    public TreeTableNode getParent() {
+    public Object getTooltipContent(int column) {
+        return null;
+    }
+
+    public final TreeTableNode getParent() {
         return parent;
     }
 

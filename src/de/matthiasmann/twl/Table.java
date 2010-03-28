@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -80,6 +80,11 @@ public class Table extends TableBase {
     @Override
     protected TreeTableNode getNodeFromRow(int row) {
         return null;
+    }
+
+    @Override
+    protected Object getTooltipContentFromRow(int row, int column) {
+        return model.getTooltipContent(row, column);
     }
 
     class ModelChangeListener implements TableModel.ChangeListener {

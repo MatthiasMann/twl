@@ -81,6 +81,8 @@ public interface TableModel extends TableColumnHeaderModel {
 
     public Object getCell(int row, int column);
 
+    public Object getTooltipContent(int row, int column);
+    
     public void addChangeListener(ChangeListener listener);
 
     public void removeChangeListener(ChangeListener listener);

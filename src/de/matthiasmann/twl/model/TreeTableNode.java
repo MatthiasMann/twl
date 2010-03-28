@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -37,6 +37,8 @@ public interface TreeTableNode {
 
     public Object getData(int column);
 
+    public Object getTooltipContent(int column);
+    
     public TreeTableNode getParent();
 
     public boolean isLeaf();

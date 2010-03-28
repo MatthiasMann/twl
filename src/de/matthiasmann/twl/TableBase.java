@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -171,6 +171,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected static final int LAST_MOUSE_Y_OUTSIDE = Integer.MIN_VALUE;
     
     protected int lastMouseY = LAST_MOUSE_Y_OUTSIDE;
+    protected int lastMouseRow = -1;
+    protected int lastMouseColumn = -1;
 
     protected TableBase() {
         this.cellRenderers = new TypeMapping<CellRenderer>();
@@ -501,6 +503,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     @Override
+    protected Object getTooltipContentAt(int mouseX, int mouseY) {
+        // use cached row/column
+        if(lastMouseRow >= 0 && lastMouseRow < getNumRows() &&
+                lastMouseColumn >= 0 && lastMouseColumn < getNumColumns()) {
+            Object tooltip = getTooltipContentFromRow(lastMouseRow, lastMouseColumn);
+            if(tooltip != null) {
+                return tooltip;
+            }
+        }
+        return super.getTooltipContentAt(mouseX, mouseY);
+    }
+
+    @Override
     protected void layout() {
         final int innerWidth = getInnerWidth();
         final int innerHeight = Math.max(0, getInnerHeight() - columnHeaderHeight);
@@ -696,6 +711,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     protected abstract TreeTableNode getNodeFromRow(int row);
     protected abstract Object getCellData(int row, int column, TreeTableNode node);
+    protected abstract Object getTooltipContentFromRow(int row, int column);
 
     protected boolean isRowSelected(int row) {
         if(selectionManager != null) {
@@ -951,8 +967,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected int dragStartSumWidth;
 
     protected boolean handleMouseEvent(Event evt) {
-        if(evt.getType() == Event.Type.MOUSE_EXITED) {
+        final Event.Type evtType = evt.getType();
+
+        if(evtType == Event.Type.MOUSE_EXITED) {
             lastMouseY = LAST_MOUSE_Y_OUTSIDE;
+            lastMouseRow = -1;
+            lastMouseColumn = -1;
         } else {
             lastMouseY = evt.getMouseY();
         }
@@ -980,12 +1000,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
         boolean inHeader = isMouseInColumnHeader(evt.getMouseY());
         if(inHeader) {
-            int column = getColumnSeparatorUnderMouse(evt.getMouseX());
-            boolean fixedWidthMode = isFixedWidthMode();
+            final int column = getColumnSeparatorUnderMouse(evt.getMouseX());
+            final boolean fixedWidthMode = isFixedWidthMode();
+            
+            if(lastMouseRow != -1 || lastMouseColumn != -1) {
+                lastMouseRow = -1;
+                lastMouseColumn = -1;
+                updateTooltip();
+            }
+
             if(column >= 0 && (column < getNumColumns()-1 || !fixedWidthMode)) {
                 setMouseCursor(columnResizeCursor);
 
-                if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
+                if(evtType == Event.Type.MOUSE_BTNDOWN) {
                     int columnWidth = getColumnWidth(column);
                     dragColumn = column;
                     dragStartX = evt.getMouseX() - columnWidth;
@@ -996,18 +1023,25 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                         dragStartSumWidth = columnWidth + getColumnWidth(column+1);
                     }
                 }
-                if(evt.isMouseDragEvent()) {
-                    dragActive = true;
-                }
+
+                dragActive = evt.isMouseDragEvent();
                 return true;
             }
         } else {
-            int row = getRowUnderMouse(evt.getMouseY());
-            int column = getColumnUnderMouse(evt.getMouseX());
+            final int row = getRowUnderMouse(evt.getMouseY());
+            final int column = getColumnUnderMouse(evt.getMouseX());
+
+            if(lastMouseRow != row || lastMouseColumn != column) {
+                lastMouseRow = row;
+                lastMouseColumn = column;
+                updateTooltip();
+            }
+
             if(selectionManager != null) {
                 selectionManager.handleMouseEvent(row, column, evt);
             }
-            if(evt.getType() == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
+            
+            if(evtType == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
                 if(callbacks != null) {
                     for(Callback cb : callbacks) {
                         cb.mouseDoubleClicked(row, column);
@@ -1019,7 +1053,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         setMouseCursor(normalCursor);
 
         // let ScrollPane handle mouse wheel
-        return evt.getType() != Event.Type.MOUSE_WHEEL;
+        return evtType != Event.Type.MOUSE_WHEEL;
     }
 
     protected void columnHeaderClicked(int column) {

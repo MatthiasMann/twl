@@ -153,6 +153,14 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
             }
         }
 
+        public Object getTooltipContent(int column) {
+            StringBuilder sb = new StringBuilder();
+            sb.append(fsm.getPath(folder))
+                    .append("\nLast modified: ")
+                    .append(new Date(fsm.getLastModified(folder)));
+            return sb.toString();
+        }
+
         public TreeTableNode getChild(int idx) {
             return children[idx];
         }

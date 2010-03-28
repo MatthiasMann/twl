@@ -57,7 +57,11 @@ public abstract class AbstractTreeTableModel extends AbstractTableColumnHeaderMo
         return null;
     }
 
-    public TreeTableNode getParent() {
+    public Object getTooltipContent(int column) {
+        return null;
+    }
+
+    public final TreeTableNode getParent() {
         return null;
     }
 

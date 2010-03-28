@@ -277,6 +277,15 @@ public class TreeTable extends TableBase {
         return super.getCellRenderer(row, col, node);
     }
 
+    @Override
+    protected Object getTooltipContentFromRow(int row, int column) {
+        TreeTableNode node = getNodeFromRow(row);
+        if(node != null) {
+            return node.getTooltipContent(column);
+        }
+        return null;
+    }
+
     private boolean updateParentSizes(NodeState ns) {
         while(ns.expanded && ns.parent != null) {
             NodeState parent = ns.parent;
