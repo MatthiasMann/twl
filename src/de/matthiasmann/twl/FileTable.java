@@ -399,6 +399,17 @@ public class FileTable extends Table {
             }
         }
 
+        @Override
+        public Object getTooltipContent(int row, int column) {
+            Entry e = entries[row];
+            StringBuilder sb = new StringBuilder(e.name);
+            if(!e.isFolder) {
+                sb.append("\nSize: ").append(formatFileSize(e.size));
+            }
+            sb.append("\nLast modified: ").append(dateFormat.format(e.lastModified));
+            return sb.toString();
+        }
+
         public int getNumRows() {
             return entries.length;
         }
