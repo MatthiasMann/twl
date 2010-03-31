@@ -558,6 +558,7 @@ public class ListBox<T> extends Widget {
     
     protected static class ListBoxLabel extends TextWidget implements ListBoxDisplay {
         public static final String STATE_SELECTED = "selected";
+        public static final String STATE_EMPTY = "empty";
 
         private boolean selected;
         private CallbackWithReason<?>[] callbacks;
@@ -588,6 +589,7 @@ public class ListBox<T> extends Widget {
 
         public void setData(Object data) {
             setCharSequence((data == null) ? "" : data.toString());
+            getAnimationState().setAnimationState(STATE_EMPTY, data == null);
         }
 
         public Widget getWidget() {
