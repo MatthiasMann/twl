@@ -59,7 +59,8 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
         return fileFilter;
     }
 
-    public AutoCompletionResult collectSuggestions(String text, AutoCompletionResult prev) {
+    public AutoCompletionResult collectSuggestions(String text, int cursorPos, AutoCompletionResult prev) {
+        text = text.substring(0, cursorPos);
         int prefixLength = computePrefixLength(text);
         String prefix = text.substring(0, prefixLength);
         Object parent;
@@ -158,7 +159,8 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
         }
 
         @Override
-        public AutoCompletionResult refine(String text) {
+        public AutoCompletionResult refine(String text, int cursorPos) {
+            text = text.substring(0, cursorPos);
             if(canRefine(text)) {
                 Result result = new Result(text, prefixLength, parent);
                 result.addFiltedNames(results1);

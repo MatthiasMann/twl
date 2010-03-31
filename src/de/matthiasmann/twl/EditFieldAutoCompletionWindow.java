@@ -56,7 +56,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
 
     /**
      * Creates an EditFieldAutoCompletionWindow associated with the specified
-     * EditField. It will register itself as callback.
+     * EditField.
      *
      * Auto completion will start to work once a data source is set
      *
@@ -72,12 +72,11 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
 
         Callbacks cb = new Callbacks();
         listBox.addCallback(cb);
-        editField.addCallback(cb);
     }
 
     /**
      * Creates an EditFieldAutoCompletionWindow associated with the specified
-     * EditField. It will register itself as callback.
+     * EditField.
      *
      * Auto completion is operational with the given data source (when it's not null)
      *
@@ -91,7 +90,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
 
     /**
      * Creates an EditFieldAutoCompletionWindow associated with the specified
-     * EditField. It will register itself as callback.
+     * EditField.
      *
      * Auto completion is operational with the given data source (when it's not null)
      *
@@ -113,7 +112,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
      * Returns the EditField to which this EditFieldAutoCompletionWindow is attached
      * @return the EditField
      */
-    public EditField getEditField() {
+    public final EditField getEditField() {
         return (EditField)getOwner();
     }
 
@@ -179,19 +178,19 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         if(dataSource != null) {
             EditField ef = getEditField();
             int cursorPos = ef.getCursorPos();
-            if(cursorPos > 0 && cursorPos == ef.getTextLength()) {
+            if(cursorPos > 0) {
                 String text = ef.getText();
                 GUI gui = ef.getGUI();
                 if(listModel.result != null) {
-                    result = listModel.result.refine(text);
+                    result = listModel.result.refine(text, cursorPos);
                 }
                 if(result == null) {
                     if(executorService != null && gui != null) {
                         future = executorService.submit((Callable<AutoCompletionResult>)
-                                new AsyncQuery(gui, dataSource, text, listModel.result));
+                                new AsyncQuery(gui, dataSource, text, cursorPos, listModel.result));
                     } else {
                         try {
-                            result = dataSource.collectSuggestions(text, listModel.result);
+                            result = dataSource.collectSuggestions(text, cursorPos, listModel.result);
                         } catch (Exception ex) {
                             reportQueryException(ex);
                         }
@@ -276,6 +275,10 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                             listBox.handleEvent(evt);
                             break;
 
+                        case Keyboard.KEY_LEFT:
+                        case Keyboard.KEY_RIGHT:
+                            return false;
+
                         default:
                             if(evt.hasKeyChar() || evt.getKeyCode() == Keyboard.KEY_BACK) {
                                 if(!acceptAutoCompletion()) {
@@ -294,6 +297,15 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                         listBox.handleEvent(evt);
                         startCapture();
                         return true;
+                    case Keyboard.KEY_ESCAPE:
+                        stopAutoCompletion();
+                        return false;
+                    case Keyboard.KEY_SPACE:
+                        if((evt.getModifiers() & Event.MODIFIER_CTRL) != 0) {
+                            updateAutoCompletion();
+                            return true;
+                        }
+                        return false;
                     default:
                         return false;
                 }
@@ -306,7 +318,15 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
     boolean acceptAutoCompletion() {
         int selected = listBox.getSelected();
         if(selected >= 0) {
-            getEditField().setText(listModel.getEntry(selected));
+            EditField editField = getEditField();
+            String text = listModel.getEntry(selected);
+            int pos = listModel.getCursorPosForEntry(selected);
+
+            editField.setText(text);
+            if(pos >= 0 && pos < text.length()) {
+                editField.setCursorPos(pos);
+            }
+            
             stopAutoCompletion();
             return true;
         }
@@ -320,10 +340,10 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
 
     private void installAutoCompletion() {
         if(listModel.getNumEntries() > 0) {
-            getEditField().setAutoCompletionWindow(this, captureKeys);
+            openInfo();
         } else {
             captureKeys = false;
-            getEditField().setAutoCompletionWindow(null, false);
+            closeInfo();
         }
     }
 
@@ -342,17 +362,13 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         public String getEntry(int index) {
             return result.getResult(index);
         }
+
+        public int getCursorPosForEntry(int index) {
+            return result.getCursorPosForResult(index);
+        }
     }
 
-    class Callbacks implements EditField.Callback, CallbackWithReason<ListBox.CallbackReason> {
-        public void callback(int key) {
-            if(key == Keyboard.KEY_NONE) {
-                updateAutoCompletion();
-            } else {
-                stopAutoCompletion();
-            }
-        }
-
+    class Callbacks implements CallbackWithReason<ListBox.CallbackReason> {
         public void callback(ListBox.CallbackReason reason) {
             switch(reason) {
                 case MOUSE_DOUBLE_CLICK:
@@ -366,17 +382,19 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
         private final GUI gui;
         private final AutoCompletionDataSource dataSource;
         private final String text;
+        private final int cursorPos;
         private final AutoCompletionResult prevResult;
 
-        public AsyncQuery(GUI gui, AutoCompletionDataSource dataSource, String text, AutoCompletionResult prevResult) {
+        public AsyncQuery(GUI gui, AutoCompletionDataSource dataSource, String text, int cursorPos, AutoCompletionResult prevResult) {
             this.gui = gui;
             this.dataSource = dataSource;
             this.text = text;
+            this.cursorPos = cursorPos;
             this.prevResult = prevResult;
         }
 
         public AutoCompletionResult call() throws Exception {
-            AutoCompletionResult acr = dataSource.collectSuggestions(text, prevResult);
+            AutoCompletionResult acr = dataSource.collectSuggestions(text, cursorPos, prevResult);
             gui.invokeLater(this);
             return acr;
         }

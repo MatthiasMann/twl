@@ -29,12 +29,20 @@
  */
 package de.matthiasmann.twl.model;
 
+import de.matthiasmann.twl.EditField;
+
 /**
  * An abstract container for auto completion results.
  *
  * @author Matthias Mann
  */
 public abstract class AutoCompletionResult {
+
+    /**
+     * Return value for {@link #getCursorPosForResult} to use EditField's
+     * default cursor position for {@link EditField#setText(java.lang.String)}
+     */
+    public static final int DEFAULT_CURSOR_POS = -1;
 
     protected final String text;
     protected final int prefixLength;
@@ -78,6 +86,21 @@ public abstract class AutoCompletionResult {
     public abstract String getResult(int idx);
 
     /**
+     * Returns the desired cursor position for the given result entry.
+     * 
+     * The default implementation returns {@link #DEFAULT_CURSOR_POS}
+     * 
+     * @param idx the index of the desired result entry
+     * @return the cursor position
+     * @see #getNumResults()
+     * @see #getResult(int)
+     * @see #DEFAULT_CURSOR_POS
+     */
+    public int getCursorPosForResult(int idx) {
+        return DEFAULT_CURSOR_POS;
+    }
+
+    /**
      * Tries to refine the results. Refining can result in a different order
      * of results then a new query but is faster.
      *
@@ -85,9 +108,10 @@ public abstract class AutoCompletionResult {
      * is returned.
      *
      * @param text The new text
+     * @param cursorPos The new cursor position
      * @return the new refined AutoCompletionResult or null if refining was not possible
      */
-    public AutoCompletionResult refine(String text) {
+    public AutoCompletionResult refine(String text, int cursorPos) {
         return null;
     }
 }

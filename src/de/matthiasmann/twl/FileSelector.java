@@ -196,6 +196,7 @@ public class FileSelector extends DialogLayout {
 
         autoCompletion = new EditFieldAutoCompletionWindow(currentFolder.getEditField());
         autoCompletion.setExecutorService(Executors.newSingleThreadExecutor());
+        currentFolder.getEditField().setAutoCompletionWindow(autoCompletion);
 
         setAllowMultiSelection(true);
         fileTable.addCallback(new TableBase.Callback() {

@@ -29,11 +29,13 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.AutoCompletionDataSource;
 import de.matthiasmann.twl.model.StringModel;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
+import java.util.concurrent.ExecutorService;
 import org.lwjgl.input.Keyboard;
 
 /**
@@ -83,8 +85,7 @@ public class EditField extends Widget {
     private Menu popupMenu;
     private boolean textLongerThenWidget;
 
-    private InfoWindow autoCompletionWindow;
-    private boolean autoCompletionWantKeys;
+    private EditFieldAutoCompletionWindow autoCompletionWindow;
     private int autoCompletionHeight = 100;
 
     private InfoWindow errorInfoWindow;
@@ -203,6 +204,16 @@ public class EditField extends Widget {
         }
     }
 
+    /**
+     * Set a new text for this EditField.
+     * If the new text is longer then {@link #getMaxTextLength()} then it is truncated.
+     * The selection is cleared.
+     * The cursor is positioned at the end of the new text.
+     * If a model is set, then the model is also updated.
+     *
+     * @param text the new text
+     * @throws NullPointerException if text is null
+     */
     public void setText(String text) {
         text = TextUtil.limitStringLength(text, maxTextLength);
         editBuffer.replace(0, editBuffer.length(), text);
@@ -328,6 +339,15 @@ public class EditField extends Widget {
     protected void layout() {
         layoutChildFullInnerArea(textRenderer);
         checkTextWidth();
+        layoutInfoWindows();
+    }
+
+    @Override
+    protected void positionChanged() {
+        layoutInfoWindows();
+    }
+
+    private void layoutInfoWindows() {
         if(autoCompletionWindow != null) {
             layoutAutocompletionWindow();
         }
@@ -413,19 +433,46 @@ public class EditField extends Widget {
         return tooltip;
     }
 
-    public void setAutoCompletionWindow(InfoWindow window, boolean wantKeys) {
-        if(window == null) {
+    public void setAutoCompletionWindow(EditFieldAutoCompletionWindow window) {
+        if(autoCompletionWindow != window) {
             if(autoCompletionWindow != null) {
                 autoCompletionWindow.closeInfo();
                 autoCompletionWindow = null;
             }
-            autoCompletionWantKeys = false;
-        } else {
             autoCompletionWindow = window;
-            autoCompletionWantKeys = wantKeys;
-            if(autoCompletionWindow.openInfo()) {
-                layoutAutocompletionWindow();
-            }
+        }
+    }
+
+    public EditFieldAutoCompletionWindow getAutoCompletionWindow() {
+        return autoCompletionWindow;
+    }
+
+    /**
+     * Installs a new auto completion window with the given data source.
+     * 
+     * @param dataSource the data source used for auto completion - can be null
+     * @see EditFieldAutoCompletionWindow#EditFieldAutoCompletionWindow(de.matthiasmann.twl.EditField, de.matthiasmann.twl.model.AutoCompletionDataSource) 
+     */
+    public void setAutoCompletion(AutoCompletionDataSource dataSource) {
+        if(dataSource == null) {
+            setAutoCompletionWindow(null);
+        } else {
+            setAutoCompletionWindow(new EditFieldAutoCompletionWindow(this, dataSource));
+        }
+    }
+
+    /**
+     * Installs a new auto completion window with the given data source.
+     *
+     * @param dataSource the data source used for auto completion - can be null
+     * @param executorService the executorService used to execute the data source queries
+     * @see EditFieldAutoCompletionWindow#EditFieldAutoCompletionWindow(de.matthiasmann.twl.EditField, de.matthiasmann.twl.model.AutoCompletionDataSource, java.util.concurrent.ExecutorService)
+     */
+    public void setAutoCompletion(AutoCompletionDataSource dataSource, ExecutorService executorService) {
+        if(dataSource == null) {
+            setAutoCompletionWindow(null);
+        } else {
+            setAutoCompletionWindow(new EditFieldAutoCompletionWindow(this, dataSource, executorService));
         }
     }
 
@@ -451,7 +498,7 @@ public class EditField extends Widget {
             return true;
         }
 
-        if(evt.isKeyEvent() && autoCompletionWantKeys) {
+        if(autoCompletionWindow != null) {
             if(autoCompletionWindow.handleEvent(evt)) {
                 return true;
             }
@@ -482,12 +529,6 @@ public class EditField extends Widget {
             case Keyboard.KEY_RIGHT:
                 moveCursor(+1, selectPressed);
                 return true;
-            case Keyboard.KEY_UP:
-            case Keyboard.KEY_DOWN:
-                if(!autoCompletionWantKeys && autoCompletionWindow != null) {
-                    return autoCompletionWindow.handleEvent(evt);
-                }
-                return false;
             default:
                 if(evt.hasKeyCharNoModifiers()) {
                     insertChar(evt.getKeyChar());
@@ -507,12 +548,6 @@ public class EditField extends Widget {
             case Keyboard.KEY_LEFT:
             case Keyboard.KEY_RIGHT:
                 return true;
-            case Keyboard.KEY_UP:
-            case Keyboard.KEY_DOWN:
-                if(!autoCompletionWantKeys && autoCompletionWindow != null) {
-                    return autoCompletionWindow.handleEvent(evt);
-                }
-                return false;
             default:
                 return evt.hasKeyCharNoModifiers();
             }
@@ -528,6 +563,7 @@ public class EditField extends Widget {
             if(evt.getMouseButton() == Event.MOUSE_LBUTTON && isMouseInside(evt)) {
                 int newPos = textRenderer.getCursorPosFromMouse(evt.getMouseX());
                 setCursorPos(newPos, selectPressed);
+                scrollPos = textRenderer.lastScrollPos;
                 return true;
             }
             break;
@@ -536,6 +572,10 @@ public class EditField extends Widget {
             if(evt.getMouseClickCount() == 2) {
                 int newPos = textRenderer.getCursorPosFromMouse(evt.getMouseX());
                 selectWordFromMouse(newPos);
+                this.cursorPos = selectionStart;
+                scrollToCursor(false);
+                this.cursorPos = selectionEnd;
+                scrollToCursor(false);
                 return true;
             }
             if(evt.getMouseClickCount() == 3) {
@@ -596,6 +636,7 @@ public class EditField extends Widget {
         checkTextWidth();
         scrollToCursor(false);
         doCallback(Keyboard.KEY_NONE);
+        updateAutoCompletion();
     }
 
     private void checkTextWidth() {
@@ -633,14 +674,30 @@ public class EditField extends Widget {
 
             this.cursorPos = pos;
             scrollToCursor(false);
+            updateAutoCompletion();
         }
     }
 
+    public void setCursorPos(int pos) {
+        if(pos < 0 || pos > editBuffer.length()) {
+            throw new IllegalArgumentException("pos");
+        }
+        setCursorPos(pos, false);
+    }
+    
     public void selectAll() {
         selectionStart = 0;
         selectionEnd = editBuffer.length();
     }
 
+    public void setSelection(int start, int end) {
+        if(start < 0 || start > end || end > editBuffer.length()) {
+            throw new IllegalArgumentException();
+        }
+        selectionStart = start;
+        selectionEnd = end;
+    }
+    
     protected void selectWordFromMouse(int index) {
         selectionStart = index;
         selectionEnd = index;
@@ -761,6 +818,8 @@ public class EditField extends Widget {
     protected void keyboardFocusGained() {
         if(errorMsg != null) {
             openErrorInfoWindow();
+        } else {
+            updateAutoCompletion();
         }
     }
 
@@ -769,6 +828,15 @@ public class EditField extends Widget {
         super.keyboardFocusLost();
         if(errorInfoWindow != null) {
             errorInfoWindow.closeInfo();
+        }
+        if(autoCompletionWindow != null) {
+            autoCompletionWindow.closeInfo();
+        }
+    }
+
+    protected void updateAutoCompletion() {
+        if(autoCompletionWindow != null) {
+            autoCompletionWindow.updateAutoCompletion();
         }
     }
 
@@ -780,6 +848,7 @@ public class EditField extends Widget {
 
     protected class TextRenderer extends TextWidget {
         int lastTextX;
+        int lastScrollPos;
 
         protected TextRenderer(AnimationState animState) {
             super(animState);
@@ -790,6 +859,7 @@ public class EditField extends Widget {
             if(pendingScrollToCursor) {
                 scrollToCursor(pendingScrollToCursorForce);
             }
+            lastScrollPos = hasFocusOrPopup() ? scrollPos : 0;
             lastTextX = computeTextX();
             if(hasSelection() && hasFocusOrPopup()) {
                 if(selectionImage != null) {
@@ -811,11 +881,7 @@ public class EditField extends Widget {
 
         @Override
         protected int computeTextX() {
-            if(hasFocusOrPopup()) {
-                return getInnerX() - scrollPos;
-            } else {
-                return getInnerX();
-            }
+            return getInnerX() - lastScrollPos;
         }
 
         protected int getCursorPosFromMouse(int x) {
