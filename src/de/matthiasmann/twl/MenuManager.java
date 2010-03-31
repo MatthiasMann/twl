@@ -210,15 +210,17 @@ public class MenuManager extends PopupWindow {
     void popupTimer() {
         if(lastMouseOverWidget instanceof Menu.SubMenuBtn) {
             ((Menu.SubMenuBtn)lastMouseOverWidget).run();
-        } else {
+        } else if(lastMouseOverWidget != this) {
+            int level = 0;
             // search for the MenuPopup containing this widget
             // it knows which menu level we need to close
             for(Widget w=lastMouseOverWidget ; w!=null ; w=w.getParent()) {
                 if(w instanceof Menu.MenuPopup) {
-                    closeSubMenu(((Menu.MenuPopup)w).level);
+                    level = ((Menu.MenuPopup)w).level;
                     break;
                 }
             }
+            closeSubMenu(level);
         }
     }
 
