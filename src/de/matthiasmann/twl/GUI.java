@@ -33,8 +33,6 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
@@ -69,7 +67,7 @@ public final class GUI extends Widget {
     private Widget rootPane;
     boolean hasInvalidLayouts;
 
-    final EventImpl event;
+    final Event event;
     private boolean wasInside;
     private boolean dragActive;
     private int mouseClickCount;
@@ -102,7 +100,7 @@ public final class GUI extends Widget {
     private final Label tooltipLabel;
     private Widget tooltipOwner;
     
-    final ArrayList<TimerImpl> activeTimers;
+    final ArrayList<Timer> activeTimers;
     private final ArrayList<Runnable> invokeLaterQueue;
 
     /**
@@ -136,7 +134,7 @@ public final class GUI extends Widget {
         }
         
         this.renderer = renderer;
-        this.event = new EventImpl();
+        this.event = new Event();
         this.rootPane = rootPane;
         this.rootPane.setFocusKeyEnabled(false);
         this.clipRects = new Rect[8];
@@ -148,7 +146,7 @@ public final class GUI extends Widget {
         this.tooltipWindow = new TooltipWindow();
         this.tooltipWindow.setVisible(false);
         
-        this.activeTimers = new ArrayList<TimerImpl>();
+        this.activeTimers = new ArrayList<Timer>();
         this.invokeLaterQueue = new ArrayList<Runnable>();
         
         setTheme("");
@@ -206,9 +204,13 @@ public final class GUI extends Widget {
             }
         };
     }
-    
+
+    /**
+     * Creates a new UI timer.
+     * @return new Timer(this)
+     */
     public Timer createTimer() {
-        return new TimerImpl();
+        return new Timer(this);
     }
 
     public long getCurrentTime() {
@@ -635,8 +637,10 @@ public final class GUI extends Widget {
      */
     public final boolean handleMouseWheel(int wheelDelta) {
         event.mouseWheelDelta = wheelDelta;
-        return sendMouseEvent(Event.Type.MOUSE_WHEEL,
+        boolean handled = sendMouseEvent(Event.Type.MOUSE_WHEEL,
                 dragActive ? lastMouseDownWidget : null) != null;
+        event.mouseWheelDelta = 0;
+        return handled;
     }
 
     /**
@@ -1118,206 +1122,6 @@ public final class GUI extends Widget {
         @Override
         protected void layout() {
             layoutChildrenFullInnerArea();
-        }
-    }
-    
-    static class EventImpl extends Event {
-        Type type;
-        int mouseX;
-        int mouseY;
-        int mouseWheelDelta;
-        int mouseButton;
-        int mouseClickCount;
-        boolean dragEvent;
-        boolean keyRepeated;
-        char keyChar;
-        int keyCode;
-        int modifier;
-        EventImpl subEvent;
-
-        @Override
-        public Type getType() {
-            return type;
-        }
-
-        @Override
-        public boolean isMouseDragEvent() {
-            return dragEvent;
-        }
-
-        @Override
-        public boolean isMouseDragEnd() {
-            return (modifier & MODIFIER_BUTTON) == 0;
-        }
-
-        @Override
-        public int getMouseX() {
-            return mouseX;
-        }
-
-        @Override
-        public int getMouseY() {
-            return mouseY;
-        }
-
-        @Override
-        public int getMouseButton() {
-            return mouseButton;
-        }
-
-        @Override
-        public int getMouseWheelDelta() {
-            return mouseWheelDelta;
-        }
-
-        @Override
-        public int getMouseClickCount() {
-            return mouseClickCount;
-        }
-
-        @Override
-        public char getKeyChar() {
-            return keyChar;
-        }
-
-        @Override
-        public int getKeyCode() {
-            return keyCode;
-        }
-
-        @Override
-        public boolean hasKeyChar() {
-            return type == Type.KEY_PRESSED && keyChar != Keyboard.CHAR_NONE;
-        }
-
-        private static final int MODIFIER_ALTGR = MODIFIER_LCTRL | MODIFIER_RALT;
-        
-        @Override
-        public boolean hasKeyCharNoModifiers() {
-            return hasKeyChar() && (
-                    ((modifier & ~MODIFIER_SHIFT) == 0) ||
-                    ((modifier & ~MODIFIER_ALTGR) == 0));
-        }
-
-        @Override
-        public boolean isKeyRepeated() {
-            return type == Type.KEY_PRESSED && keyRepeated;
-        }
-
-        @Override
-        public int getModifiers() {
-            return modifier;
-        }
-
-        @Override
-        public Event createSubEvent(Type newType) {
-            if(subEvent == null) {
-                subEvent = new EventImpl();
-            }
-            subEvent.type = newType;
-            subEvent.mouseX = mouseX;
-            subEvent.mouseY = mouseY;
-            subEvent.mouseButton = mouseButton;
-            subEvent.mouseWheelDelta = mouseWheelDelta;
-            subEvent.mouseClickCount = mouseClickCount;
-            subEvent.dragEvent = dragEvent;
-            subEvent.keyRepeated = keyRepeated;
-            subEvent.keyChar = keyChar;
-            subEvent.keyCode = keyCode;
-            subEvent.modifier = modifier;
-            return subEvent;
-        }
-
-        void setModifier(int mask, boolean pressed) {
-            if(pressed) {
-                modifier |= mask;
-            } else {
-                modifier &= ~mask;
-            }
-        }
-    }
-    
-    private static final int TIMER_COUNTER_IN_CALLBACK = -1;
-    private static final int TIMER_COUNTER_DO_START = -2;
-    private static final int TIMER_COUNTER_DO_STOP = -3;
-    
-    class TimerImpl implements Timer {
-        int counter;
-        int delay = 10;
-        boolean continuous;
-        Runnable callback;
-
-        public boolean isRunning() {
-            return counter > 0 || (continuous && counter == TIMER_COUNTER_IN_CALLBACK);
-        }
-
-        public void setDelay(int delay) {
-            if(delay < 1) {
-                throw new IllegalArgumentException("delay < 1");
-            }
-            this.delay = delay;
-        }
-
-        public void start() {
-            if(counter == 0) {
-                counter = delay;
-                activeTimers.add(this);
-            } else if(counter < 0) {
-                counter = TIMER_COUNTER_DO_START;
-            }
-        }
-
-        public void stop() {
-            if(counter > 0) {
-                counter = 0;
-                activeTimers.remove(this);
-            } else if(counter < 0) {
-                counter = TIMER_COUNTER_DO_STOP;
-            }
-        }
-
-        public void setCallback(Runnable callback) {
-            this.callback = callback;
-        }
-
-        public boolean isContinuous() {
-            return continuous;
-        }
-
-        public void setContinuous(boolean continuous) {
-            this.continuous = continuous;
-        }
-        
-        boolean tick(int delta) {
-            int newCounter = counter - delta;
-            if(newCounter <= 0) {
-                boolean doStop = !continuous;
-                counter = TIMER_COUNTER_IN_CALLBACK;
-                doCallback();
-                if(counter == TIMER_COUNTER_DO_STOP) {
-                    counter = 0;
-                    return false;
-                }
-                if(doStop && counter != TIMER_COUNTER_DO_START) {
-                    counter = 0;
-                    return false;
-                }
-                // timer is already running
-                counter = Math.max(1, newCounter + delay);
-            } else {
-                counter = newCounter;
-            }
-            return true;
-        }
-        
-        private void doCallback() {
-            if(callback != null) {
-                try {
-                    callback.run();
-                } catch (Throwable ex) {
-                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in callback", ex);
-                }
-            }
         }
     }
 }

@@ -29,12 +29,14 @@
  */
 package de.matthiasmann.twl;
 
+import org.lwjgl.input.Keyboard;
+
 /**
  * UI events for Mouse and Keyboard.
  *
  * @author MannMat
  */
-public abstract class Event {
+public final class Event {
 
     public enum Type {
         MOUSE_ENTERED(true, false),
@@ -118,23 +120,85 @@ public abstract class Event {
      */
     public static final int MOUSE_MBUTTON = 2;
     
-    public abstract Type getType();
-    
+    Type type;
+    int mouseX;
+    int mouseY;
+    int mouseWheelDelta;
+    int mouseButton;
+    int mouseClickCount;
+    boolean dragEvent;
+    boolean keyRepeated;
+    char keyChar;
+    int keyCode;
+    int modifier;
+    private Event subEvent;
+
+    Event() {
+    }
+
+    /**
+     * Returns the type of the event.
+     * @return the type of the event.
+     */
+    public final Type getType() {
+        return type;
+    }
+
+    /**
+     * Returns true for all MOUSE_* event types.
+     * @return true if this is a mouse event.
+     */
     public final boolean isMouseEvent() {
-        return getType().isMouseEvent;
+        return type.isMouseEvent;
     }
 
+    /**
+     * Returns true for all MOUSE_* event types except MOUSE_WHEEL.
+     * @return true if this is a mouse event but not a mouse wheel event.
+     */
+    public final boolean isMouseEventNoWheel() {
+        return type.isMouseEvent && type != Type.MOUSE_WHEEL;
+    }
+
+    /**
+     * Returns true for all KEY_* event types.
+     * @return true if this is a key event.
+     */
     public final boolean isKeyEvent() {
-        return getType().isKeyEvent;
+        return type.isKeyEvent;
     }
-    
-    public abstract boolean isMouseDragEvent();
 
-    public abstract boolean isMouseDragEnd();
-    
-    public abstract int getMouseX();
-    
-    public abstract int getMouseY();
+    /**
+     * Returns true if this event is part of a drag operation
+     * @return true if this event is part of a drag operation
+     */
+    public final boolean isMouseDragEvent() {
+        return dragEvent;
+    }
+
+    /**
+     * Returns true if this event ends a drag operation
+     * @return true if this event ends a drag operation
+     */
+    public final boolean isMouseDragEnd() {
+        return (modifier & MODIFIER_BUTTON) == 0;
+    }
+
+    /**
+     * Returns the current mouse X coordinate
+     * @return the current mouse X coordinate
+     */
+    public final int getMouseX() {
+        return mouseX;
+    }
+
+    /**
+     * Returns the current mouse Y coordinate
+     * @return the current mouse Y coordinate
+     */
+    public final int getMouseY() {
+        return mouseY;
+    }
 
     /**
      * The mouse button. Only valid for MOUSE_BTNDOWN or MOUSE_BTNUP events
@@ -145,54 +209,107 @@ public abstract class Event {
      * @see #MOUSE_RBUTTON
      * @see #MOUSE_MBUTTON
      */
-    public abstract int getMouseButton();
+    public final int getMouseButton() {
+        return mouseButton;
+    }
 
     /**
      * The mouse wheel delta. Only valid for MOUSE_WHEEL events
      * @return the mouse wheel delta
      * @see Type#MOUSE_WHEEL
      */
-    public abstract int getMouseWheelDelta();
+    public final int getMouseWheelDelta() {
+        return mouseWheelDelta;
+    }
     
     /**
      * The mouse click count. Only valid for MOUSE_CLICKED events
      * @return the mouse click count
      * @see Type#MOUSE_CLICKED
      */
-    public abstract int getMouseClickCount();
-
-    public abstract Event createSubEvent(Type newType);
+    public final int getMouseClickCount() {
+        return mouseClickCount;
+    }
     
     /**
      * Returns the key code. Only valid for KEY_PRESSED or KEY_RELEASED events
      * @see org.lwjgl.input.Keyboard
      * @return the key code
      */
-    public abstract int getKeyCode();
+    public final int getKeyCode() {
+        return keyCode;
+    }
 
     /**
      * Returns the key character. Only valid if hasKeyChar() returns true.
      * @see #hasKeyChar()
      * @return the key character
      */
-    public abstract char getKeyChar();
+    public final char getKeyChar() {
+        return keyChar;
+    }
 
     /**
      * Checks if a character is available for theis KEY_PRESSED event
      * @see #getKeyChar()
      * @return true if a character is available
      */
-    public abstract boolean hasKeyChar();
-    
+    public final boolean hasKeyChar() {
+        return type == Type.KEY_PRESSED && keyChar != Keyboard.CHAR_NONE;
+    }
+
     /**
      * Checks if a characters is available and no keyboard modifiers are
      * active (except these needed to generate that character).
      * 
-     * @return true if it's a characzer without additional modifiers
+     * @return true if it's a character without additional modifiers
      */
-    public abstract boolean hasKeyCharNoModifiers();
+    public final boolean hasKeyCharNoModifiers() {
+        final int MODIFIER_ALTGR = MODIFIER_LCTRL | MODIFIER_RALT;
+        return hasKeyChar() && (
+                ((modifier & ~MODIFIER_SHIFT) == 0) ||
+                ((modifier & ~MODIFIER_ALTGR) == 0));
+    }
 
-    public abstract boolean isKeyRepeated();
+    /**
+     * Returns true if this is a repeated KEY_PRESSED event
+     * @return true if this is a repeated KEY_PRESSED event
+     */
+    public final boolean isKeyRepeated() {
+        return type == Type.KEY_PRESSED && keyRepeated;
+    }
+
+    /**
+     * Returns the current event modifiers
+     * @return the current event modifiers
+     */
+    public final int getModifiers() {
+        return modifier;
+    }
+
+    final Event createSubEvent(Type newType) {
+        if(subEvent == null) {
+            subEvent = new Event();
+        }
+        subEvent.type = newType;
+        subEvent.mouseX = mouseX;
+        subEvent.mouseY = mouseY;
+        subEvent.mouseButton = mouseButton;
+        subEvent.mouseWheelDelta = mouseWheelDelta;
+        subEvent.mouseClickCount = mouseClickCount;
+        subEvent.dragEvent = dragEvent;
+        subEvent.keyRepeated = keyRepeated;
+        subEvent.keyChar = keyChar;
+        subEvent.keyCode = keyCode;
+        subEvent.modifier = modifier;
+        return subEvent;
+    }
     
-    public abstract int getModifiers();
+    void setModifier(int mask, boolean pressed) {
+        if(pressed) {
+            modifier |= mask;
+        } else {
+            modifier &= ~mask;
+        }
+    }
 }

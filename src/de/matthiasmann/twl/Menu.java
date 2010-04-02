@@ -181,7 +181,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
 
         @Override
         protected boolean handleEvent(Event evt) {
-            return super.handleEvent(evt) || (evt.isMouseEvent() && evt.getType() != Event.Type.MOUSE_WHEEL);
+            return super.handleEvent(evt) || evt.isMouseEventNoWheel();
         }
     }
     
