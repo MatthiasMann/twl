@@ -33,6 +33,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * A layout manager similar to Swing's GroupLayout
@@ -117,6 +119,7 @@ public class DialogLayout extends Widget {
     protected boolean includeInvisibleWidgets = true;
     protected boolean redoDefaultGaps;
     protected boolean blockInvalidateLayoutTree;
+    protected boolean warnOnIncomplete;
 
     private Group horz;
     private Group vert;
@@ -291,9 +294,16 @@ public class DialogLayout extends Widget {
     }
 
     private void collectDebugStack() {
+        warnOnIncomplete = true;
         if(DEBUG_LAYOUT_GROUPS) {
             debugStackTrace = new Throwable("DialogLayout created/used here").fillInStackTrace();
         }
+    }
+
+    private void warnOnIncomplete() {
+        warnOnIncomplete = false;
+        Logger.getLogger(DialogLayout.class.getName()).log(Level.WARNING,
+                "Dialog layout has incomplete state", debugStackTrace);
     }
 
     protected void applyThemeDialogLayout(ThemeInfo themeInfo) {
@@ -370,10 +380,12 @@ public class DialogLayout extends Widget {
     }
 
     @Override
-    public void layout() {
+    protected void layout() {
         if(horz != null && vert != null) {
             prepare();
             doLayout();
+        } else if(warnOnIncomplete) {
+            warnOnIncomplete();
         }
     }
     
