@@ -654,19 +654,64 @@ public class Widget {
         }
     }
 
+    /**
+     * Returns the minimum width of the widget.
+     * Layout manager will allocate atleast the minimum width to a widget even
+     * when the container is not big enough.
+     *
+     * The default implementation will not return values smaller then the
+     * current border width.
+     *
+     * @return the minimum width of the widget
+     */
     public int getMinWidth() {
         return Math.max(minWidth, borderLeft + borderRight);
     }
 
+    /**
+     * Returns the minimum height of the widget.
+     * Layout manager will allocate atleast the minimum height to a widget even
+     * when the container is not big enough.
+     *
+     * The default implementation will not return values smaller then the
+     * current border width.
+     *
+     * @return the minimum height of the widget
+     */
     public int getMinHeight() {
         return Math.max(minHeight, borderTop + borderBottom);
     }
 
+    /**
+     * Sets the minimum size of the widget. This size includes the border.
+     *
+     * @param width the minimum width
+     * @param height the minimum wheight
+     * @see #getMinWidth()
+     * @see #getMinHeight()
+     * @throws IllegalArgumentException when width or height is negative
+     */
     public void setMinSize(int width, int height) {
+        if(width < 0 || height < 0) {
+            throw new IllegalArgumentException("negative size");
+        }
         minWidth = (short)Math.min(width, Short.MAX_VALUE);
         minHeight = (short)Math.min(height, Short.MAX_VALUE);
     }
 
+    /**
+     * Computes the preferred inner width (the size of the widget without the border)
+     *
+     * The default implementation uses the current position of the children.
+     *
+     * It is highly recommended to override this method as the default implementation
+     * lead to unstable layouts.
+     *
+     * The default behavior might change in the future to provide a better default
+     * behavior.
+     *
+     * @return the preferred inner width
+     */
     public int getPreferredInnerWidth() {
         int right = getInnerX();
         if(children != null) {
@@ -684,6 +729,7 @@ public class Widget {
      * Subclasses can overwrite this method to compute the preferred size differently.
      *
      * @return the preferred width.
+     * @see #getPreferredInnerWidth()
      */
     public int getPreferredWidth() {
         int prefWidth = borderLeft + borderRight + getPreferredInnerWidth();
@@ -694,6 +740,19 @@ public class Widget {
         return Math.max(minWidth, prefWidth);
     }
 
+    /**
+     * Computes the preferred inner height (the size of the widget without the border)
+     *
+     * The default implementation uses the current position of the children.
+     *
+     * It is highly recommended to override this method as the default implementation
+     * lead to unstable layouts.
+     *
+     * The default behavior might change in the future to provide a better default
+     * behavior.
+     *
+     * @return the preferred inner height
+     */
     public int getPreferredInnerHeight() {
         int bottom = getInnerY();
         if(children != null) {
@@ -712,6 +771,7 @@ public class Widget {
      * Subclasses can overwrite this method to compute the preferred size differently.
      *
      * @return the preferred height.
+     * @see #getPreferredInnerHeight() 
      */
     public int getPreferredHeight() {
         int prefHeight = borderTop + borderBottom + getPreferredInnerHeight();
@@ -722,24 +782,69 @@ public class Widget {
         return Math.max(minHeight, prefHeight);
     }
 
+    /**
+     * Returns the maximum width of the widget.
+     *
+     * A maximum of 0 means that the widgets wants it's preferred size and no
+     * extra space from layout.
+     * A value &gt; 0 is used for widgets which can expand to cover available
+     * area to that maximum.
+     *
+     * @return the maximum width
+     */
     public int getMaxWidth() {
         return maxWidth;
     }
 
+    /**
+     * Returns the maximum height of the widget.
+     *
+     * A maximum of 0 means that the widgets wants it's preferred size and no
+     * extra space from layout.
+     * A value &gt; 0 is used for widgets which can expand to cover available
+     * area to that maximum.
+     *
+     * @return the maximum height
+     */
     public int getMaxHeight() {
         return maxHeight;
     }
 
+    /**
+     * Sets the maximum size of the widget.
+     * A value of 0 means no expansion, use {@link Short#MAX_VALUE} for unbounded expansion.
+     *
+     * @param width the maximum width
+     * @param height the maximum wheight
+     * @see #getMaxWidth()
+     * @see #getMaxHeight()
+     * @throws IllegalArgumentException when width or height is negative
+     */
     public void setMaxSize(int width, int height) {
+        if(width < 0 || height < 0) {
+            throw new IllegalArgumentException("negative size");
+        }
         maxWidth = (short)Math.min(width, Short.MAX_VALUE);
         maxHeight = (short)Math.min(height, Short.MAX_VALUE);
     }
 
-    public static int computeSize(int min, int width, int max) {
+    /**
+     * A helper method to compute the size of a widget based on min, max and
+     * preferred size.
+     *
+     * If max size is &gt; 0 then the preferred size is limited to max.
+     *
+     * @param min the minimum size of the widget
+     * @param preferred the preferred size of the widget
+     *                  or the available space where the widget is fitted into
+     * @param max the maximum size of the widget
+     * @return Math.max(min, (max > 0) ? Math.min(preferred, max) : preferred)
+     */
+    public static int computeSize(int min, int preferred, int max) {
         if(max > 0) {
-            width = Math.min(width, max);
+            preferred = Math.min(preferred, max);
         }
-        return Math.max(min, width);
+        return Math.max(min, preferred);
     }
 
     /**
@@ -1557,7 +1662,9 @@ public class Widget {
     }
     
     /**
-     * Called when the layoutInvalid flag is set
+     * Called when the layoutInvalid flag is set.
+     *
+     * The default implementation does nothing.
      */
     protected void layout() {
     }
