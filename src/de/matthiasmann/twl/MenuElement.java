@@ -94,27 +94,27 @@ public abstract class MenuElement {
 
     protected abstract Widget createMenuWidget(MenuManager mm, int level);
 
-    public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
         if(pcs == null) {
             pcs = new PropertyChangeSupport(this);
         }
         pcs.addPropertyChangeListener(listener);
     }
 
-    public synchronized void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         if(pcs == null) {
             pcs = new PropertyChangeSupport(this);
         }
         pcs.addPropertyChangeListener(propertyName, listener);
     }
 
-    public synchronized void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         if(pcs != null) {
             pcs.removePropertyChangeListener(propertyName, listener);
         }
     }
 
-    public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
         if(pcs != null) {
             pcs.removePropertyChangeListener(listener);
         }
