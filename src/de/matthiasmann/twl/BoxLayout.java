@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -236,16 +236,6 @@ public class BoxLayout extends Widget {
             child.setPosition(x, y + yoff);
             x += childWidth + spacing;
         }
-
-        // 3: check container size
-        if(!scroll) {
-            if(numChildren > 0) {
-                x -= spacing;
-            }
-            if(container.getInnerRight() != x) {
-                container.invalidateLayoutTree();
-            }
-        }
     }
 
     public static void layoutVertical(Widget container, int spacing, Alignment alignment, boolean scroll) {
@@ -271,16 +261,6 @@ public class BoxLayout extends Widget {
             child.setSize(childWidth, childHeight);
             child.setPosition(x + xoff, y);
             y += childHeight + spacing;
-        }
-
-        // 3: check container size
-        if(!scroll) {
-            if(numChildren > 0) {
-                y -= spacing;
-            }
-            if(container.getInnerBottom() != y) {
-                container.invalidateLayoutTree();
-            }
         }
     }
 

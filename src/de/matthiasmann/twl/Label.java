@@ -101,7 +101,7 @@ public class Label extends TextWidget {
     public void setFont(Font font) {
         super.setFont(font);
         if(autoSize) {
-            invalidateLayoutTree();
+            invalidateLayout();
         }
     }
 
@@ -114,7 +114,7 @@ public class Label extends TextWidget {
         if(!text.equals(getText())) {
             super.setCharSequence(text);
             if(autoSize) {
-                invalidateLayoutTree();
+                invalidateLayout();
             }
         }
     }

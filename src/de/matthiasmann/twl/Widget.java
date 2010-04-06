@@ -529,11 +529,8 @@ public class Widget {
             this.width = width;
             this.height = height;
 
-            if(parent != null) {
-                parent.childChangedSize(this);
-            }
-
             sizeChanged();
+            
             if(propertyChangeSupport != null) {
                 firePropertyChange("width", oldWidth, width);
                 firePropertyChange("height", oldHeight, height);
@@ -865,13 +862,14 @@ public class Widget {
 
     /**
      * Called when something has changed which affected the layout of this widget.
-     * The default implementation sets a layout invalid flag which causes layout() to be called.
      *
-     * Called by the default implementation of sizeChanged, borderChanged and childChangedSize.
+     * The default implementation sets a layout invalid flag which causes layout()
+     * to be called and calls invalidateParentLayout()
+     *
+     * Called by the default implementation of sizeChanged, borderChanged.
      *
      * @see #sizeChanged()
      * @see #borderChanged()
-     * @see #childChangedSize(Widget)
      */
     public void invalidateLayout() {
         if(!layoutInvalid) {
@@ -880,19 +878,9 @@ public class Widget {
             if(gui != null) {
                 gui.hasInvalidLayouts = true;
             }
-        }
-    }
-
-    /**
-     * Invalidates this widget and calls it's parent's {@code invalidateLayoutTree}
-     *
-     * A widget which does not depend on the size of it's child widgets
-     * (like ScrollPane) should not propagte that call futher up.
-     */
-    public void invalidateLayoutTree() {
-        invalidateLayout();
-        if(parent != null) {
-            parent.invalidateLayoutTree();
+            if(parent != null) {
+                parent.childInvalidateLayout(this);
+            }
         }
     }
     
@@ -1405,7 +1393,9 @@ public class Widget {
     //
     
     /**
-     * Apply the given theme
+     * Apply the given theme.
+     * 
+     * This method also calls invalidateLayout()
      * 
      * @param themeInfo The theme info for this widget
      */
@@ -1418,6 +1408,7 @@ public class Widget {
         applyThemeMouseCursor(themeInfo);
         applyThemeInputMap(themeInfo);
         applyThemeTooltip(themeInfo);
+        invalidateLayout();
     }
 
     protected void applyThemeBackground(ThemeInfo themeInfo) {
@@ -1691,7 +1682,7 @@ public class Widget {
     }
 
     /**
-     * Caleld when the border size has changed.
+     * Called when the border size has changed.
      * The default implementation calls invalidateLayout.
      * 
      * @see #invalidateLayout()
@@ -1699,15 +1690,15 @@ public class Widget {
     protected void borderChanged() {
         invalidateLayout();
     }
-    
+
     /**
-     * A child of this widget has changed it's size.
+     * Called when the layout of a child has been invalidated.
      * The default implementation calls invalidateLayout.
-     * 
-     * @param child the child that changed size
+     *
+     * @param child the child which was invalidated
      * @see #invalidateLayout()
      */
-    protected void childChangedSize(Widget child) {
+    protected void childInvalidateLayout(Widget child) {
         invalidateLayout();
     }
 
@@ -1735,7 +1726,7 @@ public class Widget {
 
     /**
      * Called when the visibility state of a child was changed.
-     * The default implementation does nothing
+     * The default implementation does nothing.
      * 
      * @param child the child which changed it's visibility state
      * @see #setVisible(boolean) 

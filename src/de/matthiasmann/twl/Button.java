@@ -171,7 +171,6 @@ public class Button extends TextWidget {
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
         applyThemeButton(themeInfo);
-        invalidateLayoutTree();
     }
 
     protected void applyThemeButton(ThemeInfo themeInfo) {

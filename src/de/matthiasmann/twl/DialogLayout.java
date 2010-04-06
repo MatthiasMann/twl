@@ -317,7 +317,7 @@ public class DialogLayout extends Widget {
         } finally {
             blockInvalidateLayoutTree = false;
         }
-        invalidateLayoutTree();
+        invalidateLayout();
     }
 
     @Override
@@ -423,9 +423,6 @@ public class DialogLayout extends Widget {
                 ex.initCause(debugStackTrace);
             }
             throw ex;
-        }
-        if((getWidth() < horz.getMinSize(AXIS_X) || getHeight() < vert.getMinSize(AXIS_Y))) {
-            invalidateLayoutTree();
         }
     }
 
@@ -533,7 +530,7 @@ public class DialogLayout extends Widget {
 
     protected void maybeInvalidateLayoutTree() {
         if(horz != null && vert != null && !blockInvalidateLayoutTree) {
-            invalidateLayoutTree();
+            invalidateLayout();
         }
     }
 

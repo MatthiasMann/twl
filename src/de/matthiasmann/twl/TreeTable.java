@@ -88,7 +88,7 @@ public class TreeTable extends TableBase {
             this.numColumns = 0;
         }
         modelAllChanged();
-        invalidateLayoutTree();
+        invalidateLayout();
     }
 
     @Override

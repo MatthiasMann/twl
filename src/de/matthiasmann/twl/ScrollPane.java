@@ -54,7 +54,7 @@ public class ScrollPane extends Widget {
     
     final Scrollbar scrollbarH;
     final Scrollbar scrollbarV;
-    private final ContentArea contentArea;
+    private final Widget contentArea;
     private DraggableButton dragButton;
     private Widget content;
     private Fixed fixed = Fixed.NONE;
@@ -71,7 +71,7 @@ public class ScrollPane extends Widget {
     public ScrollPane(Widget content) {
         this.scrollbarH = new Scrollbar(Scrollbar.Orientation.HORIZONTAL);
         this.scrollbarV = new Scrollbar(Scrollbar.Orientation.VERTICAL);
-        this.contentArea = new ContentArea();
+        this.contentArea = new Widget();
 
         Runnable cb = new Runnable() {
             public void run() {
@@ -83,6 +83,8 @@ public class ScrollPane extends Widget {
         scrollbarH.setVisible(false);
         scrollbarV.addCallback(cb);
         scrollbarV.setVisible(false);
+        contentArea.setClip(true);
+        contentArea.setTheme("");
         
         super.insertChild(contentArea, 0);
         super.insertChild(scrollbarH, 1);
@@ -175,8 +177,13 @@ public class ScrollPane extends Widget {
 
     public static ScrollPane getContainingScrollPane(Widget widget) {
         Widget ca = widget.getParent();
-        if(ca != null && ca.getClass() == ContentArea.class) {
-            return (ScrollPane)ca.getParent();
+        if(ca != null) {
+            Widget sp = ca.getParent();
+            if(sp instanceof ScrollPane) {
+                ScrollPane scrollPane = (ScrollPane)sp;
+                assert scrollPane.getContent() == widget;
+                return scrollPane;
+            }
         }
         return null;
     }
@@ -295,7 +302,6 @@ public class ScrollPane extends Widget {
             super.removeChild(3);
             dragButton = null;
         }
-        invalidateLayout();
     }
 
     @Override
@@ -385,7 +391,7 @@ public class ScrollPane extends Widget {
             }
 
             if(visibleH != scrollbarH.isVisible() || visibleV != scrollbarV.isVisible()) {
-                invalidateLayoutTree();
+                invalidateLayout();
             }
 
             scrollbarH.setVisible(visibleH);
@@ -480,31 +486,5 @@ public class ScrollPane extends Widget {
                     contentArea.getX()-scrollbarH.getValue(),
                     contentArea.getY()-scrollbarV.getValue());
        }
-    }
-
-    class ContentArea extends Widget {
-        ContentArea() {
-            setClip(true);
-            setTheme("");
-        }
-
-        @Override
-        protected void childChangedSize(Widget child) {
-            ScrollPane.this.childChangedSize(child);
-        }
-
-        @Override
-        public void invalidateLayout() {
-            ScrollPane.this.invalidateLayout();
-        }
-
-        @Override
-        protected void sizeChanged() {
-        }
-
-        @Override
-        public void invalidateLayoutTree() {
-            invalidateLayout();
-        }
     }
 }

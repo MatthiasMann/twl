@@ -292,7 +292,7 @@ public class TextArea extends Widget {
 
             if(lastCurY != curY) {
                 // call outside of inLayoutCode range
-                invalidateLayoutTree();
+                invalidateLayout();
             }
         }
     }
@@ -309,14 +309,6 @@ public class TextArea extends Widget {
             LElement le = ll.get(i);
             as.setAnimationState(STATE_HOVER, hoverElement == le);
             le.draw(innerX, innerY, as);
-        }
-    }
-
-    @Override
-    protected void childChangedSize(Widget child) {
-        // ignore while in layout code
-        if(!inLayoutCode) {
-            forceRelayout();
         }
     }
 

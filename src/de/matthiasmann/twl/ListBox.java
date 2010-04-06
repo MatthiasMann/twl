@@ -399,13 +399,6 @@ public class ListBox<T> extends Widget {
     }
 
     @Override
-    protected void childChangedSize(Widget child) {
-        if(!(child instanceof ListBoxDisplay)) {
-            super.childChangedSize(child);
-        }
-    }
-
-    @Override
     public int getMinWidth() {
         return Math.max(super.getMinWidth(), scrollbar.getMinWidth());
     }
