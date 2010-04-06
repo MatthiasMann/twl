@@ -249,8 +249,12 @@ public class EditField extends Widget {
     }
 
     public void setReadOnly(boolean readOnly) {
-        this.readOnly = readOnly;
-        getAnimationState().setAnimationState(STATE_READONLY, readOnly);
+        if(this.readOnly != readOnly) {
+            this.readOnly = readOnly;
+            this.popupMenu = null;  // popup menu depends on read only state
+            getAnimationState().setAnimationState(STATE_READONLY, readOnly);
+            firePropertyChange("readonly", !readOnly, readOnly);
+        }
     }
 
     public void insertText(String str) {
@@ -602,27 +606,36 @@ public class EditField extends Widget {
 
     protected Menu createPopupMenu() {
         Menu menu = new Menu();
-        menu.add("cut", new Runnable() {
-            public void run() {
-                cutToClipboard();
-            }
-        });
+        if(!readOnly) {
+            menu.add("cut", new Runnable() {
+                public void run() {
+                    cutToClipboard();
+                }
+            });
+        }
         menu.add("copy", new Runnable() {
             public void run() {
                 copyToClipboard();
             }
         });
-        menu.add("paste", new Runnable() {
-            public void run() {
-                pasteFromClipboard();
-            }
-        });
-        menu.addSpacer();
-        menu.add("clear", new Runnable() {
-            public void run() {
-                if(!isReadOnly()) {
-                    setText("");
+        if(!readOnly) {
+            menu.add("paste", new Runnable() {
+                public void run() {
+                    pasteFromClipboard();
                 }
+            });
+            menu.add("clear", new Runnable() {
+                public void run() {
+                    if(!isReadOnly()) {
+                        setText("");
+                    }
+                }
+            });
+        }
+        menu.addSpacer();
+        menu.add("select all", new Runnable() {
+            public void run() {
+                selectAll();
             }
         });
         return menu;
