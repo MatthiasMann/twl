@@ -105,7 +105,7 @@ public class ActionMap {
     }
 
     /**
-     * Add an action mapping for the specified action to the given public method.
+     * Add an action mapping for the specified action to the given public instance method.
      *
      * Parameters can be passed to the method to differentiate between different
      * actions using the same handler method.
@@ -115,7 +115,41 @@ public class ActionMap {
      * besides a simple parameter compatibility check.
      *
      * @param action the action name
-     * @param target the target object. If null then only static methods can be called.
+     * @param target the target object
+     * @param methodName the method name
+     * @param params parameters passed to the method
+     * @param flags flags to control on which events the method should be invoked
+     * @throws IllegalArgumentException if no matching method was found
+     * qthrows NullPointerException if target is null
+     * @see ClassUtils#isParamsCompatible(java.lang.Class<?>[], java.lang.Object[])
+     * @see #FLAG_ON_PRESSED
+     * @see #FLAG_ON_RELEASE
+     * @see #FLAG_ON_REPEAT
+     */
+    public void addMapping(String action, Object target, String methodName, Object[] params, int flags) throws IllegalArgumentException {
+        for(Method m : target.getClass().getMethods()) {
+            if(m.getName().equals(methodName) && !Modifier.isStatic(m.getModifiers())) {
+                if(ClassUtils.isParamsCompatible(m.getParameterTypes(), params)) {
+                    addMappingImpl(action, target, m, params, flags);
+                    return;
+                }
+            }
+        }
+        throw new IllegalArgumentException("Can't find matching method");
+    }
+
+    /**
+     * Add an action mapping for the specified action to the given public static method.
+     *
+     * Parameters can be passed to the method to differentiate between different
+     * actions using the same handler method.
+     *
+     * NOTE: if multiple methods are compatible to the given parameters then it's
+     * undefined which method will be selected. No overload resolution is performed
+     * besides a simple parameter compatibility check.
+     *
+     * @param action the action name
+     * @param targetClass the target class
      * @param methodName the method name
      * @param params parameters passed to the method
      * @param flags flags to control on which events the method should be invoked
@@ -125,12 +159,11 @@ public class ActionMap {
      * @see #FLAG_ON_RELEASE
      * @see #FLAG_ON_REPEAT
      */
-    public void addMapping(String action, Object target, String methodName, Object[] params, int flags) throws IllegalArgumentException {
-        for(Method m : target.getClass().getMethods()) {
-            if(m.getName().equals(methodName) &&
-                    (target != null || Modifier.isStatic(m.getModifiers()))) {
+    public void addMapping(String action, Class targetClass, String methodName, Object[] params, int flags) throws IllegalArgumentException {
+        for(Method m : targetClass.getMethods()) {
+            if(m.getName().equals(methodName) && Modifier.isStatic(m.getModifiers())) {
                 if(ClassUtils.isParamsCompatible(m.getParameterTypes(), params)) {
-                    addMappingImpl(action, target, m, params, flags);
+                    addMappingImpl(action, null, m, params, flags);
                     return;
                 }
             }
