@@ -42,6 +42,7 @@ public abstract class MenuElement {
     private String name;
     private String theme;
     private boolean enabled = true;
+    private Object tooltipContent;
     private PropertyChangeSupport pcs;
 
     public MenuElement() {
@@ -79,6 +80,16 @@ public abstract class MenuElement {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         firePropertyChange("enabled", oldEnabled, enabled);
+    }
+
+    public Object getTooltipContent() {
+        return tooltipContent;
+    }
+
+    public void setTooltipContent(Object tooltip) {
+        Object oldTooltip = this.tooltipContent;
+        this.tooltipContent = tooltip;
+        firePropertyChange("tooltipContent", oldTooltip, tooltip);
     }
 
     protected abstract Widget createMenuWidget(MenuManager mm, int level);
@@ -137,8 +148,7 @@ public abstract class MenuElement {
 
     class MenuBtn extends Button implements PropertyChangeListener {
         public MenuBtn() {
-            super(MenuElement.this.getName());
-            setEnabled(MenuElement.this.isEnabled());
+            sync();
         }
 
         @Override
@@ -154,7 +164,12 @@ public abstract class MenuElement {
         }
 
         public void propertyChange(PropertyChangeEvent evt) {
+            sync();
+        }
+
+        protected void sync() {
             setEnabled(MenuElement.this.isEnabled());
+            setTooltipContent(MenuElement.this.getTooltipContent());
             setText(MenuElement.this.getName());
         }
     }
