@@ -31,6 +31,7 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.Border;
+import de.matthiasmann.twl.DebugHook;
 import de.matthiasmann.twl.DialogLayout;
 import de.matthiasmann.twl.Dimension;
 import de.matthiasmann.twl.ListBox;
@@ -163,8 +164,12 @@ public class ThemeManager {
         }
         enums.put(name, enumClazz);
     }
-    
+
     public ThemeInfo findThemeInfo(String themePath) {
+        return findThemeInfo(themePath, true);
+    }
+
+    private ThemeInfo findThemeInfo(String themePath, boolean warn) {
         int start = ParserUtil.indexOf(themePath, '.', 0);
         ThemeInfo info = themes.get(themePath.substring(0, start));
         while(info != null && ++start < themePath.length()) {
@@ -172,8 +177,8 @@ public class ThemeManager {
             info = info.getChildTheme(themePath.substring(start, next));
             start = next;
         }
-        if(info == null) {
-            getLogger().warning("Could not find theme: " + themePath);
+        if(info == null && warn) {
+            DebugHook.getDebugHook().missingTheme(themePath);
         }
         return info;
     }
@@ -576,7 +581,7 @@ public class ThemeManager {
     ThemeInfo resolveWildcard(String base, String name) {
         assert(base.length() == 0 || base.endsWith("."));
         String fullPath = base.concat(name);
-        ThemeInfo info = findThemeInfo(fullPath);
+        ThemeInfo info = findThemeInfo(fullPath, false);
         if(info != null && ((ThemeInfoImpl)info).maybeUsedFromWildcard) {
             return info;
         }

@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.theme;
 
+import de.matthiasmann.twl.DebugHook;
 import de.matthiasmann.twl.ThemeInfo;
 import java.util.HashMap;
 
@@ -67,7 +68,7 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
                 info = manager.resolveWildcard(wildcardImportPath, theme);
             }
             if(info == null) {
-                System.err.println("Missing child theme \"" + theme + "\" for \"" + getThemePath() + "\"");
+                DebugHook.getDebugHook().missingChildTheme(this, theme);
             }
         }
         return info;

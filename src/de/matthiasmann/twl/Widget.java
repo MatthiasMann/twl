@@ -2186,14 +2186,21 @@ public class Widget {
             }
             return;
         }
+
+        final DebugHook hook = DebugHook.getDebugHook();
+        hook.beforeApplyTheme(this);
         
-        final ThemeInfo themeInfo = themeManager.findThemeInfo(themePath);
-        if(themeInfo != null) {
-            if(theme.length() > 0) {
+        ThemeInfo themeInfo = null;
+        try {
+            themeInfo = themeManager.findThemeInfo(themePath);
+            if(themeInfo != null && theme.length() > 0) {
                 applyTheme(themeInfo);
             }
-            applyThemeToChildren(themeManager, themeInfo);
+        } finally {
+            hook.afterApplyTheme(this);
         }
+
+        applyThemeToChildren(themeManager, themeInfo, hook);
     }
 
     /**
@@ -2207,27 +2214,31 @@ public class Widget {
         return theme.length() > 1 && theme.charAt(0) == '/';
     }
 
-    private void applyThemeImpl(ThemeManager themeManager, ThemeInfo themeInfo) {
+    private void applyThemeImpl(ThemeManager themeManager, ThemeInfo themeInfo, DebugHook hook) {
         this.themeManager = themeManager;
         if(theme.length() > 0) {
-            if(isAbsoluteTheme(theme)) {
-                themeInfo = themeManager.findThemeInfo(theme.substring(1));
-            } else {
-                themeInfo = themeInfo.getChildTheme(theme);
+            hook.beforeApplyTheme(this);
+            try {
+                if(isAbsoluteTheme(theme)) {
+                    themeInfo = themeManager.findThemeInfo(theme.substring(1));
+                } else {
+                    themeInfo = themeInfo.getChildTheme(theme);
+                }
+                if(themeInfo != null) {
+                    applyTheme(themeInfo);
+                }
+            } finally {
+                hook.afterApplyTheme(this);
             }
-            if(themeInfo == null) {
-                return;
-            }
-            applyTheme(themeInfo);
         }
-        applyThemeToChildren(themeManager, themeInfo);
+        applyThemeToChildren(themeManager, themeInfo, hook);
     }
-    
-    private void applyThemeToChildren(ThemeManager themeManager, ThemeInfo themeInfo) {
-        if(children != null) {
+
+    private void applyThemeToChildren(ThemeManager themeManager, ThemeInfo themeInfo, DebugHook hook) {
+        if(children != null && themeInfo != null) {
             for(int i=0,n=children.size() ; i<n ; i++) {
                 Widget child = children.get(i);
-                child.applyThemeImpl(themeManager, themeInfo);
+                child.applyThemeImpl(themeManager, themeInfo, hook);
             }
         }
     }

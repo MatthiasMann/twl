@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,14 +30,59 @@
 package de.matthiasmann.twl;
 
 /**
- * The theme info class contains all theme specific information for a given widget.
+ * The debug hook class can be used to retieve more detailed information
+ * about missing themes or parameters.
  *
  * @author Matthias Mann
  */
-public interface ThemeInfo extends ParameterMap {
+public class DebugHook {
 
-    public ThemeInfo getChildTheme(String theme);
+    private static ThreadLocal<DebugHook> tls = new ThreadLocal<DebugHook>() {
+        @Override
+        protected DebugHook initialValue() {
+            return new DebugHook();
+        }
+    };
 
-    public String getThemePath();
+    /**
+     * Returns the currently active debug hook for this thread.
+     * @return the debug hook. Never null.
+     */
+    public static DebugHook getDebugHook() {
+        return tls.get();
+    }
+
+    /**
+     * Installs a new debug hook.
+     *
+     * @param hook the new debug hook
+     * @return the previous debug hook
+     * @throws NullPointerException if hook is null
+     */
+    public static DebugHook installHook(DebugHook hook) {
+        if(hook == null) {
+            throw new NullPointerException("hook");
+        }
+        DebugHook old = tls.get();
+        tls.set(hook);
+        return old;
+    }
+
+    public void beforeApplyTheme(Widget widget) {
+    }
+
+    public void afterApplyTheme(Widget widget) {
+    }
+
+    public void missingTheme(String themePath) {
+        System.err.println("Could not find theme: " + themePath);
+    }
     
+    public void missingChildTheme(ThemeInfo parent, String theme) {
+        System.err.println("Missing child theme \"" + theme + "\" for \"" + parent.getThemePath() + "\"");
+    }
+
+    public void missingParameter(ParameterMap map, String paramName) {
+        System.err.println("Parameter \"" + paramName + "\" not set");
+    }
 }
