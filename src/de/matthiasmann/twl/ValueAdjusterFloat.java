@@ -190,6 +190,11 @@ public class ValueAdjusterFloat extends ValueAdjuster {
     }
 
     @Override
+    protected void onDragCancelled() {
+        setValue(dragStartValue);
+    }
+
+    @Override
     protected void doDecrement() {
         setValue(value - getStepSize());
     }

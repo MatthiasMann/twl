@@ -37,7 +37,7 @@ import org.lwjgl.input.Keyboard;
  *
  * You can adjust the value via drag&drop on the display
  * or by clicking on the display which will open an edit field
- * or using the +/ buttons
+ * or using the +/- buttons
  * or using the left/right keys
  * 
  * @author Matthias Mann
@@ -52,6 +52,7 @@ public abstract class ValueAdjuster extends Widget {
     private final Button decButton;
     private final Button incButton;
     private final Runnable timerCallback;
+    private final L listeners;
     private Timer timer;
 
     private String displayPrefix;
@@ -87,12 +88,12 @@ public abstract class ValueAdjuster extends Widget {
         decButton.getModel().addStateCallback(cbUpdateTimer);
         incButton.getModel().addStateCallback(cbUpdateTimer);
 
-        CB cb = new CB();
-        label.addCallback(cb);
-        label.setListener(cb);
+        listeners = new L();
+        label.addCallback(listeners);
+        label.setListener(listeners);
         
         editField.setVisible(false);
-        editField.addCallback(cb);
+        editField.addCallback(listeners);
         
         add(label);
         add(editField);
@@ -295,6 +296,11 @@ public abstract class ValueAdjuster extends Widget {
     @Override
     protected boolean handleEvent(Event evt) {
         if(evt.isKeyEvent()) {
+            if(evt.getType() == Event.Type.KEY_PRESSED && evt.getKeyCode() == Keyboard.KEY_ESCAPE && listeners.dragActive) {
+                listeners.dragActive = false;
+                onDragCancelled();
+                return true;
+            }
             if(!editField.isVisible()) {
                 switch(evt.getType()) {
                 case KEY_PRESSED:
@@ -330,6 +336,7 @@ public abstract class ValueAdjuster extends Widget {
     
     protected abstract void onDragStart();
     protected abstract void onDragUpdate(int dragDelta);
+    protected abstract void onDragCancelled();
     
     protected abstract void doDecrement();
     protected abstract void doIncrement();
@@ -360,17 +367,22 @@ public abstract class ValueAdjuster extends Widget {
         }
     }
 
-    class CB implements Runnable, DraggableButton.DragListener, EditField.Callback {
+    class L implements Runnable, DraggableButton.DragListener, EditField.Callback {
+        boolean dragActive;
         public void run() {
             startEdit();
         }
         public void dragStarted() {
+            dragActive = true;
             onDragStart();
         }
         public void dragged(int deltaX, int deltaY) {
-            onDragUpdate(deltaX);
+            if(dragActive) {
+                onDragUpdate(deltaX);
+            }
         }
         public void dragStopped() {
+            dragActive = false;
         }
         public void callback(int key) {
             handleEditCallback(key);
