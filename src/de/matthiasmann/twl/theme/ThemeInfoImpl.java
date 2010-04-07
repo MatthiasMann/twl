@@ -90,10 +90,4 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
         sb.append(getName());
         return sb;
     }
-
-    @Override
-    protected void missingParameter(String paramName) {
-        manager.getLogger().warning("Parameter \"" + paramName + "\" not set for \"" + getThemePath() + "\"");
-    }
-
 }

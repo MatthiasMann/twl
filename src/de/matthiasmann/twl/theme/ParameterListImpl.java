@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.DebugHook;
 import de.matthiasmann.twl.ParameterList;
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Font;
@@ -154,8 +155,6 @@ public class ParameterListImpl extends ThemeChildImpl implements ParameterList {
     }
 
     protected void wrongParameterType(int idx, Class<?> expectedType, Class<?> foundType) {
-        manager.getLogger().warning("Parameter at index " + idx + " is a " +
-                foundType.getSimpleName() + " expected a " +
-                expectedType.getSimpleName() + getParentDescription());
+        DebugHook.getDebugHook().wrongParameterType(this, idx, expectedType, foundType, getParentDescription());
     }
 }

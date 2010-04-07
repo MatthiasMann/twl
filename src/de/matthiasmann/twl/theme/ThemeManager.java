@@ -190,7 +190,7 @@ public class ThemeManager {
     public Image getImage(String name) {
         Image img = imageManager.getImage(name);
         if(img == null) {
-            getLogger().warning("Could not find image: " + name);
+            DebugHook.getDebugHook().missingImage(name);
         }
         return img;
     }
@@ -586,10 +586,6 @@ public class ThemeManager {
             return info;
         }
         return null;
-    }
-
-    Logger getLogger() {
-        return Logger.getLogger(ThemeManager.class.getName());
     }
 
     class MathInterpreter extends AbstractMathInterpreter {

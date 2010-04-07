@@ -82,7 +82,32 @@ public class DebugHook {
         System.err.println("Missing child theme \"" + theme + "\" for \"" + parent.getThemePath() + "\"");
     }
 
-    public void missingParameter(ParameterMap map, String paramName) {
-        System.err.println("Parameter \"" + paramName + "\" not set");
+    public void missingParameter(ParameterMap map, String paramName, String parentDescription) {
+        if(map instanceof ThemeInfo) {
+            System.err.println("Parameter \"" + paramName + "\" not set for \"" + ((ThemeInfo)map).getThemePath() + "\"");
+        } else {
+            System.err.println("Parameter \"" + paramName + "\" not set" + parentDescription);
+        }
+    }
+
+    public void wrongParameterType(ParameterMap map, String paramName, Class<?> expectedType, Class<?> foundType, String parentDescription) {
+        System.err.println("Parameter \"" + paramName + "\" is a " +
+                foundType.getSimpleName() + " expected a " +
+                expectedType.getSimpleName() + parentDescription);
+    }
+
+    public void wrongParameterType(ParameterList map, int idx, Class<?> expectedType, Class<?> foundType, String parentDescription) {
+        System.err.println("Parameter at index " + idx + " is a " +
+                foundType.getSimpleName() + " expected a " +
+                expectedType.getSimpleName() + parentDescription);
+    }
+
+    public void replacingWithDifferentType(ParameterMap map, String paramName, Class<?> oldType, Class<?> newType, String parentDescription) {
+        System.err.println("Paramter \"" + paramName + "\" of type " +
+                oldType + " is replaced with type " + newType + parentDescription);
+    }
+
+    public void missingImage(String name) {
+        System.err.println("Could not find image: " + name);
     }
 }

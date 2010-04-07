@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.DebugHook;
 import de.matthiasmann.twl.ParameterList;
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Font;
@@ -162,18 +163,15 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
 
 
     protected void wrongParameterType(String paramName, Class<?> expectedType, Class<?> foundType) {
-        manager.getLogger().warning("Parameter \"" + paramName + "\" is a " +
-                foundType.getSimpleName() + " expected a " +
-                expectedType.getSimpleName() + getParentDescription());
+        DebugHook.getDebugHook().wrongParameterType(this, paramName, expectedType, foundType, getParentDescription());
     }
 
     protected void missingParameter(String paramName) {
-        manager.getLogger().warning("Parameter \"" + paramName + "\" not set" + getParentDescription());
+        DebugHook.getDebugHook().missingParameter(this, paramName, getParentDescription());
     }
     
     protected void replacingWithDifferentType(String paramName, Class<?> oldType, Class<?> newType) {
-        manager.getLogger().warning("Paramter \"" + paramName + "\" of type " +
-                oldType + " is replaced with type " + newType + getParentDescription());
+        DebugHook.getDebugHook().replacingWithDifferentType(this, paramName, oldType, newType, getParentDescription());
     }
 
     void addParameters(Map<String, ?> params) {
