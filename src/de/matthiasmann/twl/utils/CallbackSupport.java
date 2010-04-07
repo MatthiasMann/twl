@@ -62,9 +62,11 @@ public class CallbackSupport {
 
     public static <T> int findCallbackPosition(T[] list, T callback) {
         checkNotNull(callback);
-        for(int i=0,n=list.length ; i<n ; i++) {
-            if(list[i] == callback) {
-                return i;
+        if(list != null) {
+            for(int i=0,n=list.length ; i<n ; i++) {
+                if(list[i] == callback) {
+                    return i;
+                }
             }
         }
         return -1;
