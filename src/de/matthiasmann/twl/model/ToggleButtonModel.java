@@ -123,7 +123,7 @@ public class ToggleButtonModel extends SimpleButtonModel {
     }
 
     private void removeModelCallback() {
-        if(model != null) {
+        if(model != null && modelCallback != null) {
             model.removeCallback(modelCallback);
         }
     }
