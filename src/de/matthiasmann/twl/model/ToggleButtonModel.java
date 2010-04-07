@@ -90,6 +90,9 @@ public class ToggleButtonModel extends SimpleButtonModel {
             this.model = model;
             addModelCallback();
         }
+        if(model != null) {
+            syncWithModel();
+        }
     }
 
     public boolean isInvertModelState() {
