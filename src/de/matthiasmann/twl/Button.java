@@ -241,7 +241,7 @@ public class Button extends TextWidget {
     }
 
     @Override
-    public boolean handleEvent(Event evt) {
+    protected boolean handleEvent(Event evt) {
         if(evt.isMouseEvent()) {
             boolean hover = (evt.getType() != Event.Type.MOUSE_EXITED) && isMouseInside(evt);
             model.setHover(hover);
