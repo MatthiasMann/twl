@@ -1013,7 +1013,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     dragStartX = evt.getMouseX() - columnWidth;
                     if(fixedWidthMode) {
                         for(int i=0 ; i<numColumns ; ++i) {
-                            columnHeaders[i].setColumnWidth(getColumnWidth(column));
+                            columnHeaders[i].setColumnWidth(getColumnWidth(i));
                         }
                         dragStartSumWidth = columnWidth + getColumnWidth(column+1);
                     }
