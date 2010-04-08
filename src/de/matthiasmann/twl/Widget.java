@@ -2300,7 +2300,10 @@ public class Widget {
                         if(result != null) {
                             return result;
                         }
-                        // widget no longer wants mouse events
+                        if(evt.getType() != Event.Type.MOUSE_WHEEL) {
+                            // widget accepted MOUSE_ENTERED so route other events too
+                            return child;
+                        }
                     }
                     // found a widget - but it doesn't want mouse events
                     // so assumes it's "invisible" for the mouse
