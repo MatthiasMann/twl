@@ -383,9 +383,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     public void setScrollPosition(int scrollPosX, int scrollPosY) {
-        this.scrollPosX = scrollPosX;
-        this.scrollPosY = scrollPosY;
-        invalidateLayout();
+        if(this.scrollPosX != scrollPosX || this.scrollPosY != scrollPosY) {
+            this.scrollPosX = scrollPosX;
+            this.scrollPosY = scrollPosY;
+            invalidateLayoutLocally();
+        }
     }
 
     public void adjustScrollPosition(int row) {

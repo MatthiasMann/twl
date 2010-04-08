@@ -863,21 +863,17 @@ public class Widget {
     /**
      * Called when something has changed which affected the layout of this widget.
      *
-     * The default implementation sets a layout invalid flag which causes layout()
-     * to be called and calls invalidateParentLayout()
+     * The default implementation calls invalidateLayoutLocally() followed by invalidateParentLayout()
      *
      * Called by the default implementation of sizeChanged, borderChanged.
      *
+     * @see #invalidateLayoutLocally()
      * @see #sizeChanged()
      * @see #borderChanged()
      */
     public void invalidateLayout() {
         if(!layoutInvalid) {
-            layoutInvalid = true;
-            GUI gui = getGUI();
-            if(gui != null) {
-                gui.hasInvalidLayouts = true;
-            }
+            invalidateLayoutLocally();
             if(parent != null) {
                 parent.childInvalidateLayout(this);
             }
@@ -891,8 +887,11 @@ public class Widget {
      */
     public void validateLayout() {
         if(layoutInvalid) {
-            layout();
+            /* Reset the flag first so that widgets like TextArea can invalidate
+             * their layout from inside layout()
+             */
             layoutInvalid = false;
+            layout();
         }
         if(children != null) {
             for(int i=0,n=children.size() ; i<n ; i++) {
@@ -1673,12 +1672,13 @@ public class Widget {
 
     /**
      * Called when the size of this widget has changed.
-     * The default implementation calls invalidateLayout.
+     * The default implementation calls invalidateLayoutLocally. As size changes
+     * are normally the result of the parent's layout() function.
      * 
-     * @see #invalidateLayout()
+     * @see #invalidateLayoutLocally()
      */
     protected void sizeChanged() {
-        invalidateLayout();
+        invalidateLayoutLocally();
     }
 
     /**
@@ -1835,6 +1835,24 @@ public class Widget {
             throw new IllegalArgumentException("can only render direct children");
         }
         child.drawWidget(gui);
+    }
+
+    /**
+     * Invalidates only the layout of this widget. Does not invalidate the layout of the parent.
+     * Should only be used for things like scrolling.
+     *
+     * This method is called by sizeChanged()
+     * 
+     * @see #sizeChanged()
+     */
+    protected final void invalidateLayoutLocally() {
+        if(!layoutInvalid) {
+            layoutInvalid = true;
+            GUI gui = getGUI();
+            if(gui != null) {
+                gui.hasInvalidLayouts = true;
+            }
+        }
     }
 
     /**
