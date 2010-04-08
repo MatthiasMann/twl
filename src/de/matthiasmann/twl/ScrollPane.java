@@ -437,7 +437,7 @@ public class ScrollPane extends Widget {
 
     @Override
     protected boolean handleEvent(Event evt) {
-        if(evt.isKeyEvent() && content.canAcceptKeyboardFocus()) {
+        if(evt.isKeyEvent() && content != null && content.canAcceptKeyboardFocus()) {
             if(content.handleEvent(evt)) {
                 content.requestKeyboardFocus();
                 return true;
