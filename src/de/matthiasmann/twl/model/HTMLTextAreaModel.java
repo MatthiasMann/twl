@@ -219,14 +219,18 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     if(startLength[1] > 0) {
                         int pos = sb.length();
                         sb.append(buf, startLength[0], startLength[1]);
-                        removeBreaks(pos);
+                        if(!getStyle().pre) {
+                            removeBreaks(pos);
+                        }
                     }
                     break;
                 }
                 case XmlPullParser.ENTITY_REF: {
                     int pos = sb.length();
                     sb.append(xpp.getText());
-                    removeBreaks(pos);
+                    if(!getStyle().pre) {
+                        removeBreaks(pos);
+                    }
                 }
                 }
             }
