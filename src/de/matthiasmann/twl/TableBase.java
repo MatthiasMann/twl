@@ -1315,7 +1315,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected class ColumnHeader extends Button implements Runnable {
-        private int column;
+        int column;
         private int columnWidth;
         int springWidth;
 

@@ -40,7 +40,7 @@ public class Table extends TableBase {
 
     private final TableModel.ChangeListener modelChangeListener;
     
-    private TableModel model;
+    TableModel model;
 
     public Table() {
         this.modelChangeListener = new ModelChangeListener();

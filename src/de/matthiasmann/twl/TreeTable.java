@@ -50,7 +50,7 @@ public class TreeTable extends TableBase {
 
     private NodeState[] nodeStateTable;
     private int nodeStateTableSize;
-    private TreeTableModel model;
+    TreeTableModel model;
     private NodeState rootNodeState;
 
     public TreeTable() {
