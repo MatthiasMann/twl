@@ -622,7 +622,10 @@ public final class GUI extends Widget {
         }
 
         if(event.isMouseDragEnd()) {
-            dragActive = false;
+            if(dragActive) {
+                dragActive = false;
+                sendMouseEvent(Event.Type.MOUSE_MOVED, null);
+            }
             dragButton = -1;
         }
 
