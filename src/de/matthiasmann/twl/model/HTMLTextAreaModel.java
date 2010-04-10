@@ -725,7 +725,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         }
 
         public Image getBackgroundImage(ParameterMap styleMap) {
-            return styleMap.getImage(style.backgroundImage);
+            if(style.backgroundImage.length() > 0) {
+                return styleMap.getImage(style.backgroundImage);
+            }
+            return null;
         }
 
         public ValueUnit getWidth() {
