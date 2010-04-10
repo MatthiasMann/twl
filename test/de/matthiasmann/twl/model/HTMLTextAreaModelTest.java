@@ -59,10 +59,22 @@ public class HTMLTextAreaModelTest {
     }
 
     @Test
+    public void testEmptySpan() {
+        HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo<span/>Welt");
+        Iterator<TextAreaModel.Element> i = m.iterator();
+        assertText(i, "default", "HalloWelt");
+        assertFalse(i.hasNext());
+    }
+
+    @Test
     public void testEmptyDiv() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo<div/>Welt");
         Iterator<TextAreaModel.Element> i = m.iterator();
-        assertText(i, "default", "HalloWelt");
+        assertText(i, "default", "Hallo");
+        TextAreaModel.BlockElement be = next(i, TextAreaModel.BlockElement.class);
+        assertEquals(TextAreaModel.FloatPosition.NONE, be.getFloatPosition());
+        assertFalse(be.iterator().hasNext());
+        assertText(i, "default", "Welt");
         assertFalse(i.hasNext());
     }
 
@@ -75,16 +87,16 @@ public class HTMLTextAreaModelTest {
     }
 
     @Test
-    public void testBREmptyDiv() {
-        HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/><div/>A new line");
+    public void testBREmptySpan() {
+        HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/><span/>A new line");
         Iterator<TextAreaModel.Element> i = m.iterator();
         assertText(i, "default", "Hallo Welt\nA new line");
         assertFalse(i.hasNext());
     }
 
     @Test
-    public void testBREmptyDiv2() {
-        HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<div/><br/>A new line");
+    public void testBREmptySpan2() {
+        HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<span/><br/>A new line");
         Iterator<TextAreaModel.Element> i = m.iterator();
         assertText(i, "default", "Hallo Welt\nA new line");
         assertFalse(i.hasNext());
