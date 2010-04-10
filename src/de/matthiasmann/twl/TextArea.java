@@ -270,6 +270,9 @@ public class TextArea extends Widget {
                     
                     // finish the last line
                     box.nextLine(false);
+                    
+                    // finish floaters
+                    box.clearFloater(TextAreaModel.Clear.BOTH);
                 }
                 updateMouseHover();
             } finally {
