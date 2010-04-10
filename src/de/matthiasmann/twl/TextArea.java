@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.TextAreaModel.TextElement;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.model.TextAreaModel;
 import de.matthiasmann.twl.renderer.Font;
@@ -77,21 +78,9 @@ public class TextArea extends Widget {
     private MouseCursor mouseCursorLink;
 
     private final ArrayList<LElement> layout;
-    private final ArrayList<LElement> objLeft;
-    private final ArrayList<LElement> objRight;
-    private int curY;
-    private int curX;
-    private int lineStartIdx;
-    private int marginLeft;
-    private int marginRight;
-    private int lineStartX;
-    private int lineWidth;
-    private int fontLineHeight;
-    private boolean inParagraph;
-    private boolean wasAutoBreak;
     private boolean inLayoutCode;
-    private TextAreaModel.HAlignment textAlignment;
     private int lastWidth;
+    private int lastHeight;
 
     private int lastMouseX;
     private int lastMouseY;
@@ -102,8 +91,6 @@ public class TextArea extends Widget {
         this.widgets = new HashMap<String, Widget>();
         this.widgetResolvers = new HashMap<String, WidgetResolver>();
         this.layout = new ArrayList<LElement>();
-        this.objLeft = new ArrayList<LElement>();
-        this.objRight = new ArrayList<LElement>();
         
         this.modelCB = new Runnable() {
             public void run() {
@@ -234,7 +221,7 @@ public class TextArea extends Widget {
     @Override
     public int getPreferredInnerHeight() {
         validateLayout();
-        return curY;
+        return lastHeight;
     }
     
     @Override
@@ -273,24 +260,24 @@ public class TextArea extends Widget {
         if(lastWidth != targetWidth) {
             this.lastWidth = targetWidth;
             this.inLayoutCode = true;
-            int lastCurY = curY;
+
+            clearLayout();
+            Box box = new Box(0, 0, targetWidth);
 
             try {
-                clearLayout();
                 if(model != null) {
-                    layoutElements(model);
+                    layoutElements(box, model);
                     
                     // finish the last line
-                    nextLine(false);
+                    box.nextLine(false);
                 }
                 updateMouseHover();
             } finally {
                 inLayoutCode = false;
-                objLeft.clear();
-                objRight.clear();
             }
 
-            if(lastCurY != curY) {
+            if(lastHeight != box.curY) {
+                lastHeight = box.curY;
                 // call outside of inLayoutCode range
                 invalidateLayout();
             }
@@ -401,153 +388,23 @@ public class TextArea extends Widget {
         for(int i=0,n=layout.size() ; i<n ; i++) {
             layout.get(i).destroy();
         }
-        objLeft.clear();
-        objRight.clear();
-        super.removeAllChildren();
-
-        curY = 0;
-        curX = 0;
-        marginLeft = 0;
-        marginRight = 0;
-        lineStartIdx = 0;
-        fontLineHeight = 0;
-        inParagraph = false;
-        wasAutoBreak = false;
-        textAlignment = TextAreaModel.HAlignment.LEFT;
         layout.clear();
-        computeMargin();
+        super.removeAllChildren();
     }
 
-    private void computeMargin() {
-        int right = lastWidth;
-        int left = 0;
-
-        for(int i=0,n=objLeft.size() ; i<n ; i++) {
-            LElement e = objLeft.get(i);
-            left = Math.max(left, e.x + e.width);
-        }
-
-        for(int i=0,n=objRight.size() ; i<n ; i++) {
-            LElement e = objRight.get(i);
-            right = Math.min(right, e.x);
-        }
-
-        left += marginLeft;
-        right -= marginRight;
-
-        lineStartX = left;
-        lineWidth = Math.max(0, right - left);
-
-        if(isAtStartOfLine()) {
-            curX = lineStartX;
-        }
-    }
-
-    private int getRemaining() {
-        return Math.max(0, lineWidth - curX);
-    }
-
-    private boolean isAtStartOfLine() {
-        return lineStartIdx == layout.size();
-    }
-
-    private boolean nextLine(boolean force) {
-        if(isAtStartOfLine()) {
-            if(!wasAutoBreak && force) {
-                curY += fontLineHeight;
-                wasAutoBreak = false;
-                return true;
-            }
-            return false;
-        }
-        wasAutoBreak = !force;
-        int lineHeight = 0;
-        for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
-            LElement le = layout.get(idx);
-            lineHeight = Math.max(lineHeight, le.height);
-        }
-
-        LElement lastElement = layout.get(layout.size() - 1);
-        int remaining = (lineStartX + lineWidth) - (lastElement.x + lastElement.width);
-        
-        switch(textAlignment) {
-        case RIGHT: {
-            for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
-                LElement le = layout.get(idx);
-                le.x += remaining;
-            }
-            break;
-        }
-        case CENTER: {
-            int offset = remaining / 2;
-            for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
-                LElement le = layout.get(idx);
-                le.x += offset;
-            }
-            break;
-        }
-        case BLOCK:
-            if(remaining < lineWidth / 4) {
-                int num = layout.size() - lineStartIdx;
-                for(int i=1 ; i<num ; i++) {
-                    LElement le = layout.get(lineStartIdx + i);
-                    int offset = remaining * i / (num-1);
-                    le.x += offset;
-                }
-            }
-            break;
-        }
-        
-        for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
-            LElement le = layout.get(idx);
-            switch(le.element.getVerticalAlignment()) {
-            case BOTTOM:
-                le.y = curY + lineHeight - le.height;
-                break;
-            case TOP:
-                le.y = curY;
-                break;
-            case CENTER:
-                le.y = curY + (lineHeight - le.height)/2;
-                break;
-            case FILL:
-                le.y = curY;
-                le.height = lineHeight;
-                break;
-            }
-
-            le.adjustWidget();
-        }
-        lineStartIdx = layout.size();
-        curY += lineHeight;
-
-        removeObjFromList(objLeft);
-        removeObjFromList(objRight);
-        computeMargin();
-        // curX is set by computeMargin()
-        
-        return true;
-    }
-
-    private void removeObjFromList(ArrayList<LElement> list) {
-        for(int i=list.size() ; i-->0 ;) {
-            LElement e = list.get(i);
-            if(e.y + e.height < curY) {
-                list.remove(i);
-            }
-        }
-    }
-
-    private void layoutElements(Iterable<TextAreaModel.Element> elements) {
+    private void layoutElements(Box box, Iterable<TextAreaModel.Element> elements) {
         for(TextAreaModel.Element e : elements) {
+            box.clearFloater(e.getClear());
             if(e instanceof TextAreaModel.TextElement) {
-                layout((TextAreaModel.TextElement)e);
+                layoutTextElement(box, (TextAreaModel.TextElement)e);
             } else if(e instanceof TextAreaModel.ImageElement) {
-                layout((TextAreaModel.ImageElement)e);
+                layoutImageElement(box, (TextAreaModel.ImageElement)e);
             } else if(e instanceof TextAreaModel.WidgetElement) {
-                layout((TextAreaModel.WidgetElement)e);
+                layoutWidgetElement(box, (TextAreaModel.WidgetElement)e);
             } else if(e instanceof TextAreaModel.ListElement) {
-                layout((TextAreaModel.ListElement)e);
+                layoutListElement(box, (TextAreaModel.ListElement)e);
+            } else if(e instanceof TextAreaModel.BlockElement) {
+                layoutBlockElement(box, (TextAreaModel.BlockElement)e);
             } else {
                 Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE,
                         "Unknown Element subclass: " + e.getClass());
@@ -555,7 +412,7 @@ public class TextArea extends Widget {
         }
     }
     
-    private void layout(TextAreaModel.ImageElement ie) {
+    private void layoutImageElement(Box box, TextAreaModel.ImageElement ie) {
         if(images == null) {
             return;
         }
@@ -565,10 +422,10 @@ public class TextArea extends Widget {
         }
 
         LImage li = new LImage(ie, image, ie.getToolTip());
-        layout(ie, li);
+        layout(box, ie, li, ie.getFloatPosition(), ie.getHorizontalAlignment());
     }
 
-    private void layout(TextAreaModel.WidgetElement we) {
+    private void layoutWidgetElement(Box box, TextAreaModel.WidgetElement we) {
         Widget widget = widgets.get(we.getWidgetName());
         if(widget == null) {
             WidgetResolver resolver = widgetResolvers.get(we.getWidgetName());
@@ -586,16 +443,12 @@ public class TextArea extends Widget {
         }
 
         LWidget lw = new LWidget(we, widget);
-        layout(we, lw);
+        layout(box, we, lw, we.getFloatPosition(), we.getHorizontalAlignment());
     }
 
-    private void layout(TextAreaModel.Element e, LWidget lw) {
-        layout(e, lw, e.getHorizontalAlignment());
-    }
-
-    private void layout(TextAreaModel.Element e, LWidget lw, TextAreaModel.HAlignment align) {
+    private void layout(Box box, TextAreaModel.Element e, LWidget lw, TextAreaModel.FloatPosition floatPos, TextAreaModel.HAlignment align) {
         if(align != TextAreaModel.HAlignment.INLINE) {
-            nextLine(false);
+            box.nextLine(false);
         }
 
         super.insertChild(lw.widget, getNumChildren());
@@ -604,106 +457,121 @@ public class TextArea extends Widget {
         lw.height = lw.widget.getHeight();
 
         boolean leftRight = false;
-        switch(align) {
-        case LEFT:
-            leftRight = true;
-            lw.x = lineStartX;
-            objLeft.add(lw);
-            break;
 
-        case RIGHT:
-            leftRight = true;
-            lw.x = lineStartX + lineWidth - lw.width;
-            objRight.add(lw);
-            break;
+        switch(floatPos) {
+            case LEFT:
+                leftRight = true;
+                lw.x = box.lineStartX;
+                box.objLeft.add(lw);
+                break;
 
-        case CENTER:
-            lw.x = lineStartX + (lineWidth - lw.width) / 2;
-            nextLine(false);
-            break;
+            case RIGHT:
+                leftRight = true;
+                lw.x = box.lineStartX + box.lineWidth - lw.width;
+                box.objRight.add(lw);
+                break;
 
-        case BLOCK:
-            lw.x = lineStartX;
-            lw.width = lineWidth;
-            nextLine(false);
-            break;
+            default:
+                switch(align) {
+                case LEFT:
+                    lw.x = box.lineStartX;
+                    box.nextLine(false);
+                    break;
 
-        case INLINE:
-            if(getRemaining() < lw.width && !isAtStartOfLine()) {
-                nextLine(false);
-            }
-            lw.x = curX;
-            curX += lw.width;
-            break;
+                case RIGHT:
+                    lw.x = box.lineStartX + box.lineWidth - lw.width;
+                    box.nextLine(false);
+                    break;
+
+                case CENTER:
+                    lw.x = box.lineStartX + (box.lineWidth - lw.width) / 2;
+                    box.nextLine(false);
+                    break;
+
+                case BLOCK:
+                    lw.x = box.lineStartX;
+                    lw.width = box.lineWidth;
+                    box.nextLine(false);
+                    break;
+
+                case INLINE:
+                    if(box.getRemaining() < lw.width && !box.isAtStartOfLine()) {
+                        box.nextLine(false);
+                    }
+                    lw.x = box.getXAndAdvance(lw.width);
+                    break;
+                }
         }
 
         layout.add(lw);
         if(leftRight) {
-            assert lineStartIdx == layout.size() - 1;
-            lineStartIdx++;
-            lw.y = curY;
+            assert box.lineStartIdx == layout.size() - 1;
+            box.lineStartIdx++;
+            lw.y = box.curY;
             lw.adjustWidget();
-            computeMargin();
+            box.computeMargin();
         }
     }
 
-    private void layout(TextAreaModel.TextElement te) {
+    static int convertToPX(TextAreaModel.ValueUnit valueUnit, Font font, int full) {
+        float value = valueUnit.value;
+        switch(valueUnit.unit) {
+            case EM:
+                value *= font.getEM();
+                break;
+            case EX:
+                value *= font.getEX();
+                break;
+            case PERCENT:
+                value *= full * 0.01f;
+                break;
+        }
+        return Math.round(value);
+    }
+
+    private Font selectFont(TextAreaModel.Element e) {
+        String fontName = e.getFontName();
+        if(fontName != null) {
+            Font font = fonts.getFont(fontName);
+            if(font != null) {
+                return font;
+            }
+        }
+        return defaultFont;
+    }
+    
+    private void layoutTextElement(Box box, TextAreaModel.TextElement te) {
         if(fonts == null) {
             return;
         }
         final String text = te.getText();
-        Font font;
-        if(te.getFontName() == null || (font = fonts.getFont(te.getFontName())) == null) {
-            if(defaultFont == null) {
-                return;
-            }
-            font = defaultFont;
-        }
-        fontLineHeight = font.getLineHeight();
-
-        if(te.isParagraphStart()) {
-            nextLine(false);
-            inParagraph = true;
+        Font font = selectFont(te);
+        if(font == null) {
+            return;
         }
 
-        if(te.isParagraphStart() || (!inParagraph && isAtStartOfLine())) {
-            marginLeft = Math.max(0, te.getMarginLeft());
-            marginRight = Math.max(0, te.getMarginRight());
-            textAlignment = te.getHorizontalAlignment();
-            computeMargin();
-            curX = Math.max(0, lineStartX + te.getTextIndent());
-        }
+        box.setupTextParams(te, font);
 
         int idx = 0;
         while(idx < text.length()) {
             int end = TextUtil.indexOf(text, '\n', idx);
             if(te.isPreformatted()) {
-                layoutTextPre(te, font, text, idx, end);
+                layoutTextPre(box, te, font, text, idx, end);
             } else {
-                layoutText(te, font, text, idx, end);
+                layoutText(box, te, font, text, idx, end);
             }
             
             if(end < text.length() && text.charAt(end) == '\n') {
                 end++;
-                nextLine(true);
+                box.nextLine(true);
             }
             idx = end;
         }
 
-        if(te.isParagraphEnd()) {
-            nextLine(false);
-            curY += font.getLineHeight();
-            inParagraph = false;
-        }
-        if(!inParagraph) {
-            marginLeft = 0;
-            marginRight = 0;
-            textAlignment = TextAreaModel.HAlignment.LEFT;
-            computeMargin();
-        }
+        box.resetTextParams(te.isParagraphEnd());
     }
 
-    private void layoutText(TextAreaModel.TextElement te, Font font,
+    private void layoutText(Box box, TextAreaModel.TextElement te, Font font,
             String text, int textStart, int textEnd) {
         int idx = textStart;
         // trim start
@@ -717,9 +585,8 @@ public class TextArea extends Widget {
 
         // check if we skipped white spaces and the previous element in this
         // row was not a text cell
-        if(textStart > idx && layout.size() > lineStartIdx &&
-                !(layout.get(layout.size()-1) instanceof LText)) {
-            curX += font.getSpaceWidth();
+        if(textStart > idx && box.prevOnLineNotText()) {
+            box.curX += font.getSpaceWidth();
         }
 
         idx = textStart;
@@ -727,12 +594,18 @@ public class TextArea extends Widget {
             assert !Character.isSpaceChar(text.charAt(idx));
 
             int count;
-            if(textAlignment == TextAreaModel.HAlignment.BLOCK) {
+            if(box.textAlignment == TextAreaModel.HAlignment.BLOCK) {
                 count = 1;
             } else {
-                count = font.computeVisibleGlpyhs(text, idx, textEnd, getRemaining());
+                count = font.computeVisibleGlpyhs(text, idx, textEnd, box.getRemaining());
             }
-            int end = idx + Math.max(1, count);
+            
+            int end;
+            if(box.isAtStartOfLine()) {
+                end = idx + Math.max(1, count);
+            } else {
+                end = idx + count;
+            }
 
             // if we are not at the end of this text element
             // and the next character is not a space
@@ -752,7 +625,7 @@ public class TextArea extends Widget {
             // if we found no word that fits
             if(end == idx) {
                 // we may need a new line
-                if(textAlignment != TextAreaModel.HAlignment.BLOCK && nextLine(false)) {
+                if(box.textAlignment != TextAreaModel.HAlignment.BLOCK && box.nextLine(false)) {
                     continue;
                 }
                 // or we already are at the start of a line
@@ -760,20 +633,25 @@ public class TextArea extends Widget {
                 while(end < textEnd && !isBreak(text.charAt(end))) {
                     end++;
                 }
-                // some characters need to stay at the end of a word
-                if(end < textEnd && isPunctuation(text.charAt(end))) {
-                    end++;
-                }
+            }
+
+            // some characters need to stay at the end of a word
+            if(end < textEnd && isPunctuation(text.charAt(end))) {
+                end++;
             }
 
             if(idx < end) {
                 LText lt = new LText(te, font, text, idx, end);
-                if(textAlignment == TextAreaModel.HAlignment.BLOCK && getRemaining() < lt.width) {
-                    nextLine(false);
+                if(box.textAlignment == TextAreaModel.HAlignment.BLOCK && box.getRemaining() < lt.width) {
+                    box.nextLine(false);
                 }
-                
-                lt.x = curX;
-                curX += lt.width + font.getSpaceWidth();
+
+                int width = lt.width;
+                if(end < textEnd && isSkip(text.charAt(end))) {
+                    width += font.getSpaceWidth();
+                }
+
+                lt.x = box.getXAndAdvance(width);
                 layout.add(lt);
             }
 
@@ -785,19 +663,19 @@ public class TextArea extends Widget {
         }
     }
 
-    private void layoutTextPre(TextAreaModel.TextElement te, Font font,
+    private void layoutTextPre(Box box, TextAreaModel.TextElement te, Font font,
             String text, int textStart, int textEnd) {
         int idx = textStart;
         while(idx < textEnd) {
-            nextLine(false);
+            box.nextLine(false);
 
             while(idx < textEnd) {
                 if(text.charAt(idx) == '\t') {
                     idx++;
-                    int tabX = computeNextTabStop(font);
-                    if(tabX < lineWidth) {
-                        curX = tabX;
-                    } else if(!isAtStartOfLine()) {
+                    int tabX = box.computeNextTabStop(font);
+                    if(tabX < box.lineWidth) {
+                        box.curX = tabX;
+                    } else if(!box.isAtStartOfLine()) {
                         break;
                     }
                 }
@@ -809,44 +687,84 @@ public class TextArea extends Widget {
                 }
 
                 if(end > idx) {
-                    int count = font.computeVisibleGlpyhs(text, idx, end, getRemaining());
-                    if(count == 0 && !isAtStartOfLine()) {
+                    int count = font.computeVisibleGlpyhs(text, idx, end, box.getRemaining());
+                    if(count == 0 && !box.isAtStartOfLine()) {
                         break;
                     }
 
                     end = idx + Math.max(1, count);
 
                     LText lt = new LText(te, font, text, idx, end);
-                    lt.x = curX;
-                    curX += lt.width;
+                    lt.x = box.getXAndAdvance(lt.width);
                     layout.add(lt);
                 }
 
                 idx = end;
             }
         }
-        nextLine(false);
+        box.nextLine(false);
     }
 
-    private void layout(TextAreaModel.ListElement le) {
+    private void layoutListElement(Box box, TextAreaModel.ListElement le) {
         Image image = (images != null) ? le.getBulletImage(images) : null;
         if(image != null) {
             LImage li = new LImage(le, image, null);
-            layout(le, li, TextAreaModel.HAlignment.LEFT);
+            layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.HAlignment.LEFT);
             
             int imageHeight = li.height;
             li.height = Short.MAX_VALUE;
 
-            layoutElements(le);
-            nextLine(false);
+            layoutElements(box, le);
+            box.nextLine(false);
 
             li.height = imageHeight;
 
-            objLeft.remove(li);
-            computeMargin();
+            box.objLeft.remove(li);
+            box.computeMargin();
         } else {
-            layoutElements(le);
-            nextLine(false);
+            layoutElements(box, le);
+            box.nextLine(false);
+        }
+    }
+
+    private void layoutBlockElement(Box box, TextAreaModel.BlockElement be) {
+        box.nextLine(false);
+
+        if(be.getFloatPosition() == TextAreaModel.FloatPosition.NONE) {
+            layoutElements(box, be);
+            box.nextLine(false);
+        } else {
+            Font font = selectFont(be);
+            if(font == null && be.getWidth().unit.isFontBased()) {
+                return;
+            }
+            
+            int width = convertToPX(be.getWidth(), font, box.getRemaining());
+            int left = box.curX;
+
+            if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
+                left += box.lineWidth - width;
+            }
+
+            Box blockBox = new Box(box.curY, left, width);
+            layoutElements(blockBox, be);
+            blockBox.nextLine(false);
+            
+            // sync main box with layout
+            box.lineStartIdx = layout.size();
+
+            LElement dummy = new LElement(be);
+            dummy.x = left;
+            dummy.y = box.curY;
+            dummy.width = width;
+            dummy.height = blockBox.curY - box.curY;
+
+            if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
+                box.objRight.add(dummy);
+            } else {
+                box.objLeft.add(dummy);
+            }
+            box.computeMargin();
         }
     }
 
@@ -862,13 +780,240 @@ public class TextArea extends Widget {
         return Character.isWhitespace(ch) || isPunctuation(ch);
     }
 
-    private int computeNextTabStop(Font font) {
-        int x = curX - lineStartX + font.getSpaceWidth();
-        int tabSize = 8 * font.getSpaceWidth();
-        return curX + tabSize - (x % tabSize);
+    class Box {
+        final ArrayList<LElement> objLeft = new ArrayList<LElement>();
+        final ArrayList<LElement> objRight = new ArrayList<LElement>();
+        final int boxLeft;
+        final int boxWidth;
+        int curY;
+        int curX;
+        int lineStartIdx;
+        int marginLeft;
+        int marginRight;
+        int lineStartX;
+        int lineWidth;
+        int fontLineHeight;
+        boolean inParagraph;
+        boolean wasAutoBreak;
+        TextAreaModel.HAlignment textAlignment;
+
+        public Box(int boxTop, int boxLeft, int boxWidth) {
+            this.boxLeft = boxLeft;
+            this.boxWidth = boxWidth;
+            this.curX = boxLeft;
+            this.curY = boxTop;
+            this.lineStartIdx = layout.size();
+            this.lineStartX = boxLeft;
+            this.lineWidth = boxWidth;
+            this.textAlignment = TextAreaModel.HAlignment.LEFT;
+        }
+
+        void computeMargin() {
+            int left = boxLeft;
+            int right = boxLeft + boxWidth;
+
+            for(int i=0,n=objLeft.size() ; i<n ; i++) {
+                LElement e = objLeft.get(i);
+                left = Math.max(left, e.x + e.width);
+            }
+
+            for(int i=0,n=objRight.size() ; i<n ; i++) {
+                LElement e = objRight.get(i);
+                right = Math.min(right, e.x);
+            }
+
+            left += marginLeft;
+            right -= marginRight;
+
+            lineStartX = left;
+            lineWidth = Math.max(0, right - left);
+
+            if(isAtStartOfLine()) {
+                curX = lineStartX;
+            }
+        }
+
+        int getRemaining() {
+            return Math.max(0, lineWidth - curX + lineStartX);
+        }
+
+        int getXAndAdvance(int amount) {
+            int x = curX;
+            curX = x + amount;
+            return x;
+        }
+
+        boolean isAtStartOfLine() {
+            return lineStartIdx == layout.size();
+        }
+
+        boolean prevOnLineNotText() {
+            return lineStartIdx < layout.size() && !(layout.get(layout.size()-1) instanceof LText);
+        }
+
+        void checkFloaters() {
+            removeObjFromList(objLeft);
+            removeObjFromList(objRight);
+            computeMargin();
+            // curX is set by computeMargin()
+        }
+
+        void clearFloater(TextAreaModel.Clear clear) {
+            if(clear != TextAreaModel.Clear.NONE) {
+                int targetY = -1;
+                if(clear == TextAreaModel.Clear.LEFT || clear == TextAreaModel.Clear.BOTH) {
+                    for(int i=0,n=objLeft.size() ; i<n ; ++i) {
+                        LElement le = objLeft.get(i);
+                        if(le.height != Short.MAX_VALUE) {  // special case for list elements
+                            targetY = Math.max(targetY, le.y + le.height);
+                        }
+                    }
+                }
+                if(clear == TextAreaModel.Clear.RIGHT || clear == TextAreaModel.Clear.BOTH) {
+                    for(int i=0,n=objRight.size() ; i<n ; ++i) {
+                        LElement le = objRight.get(i);
+                        targetY = Math.max(targetY, le.y + le.height);
+                    }
+                }
+                if(targetY >= 0) {
+                    nextLine(false);
+                    if(targetY > curY) {
+                        curY = targetY;
+                        checkFloaters();
+                    }
+                }
+            }
+        }
+
+        boolean nextLine(boolean force) {
+            if(isAtStartOfLine()) {
+                if(!wasAutoBreak && force) {
+                    curY += fontLineHeight;
+                    checkFloaters();
+                    wasAutoBreak = false;
+                    return true;
+                }
+                return false;
+            }
+            wasAutoBreak = !force;
+            int lineHeight = 0;
+            for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
+                LElement le = layout.get(idx);
+                lineHeight = Math.max(lineHeight, le.height);
+            }
+
+            LElement lastElement = layout.get(layout.size() - 1);
+            int remaining = (lineStartX + lineWidth) - (lastElement.x + lastElement.width);
+
+            switch(textAlignment) {
+            case RIGHT: {
+                for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
+                    LElement le = layout.get(idx);
+                    le.x += remaining;
+                }
+                break;
+            }
+            case CENTER: {
+                int offset = remaining / 2;
+                for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
+                    LElement le = layout.get(idx);
+                    le.x += offset;
+                }
+                break;
+            }
+            case BLOCK:
+                if(remaining < lineWidth / 4) {
+                    int num = layout.size() - lineStartIdx;
+                    for(int i=1 ; i<num ; i++) {
+                        LElement le = layout.get(lineStartIdx + i);
+                        int offset = remaining * i / (num-1);
+                        le.x += offset;
+                    }
+                }
+                break;
+            }
+
+            for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
+                LElement le = layout.get(idx);
+                switch(le.element.getVerticalAlignment()) {
+                case BOTTOM:
+                    le.y = curY + lineHeight - le.height;
+                    break;
+                case TOP:
+                    le.y = curY;
+                    break;
+                case CENTER:
+                    le.y = curY + (lineHeight - le.height)/2;
+                    break;
+                case FILL:
+                    le.y = curY;
+                    le.height = lineHeight;
+                    break;
+                }
+
+                le.adjustWidget();
+            }
+            lineStartIdx = layout.size();
+            curY += lineHeight;
+            checkFloaters();
+            // curX is set by computeMargin() inside checkFloaters()
+            return true;
+        }
+
+        int computeNextTabStop(Font font) {
+            int x = curX - lineStartX + font.getSpaceWidth();
+            int tabSize = 8 * font.getEM();
+            return curX + tabSize - (x % tabSize);
+        }
+
+        private void removeObjFromList(ArrayList<LElement> list) {
+            for(int i=list.size() ; i-->0 ;) {
+                LElement e = list.get(i);
+                if(e.y + e.height <= curY) {
+                    list.remove(i);
+                }
+            }
+        }
+
+        void endParagraph() {
+        }
+
+        void resetTextParams(boolean endParagraph) {
+            if(endParagraph) {
+                nextLine(false);
+                curY += fontLineHeight;
+                checkFloaters();
+                inParagraph = false;
+            }
+            
+            if(!inParagraph) {
+                marginLeft = 0;
+                marginRight = 0;
+                textAlignment = TextAreaModel.HAlignment.LEFT;
+                computeMargin();
+            }
+        }
+
+        void setupTextParams(TextElement te, Font font) {
+            fontLineHeight = font.getLineHeight();
+
+            if(te.isParagraphStart()) {
+                nextLine(false);
+                inParagraph = true;
+            }
+
+            if(te.isParagraphStart() || (!inParagraph && isAtStartOfLine())) {
+                int remaining = getRemaining();
+                marginLeft = Math.max(0, convertToPX(te.getMarginLeft(), font, remaining));
+                marginRight = Math.max(0, convertToPX(te.getMarginRight(), font, remaining));
+                textAlignment = te.getHorizontalAlignment();
+                computeMargin();
+                curX = Math.max(0, lineStartX + convertToPX(te.getTextIndent(), font, remaining));
+            }
+        }
     }
 
-    static abstract class LElement {
+    static class LElement {
         final TextAreaModel.Element element;
         int x;
         int y;

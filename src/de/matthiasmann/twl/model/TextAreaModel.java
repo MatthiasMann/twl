@@ -54,6 +54,47 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         FILL
     }
 
+    public enum Clear {
+        NONE,
+        LEFT,
+        RIGHT,
+        BOTH
+    }
+
+    public enum FloatPosition {
+        NONE,
+        LEFT,
+        RIGHT
+    }
+
+    public enum Unit {
+        PX(false),
+        EM(true),
+        EX(true),
+        PERCENT(false);
+
+        final boolean fontBased;
+        private Unit(boolean fontBased) {
+            this.fontBased = fontBased;
+        }
+
+        public boolean isFontBased() {
+            return fontBased;
+        }
+    }
+
+    public final class ValueUnit {
+        public final float value;
+        public final Unit unit;
+
+        public ValueUnit(float value, Unit unit) {
+            this.value = value;
+            this.unit = unit;
+        }
+    }
+
+    public static final ValueUnit ZERO_PX = new ValueUnit(0, Unit.PX);
+    
     public interface Element {
         /**
          * Returns the desired horizontal alignment for this element.
@@ -71,22 +112,28 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * Returns the margin to the left border.
          * @return the margin to the left border.
          */
-        public int getMarginLeft();
+        public ValueUnit getMarginLeft();
 
         /**
          * Returns the margin to the right border.
          * @return the margin to the right border.
          */
-        public int getMarginRight();
-    }
+        public ValueUnit getMarginRight();
 
-    public interface TextElement extends Element {
+        /**
+         * Returns the clear behavior for this element.
+         * @return the clear behavior for this element.
+         */
+        public Clear getClear();
+
         /**
          * Returns the font name. The font name is mapped to a font using the themeInfo.
          * @return the font name.
          */
         public String getFontName();
+    }
 
+    public interface TextElement extends Element {
         /**
          * Returns ths text.
          * @return the text.
@@ -97,7 +144,7 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * Returns the indentation for the first line of the text.
          * @return the indentation for the first line of the text.
          */
-        public int getTextIndent();
+        public ValueUnit getTextIndent();
 
         /**
          * Returns true if this element starts a new paragraph.
@@ -151,11 +198,23 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the tooltip or null for this image.
          */
         public String getToolTip();
+        
+        /**
+         * Returns the float behavior for this image.
+         * @return the float behavior for this image.
+         */
+        public FloatPosition getFloatPosition();
     }
 
     public interface WidgetElement extends Element {
         public String getWidgetName();
         public String getWidgetParam();
+        
+        /**
+         * Returns the float behavior for this image.
+         * @return the float behavior for this image.
+         */
+        public FloatPosition getFloatPosition();
     }
 
     public interface ListElement extends Element, Iterable<Element> {
@@ -166,6 +225,28 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the image object for the bullet.
          */
         public Image getBulletImage(ParameterMap style);
+    }
+
+    public interface BlockElement extends Element, Iterable<Element> {
+        /**
+         * Returns the image used as backgroud for the block.
+         *
+         * @param style a ParameterMap which can be used to lookup images.
+         * @return the image object for the background.
+         */
+        public Image getBackgroundImage(ParameterMap style);
+
+        /**
+         * Returns the float behavior for this box.
+         * @return the float behavior for this box.
+         */
+        public FloatPosition getFloatPosition();
+
+        /**
+         * Returns the width of this block. Only used when getFloatPosition() != NONE
+         * @return the width of this block.
+         */
+        public ValueUnit getWidth();
     }
 
     /**

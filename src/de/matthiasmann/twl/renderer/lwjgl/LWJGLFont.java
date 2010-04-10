@@ -233,6 +233,14 @@ public class LWJGLFont implements Font {
         return font.getBaseLine();
     }
 
+    public int getEM() {
+        return font.getEM();
+    }
+
+    public int getEX() {
+        return font.getEX();
+    }
+
     public void destroy() {
         font.destroy();
     }

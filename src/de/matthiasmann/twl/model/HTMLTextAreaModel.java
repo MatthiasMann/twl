@@ -34,7 +34,10 @@ import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.utils.ParameterStringParser;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -54,7 +57,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private boolean needToParse;
 
     private final ArrayList<StyleInfo> styleStack;
-    private final ArrayList<ListElementImpl> listStack;
+    private final ArrayList<Container> containerStack;
     private final StringBuilder sb;
     private final int[] startLength;
 
@@ -65,7 +68,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
         this.styleStack = new ArrayList<StyleInfo>();
-        this.listStack = new ArrayList<ListElementImpl>();
+        this.containerStack = new ArrayList<Container>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
     }
@@ -105,6 +108,20 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         setHtml(new String(buf, 0, off));
     }
 
+    public void readHTMLFromURL(URL url) throws IOException {
+        InputStream in = url.openStream();
+        try {
+            readHTMLFromStream(new InputStreamReader(in));
+        } finally {
+            try {
+                in.close();
+            } catch (IOException ex) {
+                Logger.getLogger(HTMLTextAreaModel.class.getName()).log(
+                        Level.SEVERE, "Exception while closing InputStream", ex);
+            }
+        }
+    }
+
     public Iterator<Element> iterator() {
         if(needToParse) {
             parseHTML();
@@ -114,9 +131,9 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     private void addElement(Element e) {
-        int numOpenLists = listStack.size();
-        if(numOpenLists > 0) {
-            listStack.get(numOpenLists-1).elements.add(e);
+        int numOpenContainer = containerStack.size();
+        if(numOpenContainer > 0) {
+            containerStack.get(numOpenContainer-1).elements.add(e);
         } else {
             elements.add(e);
         }
@@ -134,7 +151,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
             styleStack.clear();
             styleStack.add(new StyleInfo());
-            listStack.clear();
+            containerStack.clear();
             sb.setLength(0);
             paragraphStart = false;
             paragraphEnd = false;
@@ -145,7 +162,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 switch(type) {
                 case XmlPullParser.START_TAG: {
                     String name = xpp.getName();
-                    if("div".equals(name)) {
+                    if("span".equals(name)) {
                         pushStyle(xpp, false);
                     }
                     if("img".equals(name)) {
@@ -175,8 +192,19 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         pushStyle(xpp, false);
                         ListElementImpl lei = new ListElementImpl(getStyle());
                         addElement(lei);
-                        listStack.add(lei);
+                        containerStack.add(lei);
                         paragraphStart = true;
+                    }
+                    if("ul".equals(name)) {
+                        finishText();
+                        pushStyle(xpp, false);
+                    }
+                    if("div".equals(name)) {
+                        finishText();
+                        pushStyle(xpp, false);
+                        BlockElementImpl bei = new BlockElementImpl(getStyle());
+                        addElement(bei);
+                        containerStack.add(bei);
                     }
                     if("a".equals(name)) {
                         finishText();
@@ -187,7 +215,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 }
                 case XmlPullParser.END_TAG: {
                     String name = xpp.getName();
-                    if("div".equals(name)) {
+                    if("span".equals(name)) {
                         popStyle();
                     }
                     if("img".equals(name)) {
@@ -198,14 +226,22 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         finishText();
                         popStyle();
                     }
+                    if("button".equals(name)) {
+                        popStyle();
+                    }
                     if("li".equals(name)) {
                         paragraphEnd = true;
                         finishText();
                         popStyle();
-                        listStack.remove(listStack.size()-1);
+                        containerStack.remove(containerStack.size()-1);
                     }
-                    if("button".equals(name)) {
+                    if("ul".equals(name)) {
                         popStyle();
+                    }
+                    if("div".equals(name)) {
+                        finishText();
+                        popStyle();
+                        containerStack.remove(containerStack.size()-1);
                     }
                     if("a".equals(name)) {
                         finishText();
@@ -272,16 +308,25 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private boolean parseCSSAttribute(StyleInfo style, String key, String value) {
         if("margin-left".equals(key)) {
-            style.marginLeft = parsePXValue(value);
-            return true;
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.marginLeft = vu;
+                return true;
+            }
         }
         if("margin-right".equals(key)) {
-            style.marginRight = parsePXValue(value);
-            return true;
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.marginRight = vu;
+                return true;
+            }
         }
         if("text-indent".equals(key)) {
-            style.textIndent = parsePXValue(value);
-            return true;
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.textIndent = vu;
+                return true;
+            }
         }
         if("font".equals(key)) {
             style.fontName = value;
@@ -312,21 +357,73 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             }
         }
         if("list-style-image".equals(key)) {
-            style.listStyleImage = value;
+            style.listStyleImage = parseURL(value);
+            return true;
+        }
+        if("clear".equals(key)) {
+            Clear clear = CLEAR.get(value);
+            if(clear != null) {
+                style.clear = clear;
+                return true;
+            }
+        }
+        if("float".equals(key)) {
+            FloatPosition floatPos = FLOAT.get(value);
+            if(floatPos != null) {
+                style.floatPosition = floatPos;
+                return true;
+            }
+        }
+        if("width".equals(key)) {
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.width = vu;
+                return true;
+            }
+        }
+        if("background-image:".equals(key)) {
+            style.listStyleImage = parseURL(value);
             return true;
         }
         return false;
     }
 
-    private int parsePXValue(String value) {
+    private ValueUnit parseValueUnit(String value) {
+        Unit unit;
+        int suffixLength = 2;
         if(value.endsWith("px")) {
-            value = value.substring(0, value.length()-2).trim();
+            unit = Unit.PX;
+        } else if(value.endsWith("em")) {
+            unit = Unit.EM;
+        } else if(value.endsWith("ex")) {
+            unit = Unit.EX;
+        } else if(value.endsWith("%")) {
+            suffixLength = 1;
+            unit = Unit.PERCENT;
+        } else {
+            return null;
         }
-        return Integer.parseInt(value, 10);
+        try {
+            String numberPart = value.substring(0, value.length()-suffixLength).trim();
+            return new ValueUnit(Float.parseFloat(numberPart), unit);
+        } catch (IllegalArgumentException ex) {
+            Logger.getLogger(HTMLTextAreaModel.class.getName()).log(Level.WARNING,
+                    "Invalid numeric value: " + value, ex);
+            return null;
+        }
+    }
+
+    private String parseURL(String value) {
+        if(value.startsWith("url(") && value.endsWith(")")) {
+            return value.substring(4, value.length()-1);
+        }
+        return value;
     }
 
     private static final HashMap<String, HAlignment> HALIGN = new HashMap<String, HAlignment>();
     private static final HashMap<String, VAlignment> VALIGN = new HashMap<String, VAlignment>();
+    private static final HashMap<String, Clear> CLEAR = new HashMap<String, Clear>();
+    private static final HashMap<String, FloatPosition> FLOAT = new HashMap<String, FloatPosition>();
     static {
         HALIGN.put("left", HAlignment.LEFT);
         HALIGN.put("right", HAlignment.RIGHT);
@@ -336,6 +433,15 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         VALIGN.put("top", VAlignment.TOP);
         VALIGN.put("middle", VAlignment.CENTER);
         VALIGN.put("bottom", VAlignment.BOTTOM);
+
+        CLEAR.put("none", Clear.NONE);
+        CLEAR.put("left", Clear.LEFT);
+        CLEAR.put("right", Clear.RIGHT);
+        CLEAR.put("both", Clear.BOTH);
+
+        FLOAT.put("none", FloatPosition.NONE);
+        FLOAT.put("left", FloatPosition.LEFT);
+        FLOAT.put("right", FloatPosition.RIGHT);
     }
 
     private void popStyle() {
@@ -427,30 +533,45 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     static class StyleInfo {
-        int marginLeft;
-        int marginRight;
-        int textIndent;
+        ValueUnit marginLeft;
+        ValueUnit marginRight;
+        ValueUnit textIndent;
+        ValueUnit width;
         HAlignment halignment;
         VAlignment valignment;
+        Clear clear;
+        FloatPosition floatPosition;
         String fontName;
         String listStyleImage;
+        String backgroundImage;
         boolean pre;
         boolean changed;
 
         StyleInfo() {
+            marginLeft = TextAreaModel.ZERO_PX;
+            marginRight = TextAreaModel.ZERO_PX;
+            textIndent = TextAreaModel.ZERO_PX;
+            width = new ValueUnit(100f/3f, Unit.PERCENT);
             halignment = HAlignment.LEFT;
             valignment = VAlignment.BOTTOM;
+            clear = Clear.NONE;
+            floatPosition = FloatPosition.NONE;
             listStyleImage = "ul-bullet";
+            backgroundImage = "";
         }
 
         StyleInfo(StyleInfo src) {
             this.marginLeft = src.marginLeft;
             this.marginRight = src.marginRight;
             this.textIndent = src.textIndent;
+            this.width = src.width;
             this.halignment = src.halignment;
             this.valignment = src.valignment;
+            this.clear = src.clear;
+            this.floatPosition = src.floatPosition;
             this.fontName = src.fontName;
             this.listStyleImage = src.listStyleImage;
+            this.backgroundImage = src.backgroundImage;
             this.pre = src.pre;
         }
     }
@@ -462,11 +583,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             this.style = style;
         }
 
-        public int getMarginLeft() {
+        public ValueUnit getMarginLeft() {
             return style.marginLeft;
         }
 
-        public int getMarginRight() {
+        public ValueUnit getMarginRight() {
             return style.marginRight;
         }
 
@@ -476,6 +597,18 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public VAlignment getVerticalAlignment() {
             return style.valignment;
+        }
+
+        public Clear getClear() {
+            return style.clear;
+        }
+
+        public FloatPosition getFloatPosition() {
+            return style.floatPosition;
+        }
+
+        public String getFontName() {
+            return style.fontName;
         }
     }
 
@@ -503,12 +636,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             return isParagraphEnd;
         }
 
-        public int getTextIndent() {
+        public ValueUnit getTextIndent() {
             return style.textIndent;
-        }
-
-        public String getFontName() {
-            return style.fontName;
         }
 
         public boolean isPreformatted() {
@@ -565,23 +694,42 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         public String getWidgetParam() {
             return widgetParam;
         }
-
     }
 
-    static class ListElementImpl extends ElementImpl implements ListElement {
+    static class Container extends ElementImpl {
         final ArrayList<Element> elements;
 
-        public ListElementImpl(StyleInfo style) {
+        public Container(StyleInfo style) {
             super(style);
             this.elements = new ArrayList<Element>();
+        }
+
+        public Iterator<Element> iterator() {
+            return elements.iterator();
+        }
+    }
+
+    static class ListElementImpl extends Container implements ListElement {
+        public ListElementImpl(StyleInfo style) {
+            super(style);
         }
 
         public Image getBulletImage(ParameterMap styleMap) {
             return styleMap.getImage(style.listStyleImage);
         }
+    }
 
-        public Iterator<Element> iterator() {
-            return elements.iterator();
+    static class BlockElementImpl extends Container implements BlockElement {
+        public BlockElementImpl(StyleInfo style) {
+            super(style);
+        }
+
+        public Image getBackgroundImage(ParameterMap styleMap) {
+            return styleMap.getImage(style.backgroundImage);
+        }
+
+        public ValueUnit getWidth() {
+            return style.width;
         }
     }
 }

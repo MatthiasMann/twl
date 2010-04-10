@@ -53,6 +53,18 @@ public interface Font extends Resource {
     int getSpaceWidth();
     
     /**
+     * Returns the width of the letter 'M'
+     * @return the width of the letter 'M'
+     */
+    int getEM();
+
+    /**
+     * Returns the height of the letter 'x'
+     * @return the height of the letter 'x'
+     */
+    int getEX();
+
+    /**
      * Computes the width in pixels of the longest text line. Lines are splitted at '\n'
      * @param str the text to evaluate
      * @return the width in pixels of the longest line

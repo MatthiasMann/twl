@@ -90,6 +90,9 @@ public class BitmapFont {
     private final Glyph[][] glyphs;
     private final int lineHeight;
     private final int baseLine;
+    private final int spaceWidth;
+    private final int em;
+    private final int ex;
 
     public BitmapFont(LWJGLRenderer renderer, XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
         xmlp.require(XmlPullParser.START_TAG, null, "font");
@@ -184,6 +187,15 @@ public class BitmapFont {
             xmlp.nextTag();
         }
         xmlp.require(XmlPullParser.END_TAG, null, "font");
+
+        Glyph g = getGlyph(' ');
+        spaceWidth = (g != null) ? g.xadvance + g.width : 1;
+
+        Glyph gM = getGlyph('M');
+        em = (gM != null) ? gM.width : 1;
+
+        Glyph gx = getGlyph('x');
+        ex = (gx != null) ? gx.height : 1;
     }
 
     public static BitmapFont loadFont(LWJGLRenderer renderer, URL url) throws IOException {
@@ -210,12 +222,15 @@ public class BitmapFont {
     }
 
     public int getSpaceWidth() {
-        Glyph g = getGlyph(' ');
-        if(g != null) {
-            return g.xadvance + g.width;
-        } else {
-            return 1;
-        }
+        return spaceWidth;
+    }
+
+    public int getEM() {
+        return em;
+    }
+
+    public int getEX() {
+        return ex;
     }
 
     public void destroy() {
