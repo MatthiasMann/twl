@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.TextAreaModel.Element;
 import de.matthiasmann.twl.model.TextAreaModel.TextElement;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.model.TextAreaModel;
@@ -78,7 +79,7 @@ public class TextArea extends Widget {
     private MouseCursor mouseCursorLink;
 
     private final ArrayList<LElement> layout;
-    private final ArrayList<BGImage> bgImages;
+    private final ArrayList<LImage> bgImages;
     private boolean inLayoutCode;
     private int lastWidth;
     private int lastHeight;
@@ -92,7 +93,7 @@ public class TextArea extends Widget {
         this.widgets = new HashMap<String, Widget>();
         this.widgetResolvers = new HashMap<String, WidgetResolver>();
         this.layout = new ArrayList<LElement>();
-        this.bgImages = new ArrayList<BGImage>();
+        this.bgImages = new ArrayList<LImage>();
         
         this.modelCB = new Runnable() {
             public void run() {
@@ -292,7 +293,7 @@ public class TextArea extends Widget {
     @Override
     protected void paintWidget(GUI gui) {
         final ArrayList<LElement> ll = layout;
-        final ArrayList<BGImage> bi = bgImages;
+        final ArrayList<LImage> bi = bgImages;
         final int innerX = getInnerX();
         final int innerY = getInnerY();
         final AnimationState as = getAnimationState();
@@ -366,6 +367,16 @@ public class TextArea extends Widget {
         return false;
     }
 
+    @Override
+    protected Object getTooltipContentAt(int mouseX, int mouseY) {
+        if(curLElementUnderMouse != null) {
+            if(curLElementUnderMouse.element instanceof TextAreaModel.ImageElement) {
+                return ((TextAreaModel.ImageElement)curLElementUnderMouse.element).getToolTip();
+            }
+        }
+        return super.getTooltipContentAt(mouseX, mouseY);
+    }
+
     private LElement findElement(int x, int y) {
         for(LElement le : layout) {
             if(le.isInside(x, y)) {
@@ -380,7 +391,10 @@ public class TextArea extends Widget {
         if(lastMouseInside) {
             le = findElement(lastMouseX - getInnerX(), lastMouseY - getInnerY());
         }
-        curLElementUnderMouse = le;
+        if(curLElementUnderMouse != le) {
+            curLElementUnderMouse = le;
+            updateTooltip();
+        }
         
         if(le != null && le.element instanceof TextAreaModel.LinkElement) {
             setMouseCursor(mouseCursorLink);
@@ -432,7 +446,7 @@ public class TextArea extends Widget {
             return;
         }
 
-        LImage li = new LImage(ie, image, ie.getToolTip());
+        LImage li = new LImage(ie, image);
         layout(box, ie, li, ie.getFloatPosition(), ie.getHorizontalAlignment());
     }
 
@@ -453,73 +467,75 @@ public class TextArea extends Widget {
             return;
         }
 
+        super.insertChild(widget, getNumChildren());
+        widget.adjustSize();
+        
         LWidget lw = new LWidget(we, widget);
+        lw.width = widget.getWidth();
+        lw.height = widget.getHeight();
+
         layout(box, we, lw, we.getFloatPosition(), we.getHorizontalAlignment());
     }
 
-    private void layout(Box box, TextAreaModel.Element e, LWidget lw, TextAreaModel.FloatPosition floatPos, TextAreaModel.HAlignment align) {
-        if(align != TextAreaModel.HAlignment.INLINE) {
+    private void layout(Box box, TextAreaModel.Element e, LElement le, TextAreaModel.FloatPosition floatPos, TextAreaModel.HAlignment align) {
+        if(floatPos != TextAreaModel.FloatPosition.NONE ||
+                align != TextAreaModel.HAlignment.INLINE) {
             box.nextLine(false);
         }
-
-        super.insertChild(lw.widget, getNumChildren());
-        lw.widget.adjustSize();
-        lw.width = lw.widget.getWidth();
-        lw.height = lw.widget.getHeight();
 
         boolean leftRight = false;
 
         switch(floatPos) {
             case LEFT:
                 leftRight = true;
-                lw.x = box.lineStartX;
-                box.objLeft.add(lw);
+                le.x = box.lineStartX;
+                box.objLeft.add(le);
                 break;
 
             case RIGHT:
                 leftRight = true;
-                lw.x = box.lineStartX + box.lineWidth - lw.width;
-                box.objRight.add(lw);
+                le.x = box.lineStartX + box.lineWidth - le.width;
+                box.objRight.add(le);
                 break;
 
             default:
                 switch(align) {
                 case LEFT:
-                    lw.x = box.lineStartX;
+                    le.x = box.lineStartX;
                     box.nextLine(false);
                     break;
 
                 case RIGHT:
-                    lw.x = box.lineStartX + box.lineWidth - lw.width;
+                    le.x = box.lineStartX + box.lineWidth - le.width;
                     box.nextLine(false);
                     break;
 
                 case CENTER:
-                    lw.x = box.lineStartX + (box.lineWidth - lw.width) / 2;
+                    le.x = box.lineStartX + (box.lineWidth - le.width) / 2;
                     box.nextLine(false);
                     break;
 
                 case BLOCK:
-                    lw.x = box.lineStartX;
-                    lw.width = box.lineWidth;
+                    le.x = box.lineStartX;
+                    le.width = box.lineWidth;
                     box.nextLine(false);
                     break;
 
                 case INLINE:
-                    if(box.getRemaining() < lw.width && !box.isAtStartOfLine()) {
+                    if(box.getRemaining() < le.width && !box.isAtStartOfLine()) {
                         box.nextLine(false);
                     }
-                    lw.x = box.getXAndAdvance(lw.width);
+                    le.x = box.getXAndAdvance(le.width);
                     break;
                 }
         }
 
-        layout.add(lw);
+        layout.add(le);
         if(leftRight) {
             assert box.lineStartIdx == layout.size() - 1;
             box.lineStartIdx++;
-            lw.y = box.curY;
-            lw.adjustWidget();
+            le.y = box.curY;
+            le.adjustWidget();
             box.computeMargin();
         }
     }
@@ -542,7 +558,7 @@ public class TextArea extends Widget {
 
     private Font selectFont(TextAreaModel.Element e) {
         String fontName = e.getFontName();
-        if(fontName != null) {
+        if(fontName != null && fonts != null) {
             Font font = fonts.getFont(fontName);
             if(font != null) {
                 return font;
@@ -590,7 +606,9 @@ public class TextArea extends Widget {
             textStart++;
         }
         // trim end
+        boolean endsWithSpace = false;
         while(textEnd > textStart && isSkip(text.charAt(textEnd-1))) {
+            endsWithSpace = true;
             textEnd--;
         }
 
@@ -672,6 +690,10 @@ public class TextArea extends Widget {
                 idx++;
             }
         }
+
+        if(!box.isAtStartOfLine() && endsWithSpace) {
+            box.curX += font.getSpaceWidth();
+        }
     }
 
     private void layoutTextPre(Box box, TextAreaModel.TextElement te, Font font,
@@ -719,7 +741,7 @@ public class TextArea extends Widget {
     private void layoutListElement(Box box, TextAreaModel.ListElement le) {
         Image image = (images != null) ? le.getBulletImage(images) : null;
         if(image != null) {
-            LImage li = new LImage(le, image, null);
+            LImage li = new LImage(le, image);
             layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.HAlignment.LEFT);
             
             int imageHeight = li.height;
@@ -749,10 +771,10 @@ public class TextArea extends Widget {
             return;
         }
         
-        BGImage bgImage = null;
+        LImage bgImage = null;
         Image image = (images != null) ? be.getBackgroundImage(images) : null;
         if(image != null) {
-            bgImage = new BGImage(image);
+            bgImage = new LImage(be, image);
             bgImages.add(bgImage);
         }
 
@@ -1133,35 +1155,17 @@ public class TextArea extends Widget {
         }
     }
 
-    static class LImage extends LWidget {
-        public LImage(TextAreaModel.Element element, Image img, String toolTip) {
-            super(element, new LImageLabel(img));
-            widget.setTooltipContent(toolTip);
-        }
-    }
-
-    static class LImageLabel extends Label {
-        public LImageLabel(Image img) {
-            setTheme("image");
-            setBackground(img);
-        }
-
-        @Override
-        protected void applyThemeBackground(ThemeInfo themeInfo) {
-            // don't load the background image
-        }
-    }
-
-    static class BGImage {
+    static class LImage extends LElement {
         final Image img;
-        int x;
-        int y;
-        int width;
-        int height;
 
-        BGImage(Image img) {
+        public LImage(Element element, Image img) {
+            super(element);
             this.img = img;
+            this.width = img.getWidth();
+            this.height = img.getHeight();
         }
+        
+        @Override
         void draw(int offX, int offY, AnimationState as) {
             img.draw(as, x+offX, y+offY, width, height);
         }
