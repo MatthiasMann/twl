@@ -381,8 +381,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 return true;
             }
         }
-        if("background-image:".equals(key)) {
-            style.listStyleImage = parseURL(value);
+        if("background-image".equals(key)) {
+            style.backgroundImage = parseURL(value);
             return true;
         }
         return false;
