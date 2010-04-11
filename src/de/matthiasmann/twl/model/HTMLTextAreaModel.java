@@ -53,6 +53,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
  * <ul>
  *  <li>{@code a}<br/>Attributes: {@code href}</li>
  *  <li>{@code p}</li>
+ *  <li>{@code br}</li>
  *  <li>{@code img}<br/>Attributes: {@code src}, {@code alt}<br/>Styles: {@code float}</li>
  *  <li>{@code span}</li>
  *  <li>{@code div}<br/>Styles: {@code background-image}, {@code float}, {@code width} (required for floating divs)</li>
