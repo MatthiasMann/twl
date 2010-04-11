@@ -1045,6 +1045,9 @@ public class TextArea extends Widget {
 
         void resetTextParams(boolean endParagraph) {
             if(endParagraph) {
+                if(textAlignment == TextAreaModel.HAlignment.BLOCK) {
+                    textAlignment = TextAreaModel.HAlignment.LEFT;
+                }
                 nextLine(false);
                 curY += fontLineHeight;
                 checkFloaters();
