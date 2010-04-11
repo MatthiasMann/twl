@@ -1539,16 +1539,18 @@ public class Widget {
     /**
      * Called when an event occured that this widget could be interrested in.
      *
-     * The default implementation handles only keyboard events and delegates
+     * <p>The default implementation handles only keyboard events and delegates
      * them to the child widget which has keyboard focus.
      * If focusKey handling is enabled then this widget cycles the keyboard
      * focus through it's childs.
      * If the key was not consumed by a child or focusKey and an inputMap is
      * specified then the event is translated by the InputMap and
-     * <code>handleKeyStrokeAction</code> is called when a mapping was found.
+     * <code>handleKeyStrokeAction</code> is called when a mapping was found.</p>
      *
-     * If the widget wants to receive mouse events then it must return true
-     * for the MOUSE_ENTERED event. Otherwise the mouse event is not send.
+     * <p>If the widget wants to receive mouse events then it must return true
+     * for all mouse events except for MOUSE_WHEEL (which is optional) event.
+     * Otherwise the following mouse event are not send. Before mouse movement
+     * or button events are send a MOUSE_ENTERED event is send first.</p>
      * 
      * @param evt The event - do not store this object - it may be reused
      * @return true if the widget handled this event
@@ -2300,10 +2302,7 @@ public class Widget {
                         if(result != null) {
                             return result;
                         }
-                        if(evt.getType() != Event.Type.MOUSE_WHEEL) {
-                            // widget accepted MOUSE_ENTERED so route other events too
-                            return child;
-                        }
+                        // widget no longer wants mouse events
                     }
                     // found a widget - but it doesn't want mouse events
                     // so assumes it's "invisible" for the mouse
