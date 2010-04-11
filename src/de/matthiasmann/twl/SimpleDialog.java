@@ -107,7 +107,7 @@ public class SimpleDialog {
      * Sets the callback to call when "Cancel" was clicked.
      * The dialog is closed before the callback is fired.
      *
-     * @param cbOk the callback or null
+     * @param cbCancel the callback or null
      */
     public void setCancelCallback(Runnable cbCancel) {
         this.cbCancel = cbCancel;

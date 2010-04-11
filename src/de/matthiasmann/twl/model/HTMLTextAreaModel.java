@@ -47,7 +47,37 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
- * A simple HTML parser.
+ * A simple XHTML parser.
+ *
+ * The following tags are supported:
+ * <ul>
+ *  <li>{@code a}<br/>Attributes: {@code href}</li>
+ *  <li>{@code p}</li>
+ *  <li>{@code img}<br/>Attributes: {@code src}, {@code alt}<br/>Styles: {@code float}</li>
+ *  <li>{@code span}</li>
+ *  <li>{@code div}<br/>Styles: {@code background-image}, {@code float}, {@code width} (required for floating divs)</li>
+ *  <li>{@code ul}</li>
+ *  <li>{@code li}<br/>Styles: {@code list-style-image}</li>
+ *  <li>{@code button}<br/>Attributes: {@code name}, {@code value}</li>
+ * </ul>
+ *
+ * The following generic CSS attributes are supported:
+ * <ul>
+ *  <li>{@code font}<br/>References a font in the theme - does not behave like HTML</li>
+ *  <li>{@code text-align}</li>
+ *  <li>{@code text-ident}</li>
+ *  <li>{@code margin}</li>
+ *  <li>{@code margin-top}</li>
+ *  <li>{@code margin-left}</li>
+ *  <li>{@code margin-right}</li>
+ *  <li>{@code margin-bottom}</li>
+ *  <li>{@code clear}</li>
+ *  <li>{@code vertical-align}</li>
+ *  <li>{@code white-space}<br/>Only {@code normal} and {@code pre}</li>
+ * </ul>
+ *
+ * Numeric values must use on of the following units: {@code em}, {@code ex}, {@code px}, {@code %}
+ *
  * @author Matthias Mann
  */
 public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
@@ -65,6 +95,9 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private boolean paragraphEnd;
     private String href;
 
+    /**
+     * Creates a new {@code HTMLTextAreaModel} without content.
+     */
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
         this.styleStack = new ArrayList<StyleInfo>();
@@ -73,20 +106,42 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.startLength = new int[2];
     }
 
+    /**
+     * Creates a new {@code HTMLTextAreaModel} and parses the given html.
+     * @param html the HTML to parse
+     * @see #setHtml(java.lang.String)
+     */
     public HTMLTextAreaModel(String html) {
         this();
         setHtml(html);
     }
 
+    /**
+     * Creates a new {@code HTMLTextAreaModel} and parses the content of the
+     * given {@code Reader}.
+     *
+     * @see #readHTMLFromStream(java.io.Reader)
+     * @param r the reader to parse html from
+     * @throws IOException if an error occured while reading
+     */
     public HTMLTextAreaModel(Reader r) throws IOException {
         this();
         readHTMLFromStream(r);
     }
 
+    /**
+     * Returns the current HTML.
+     * @return the current HTML. Can be null.
+     */
     public String getHtml() {
         return html;
     }
 
+    /**
+     * Sets the a html to parse.
+     * 
+     * @param html the html.
+     */
     public void setHtml(String html) {
         this.html = html;
         this.elements.clear();
@@ -94,6 +149,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         doCallback();
     }
 
+    /**
+     * Reads HTML from the given {@code Reader}.
+     *
+     * @param r the reader to parse html from
+     * @throws IOException if an error occured while reading
+     * @see #setHtml(java.lang.String)
+     */
     public void readHTMLFromStream(Reader r) throws IOException {
         char[] buf = new char[1024];
         int read, off = 0;
@@ -108,6 +170,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         setHtml(new String(buf, 0, off));
     }
 
+    /**
+     * Reads HTML from the given {@code URL}.
+     *
+     * @param url the URL to parse.
+     * @throws IOException if an error occured while reading
+     * @see #readHTMLFromStream(java.io.Reader) 
+     */
     public void readHTMLFromURL(URL url) throws IOException {
         InputStream in = url.openStream();
         try {

@@ -94,7 +94,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
      *
      * Auto completion is operational with the given data source (when it's not null)
      *
-     * @see #setExecutorService(executorService)
+     * @see #setExecutorService(java.util.concurrent.ExecutorService) 
      *
      * @param editField the EditField to which auto completion should be applied
      * @param dataSource the data source used for auto completion - can be null

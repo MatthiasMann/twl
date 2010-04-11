@@ -516,7 +516,6 @@ public class Widget {
      * @return true if the size was changed, false if new size == old size
      * @throws java.lang.IllegalArgumentException if the size is negative
      * @see #sizeChanged()
-     * @see #childChangedSize(Widget)
      * @see #layout()
      */
     public boolean setSize(int width, int height) {
@@ -1874,8 +1873,6 @@ public class Widget {
     /**
      * Sets size and position of all child widgets so that they all consumes the
      * complete inner area. If there is more then one child then they will overlap.
-     *
-     * @param child A child widget
      */
     protected void layoutChildrenFullInnerArea() {
         if(children != null) {

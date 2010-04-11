@@ -69,7 +69,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
          * This method sets the row, column and the cell data.
          * It is called before any other cell related method is called.
          * @param row the table row
-         * @param sortColumn the table column
+         * @param column the table column
          * @param data the cell data
          */
         public void setCellData(int row, int column, Object data);
