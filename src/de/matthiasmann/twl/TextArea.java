@@ -733,34 +733,48 @@ public class TextArea extends Widget {
     private void layoutBlockElement(Box box, TextAreaModel.BlockElement be) {
         box.nextLine(false);
 
+        LImageLabel backgroundImg = null;
+        Image image = (images != null) ? be.getBackgroundImage(images) : null;
+        if(image != null) {
+            backgroundImg = new LImageLabel(image);
+            super.insertChild(backgroundImg, getNumChildren());
+        }
+
+        int bgX = box.lineStartX;
+        int bgY = box.curY;
+        int bgWidth = box.lineWidth;
+        int bgHeight = 0;
+
         if(be.getFloatPosition() == TextAreaModel.FloatPosition.NONE) {
             layoutElements(box, be);
             box.nextLine(false);
+            bgHeight = box.curY - bgY;
         } else {
             Font font = selectFont(be);
             if(font == null && be.getWidth().unit.isFontBased()) {
                 return;
             }
             
-            int width = convertToPX(be.getWidth(), font, box.getRemaining());
-            int left = box.curX;
+            bgWidth = convertToPX(be.getWidth(), font, box.getRemaining());
 
             if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
-                left += box.lineWidth - width;
+                bgX += box.lineWidth - bgWidth;
             }
 
-            Box blockBox = new Box(box.curY, left, width);
+            Box blockBox = new Box(bgY, bgX, bgWidth);
             layoutElements(blockBox, be);
             blockBox.nextLine(false);
+            blockBox.clearFloater(TextAreaModel.Clear.BOTH);
+            bgHeight = blockBox.curY - box.curY;
             
             // sync main box with layout
             box.lineStartIdx = layout.size();
 
             LElement dummy = new LElement(be);
-            dummy.x = left;
-            dummy.y = box.curY;
-            dummy.width = width;
-            dummy.height = blockBox.curY - box.curY;
+            dummy.x = bgX;
+            dummy.y = bgY;
+            dummy.width = bgWidth;
+            dummy.height = bgHeight;
 
             if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
                 box.objRight.add(dummy);
@@ -768,6 +782,11 @@ public class TextArea extends Widget {
                 box.objLeft.add(dummy);
             }
             box.computeMargin();
+        }
+        
+        if(backgroundImg != null) {
+            backgroundImg.setPosition(getInnerX() + bgX, getInnerY() + bgY);
+            backgroundImg.setSize(bgWidth, bgHeight);
         }
     }
 
@@ -1095,14 +1114,17 @@ public class TextArea extends Widget {
 
     static class LImage extends LWidget {
         public LImage(TextAreaModel.Element element, Image img, String toolTip) {
-            super(element, new LImageLabel());
-            widget.setTheme("image");
-            widget.setBackground(img);
+            super(element, new LImageLabel(img));
             widget.setTooltipContent(toolTip);
         }
     }
 
     static class LImageLabel extends Label {
+        public LImageLabel(Image img) {
+            setTheme("image");
+            setBackground(img);
+        }
+
         @Override
         protected void applyThemeBackground(ThemeInfo themeInfo) {
             // don't load the background image
