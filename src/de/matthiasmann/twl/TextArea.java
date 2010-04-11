@@ -913,7 +913,8 @@ public class TextArea extends Widget {
         }
 
         boolean prevOnLineNotText() {
-            return lineStartIdx < layout.size() && !(layout.get(layout.size()-1) instanceof LText);
+            int layoutSize = layout.size();
+            return lineStartIdx < layoutSize && !(layout.get(layoutSize-1) instanceof LText);
         }
 
         void checkFloaters() {
@@ -1038,9 +1039,6 @@ public class TextArea extends Widget {
                     list.remove(i);
                 }
             }
-        }
-
-        void endParagraph() {
         }
 
         void resetTextParams(boolean endParagraph) {
