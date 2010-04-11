@@ -247,6 +247,18 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the width of this block.
          */
         public ValueUnit getWidth();
+
+        /**
+         * Returns the margin to the top border.
+         * @return the margin to the top border.
+         */
+        public ValueUnit getMarginTop();
+
+        /**
+         * Returns the margin to the bottom border.
+         * @return the margin to the bottom border.
+         */
+        public ValueUnit getMarginBottom();
     }
 
     /**

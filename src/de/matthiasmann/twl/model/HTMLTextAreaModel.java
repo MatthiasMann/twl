@@ -307,6 +307,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     private boolean parseCSSAttribute(StyleInfo style, String key, String value) {
+        if("margin-top".equals(key)) {
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.marginTop = vu;
+                return true;
+            }
+        }
         if("margin-left".equals(key)) {
             ValueUnit vu = parseValueUnit(value);
             if(vu != null) {
@@ -318,6 +325,23 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             ValueUnit vu = parseValueUnit(value);
             if(vu != null) {
                 style.marginRight = vu;
+                return true;
+            }
+        }
+        if("margin-bottom".equals(key)) {
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.marginBottom = vu;
+                return true;
+            }
+        }
+        if("margin".equals(key)) {
+            ValueUnit vu = parseValueUnit(value);
+            if(vu != null) {
+                style.marginTop = vu;
+                style.marginLeft = vu;
+                style.marginRight = vu;
+                style.marginBottom = vu;
                 return true;
             }
         }
@@ -533,8 +557,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     static class StyleInfo {
+        ValueUnit marginTop;
         ValueUnit marginLeft;
         ValueUnit marginRight;
+        ValueUnit marginBottom;
         ValueUnit textIndent;
         ValueUnit width;
         HAlignment halignment;
@@ -548,21 +574,26 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         boolean changed;
 
         StyleInfo() {
+            marginTop = TextAreaModel.ZERO_PX;
             marginLeft = TextAreaModel.ZERO_PX;
             marginRight = TextAreaModel.ZERO_PX;
+            marginBottom = TextAreaModel.ZERO_PX;
             textIndent = TextAreaModel.ZERO_PX;
             width = new ValueUnit(100f/3f, Unit.PERCENT);
             halignment = HAlignment.LEFT;
             valignment = VAlignment.BOTTOM;
             clear = Clear.NONE;
             floatPosition = FloatPosition.NONE;
+            fontName = "default";
             listStyleImage = "ul-bullet";
             backgroundImage = "";
         }
 
         StyleInfo(StyleInfo src) {
+            this.marginTop = src.marginTop;
             this.marginLeft = src.marginLeft;
             this.marginRight = src.marginRight;
+            this.marginBottom = src.marginBottom;
             this.textIndent = src.textIndent;
             this.width = src.width;
             this.halignment = src.halignment;
@@ -733,6 +764,14 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         public ValueUnit getWidth() {
             return style.width;
+        }
+
+        public ValueUnit getMarginTop() {
+            return style.marginTop;
+        }
+
+        public ValueUnit getMarginBottom() {
+            return style.marginBottom;
         }
     }
 }

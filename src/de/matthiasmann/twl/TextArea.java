@@ -78,6 +78,7 @@ public class TextArea extends Widget {
     private MouseCursor mouseCursorLink;
 
     private final ArrayList<LElement> layout;
+    private final ArrayList<BGImage> bgImages;
     private boolean inLayoutCode;
     private int lastWidth;
     private int lastHeight;
@@ -91,6 +92,7 @@ public class TextArea extends Widget {
         this.widgets = new HashMap<String, Widget>();
         this.widgetResolvers = new HashMap<String, WidgetResolver>();
         this.layout = new ArrayList<LElement>();
+        this.bgImages = new ArrayList<BGImage>();
         
         this.modelCB = new Runnable() {
             public void run() {
@@ -290,10 +292,15 @@ public class TextArea extends Widget {
     @Override
     protected void paintWidget(GUI gui) {
         final ArrayList<LElement> ll = layout;
+        final ArrayList<BGImage> bi = bgImages;
         final int innerX = getInnerX();
         final int innerY = getInnerY();
         final AnimationState as = getAnimationState();
         final LElement hoverElement = curLElementUnderMouse;
+
+        for(int i=0,n=bi.size() ; i<n ; i++) {
+            bi.get(i).draw(innerX, innerY, as);
+        }
 
         for(int i=0,n=ll.size() ; i<n ; i++) {
             LElement le = ll.get(i);
@@ -392,6 +399,7 @@ public class TextArea extends Widget {
             layout.get(i).destroy();
         }
         layout.clear();
+        bgImages.clear();
         super.removeAllChildren();
     }
 
@@ -733,38 +741,49 @@ public class TextArea extends Widget {
     private void layoutBlockElement(Box box, TextAreaModel.BlockElement be) {
         box.nextLine(false);
 
-        LImageLabel backgroundImg = null;
+        Font font = selectFont(be);
+        if(font == null && (
+                be.getWidth().unit.isFontBased() ||
+                be.getMarginTop().unit.isFontBased() ||
+                be.getMarginBottom().unit.isFontBased())) {
+            return;
+        }
+        
+        BGImage bgImage = null;
         Image image = (images != null) ? be.getBackgroundImage(images) : null;
         if(image != null) {
-            backgroundImg = new LImageLabel(image);
-            super.insertChild(backgroundImg, getNumChildren());
+            bgImage = new BGImage(image);
+            bgImages.add(bgImage);
         }
 
         int bgX = box.lineStartX;
         int bgY = box.curY;
-        int bgWidth = box.lineWidth;
-        int bgHeight = 0;
+        int bgWidth;
+        int bgHeight;
+
+        int marginTop = Math.max(0, convertToPX(be.getMarginTop(), font, 0));
+        int marginBottom = Math.max(0, convertToPX(be.getMarginBottom(), font, 0));
 
         if(be.getFloatPosition() == TextAreaModel.FloatPosition.NONE) {
+            bgWidth = box.lineWidth;
+            box.curY += marginTop;
             layoutElements(box, be);
             box.nextLine(false);
+            box.curY += marginBottom;
             bgHeight = box.curY - bgY;
         } else {
-            Font font = selectFont(be);
-            if(font == null && be.getWidth().unit.isFontBased()) {
-                return;
-            }
-            
-            bgWidth = convertToPX(be.getWidth(), font, box.getRemaining());
+            int remaining = box.getRemaining();
+            bgWidth = Math.max(0, Math.min(convertToPX(be.getWidth(), font, remaining), remaining));
 
             if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
                 bgX += box.lineWidth - bgWidth;
             }
 
-            Box blockBox = new Box(bgY, bgX, bgWidth);
+            Box blockBox = new Box(bgY + marginTop, bgX, bgWidth);
             layoutElements(blockBox, be);
             blockBox.nextLine(false);
             blockBox.clearFloater(TextAreaModel.Clear.BOTH);
+            blockBox.curY += marginBottom;
             bgHeight = blockBox.curY - box.curY;
             
             // sync main box with layout
@@ -784,9 +803,11 @@ public class TextArea extends Widget {
             box.computeMargin();
         }
         
-        if(backgroundImg != null) {
-            backgroundImg.setPosition(getInnerX() + bgX, getInnerY() + bgY);
-            backgroundImg.setSize(bgWidth, bgHeight);
+        if(bgImage != null) {
+            bgImage.x = bgX;
+            bgImage.y = bgY;
+            bgImage.width = bgWidth;
+            bgImage.height = bgHeight;
         }
     }
 
@@ -1128,6 +1149,21 @@ public class TextArea extends Widget {
         @Override
         protected void applyThemeBackground(ThemeInfo themeInfo) {
             // don't load the background image
+        }
+    }
+
+    static class BGImage {
+        final Image img;
+        int x;
+        int y;
+        int width;
+        int height;
+
+        BGImage(Image img) {
+            this.img = img;
+        }
+        void draw(int offX, int offY, AnimationState as) {
+            img.draw(as, x+offX, y+offY, width, height);
         }
     }
 }
