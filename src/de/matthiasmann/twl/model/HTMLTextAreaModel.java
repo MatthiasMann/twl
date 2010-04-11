@@ -286,6 +286,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             newStyle.halignment = HAlignment.INLINE;
             newStyle.changed = true;
         }
+
+        if(newStyle.floatPosition != FloatPosition.NONE) {
+            newStyle.floatPosition = FloatPosition.NONE;
+            newStyle.changed = true;
+        }
         
         String style = xpp.getAttributeValue(null, "style");
         if(style != null) {
