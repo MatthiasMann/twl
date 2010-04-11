@@ -291,7 +291,12 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             newStyle.floatPosition = FloatPosition.NONE;
             newStyle.changed = true;
         }
-        
+
+        if(newStyle.backgroundImage.length() > 0) {
+            newStyle.backgroundImage = "";
+            newStyle.changed = true;
+        }
+
         String style = xpp.getAttributeValue(null, "style");
         if(style != null) {
            finishText();
