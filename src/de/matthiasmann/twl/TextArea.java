@@ -78,7 +78,7 @@ public class TextArea extends Widget {
     private MouseCursor mouseCursorNormal;
     private MouseCursor mouseCursorLink;
 
-    private final ArrayList<LElement> layout;
+    final ArrayList<LElement> layout;
     private final ArrayList<LImage> bgImages;
     private boolean inLayoutCode;
     private int lastWidth;
