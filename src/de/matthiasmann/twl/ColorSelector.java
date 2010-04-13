@@ -652,7 +652,7 @@ public class ColorSelector extends DialogLayout {
                 x += dx;
             }
 
-            img.update(imgData);
+            img.update(imgData, DynamicImage.Format.RGBA);
             needsUpdate = false;
         }
 
@@ -721,7 +721,7 @@ public class ColorSelector extends DialogLayout {
                 y += dy;
             }
 
-            img.update(imgData);
+            img.update(imgData, DynamicImage.Format.RGBA);
             needsUpdate = false;
         }
 

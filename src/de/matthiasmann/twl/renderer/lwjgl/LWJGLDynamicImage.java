@@ -35,6 +35,7 @@ import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.Image;
 import java.nio.ByteBuffer;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 
 /**
  *
@@ -65,11 +66,11 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
         }
     }
 
-    public void update(ByteBuffer data) {
-        update(0, 0, width, height, data);
+    public void update(ByteBuffer data, Format format) {
+        update(0, 0, width, height, data, format);
     }
 
-    public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data) {
+    public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data, Format format) {
         if(xoffset < 0 || yoffset < 0 || getWidth() <= 0 || getHeight() <= 0) {
             throw new IllegalArgumentException("Negative offsets or size <= 0");
         }
@@ -79,11 +80,18 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
         if(width > getWidth() - xoffset || height > getHeight() - yoffset) {
             throw new IllegalArgumentException("Rectangle outside of texture");
         }
+        if(data == null) {
+            throw new NullPointerException("data");
+        }
+        if(format == null) {
+            throw new NullPointerException("format");
+        }
         if(data.remaining() < width*height*4) {
             throw new IllegalArgumentException("Not enough data remaining in the buffer");
         }
+        int glFormat = (format == Format.RGBA) ? GL11.GL_RGBA : GL12.GL_BGRA;
         bind();
-        GL11.glTexSubImage2D(target, 0, xoffset, yoffset, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data);
+        GL11.glTexSubImage2D(target, 0, xoffset, yoffset, width, height, glFormat, GL11.GL_UNSIGNED_BYTE, data);
     }
 
     public Image createTintedVersion(Color color) {
