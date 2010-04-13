@@ -71,16 +71,16 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
 
     public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data) {
         if(xoffset < 0 || yoffset < 0 || getWidth() <= 0 || getHeight() <= 0) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Negative offsets or size <= 0");
         }
         if(xoffset >= getWidth() || yoffset >= getHeight()) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Offset outside of texture");
         }
         if(width > getWidth() - xoffset || height > getHeight() - yoffset) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Rectangle outside of texture");
         }
         if(data.remaining() < width*height*4) {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Not enough data remaining in the buffer");
         }
         bind();
         GL11.glTexSubImage2D(target, 0, xoffset, yoffset, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, data);
