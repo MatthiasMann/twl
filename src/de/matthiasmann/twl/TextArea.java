@@ -328,6 +328,11 @@ public class TextArea extends Widget {
     }
 
     @Override
+    protected void allChildrenRemoved() {
+        // always ignore
+    }
+
+    @Override
     public void destroy() {
         super.destroy();
         clearLayout();

@@ -1173,9 +1173,9 @@ public class Widget {
      * Removes all children of this widget.
      * The position of the all removed children is changed to the relative
      * position to this widget.
-     * Calls invalidateLayout after removing all children.
+     * Calls allChildrenRemoved after removing all children.
      * 
-     * @see #invalidateLayout()
+     * @see #allChildrenRemoved()
      */
     public void removeAllChildren() {
         if(children != null) {
@@ -1186,12 +1186,12 @@ public class Widget {
                 unparentChild(child);
             }
             children.clear(); // we expect that new children will be added - so keep list
-            invalidateLayout();
-        }
-        if(hasOpenPopup) {
-            GUI gui = getGUI();
-            assert(gui != null);
-            recalcOpenPopups(gui);
+            if(hasOpenPopup) {
+                GUI gui = getGUI();
+                assert(gui != null);
+                recalcOpenPopups(gui);
+            }
+            allChildrenRemoved();
         }
     }
     
@@ -1722,6 +1722,18 @@ public class Widget {
      * @see #invalidateLayout()
      */
     protected void childRemoved(Widget exChild) {
+        invalidateLayout();
+    }
+
+    /**
+     * All children have been removed.
+     * This is called by {@code removeAllChildren} instead of {@code childRemoved}.
+     * 
+     * The default implementation calls invalidateLayout.
+     * 
+     * @see #invalidateLayout()
+     */
+    protected void allChildrenRemoved() {
         invalidateLayout();
     }
 

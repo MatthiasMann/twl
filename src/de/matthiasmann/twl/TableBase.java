@@ -129,7 +129,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
     private final InsertCellWidgets insertCellWidgetsFunction;
-    private final Widget cellWidgetContainer;
+    private final CellWidgetContainer cellWidgetContainer;
     
     protected final TypeMapping<CellRenderer> cellRenderers;
     protected final SparseGrid widgetGrid;
@@ -181,9 +181,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.removeCellWidgetsFunction = new RemoveCellWidgets();
         this.insertCellWidgetsFunction = new InsertCellWidgets();
         this.columnModel = new ColumnSizeSequence();
-        this.cellWidgetContainer = new Widget();
-        this.cellWidgetContainer.setTheme("");
-        this.cellWidgetContainer.setClip(true);
+        this.cellWidgetContainer = new CellWidgetContainer();
 
         super.insertChild(cellWidgetContainer, 0);
         setCanAcceptKeyboardFocus(true);
@@ -1387,6 +1385,38 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     static class WidgetEntry extends SparseGrid.Entry {
         Widget widget;
         CellWidgetCreator creator;
+    }
+
+    static class CellWidgetContainer extends Widget {
+        CellWidgetContainer() {
+            setTheme("");
+            setClip(true);
+        }
+
+        @Override
+        protected void childInvalidateLayout(Widget child) {
+            // always ignore
+        }
+
+        @Override
+        protected void sizeChanged() {
+            // always ignore
+        }
+
+        @Override
+        protected void childAdded(Widget child) {
+            // always ignore
+        }
+
+        @Override
+        protected void childRemoved(Widget exChild) {
+            // always ignore
+        }
+
+        @Override
+        protected void allChildrenRemoved() {
+            // always ignore
+        }
     }
 
     public static class StringCellRenderer extends TextWidget implements CellRenderer {
