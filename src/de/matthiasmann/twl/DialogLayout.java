@@ -302,8 +302,11 @@ public class DialogLayout extends Widget {
 
     private void warnOnIncomplete() {
         warnOnIncomplete = false;
-        Logger.getLogger(DialogLayout.class.getName()).log(Level.WARNING,
-                "Dialog layout has incomplete state", debugStackTrace);
+        getLogger().log(Level.WARNING, "Dialog layout has incomplete state", debugStackTrace);
+    }
+
+    static Logger getLogger() {
+        return Logger.getLogger(DialogLayout.class.getName());
     }
 
     protected void applyThemeDialogLayout(ThemeInfo themeInfo) {
@@ -1234,6 +1237,12 @@ public class DialogLayout extends Widget {
                     s.setSize(axis, pos, size);
                 }
             }
+        }
+
+        @Override
+        public Group addGap() {
+            getLogger().log(Level.WARNING, "Useless call to addGap() on ParallelGroup", new Throwable());
+            return this;
         }
     }
 }
