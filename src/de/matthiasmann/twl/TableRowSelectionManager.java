@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -288,7 +288,7 @@ public class TableRowSelectionManager implements TableSelectionManager {
     }
 
     protected void handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
-        if(row < 0) {
+        if(row < 0 || row >= getNumRows()) {
             if(!isShift) {
                 selectionModel.clearSelection();
             }
