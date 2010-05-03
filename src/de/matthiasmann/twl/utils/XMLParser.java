@@ -127,6 +127,19 @@ public class XMLParser implements Closeable {
         this.loggerName = loggerName;
     }
 
+    /**
+     * @see XmlPullParser#next() 
+     */
+    public int next() throws XmlPullParserException, IOException {
+        warnUnusedAttributes();
+        int type = xpp.next();
+        handleType(type);
+        return type;
+    }
+
+    /**
+     * @see XmlPullParser#nextTag() 
+     */
     public int nextTag() throws XmlPullParserException, IOException {
         warnUnusedAttributes();
         int type = xpp.nextTag();
@@ -134,6 +147,9 @@ public class XMLParser implements Closeable {
         return type;
     }
 
+    /**
+     * @see XmlPullParser#nextText()
+     */
     public String nextText() throws XmlPullParserException, IOException {
         warnUnusedAttributes();
         return xpp.nextText();
@@ -159,6 +175,9 @@ public class XMLParser implements Closeable {
         return xpp.getName();
     }
 
+    /**
+     * @see XmlPullParser#require(int, java.lang.String, java.lang.String) 
+     */
     public void require(int type, String namespace, String name) throws XmlPullParserException, IOException {
         xpp.require(type, namespace, name);
     }
