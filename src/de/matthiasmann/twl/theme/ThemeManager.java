@@ -52,7 +52,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -102,12 +101,19 @@ public class ThemeManager {
         insertDefaultConstants();
     }
 
+    /**
+     * Returns the associated cache context which was used to load this theme.
+     * @return the cache context
+     * @see #createThemeManager(java.net.URL, de.matthiasmann.twl.renderer.Renderer, de.matthiasmann.twl.renderer.CacheContext) 
+     */
     public CacheContext getCacheContext() {
         return cacheContext;
     }
 
     /**
      * Destroys the CacheContext and releases all OpenGL resources
+     * @see CacheContext#destroy()
+     * @see #getCacheContext()
      */
     public void destroy() {
         for(Font font : fonts.values()) {
@@ -120,6 +126,19 @@ public class ThemeManager {
         return defaultFont;
     }
 
+    /**
+     * Loads the specified theme using the provided renderer and a new cache context.
+     *
+     * This is equivalent to calling {@code createThemeManager(url, renderer, renderer.createNewCacheContext())}
+     *
+     * @param url The URL of the theme
+     * @param renderer The renderer which is used to load and render the resources
+     * @return a new ThemeManager
+     * @throws IOException if an error occured while loading
+     * @throws NullPointerException if one of the passed parameters is {@code null}
+     * @see #createThemeManager(java.net.URL, de.matthiasmann.twl.renderer.Renderer, de.matthiasmann.twl.renderer.CacheContext)
+     * @see #destroy() 
+     */
     public static ThemeManager createThemeManager(URL url, Renderer renderer) throws IOException {
         if(url == null) {
             throw new NullPointerException("url");
@@ -129,7 +148,25 @@ public class ThemeManager {
         }
         return createThemeManager(url, renderer, renderer.createNewCacheContext());
     }
-    
+
+    /**
+     * Loads the specified theme using the provided renderer and cache context.
+     *
+     * The provided {@code cacheContext} is set active in the provided {@code renderer}.
+     *
+     * The cache context is stored inside the created ThemeManager. Calling
+     * {@code destroy()} on the returned ThemeManager instance will also destroy
+     * the cache context.
+     *
+     * @param url The URL of the theme
+     * @param renderer The renderer which is used to load and render the resources
+     * @param cacheContext The cache context into which the resources are loaded
+     * @return a new ThemeManager
+     * @throws IOException if an error occured while loading
+     * @throws NullPointerException if one of the passed parameters is {@code null}
+     * @see Renderer#setActiveCacheContext(de.matthiasmann.twl.renderer.CacheContext)
+     * @see #destroy() 
+     */
     public static ThemeManager createThemeManager(URL url, Renderer renderer, CacheContext cacheContext) throws IOException {
         if(url == null) {
             throw new NullPointerException("url");
@@ -138,7 +175,7 @@ public class ThemeManager {
             throw new NullPointerException("renderer");
         }
         if(cacheContext == null) {
-            throw new NullPointerException("renderer");
+            throw new NullPointerException("cacheContext");
         }
         try {
             renderer.setActiveCacheContext(cacheContext);
