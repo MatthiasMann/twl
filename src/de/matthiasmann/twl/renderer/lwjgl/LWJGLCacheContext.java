@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -49,7 +49,7 @@ public class LWJGLCacheContext implements CacheContext {
     final HashMap<String, BitmapFont> fontCache;
     boolean valid;
 
-    LWJGLCacheContext(LWJGLRenderer renderer) {
+    protected LWJGLCacheContext(LWJGLRenderer renderer) {
         this.renderer = renderer;
         this.textures = new HashMap<String, LWJGLTexture>();
         this.fontCache = new HashMap<String, BitmapFont>();
