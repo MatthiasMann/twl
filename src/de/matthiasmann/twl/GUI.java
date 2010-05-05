@@ -631,6 +631,26 @@ public final class GUI extends Widget {
 
         return handled;
     }
+
+    /**
+     * Clears current mouse button & drag state.
+     *
+     * Should be called when the Display is minimized or when mouse events are
+     * handled outside of TWL.
+     */
+    public void clearMouseState() {
+        event.setModifier(Event.MODIFIER_LBUTTON, false);
+        event.setModifier(Event.MODIFIER_MBUTTON, false);
+        event.setModifier(Event.MODIFIER_RBUTTON, false);
+        lastMouseClickWidget = null;
+        mouseClickCount = 0;
+        mouseClickedTime = curTime;
+        if(dragActive) {
+            dragActive = false;
+            sendMouseEvent(Event.Type.MOUSE_MOVED, null);
+        }
+        dragButton = -1;
+    }
     
     /**
      * Mouse wheel has been turned. Must be called after handleMouse.
