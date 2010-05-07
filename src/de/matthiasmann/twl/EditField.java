@@ -84,6 +84,7 @@ public class EditField extends Widget {
     private Callback[] callbacks;
     private Menu popupMenu;
     private boolean textLongerThenWidget;
+    private boolean forwardUnhandledKeysToCallback;
 
     private EditFieldAutoCompletionWindow autoCompletionWindow;
     private int autoCompletionHeight = 100;
@@ -131,6 +132,21 @@ public class EditField extends Widget {
 
     public void removeCallback(Callback cb) {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
+    }
+
+    public boolean isForwardUnhandledKeysToCallback() {
+        return forwardUnhandledKeysToCallback;
+    }
+
+    /**
+     * Controls if unhandled key presses are forwarded to the callback or not.
+     * Default is false. If set to true then the EditField will consume all key
+     * presses.
+     *
+     * @param forwardUnhandledKeysToCallback true if unhandled keys should be forwarded to the callbacks
+     */
+    public void setForwardUnhandledKeysToCallback(boolean forwardUnhandledKeysToCallback) {
+        this.forwardUnhandledKeysToCallback = forwardUnhandledKeysToCallback;
     }
 
     protected void doCallback(int key) {
@@ -441,7 +457,6 @@ public class EditField extends Widget {
         if(autoCompletionWindow != window) {
             if(autoCompletionWindow != null) {
                 autoCompletionWindow.closeInfo();
-                autoCompletionWindow = null;
             }
             autoCompletionWindow = window;
         }
@@ -537,6 +552,9 @@ public class EditField extends Widget {
                 if(evt.hasKeyCharNoModifiers()) {
                     insertChar(evt.getKeyChar());
                     return true;
+                } else if(forwardUnhandledKeysToCallback) {
+                    doCallback(evt.getKeyCode());
+                    return true;
                 }
                 return false;
             }
@@ -553,7 +571,7 @@ public class EditField extends Widget {
             case Keyboard.KEY_RIGHT:
                 return true;
             default:
-                return evt.hasKeyCharNoModifiers();
+                return evt.hasKeyCharNoModifiers() || forwardUnhandledKeysToCallback;
             }
 
         case MOUSE_BTNUP:
