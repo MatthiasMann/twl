@@ -125,10 +125,7 @@ class ImageManager {
                 xmlp.nextTag();
                 while(!xmlp.isEndTag()) {
                     String name = xmlp.getAttributeNotNull("name");
-                    ParserUtil.checkNameNotEmpty(name, xmlp);
-                    if(images.containsKey(name)) {
-                        throw xmlp.error("image \"" + name + "\" already defined");
-                    }
+                    checkImageName(name, xmlp);
                     String tagName = xmlp.getName();
                     if("cursor".equals(xmlp.getName())) {
                         parseCursor(xmlp, name, texture);
@@ -145,6 +142,53 @@ class ImageManager {
             }
         } catch (Exception ex) {
             throw xmlp.error("Unable to load texture: " + fileName, ex);
+        }
+    }
+
+    public void parseTextureDirect(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
+        xmlp.require(XmlPullParser.START_TAG, null, "texture");
+        String fmt = xmlp.getAttributeValue(null, "format");
+        String filter = xmlp.getAttributeValue(null, "filter");
+        String fileName = xmlp.getAttributeNotNull("file");
+        String name = xmlp.getAttributeNotNull("name");
+        checkImageName(name, xmlp);
+
+        try {
+            Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
+            if(texture == null) {
+                throw new NullPointerException("loadTexture returned null");
+            }
+            this.currentTexture = texture;
+
+            try {
+                ImageParams params = new ImageParams();
+                parseStdAttributes(xmlp, params);
+                boolean tiled = xmlp.parseBoolFromAttribute("tiled", false);
+                Image image = createImage(xmlp, 0, 0, texture.getWidth(), texture.getHeight(), params.tintColor, tiled);
+                params.tintColor = null;
+                params.condition = ParserUtil.parseCondition(xmlp);
+                if(tiled) {
+                    params.repeatX = false;
+                    params.repeatY = false;
+                }
+                image = adjustImage(image, params);
+                images.put(name, image);
+            } finally {
+                texture.themeLoadingDone();
+                currentTexture = null;
+            }
+        } catch (Exception ex) {
+            throw xmlp.error("Unable to load texture: " + fileName, ex);
+        }
+
+        xmlp.nextTag();
+        xmlp.require(XmlPullParser.END_TAG, null, "texture");
+    }
+
+    private void checkImageName(String name, XMLParser xmlp) throws XmlPullParserException, XmlPullParserException {
+        ParserUtil.checkNameNotEmpty(name, xmlp);
+        if(images.containsKey(name)) {
+            throw xmlp.error("image \"" + name + "\" already defined");
         }
     }
 
@@ -180,15 +224,7 @@ class ImageManager {
     }
 
     private Image parseImageNoCond(XMLParser xmlp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
-        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", null);
-        params.border = ParserUtil.parseBorderFromAttribute(xmlp, "border");
-        params.inset = ParserUtil.parseBorderFromAttribute(xmlp, "inset");
-        params.repeatX = xmlp.parseBoolFromAttribute("repeatX", false);
-        params.repeatY = xmlp.parseBoolFromAttribute("repeatY", false);
-        params.sizeOverwriteH = xmlp.parseIntFromAttribute("sizeOverwriteH", -1);
-        params.sizeOverwriteV = xmlp.parseIntFromAttribute("sizeOverwriteV", -1);
-        params.center = xmlp.parseBoolFromAttribute("center", false);
-        
+        parseStdAttributes(xmlp, params);
         Image image = parseImageDelegate(xmlp, tagName, params);
         return adjustImage(image, params);
     }
@@ -577,6 +613,17 @@ class ImageManager {
         params.y = xmlp.parseIntFromAttribute("y");
         params.w = xmlp.parseIntFromAttribute("width");
         params.h = xmlp.parseIntFromAttribute("height");
+    }
+
+    private void parseStdAttributes(XMLParser xmlp, ImageParams params) throws XmlPullParserException {
+        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", null);
+        params.border = ParserUtil.parseBorderFromAttribute(xmlp, "border");
+        params.inset = ParserUtil.parseBorderFromAttribute(xmlp, "inset");
+        params.repeatX = xmlp.parseBoolFromAttribute("repeatX", false);
+        params.repeatY = xmlp.parseBoolFromAttribute("repeatY", false);
+        params.sizeOverwriteH = xmlp.parseIntFromAttribute("sizeOverwriteH", -1);
+        params.sizeOverwriteV = xmlp.parseIntFromAttribute("sizeOverwriteV", -1);
+        params.center = xmlp.parseBoolFromAttribute("center", false);
     }
 
     Logger getLogger() {
