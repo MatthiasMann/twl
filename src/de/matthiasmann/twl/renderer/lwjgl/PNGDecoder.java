@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -164,8 +164,10 @@ public class PNGDecoder {
     
     public void decode(ByteBuffer buffer, int stride, LWJGLTexture.Format fmt) throws IOException {
         final int offset = buffer.position();
-        byte[] curLine = new byte[width*bytesPerPixel+1];
-        byte[] prevLine = new byte[width*bytesPerPixel+1];
+        final int lineSize = ((width * bitdepth + 7) / 8) * bytesPerPixel;
+        byte[] curLine = new byte[lineSize+1];
+        byte[] prevLine = new byte[lineSize+1];
+        byte[] palLine = (bitdepth < 8) ? new byte[width+1] : null;
         
         final Inflater inflater = new Inflater();
         try {
@@ -200,9 +202,16 @@ public class PNGDecoder {
                     }
                     break;
                 case COLOR_INDEXED:
+                    switch(bitdepth) {
+                        case 8: palLine = curLine; break;
+                        case 4: expand4(curLine, palLine); break;
+                        case 2: expand2(curLine, palLine); break;
+                        case 1: expand1(curLine, palLine); break;
+                        default: throw new UnsupportedOperationException("Unsupported bitdepth for this image");
+                    }
                     switch (fmt) {
-                    case ABGR: copyPALtoABGR(buffer, curLine); break;
-                    case RGBA: copyPALtoRGBA(buffer, curLine); break;
+                    case ABGR: copyPALtoABGR(buffer, palLine); break;
+                    case RGBA: copyPALtoRGBA(buffer, palLine); break;
                     default: throw new UnsupportedOperationException("Unsupported format for this image");
                     }
                     break;
@@ -322,6 +331,44 @@ public class PNGDecoder {
             }
         }
     }
+
+    private void expand4(byte[] src, byte[] dst) {
+        for(int i=1,n=dst.length ; i<n ; i+=2) {
+            int val = src[1 + (i >> 1)] & 255;
+            switch(n-i) {
+                default: dst[i+1] = (byte)(val & 15);
+                case 1:  dst[i  ] = (byte)(val >> 4);
+            }
+        }
+    }
+
+    private void expand2(byte[] src, byte[] dst) {
+        for(int i=1,n=dst.length ; i<n ; i+=4) {
+            int val = src[1 + (i >> 2)] & 255;
+            switch(n-i) {
+                default: dst[i+3] = (byte)((val     ) & 3);
+                case 3:  dst[i+2] = (byte)((val >> 2) & 3);
+                case 2:  dst[i+1] = (byte)((val >> 4) & 3);
+                case 1:  dst[i  ] = (byte)((val >> 6)    );
+            }
+        }
+    }
+
+    private void expand1(byte[] src, byte[] dst) {
+        for(int i=1,n=dst.length ; i<n ; i+=8) {
+            int val = src[1 + (i >> 3)] & 255;
+            switch(n-i) {
+                default: dst[i+7] = (byte)((val     ) & 1);
+                case 7:  dst[i+6] = (byte)((val >> 1) & 1);
+                case 6:  dst[i+5] = (byte)((val >> 2) & 1);
+                case 5:  dst[i+4] = (byte)((val >> 3) & 1);
+                case 4:  dst[i+3] = (byte)((val >> 4) & 1);
+                case 3:  dst[i+2] = (byte)((val >> 5) & 1);
+                case 2:  dst[i+1] = (byte)((val >> 6) & 1);
+                case 1:  dst[i  ] = (byte)((val >> 7)    );
+            }
+        }
+    }
     
     private void unfilter(byte[] curLine, byte[] prevLine) throws IOException {
         switch (curLine[0]) {
@@ -346,44 +393,38 @@ public class PNGDecoder {
     
     private void unfilterSub(byte[] curLine) {
         final int bpp = this.bytesPerPixel;
-        final int lineSize = width*bpp;
-        
-        for(int i=bpp+1 ; i<=lineSize ; ++i) {
+        for(int i=bpp+1,n=curLine.length ; i<n ; ++i) {
             curLine[i] += curLine[i-bpp];
         }
     }
     
     private void unfilterUp(byte[] curLine, byte[] prevLine) {
         final int bpp = this.bytesPerPixel;
-        final int lineSize = width*bpp;
-        
-        for(int i=1 ; i<=lineSize ; ++i) {
+        for(int i=1,n=curLine.length ; i<n ; ++i) {
             curLine[i] += prevLine[i];
         }
     }
     
     private void unfilterAverage(byte[] curLine, byte[] prevLine) {
         final int bpp = this.bytesPerPixel;
-        final int lineSize = width*bpp;
         
         int i;
         for(i=1 ; i<=bpp ; ++i) {
             curLine[i] += (byte)((prevLine[i] & 0xFF) >>> 1);
         }
-        for(; i<=lineSize ; ++i) {
+        for(int n=curLine.length ; i<n ; ++i) {
             curLine[i] += (byte)(((prevLine[i] & 0xFF) + (curLine[i - bpp] & 0xFF)) >>> 1);
         }
     }
     
     private void unfilterPaeth(byte[] curLine, byte[] prevLine) {
         final int bpp = this.bytesPerPixel;
-        final int lineSize = width*bpp;
         
         int i;
         for(i=1 ; i<=bpp ; ++i) {
             curLine[i] += prevLine[i];
         }
-        for(; i<=lineSize ; ++i) {
+        for(int n=curLine.length ; i<n ; ++i) {
             int a = curLine[i - bpp] & 255;
             int b = prevLine[i] & 255;
             int c = prevLine[i - bpp] & 255;
@@ -407,22 +448,36 @@ public class PNGDecoder {
         bitdepth = buffer[8] & 255;
         colorType = buffer[9] & 255;
         
-        if(bitdepth != 8) {
-            throw new IOException("Unsupported bit depth: " + bitdepth);
-        }
-
         switch (colorType) {
         case COLOR_GREYSCALE:
+            if(bitdepth != 8) {
+                throw new IOException("Unsupported bit depth: " + bitdepth);
+            }
             bytesPerPixel = 1;
             break;
         case COLOR_TRUECOLOR:
+            if(bitdepth != 8) {
+                throw new IOException("Unsupported bit depth: " + bitdepth);
+            }
             bytesPerPixel = 3;
             break;
         case COLOR_TRUEALPHA:
+            if(bitdepth != 8) {
+                throw new IOException("Unsupported bit depth: " + bitdepth);
+            }
             bytesPerPixel = 4;
             break;
         case COLOR_INDEXED:
-            bytesPerPixel = 1;
+            switch(bitdepth) {
+            case 8:
+            case 4:
+            case 2:
+            case 1:
+                bytesPerPixel = 1;
+                break;
+            default:
+                throw new IOException("Unsupported bit depth: " + bitdepth);
+            }
             break;
         default:
             throw new IOException("unsupported color format");  
