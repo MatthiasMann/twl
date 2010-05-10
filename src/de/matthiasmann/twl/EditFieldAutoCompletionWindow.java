@@ -296,7 +296,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                     case Keyboard.KEY_DOWN:
                         listBox.handleEvent(evt);
                         startCapture();
-                        return true;
+                        return captureKeys;
                     case Keyboard.KEY_ESCAPE:
                         stopAutoCompletion();
                         return false;
