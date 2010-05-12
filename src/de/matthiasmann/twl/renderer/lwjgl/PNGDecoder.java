@@ -135,6 +135,7 @@ public class PNGDecoder {
             switch (fmt) {
             case ABGR:
             case RGBA:
+            case BGRA:
             case RGB: return fmt;
             default: return LWJGLTexture.Format.RGB;
             }
@@ -142,6 +143,7 @@ public class PNGDecoder {
             switch (fmt) {
             case ABGR:
             case RGBA:
+            case BGRA:
             case RGB: return fmt;
             default: return LWJGLTexture.Format.RGBA;
             }
@@ -154,7 +156,8 @@ public class PNGDecoder {
         case COLOR_INDEXED:
             switch (fmt) {
             case ABGR:
-            case RGBA: return fmt;
+            case RGBA:
+            case BGRA: return fmt;
             default: return LWJGLTexture.Format.RGBA;
             }
         default:
@@ -182,6 +185,7 @@ public class PNGDecoder {
                     switch (fmt) {
                     case ABGR: copyRGBtoABGR(buffer, curLine); break;
                     case RGBA: copyRGBtoRGBA(buffer, curLine); break;
+                    case BGRA: copyRGBtoBGRA(buffer, curLine); break;
                     case RGB: copy(buffer, curLine); break;
                     default: throw new UnsupportedOperationException("Unsupported format for this image");
                     }
@@ -190,6 +194,7 @@ public class PNGDecoder {
                     switch (fmt) {
                     case ABGR: copyRGBAtoABGR(buffer, curLine); break;
                     case RGBA: copy(buffer, curLine); break;
+                    case BGRA: copyRGBAtoBGRA(buffer, curLine); break;
                     case RGB: copyRGBAtoRGB(buffer, curLine); break;
                     default: throw new UnsupportedOperationException("Unsupported format for this image");
                     }
@@ -212,6 +217,7 @@ public class PNGDecoder {
                     switch (fmt) {
                     case ABGR: copyPALtoABGR(buffer, palLine); break;
                     case RGBA: copyPALtoRGBA(buffer, palLine); break;
+                    case BGRA: copyPALtoBGRA(buffer, curLine); break;
                     default: throw new UnsupportedOperationException("Unsupported format for this image");
                     }
                     break;
@@ -276,9 +282,37 @@ public class PNGDecoder {
         }
     }
 
+    private void copyRGBtoBGRA(ByteBuffer buffer, byte[] curLine) {
+        if(transPixel != null) {
+            byte tr = transPixel[1];
+            byte tg = transPixel[3];
+            byte tb = transPixel[5];
+            for(int i=1,n=curLine.length ; i<n ; i+=3) {
+                byte r = curLine[i];
+                byte g = curLine[i+1];
+                byte b = curLine[i+2];
+                byte a = (byte)0xFF;
+                if(r==tr && g==tg && b==tb) {
+                    a = 0;
+                }
+                buffer.put(b).put(g).put(r).put(a);
+            }
+        } else {
+            for(int i=1,n=curLine.length ; i<n ; i+=3) {
+                buffer.put(curLine[i+2]).put(curLine[i+1]).put(curLine[i]).put((byte)0xFF);
+            }
+        }
+    }
+
     private void copyRGBAtoABGR(ByteBuffer buffer, byte[] curLine) {
         for(int i=1,n=curLine.length ; i<n ; i+=4) {
             buffer.put(curLine[i+3]).put(curLine[i+2]).put(curLine[i+1]).put(curLine[i]);
+        }
+    }
+
+    private void copyRGBAtoBGRA(ByteBuffer buffer, byte[] curLine) {
+        for(int i=1,n=curLine.length ; i<n ; i+=4) {
+            buffer.put(curLine[i+2]).put(curLine[i+1]).put(curLine[i+0]).put(curLine[i+3]);
         }
     }
 
@@ -328,6 +362,28 @@ public class PNGDecoder {
                 byte b = palette[idx*3 + 2];
                 byte a = (byte)0xFF;
                 buffer.put(r).put(g).put(b).put(a);
+            }
+        }
+    }
+
+    private void copyPALtoBGRA(ByteBuffer buffer, byte[] curLine) {
+        if(paletteA != null) {
+            for(int i=1,n=curLine.length ; i<n ; i+=1) {
+                int idx = curLine[i] & 255;
+                byte r = palette[idx*3 + 0];
+                byte g = palette[idx*3 + 1];
+                byte b = palette[idx*3 + 2];
+                byte a = paletteA[idx];
+                buffer.put(b).put(g).put(r).put(a);
+            }
+        } else {
+            for(int i=1,n=curLine.length ; i<n ; i+=1) {
+                int idx = curLine[i] & 255;
+                byte r = palette[idx*3 + 0];
+                byte g = palette[idx*3 + 1];
+                byte b = palette[idx*3 + 2];
+                byte a = (byte)0xFF;
+                buffer.put(b).put(g).put(r).put(a);
             }
         }
     }

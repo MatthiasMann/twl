@@ -57,6 +57,7 @@ public class LWJGLTexture implements Texture, Resource {
         RGB(GL11.GL_RGB, GL11.GL_RGB8, 3),
         RGB_SMALL(GL11.GL_RGB, GL11.GL_RGB5_A1, 3),
         RGBA(GL11.GL_RGBA, GL11.GL_RGBA8, 4),
+        BGRA(GL12.GL_BGRA, GL11.GL_RGBA8, 4),
         ABGR(EXTAbgr.GL_ABGR_EXT, GL11.GL_RGBA8, 4);
 
         final int glFormat;
