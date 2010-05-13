@@ -182,7 +182,7 @@ public class LWJGLTexture implements Texture, Resource {
     boolean bind(Color color) {
         if(id != 0) {
             GL11.glBindTexture(GL11.GL_TEXTURE_2D, id);
-            renderer.tintState.setColor(color);
+            renderer.tintStack.setColor(color);
             return true;
         }
         return false;

@@ -111,7 +111,7 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
 
     public void draw(AnimationState as, int x, int y, int width, int height) {
         bind();
-        renderer.tintState.setColor(tintColor);
+        renderer.tintStack.setColor(tintColor);
         if(target != GL11.GL_TEXTURE_2D) {
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             GL11.glEnable(target);

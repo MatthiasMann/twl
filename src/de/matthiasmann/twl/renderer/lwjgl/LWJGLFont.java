@@ -136,7 +136,7 @@ public class LWJGLFont implements Font {
             return 0;
         }
         try {
-            renderer.tintState.setColor(fontState.color);
+            renderer.tintStack.setColor(fontState.color);
             width = font.drawText(x, y, str, start, end);
         } finally {
             font.cleanup();
@@ -154,7 +154,7 @@ public class LWJGLFont implements Font {
             return 0;
         }
         try {
-            renderer.tintState.setColor(fontState.color);
+            renderer.tintStack.setColor(fontState.color);
             numLines = font.drawMultiLineText(x, y, str, width, align);
         } finally {
             font.cleanup();

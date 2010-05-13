@@ -71,7 +71,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private int width;
     private int height;
     private boolean hasScissor;
-    private final TintState tintStateRoot;
+    private final TintStack tintStateRoot;
     private final Cursor emptyCursor;
     private boolean useQuadsForLines;
     private boolean useSWMouseCursors;
@@ -82,14 +82,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     final ArrayList<TextureArea> textureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
-    TintState tintState;
+    TintStack tintStack;
 
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
         this.textureAreas = new ArrayList<TextureArea>();
         this.dynamicImages = new ArrayList<LWJGLDynamicImage>();
-        this.tintStateRoot = new TintState();
-        this.tintState = tintStateRoot;
+        this.tintStateRoot = new TintStack();
+        this.tintStack = tintStateRoot;
         syncViewportSize();
 
         GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE, ib16);
@@ -170,7 +170,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
      */
     public void startRenderering() {
         hasScissor = false;
-        tintState = tintStateRoot;
+        tintStack = tintStateRoot;
         
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT|GL11.GL_TRANSFORM_BIT|GL11.GL_HINT_BIT|
                 GL11.GL_COLOR_BUFFER_BIT|GL11.GL_SCISSOR_BIT|GL11.GL_LINE_BIT|GL11.GL_TEXTURE_BIT);
@@ -332,11 +332,11 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     }
 
     public void pushGlobalTintColor(float r, float g, float b, float a) {
-        tintState = tintState.next(r, g, b, a);
+        tintStack = tintStack.push(r, g, b, a);
     }
 
     public void popGlobalTintColor() {
-        tintState = tintState.prev;
+        tintStack = tintStack.pop();
     }
 
     public void drawLine(float[] pts, int numPts, float width, Color color, boolean drawAsLoop) {
@@ -344,7 +344,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             throw new ArrayIndexOutOfBoundsException(numPts*2);
         }
         if(numPts >= 2) {
-            tintState.setColor(color);
+            tintStack.setColor(color);
             GL11.glDisable(GL11.GL_TEXTURE_2D);
             if(useQuadsForLines) {
                 drawLinesAsQuads(numPts, pts, width, drawAsLoop);
@@ -390,10 +390,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     }
 
     protected void getTintedColor(Color color, float[] result) {
-        result[0] = tintState.r*(color.getR()&255);
-        result[1] = tintState.g*(color.getG()&255);
-        result[2] = tintState.b*(color.getB()&255);
-        result[3] = tintState.a*(color.getA()&255);
+        result[0] = tintStack.r*(color.getR()&255);
+        result[1] = tintStack.g*(color.getG()&255);
+        result[2] = tintStack.b*(color.getB()&255);
+        result[3] = tintStack.a*(color.getA()&255);
     }
 
     Logger getLogger() {
@@ -410,44 +410,5 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         ib16.clear();
         ib16.put(id).flip();
         GL11.glDeleteTextures(ib16);
-    }
-    
-    static class TintState {
-        private static final float ONE_OVER_255 = 1f / 255f;
-
-        final TintState prev;
-        TintState next;
-        float r,g,b,a;
-
-        public TintState() {
-            this.prev = this;
-            this.r = ONE_OVER_255;
-            this.g = ONE_OVER_255;
-            this.b = ONE_OVER_255;
-            this.a = ONE_OVER_255;
-        }
-
-        TintState(TintState prev) {
-            this.prev = prev;
-        }
-
-        TintState next(float r, float g, float b, float a) {
-            if(next == null) {
-                next = new TintState(this);
-            }
-            next.r = this.r * r;
-            next.g = this.g * g;
-            next.b = this.b * b;
-            next.a = this.a * a;
-            return next;
-        }
-
-        void setColor(Color color) {
-            GL11.glColor4f(
-                    r*(color.getR()&255),
-                    g*(color.getG()&255),
-                    b*(color.getB()&255),
-                    a*(color.getA()&255));
-        }
     }
 }
