@@ -259,8 +259,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                 if(evt.getType() == Event.Type.KEY_PRESSED) {
                     switch (evt.getKeyCode()) {
                         case Keyboard.KEY_RETURN:
-                            acceptAutoCompletion();
-                            break;
+                            return acceptAutoCompletion();
 
                         case Keyboard.KEY_ESCAPE:
                             stopAutoCompletion();
