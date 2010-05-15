@@ -81,8 +81,8 @@ public class PNGDecoder {
         this.crc = new CRC32();
         this.buffer = new byte[4096];
         
-        int read = input.read(buffer, 0, SIGNATURE.length);
-        if(read != SIGNATURE.length || !checkSignatur(buffer)) {
+        readFully(buffer, 0, SIGNATURE.length);
+        if(!checkSignatur(buffer)) {
             throw new IOException("Not a valid PNG file");
         }
         
