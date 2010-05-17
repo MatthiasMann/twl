@@ -74,8 +74,7 @@
 
     <target name="build-pngdecoder-jar">
         <jar basedir="${build.classes.dir}" jarfile="${dist.dir}/PNGDecoder.jar">
-            <include name="de/matthiasmann/twl/renderer/lwjgl/PNGDecoder*.class"/>
-            <include name="de/matthiasmann/twl/renderer/lwjgl/LWJGLTexture*.class"/>
+            <include name="de/matthiasmann/twl/utils/PNGDecoder*.class"/>
         </jar>
     </target>
 

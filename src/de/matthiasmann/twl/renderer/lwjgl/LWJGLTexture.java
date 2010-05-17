@@ -34,6 +34,7 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Resource;
 import de.matthiasmann.twl.renderer.Texture;
+import de.matthiasmann.twl.utils.PNGDecoder;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import org.lwjgl.opengl.EXTAbgr;
@@ -51,26 +52,32 @@ import org.lwjgl.opengl.Util;
 public class LWJGLTexture implements Texture, Resource {
 
     public enum Format {
-        ALPHA(GL11.GL_ALPHA, GL11.GL_ALPHA8, 1),
-        LUMINANCE(GL11.GL_LUMINANCE, GL11.GL_LUMINANCE8, 1),
-        LUMINANCE_ALPHA(GL11.GL_LUMINANCE_ALPHA, GL11.GL_LUMINANCE8_ALPHA8, 2),
-        RGB(GL11.GL_RGB, GL11.GL_RGB8, 3),
-        RGB_SMALL(GL11.GL_RGB, GL11.GL_RGB5_A1, 3),
-        RGBA(GL11.GL_RGBA, GL11.GL_RGBA8, 4),
-        BGRA(GL12.GL_BGRA, GL11.GL_RGBA8, 4),
-        ABGR(EXTAbgr.GL_ABGR_EXT, GL11.GL_RGBA8, 4);
+        ALPHA(GL11.GL_ALPHA, GL11.GL_ALPHA8, PNGDecoder.Format.ALPHA),
+        LUMINANCE(GL11.GL_LUMINANCE, GL11.GL_LUMINANCE8, PNGDecoder.Format.LUMINANCE),
+        LUMINANCE_ALPHA(GL11.GL_LUMINANCE_ALPHA, GL11.GL_LUMINANCE8_ALPHA8, PNGDecoder.Format.LUMINANCE_ALPHA),
+        RGB(GL11.GL_RGB, GL11.GL_RGB8, PNGDecoder.Format.RGB),
+        RGB_SMALL(GL11.GL_RGB, GL11.GL_RGB5_A1, PNGDecoder.Format.RGB),
+        RGBA(GL11.GL_RGBA, GL11.GL_RGBA8, PNGDecoder.Format.RGBA),
+        BGRA(GL12.GL_BGRA, GL11.GL_RGBA8, PNGDecoder.Format.BGRA),
+        ABGR(EXTAbgr.GL_ABGR_EXT, GL11.GL_RGBA8, PNGDecoder.Format.ABGR),
+        COLOR(-1, -1, null);
 
         final int glFormat;
         final int glInternalFormat;
-        final int pixelSize;
-        Format(int fmt, int ifmt, int ps) {
+        final PNGDecoder.Format pngFormat;
+
+        Format(int fmt, int ifmt, PNGDecoder.Format pf) {
             this.glFormat = fmt;
             this.glInternalFormat = ifmt;
-            this.pixelSize = ps;
+            this.pngFormat = pf;
         }
 
         public int getPixelSize() {
-            return pixelSize;
+            return pngFormat.getNumComponents();
+        }
+
+        public PNGDecoder.Format getPngFormat() {
+            return pngFormat;
         }
     }
 
