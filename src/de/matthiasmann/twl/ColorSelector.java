@@ -61,6 +61,9 @@ public class ColorSelector extends DialogLayout {
     private boolean showPreview = false;
     private boolean useLabels = true;
     private boolean showHexEditField = false;
+    private boolean showNativeAdjuster = true;
+    private boolean showRGBAdjuster = true;
+    private boolean showAlphaAdjuster = true;
     private Runnable[] callbacks;
     private int currentColor;
     private ARGBModel[] argbModels;
@@ -175,6 +178,48 @@ public class ColorSelector extends DialogLayout {
     public void setShowHexEditField(boolean showHexEditField) {
         if(this.showHexEditField != showHexEditField) {
             this.showHexEditField = showHexEditField;
+            recreateLayout = true;
+            invalidateLayout();
+        }
+    }
+
+    public boolean isShowAlphaAdjuster() {
+        return showAlphaAdjuster;
+    }
+
+    public void setShowAlphaAdjuster(boolean showAlphaAdjuster) {
+        if(this.showAlphaAdjuster != showAlphaAdjuster) {
+            this.showAlphaAdjuster = showAlphaAdjuster;
+            recreateLayout = true;
+            invalidateLayout();
+        }
+    }
+
+    public boolean isShowNativeAdjuster() {
+        return showNativeAdjuster;
+    }
+
+    /**
+     * Includes adjuster for each clor component of the specified color space.
+     * Default is true.
+     *
+     * @param showNativeAdjuster true if the native adjuster should be displayed
+     */
+    public void setShowNativeAdjuster(boolean showNativeAdjuster) {
+        if(this.showNativeAdjuster != showNativeAdjuster) {
+            this.showNativeAdjuster = showNativeAdjuster;
+            recreateLayout = true;
+            invalidateLayout();
+        }
+    }
+
+    public boolean isShowRGBAdjuster() {
+        return showRGBAdjuster;
+    }
+
+    public void setShowRGBAdjuster(boolean showRGBAdjuster) {
+        if(this.showRGBAdjuster != showRGBAdjuster) {
+            this.showRGBAdjuster = showRGBAdjuster;
             recreateLayout = true;
             invalidateLayout();
         }
@@ -298,6 +343,8 @@ public class ColorSelector extends DialogLayout {
         horzControlls.addGroup(horzAdjuster);
 
         Group[] vertAdjuster = new Group[4 + numComponents];
+        int numAdjuters = 0;
+        
         for(int i=0 ; i<vertAdjuster.length ; i++) {
             vertAdjuster[i] = createParallelGroup();
         }
@@ -306,37 +353,43 @@ public class ColorSelector extends DialogLayout {
         for(int component=0 ; component<numComponents ; component++) {
             colorValueModels[component] = new ColorValueModel(component);
 
-            ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModels[component]);
-            
-            if(useLabels) {
-                Label label = new Label(colorSpace.getComponentName(component));
-                label.setLabelFor(vaf);
-                horzLabels.addWidget(label);
-                vertAdjuster[component].addWidget(label);
-            } else {
-                vaf.setDisplayPrefix(colorSpace.getComponentShortName(component).concat(": "));
-                vaf.setTooltipContent(colorSpace.getComponentName(component));
-            }
+            if(showNativeAdjuster) {
+                ValueAdjusterFloat vaf = new ValueAdjusterFloat(colorValueModels[component]);
 
-            horzAdjuster.addWidget(vaf);
-            vertAdjuster[component].addWidget(vaf);
+                if(useLabels) {
+                    Label label = new Label(colorSpace.getComponentName(component));
+                    label.setLabelFor(vaf);
+                    horzLabels.addWidget(label);
+                    vertAdjuster[numAdjuters].addWidget(label);
+                } else {
+                    vaf.setDisplayPrefix(colorSpace.getComponentShortName(component).concat(": "));
+                    vaf.setTooltipContent(colorSpace.getComponentName(component));
+                }
+
+                horzAdjuster.addWidget(vaf);
+                vertAdjuster[numAdjuters].addWidget(vaf);
+                numAdjuters++;
+            }
         }
 
         for(int i=0 ; i<argbModels.length ; i++) {
-            ValueAdjusterInt vai = new ValueAdjusterInt(argbModels[i]);
-            
-            if(useLabels) {
-                Label label = new Label(RGBA_NAMES[i]);
-                label.setLabelFor(vai);
-                horzLabels.addWidget(label);
-                vertAdjuster[numComponents + i].addWidget(label);
-            } else {
-                vai.setDisplayPrefix(RGBA_PREFIX[i]);
-                vai.setTooltipContent(RGBA_NAMES[i]);
-            }
+            if((i == 3 && showAlphaAdjuster) || (i < 3 && showRGBAdjuster)) {
+                ValueAdjusterInt vai = new ValueAdjusterInt(argbModels[i]);
 
-            horzAdjuster.addWidget(vai);
-            vertAdjuster[numComponents + i].addWidget(vai);
+                if(useLabels) {
+                    Label label = new Label(RGBA_NAMES[i]);
+                    label.setLabelFor(vai);
+                    horzLabels.addWidget(label);
+                    vertAdjuster[numAdjuters].addWidget(label);
+                } else {
+                    vai.setDisplayPrefix(RGBA_PREFIX[i]);
+                    vai.setTooltipContent(RGBA_NAMES[i]);
+                }
+
+                horzAdjuster.addWidget(vai);
+                vertAdjuster[numAdjuters].addWidget(vai);
+                numAdjuters++;
+            }
         }
 
         int component = 0;
@@ -402,8 +455,11 @@ public class ColorSelector extends DialogLayout {
                 .addGroup(horzAreas.addGap())
                 .addGroup(horzControlls);
         Group vertMainGroup = createSequentialGroup()
-                .addGroup(vertAreas)
-                .addGroups(vertAdjuster);
+                .addGroup(vertAreas);
+
+        for(int i=0 ; i<numAdjuters ; i++) {
+            vertMainGroup.addGroup(vertAdjuster[i]);
+        }
 
         if(showHexEditField) {
             if(hexColorEditField == null) {
