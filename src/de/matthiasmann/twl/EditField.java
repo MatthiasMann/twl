@@ -85,6 +85,7 @@ public class EditField extends Widget {
     private Menu popupMenu;
     private boolean textLongerThenWidget;
     private boolean forwardUnhandledKeysToCallback;
+    private boolean autoCompletionOnSetText = true;
 
     private EditFieldAutoCompletionWindow autoCompletionWindow;
     private int autoCompletionHeight = 100;
@@ -149,6 +150,21 @@ public class EditField extends Widget {
         this.forwardUnhandledKeysToCallback = forwardUnhandledKeysToCallback;
     }
 
+    public boolean isAutoCompletionOnSetText() {
+        return autoCompletionOnSetText;
+    }
+
+    /**
+     * Controls if a call to setText() should trigger auto completion or not.
+     * Default is true.
+     *
+     * @param autoCompletionOnSetText true if setText() should trigger auto completion
+     * @see #setText(java.lang.String)
+     */
+    public void setAutoCompletionOnSetText(boolean autoCompletionOnSetText) {
+        this.autoCompletionOnSetText = autoCompletionOnSetText;
+    }
+
     protected void doCallback(int key) {
         if(callbacks != null) {
             for(Callback cb : callbacks) {
@@ -168,7 +184,7 @@ public class EditField extends Widget {
             } else {
                 this.passwordMasking = null;
             }
-            updateText();
+            updateText(false);
         }
     }
 
@@ -180,7 +196,7 @@ public class EditField extends Widget {
         this.passwordChar = passwordChar;
         if(passwordMasking != null) {
             passwordMasking = new PasswordMasker(editBuffer, passwordChar);
-            updateText();
+            updateText(false);
         }
     }
 
@@ -236,7 +252,7 @@ public class EditField extends Widget {
         cursorPos = editBuffer.length();
         selectionStart = 0;
         selectionEnd = 0;
-        updateText();
+        updateText(autoCompletionOnSetText);
         scrollToCursor(true);
     }
 
@@ -287,7 +303,7 @@ public class EditField extends Widget {
                 update = true;
             }
             if(update) {
-                updateText();
+                updateText(true);
             }
         }
     }
@@ -315,17 +331,13 @@ public class EditField extends Widget {
 
     public void cutToClipboard() {
         String text;
-        if(hasSelection()) {
-            text = getSelectedText();
-            if(!readOnly) {
-                deleteSelection();
-                updateText();
-            }
-        } else {
-            text = getText();
-            if(!readOnly) {
-                setText("");
-            }
+        if(!hasSelection()) {
+            selectAll();
+        }
+        text = getSelectedText();
+        if(!readOnly) {
+            deleteSelection();
+            updateText(true);
         }
         if(isPasswordMasking()) {
             text = TextUtil.createString(passwordChar, text.length());
@@ -659,7 +671,7 @@ public class EditField extends Widget {
         return menu;
     }
 
-    private void updateText() {
+    private void updateText(boolean updateAutoCompletion) {
         if(model != null) {
             model.setValue(getText());
         }
@@ -667,7 +679,9 @@ public class EditField extends Widget {
         checkTextWidth();
         scrollToCursor(false);
         doCallback(Keyboard.KEY_NONE);
-        updateAutoCompletion();
+        if(autoCompletionWindow != null && autoCompletionWindow.isOpen() || updateAutoCompletion) {
+            updateAutoCompletion();
+        }
     }
 
     private void checkTextWidth() {
@@ -770,7 +784,7 @@ public class EditField extends Widget {
                 update = true;
             }
             if(update) {
-                updateText();
+                updateText(true);
             }
         }
     }
@@ -779,7 +793,7 @@ public class EditField extends Widget {
         if(!readOnly) {
             if(hasSelection()) {
                 deleteSelection();
-                updateText();
+                updateText(true);
             } else if(cursorPos > 0) {
                 --cursorPos;
                 deleteNext();
@@ -791,10 +805,10 @@ public class EditField extends Widget {
         if(!readOnly) {
             if(hasSelection()) {
                 deleteSelection();
-                updateText();
+                updateText(true);
             } else if(cursorPos < editBuffer.length()) {
                 editBuffer.deleteCharAt(cursorPos);
-                updateText();
+                updateText(true);
             }
         }
     }
