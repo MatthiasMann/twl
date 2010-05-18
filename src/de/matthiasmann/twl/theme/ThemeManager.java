@@ -310,7 +310,11 @@ public class ThemeManager {
                         defaultFont = font;
                     }
                 } else if("constantDef".equals(tagName)) {
-                    insertConstant(name, parseParam(xmlp, baseUrl, "constantDef", null));
+                    Map<String, ?> value = parseParam(xmlp, baseUrl, "constantDef", null);
+                    if(value.size() != 1) {
+                        throw xmlp.error("constant definitions must define exactly 1 value");
+                    }
+                    insertConstant(name, value.values().iterator().next());
                 } else {
                     throw xmlp.unexpected();
                 }
@@ -495,7 +499,23 @@ public class ThemeManager {
     }
     
     private ParameterMapImpl parseMap(XMLParser xmlp, URL baseUrl, ThemeInfoImpl parent) throws XmlPullParserException, IOException, NumberFormatException {
+        String ref = xmlp.getAttributeValue(null, "ref");
         ParameterMapImpl result = new ParameterMapImpl(this, parent);
+        if(ref != null) {
+            Object obj = parent.params.get(ref);
+            if(obj == null) {
+                obj = constants.get(ref);
+                if(obj == null) {
+                    throw new IOException("Referenced map not found: " + ref);
+                }
+            }
+            if(obj instanceof ParameterMapImpl) {
+                ParameterMapImpl base = (ParameterMapImpl)obj;
+                result.params.putAll(base.params);
+            } else {
+                throw new IOException("Expected a map got a " + obj.getClass().getSimpleName());
+            }
+        }
         xmlp.nextTag();
         while(xmlp.isStartTag()) {
             String tagName = xmlp.getName();
