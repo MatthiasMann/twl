@@ -258,7 +258,7 @@ public class PNGDecoder {
                     switch (fmt) {
                     case ABGR: copyPALtoABGR(buffer, palLine); break;
                     case RGBA: copyPALtoRGBA(buffer, palLine); break;
-                    case BGRA: copyPALtoBGRA(buffer, curLine); break;
+                    case BGRA: copyPALtoBGRA(buffer, palLine); break;
                     default: throw new UnsupportedOperationException("Unsupported format for this image");
                     }
                     break;
