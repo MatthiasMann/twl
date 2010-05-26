@@ -700,6 +700,16 @@ public final class GUI extends Widget {
 
         return false;
     }
+
+    /**
+     * Clears current keyboard modifiers.
+     *
+     * Should be called when the Display is minimized or when keyboard events are
+     * handled outside of TWL.
+     */
+    public final void clearKeyboardState() {
+        event.modifier &= ~(Event.MODIFIER_ALT | Event.MODIFIER_CTRL | Event.MODIFIER_SHIFT | Event.MODIFIER_META);
+    }
     
     /**
      * Must be called after calling handleKey().
