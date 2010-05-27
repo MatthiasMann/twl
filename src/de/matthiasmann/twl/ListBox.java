@@ -505,7 +505,7 @@ public class ListBox<T> extends Widget {
         scrollbar.setPageSize(visibleCells);
         
         int curVisible = labels.length;
-        for(int i = visibleCells; i < curVisible; i++) {
+        for(int i=curVisible ; i-->visibleCells ;) {
             super.removeChild(1+i);
         }
 
