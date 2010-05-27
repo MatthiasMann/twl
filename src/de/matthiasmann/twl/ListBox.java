@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -90,7 +90,7 @@ public class ListBox<T> extends Widget {
         scrollbar.addCallback(li);
         labels = EMPTY_LABELS;
         
-        add(scrollbar);
+        super.insertChild(scrollbar, 0);
         
         setSize(200, 300);
         setCanAcceptKeyboardFocus(true);
@@ -298,6 +298,21 @@ public class ListBox<T> extends Widget {
     }
 
     @Override
+    public void insertChild(Widget child, int index) throws IndexOutOfBoundsException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void removeAllChildren() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Widget removeChild(int index) throws IndexOutOfBoundsException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
         setCellHeight(themeInfo.getParameter("cellHeight", DEFAULT_CELL_HEIGHT));
@@ -491,7 +506,7 @@ public class ListBox<T> extends Widget {
         
         int curVisible = labels.length;
         for(int i = visibleCells; i < curVisible; i++) {
-            removeChild(labels[i].getWidget());
+            super.removeChild(1+i);
         }
 
         ListBoxDisplay[] newLabels = new ListBoxDisplay[visibleCells];
@@ -509,7 +524,7 @@ public class ListBox<T> extends Widget {
                     }
                 }
             });
-            add(lbd.getWidget());
+            super.insertChild(lbd.getWidget(), 1+i);
             labels[i] = lbd;
         }
         
