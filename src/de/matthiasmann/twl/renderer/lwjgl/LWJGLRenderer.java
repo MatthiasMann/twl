@@ -94,11 +94,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
         GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE, ib16);
         maxTextureSize = ib16.get(0);
-        
-        int minCursorSize = Cursor.getMinCursorSize();
-        IntBuffer tmp = BufferUtils.createIntBuffer(minCursorSize * minCursorSize);
-        emptyCursor = new Cursor(minCursorSize, minCursorSize,
-                minCursorSize/2, minCursorSize/2, 1, tmp, null);
+
+        if(Mouse.isCreated()) {
+            int minCursorSize = Cursor.getMinCursorSize();
+            IntBuffer tmp = BufferUtils.createIntBuffer(minCursorSize * minCursorSize);
+            emptyCursor = new Cursor(minCursorSize, minCursorSize,
+                    minCursorSize/2, minCursorSize/2, 1, tmp, null);
+        } else {
+            emptyCursor = null;
+        }
     }
 
     public boolean isUseQuadsForLines() {
