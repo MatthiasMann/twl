@@ -625,7 +625,7 @@ public class TextArea extends Widget {
 
         idx = textStart;
         while(idx < textEnd) {
-            assert !Character.isSpaceChar(text.charAt(idx));
+            assert !isSkip(text.charAt(idx));
 
             int count;
             if(box.textAlignment == TextAreaModel.HAlignment.BLOCK) {
