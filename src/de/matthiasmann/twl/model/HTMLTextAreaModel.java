@@ -216,6 +216,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             xppf.setValidating(false);
             XmlPullParser xpp = xppf.newPullParser();
             xpp.setInput(new CompositeReader("<html>", html, "</html>"));
+            xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
             xpp.nextTag();
 
