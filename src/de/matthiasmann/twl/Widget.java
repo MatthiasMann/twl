@@ -2359,7 +2359,8 @@ public class Widget {
 
     private boolean handleKeyEvent(Event evt) {
         if(children != null) {
-            if(focusKeyEnabled && evt.isKeyEvent() && evt.getKeyCode() == FOCUS_KEY) {
+            if(focusKeyEnabled && evt.isKeyEvent() && evt.getKeyCode() == FOCUS_KEY &&
+                    ((evt.getModifiers() & (Event.MODIFIER_CTRL|Event.MODIFIER_META|Event.MODIFIER_ALT)) == 0)) {
                 handleFocusKeyEvent(evt);
                 return true;
             }
