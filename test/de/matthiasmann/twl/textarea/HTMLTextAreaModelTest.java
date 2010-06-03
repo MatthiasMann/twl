@@ -27,7 +27,7 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl.model;
+package de.matthiasmann.twl.textarea;
 
 import de.matthiasmann.twl.textarea.HTMLTextAreaModel;
 import de.matthiasmann.twl.textarea.TextAreaModel;
@@ -75,7 +75,7 @@ public class HTMLTextAreaModelTest {
         Iterator<TextAreaModel.Element> i = m.iterator();
         assertText(i, "default", "Hallo");
         TextAreaModel.BlockElement be = next(i, TextAreaModel.BlockElement.class);
-        assertEquals(null, be.getStyle().get(StyleAttribute.FLOAT_POSITION, null));
+        assertEquals(TextAreaModel.FloatPosition.NONE, be.getStyle().get(StyleAttribute.FLOAT_POSITION, null));
         assertFalse(be.iterator().hasNext());
         assertText(i, "default", "Welt");
         assertFalse(i.hasNext());
