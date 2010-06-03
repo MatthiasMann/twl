@@ -146,9 +146,9 @@ public class TabbedPane extends Widget {
                 idx = 0;
             } else {
                 idx += direction;
-                idx &= tabs.size();
+                idx %= tabs.size();
                 idx += tabs.size();
-                idx &= tabs.size();
+                idx %= tabs.size();
             }
             setActiveTab(tabs.get(idx));
         }
