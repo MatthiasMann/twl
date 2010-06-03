@@ -29,15 +29,22 @@
  */
 package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.model.TextAreaModel.Element;
-import de.matthiasmann.twl.model.TextAreaModel.TextElement;
-import de.matthiasmann.twl.utils.TextUtil;
-import de.matthiasmann.twl.model.TextAreaModel;
+import de.matthiasmann.twl.textarea.TextAreaModel;
+import de.matthiasmann.twl.textarea.TextAreaModel.Clear;
+import de.matthiasmann.twl.textarea.TextAreaModel.Element;
+import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
+import de.matthiasmann.twl.textarea.TextAreaModel.TextElement;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
+import de.matthiasmann.twl.textarea.CSSStyle;
+import de.matthiasmann.twl.textarea.Style;
+import de.matthiasmann.twl.textarea.StyleAttribute;
+import de.matthiasmann.twl.textarea.StyleClassResolver;
+import de.matthiasmann.twl.textarea.Value;
 import de.matthiasmann.twl.utils.CallbackSupport;
+import de.matthiasmann.twl.utils.TextUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -68,7 +75,8 @@ public class TextArea extends Widget {
     
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
-    
+
+    private StyleClassResolver styleClassResolver;
     private final Runnable modelCB;
     private TextAreaModel model;
     private ParameterMap fonts;
@@ -198,6 +206,7 @@ public class TextArea extends Widget {
         defaultFont = themeInfo.getFont("font");
         mouseCursorNormal = themeInfo.getMouseCursor("mouseCursor");
         mouseCursorLink = themeInfo.getMouseCursor("mouseCursor.link");
+        styleClassResolver = new StyleClassResolverImpl(themeInfo.getParameterMap("classes"));
         forceRelayout();
     }
 
@@ -275,7 +284,7 @@ public class TextArea extends Widget {
                     box.nextLine(false);
                     
                     // finish floaters
-                    box.clearFloater(TextAreaModel.Clear.BOTH);
+                    box.clearFloater(Clear.BOTH);
                 }
                 updateMouseHover();
             } finally {
@@ -424,7 +433,8 @@ public class TextArea extends Widget {
 
     private void layoutElements(Box box, Iterable<TextAreaModel.Element> elements) {
         for(TextAreaModel.Element e : elements) {
-            box.clearFloater(e.getClear());
+            box.clearFloater(e.getStyle().get(StyleAttribute.CLEAR, styleClassResolver));
+            
             if(e instanceof TextAreaModel.TextElement) {
                 layoutTextElement(box, (TextAreaModel.TextElement)e);
             } else if(e instanceof TextAreaModel.ImageElement) {
@@ -452,7 +462,7 @@ public class TextArea extends Widget {
         }
 
         LImage li = new LImage(ie, image);
-        layout(box, ie, li, ie.getFloatPosition(), ie.getHorizontalAlignment());
+        layout(box, ie, li);
     }
 
     private void layoutWidgetElement(Box box, TextAreaModel.WidgetElement we) {
@@ -479,16 +489,33 @@ public class TextArea extends Widget {
         lw.width = widget.getWidth();
         lw.height = widget.getHeight();
 
-        layout(box, we, lw, we.getFloatPosition(), we.getHorizontalAlignment());
+        layout(box, we, lw);
     }
 
-    private void layout(Box box, TextAreaModel.Element e, LElement le, TextAreaModel.FloatPosition floatPos, TextAreaModel.HAlignment align) {
-        if(floatPos != TextAreaModel.FloatPosition.NONE ||
-                align != TextAreaModel.HAlignment.INLINE) {
+    private void layout(Box box, TextAreaModel.Element e, LElement le) {
+        Style style = e.getStyle();
+
+        FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
+        TextAreaModel.Display display = style.get(StyleAttribute.DISPLAY, styleClassResolver);
+        
+        layout(box, e, le, floatPosition, display);
+    }
+    
+    private void layout(Box box, TextAreaModel.Element e, LElement le, FloatPosition floatPos, TextAreaModel.Display display) {
+        boolean leftRight = floatPos != FloatPosition.NONE;
+
+        if(leftRight || display != TextAreaModel.Display.INLINE) {
             box.nextLine(false);
         }
 
-        boolean leftRight = false;
+        Style style = e.getStyle();
+        int width = convertToPX(style, StyleAttribute.WIDTH, box.lineWidth);
+        if(width > 0) {
+            le.width = width;
+        }
+        if(le.width > box.lineWidth) {
+            le.width = box.lineWidth;
+        }
 
         switch(floatPos) {
             case LEFT:
@@ -504,35 +531,30 @@ public class TextArea extends Widget {
                 break;
 
             default:
-                switch(align) {
-                case LEFT:
-                    le.x = box.lineStartX;
-                    box.nextLine(false);
-                    break;
-
-                case RIGHT:
-                    le.x = box.lineStartX + box.lineWidth - le.width;
-                    box.nextLine(false);
-                    break;
-
-                case CENTER:
-                    le.x = box.lineStartX + (box.lineWidth - le.width) / 2;
-                    box.nextLine(false);
-                    break;
-
-                case BLOCK:
-                    le.x = box.lineStartX;
-                    le.width = box.lineWidth;
-                    box.nextLine(false);
-                    break;
-
-                case INLINE:
+                if(display == TextAreaModel.Display.INLINE) {
                     if(box.getRemaining() < le.width && !box.isAtStartOfLine()) {
                         box.nextLine(false);
                     }
                     le.x = box.getXAndAdvance(le.width);
+                } else {
+                    switch(style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver)) {
+                    case CENTER:
+                    case JUSTIFY:
+                        le.x = box.lineStartX + (box.lineWidth - le.width) / 2;
+                        break;
+
+                    case RIGHT:
+                        le.x = box.lineStartX + (box.lineWidth - le.width);
+                        break;
+
+                    default:
+                        le.x = box.lineStartX;
+                    }
+
+                    box.curX = box.lineWidth;
                     break;
                 }
+                break;
         }
 
         layout.add(le);
@@ -545,7 +567,18 @@ public class TextArea extends Widget {
         }
     }
 
-    static int convertToPX(TextAreaModel.ValueUnit valueUnit, Font font, int full) {
+    private int convertToPX(Style style, StyleAttribute<Value> attribute, int full) {
+        style = style.resolve(attribute, styleClassResolver);
+        Value valueUnit = style.getNoResolve(attribute, styleClassResolver);
+        
+        Font font = null;
+        if(valueUnit.unit.isFontBased()) {
+            font = selectFont(style);
+            if(font == null) {
+                return 0;
+            }
+        }
+        
         float value = valueUnit.value;
         switch(valueUnit.unit) {
             case EM:
@@ -561,8 +594,8 @@ public class TextArea extends Widget {
         return Math.round(value);
     }
 
-    private Font selectFont(TextAreaModel.Element e) {
-        String fontName = e.getFontName();
+    private Font selectFont(Style style) {
+        String fontName = style.get(StyleAttribute.FONT_NAME, styleClassResolver);
         if(fontName != null && fonts != null) {
             Font font = fonts.getFont(fontName);
             if(font != null) {
@@ -571,13 +604,22 @@ public class TextArea extends Widget {
         }
         return defaultFont;
     }
-    
-    private void layoutTextElement(Box box, TextAreaModel.TextElement te) {
-        if(fonts == null) {
-            return;
+
+    private Image selectImage(Style style, StyleAttribute<String> element) {
+        String imageName = style.get(element, styleClassResolver);
+        if(imageName != null && images != null) {
+            return images.getImage(imageName);
+        } else {
+            return null;
         }
+    }
+
+    private void layoutTextElement(Box box, TextAreaModel.TextElement te) {
         final String text = te.getText();
-        Font font = selectFont(te);
+        final Style style = te.getStyle();
+        final Font font = selectFont(style);
+        final boolean pre = style.get(StyleAttribute.PREFORMATTED, styleClassResolver);
+        
         if(font == null) {
             return;
         }
@@ -587,7 +629,7 @@ public class TextArea extends Widget {
         int idx = 0;
         while(idx < text.length()) {
             int end = TextUtil.indexOf(text, '\n', idx);
-            if(te.isPreformatted()) {
+            if(pre) {
                 layoutTextPre(box, te, font, text, idx, end);
             } else {
                 layoutText(box, te, font, text, idx, end);
@@ -628,7 +670,7 @@ public class TextArea extends Widget {
             assert !isSkip(text.charAt(idx));
 
             int count;
-            if(box.textAlignment == TextAreaModel.HAlignment.BLOCK) {
+            if(box.textAlignment == TextAreaModel.HAlignment.JUSTIFY) {
                 count = 1;
             } else {
                 count = font.computeVisibleGlpyhs(text, idx, textEnd, box.getRemaining());
@@ -659,7 +701,7 @@ public class TextArea extends Widget {
             // if we found no word that fits
             if(end == idx) {
                 // we may need a new line
-                if(box.textAlignment != TextAreaModel.HAlignment.BLOCK && box.nextLine(false)) {
+                if(box.textAlignment != TextAreaModel.HAlignment.JUSTIFY && box.nextLine(false)) {
                     continue;
                 }
                 // or we already are at the start of a line
@@ -676,7 +718,7 @@ public class TextArea extends Widget {
 
             if(idx < end) {
                 LText lt = new LText(te, font, text, idx, end);
-                if(box.textAlignment == TextAreaModel.HAlignment.BLOCK && box.getRemaining() < lt.width) {
+                if(box.textAlignment == TextAreaModel.HAlignment.JUSTIFY && box.getRemaining() < lt.width) {
                     box.nextLine(false);
                 }
 
@@ -744,10 +786,10 @@ public class TextArea extends Widget {
     }
 
     private void layoutListElement(Box box, TextAreaModel.ListElement le) {
-        Image image = (images != null) ? le.getBulletImage(images) : null;
+        Image image = selectImage(le.getStyle(), StyleAttribute.LIST_STYLE_IMAGE);
         if(image != null) {
             LImage li = new LImage(le, image);
-            layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.HAlignment.LEFT);
+            layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.Display.BLOCK);
             
             int imageHeight = li.height;
             li.height = Short.MAX_VALUE;
@@ -768,16 +810,11 @@ public class TextArea extends Widget {
     private void layoutBlockElement(Box box, TextAreaModel.BlockElement be) {
         box.nextLine(false);
 
-        Font font = selectFont(be);
-        if(font == null && (
-                be.getWidth().unit.isFontBased() ||
-                be.getMarginTop().unit.isFontBased() ||
-                be.getMarginBottom().unit.isFontBased())) {
-            return;
-        }
-        
+        final Style style = be.getStyle();
+        final FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
+
         LImage bgImage = null;
-        Image image = (images != null) ? be.getBackgroundImage(images) : null;
+        Image image = selectImage(style, StyleAttribute.BACKGROUND_IMAGE);
         if(image != null) {
             bgImage = new LImage(be, image);
             bgImages.add(bgImage);
@@ -788,10 +825,10 @@ public class TextArea extends Widget {
         int bgWidth;
         int bgHeight;
 
-        int marginTop = Math.max(0, convertToPX(be.getMarginTop(), font, 0));
-        int marginBottom = Math.max(0, convertToPX(be.getMarginBottom(), font, 0));
+        int marginTop = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_TOP, 0));
+        int marginBottom = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_BOTTOM, 0));
 
-        if(be.getFloatPosition() == TextAreaModel.FloatPosition.NONE) {
+        if(floatPosition == TextAreaModel.FloatPosition.NONE) {
             bgWidth = box.lineWidth;
             box.curY += marginTop;
             layoutElements(box, be);
@@ -800,9 +837,9 @@ public class TextArea extends Widget {
             bgHeight = box.curY - bgY;
         } else {
             int remaining = box.getRemaining();
-            bgWidth = Math.max(0, Math.min(convertToPX(be.getWidth(), font, remaining), remaining));
+            bgWidth = Math.max(0, Math.min(convertToPX(style, StyleAttribute.WIDTH, remaining), remaining));
 
-            if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
+            if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
                 bgX += box.lineWidth - bgWidth;
             }
 
@@ -822,7 +859,7 @@ public class TextArea extends Widget {
             dummy.width = bgWidth;
             dummy.height = bgHeight;
 
-            if(be.getFloatPosition() == TextAreaModel.FloatPosition.RIGHT) {
+            if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
                 box.objRight.add(dummy);
             } else {
                 box.objLeft.add(dummy);
@@ -992,7 +1029,7 @@ public class TextArea extends Widget {
                 }
                 break;
             }
-            case BLOCK:
+            case JUSTIFY:
                 if(remaining < lineWidth / 4) {
                     int num = layout.size() - lineStartIdx;
                     for(int i=1 ; i<num ; i++) {
@@ -1006,14 +1043,14 @@ public class TextArea extends Widget {
 
             for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
                 LElement le = layout.get(idx);
-                switch(le.element.getVerticalAlignment()) {
+                switch(le.element.getStyle().get(StyleAttribute.VERTICAL_ALIGNMENT, styleClassResolver)) {
                 case BOTTOM:
                     le.y = curY + lineHeight - le.height;
                     break;
                 case TOP:
                     le.y = curY;
                     break;
-                case CENTER:
+                case MIDDLE:
                     le.y = curY + (lineHeight - le.height)/2;
                     break;
                 case FILL:
@@ -1048,7 +1085,7 @@ public class TextArea extends Widget {
 
         void resetTextParams(boolean endParagraph) {
             if(endParagraph) {
-                if(textAlignment == TextAreaModel.HAlignment.BLOCK) {
+                if(textAlignment == TextAreaModel.HAlignment.JUSTIFY) {
                     textAlignment = TextAreaModel.HAlignment.LEFT;
                 }
                 nextLine(false);
@@ -1075,11 +1112,12 @@ public class TextArea extends Widget {
 
             if(te.isParagraphStart() || (!inParagraph && isAtStartOfLine())) {
                 int remaining = getRemaining();
-                marginLeft = Math.max(0, convertToPX(te.getMarginLeft(), font, remaining));
-                marginRight = Math.max(0, convertToPX(te.getMarginRight(), font, remaining));
-                textAlignment = te.getHorizontalAlignment();
+                Style style = te.getStyle();
+                marginLeft = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_LEFT, remaining));
+                marginRight = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_RIGHT, remaining));
+                textAlignment = style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver);
                 computeMargin();
-                curX = Math.max(0, lineStartX + convertToPX(te.getTextIndent(), font, remaining));
+                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, remaining));
             }
         }
     }
@@ -1174,6 +1212,26 @@ public class TextArea extends Widget {
         @Override
         void draw(int offX, int offY, AnimationState as) {
             img.draw(as, x+offX, y+offY, width, height);
+        }
+    }
+
+    private static class StyleClassResolverImpl implements StyleClassResolver {
+        private final ParameterMap classes;
+        private final HashMap<String, Style> cache;
+
+        public StyleClassResolverImpl(ParameterMap classes) {
+            this.classes = classes;
+            this.cache = new HashMap<String, Style>();
+        }
+
+        public Style resolve(String classRef) {
+            Style style = cache.get(classRef);
+            if(style == null) {
+                String css = classes.getParameter(classRef, "");
+                style = new CSSStyle(css);
+                cache.put(classRef, style);
+            }
+            return style;
         }
     }
 }

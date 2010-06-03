@@ -27,47 +27,14 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl.model;
-
-import java.util.Collections;
-import java.util.Iterator;
+package de.matthiasmann.twl.textarea;
 
 /**
- * A simple text area model which represents the complete text as a single
- * paragraph without any styles.
  *
  * @author Matthias Mann
  */
-public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
+public interface StyleClassResolver {
 
-    private static final HTMLTextAreaModel.StyleInfo EMPTY_STYLE = new HTMLTextAreaModel.StyleInfo();
-
-    private Element element;
-
-    public SimpleTextAreaModel() {
-    }
-
-    public SimpleTextAreaModel(String text) {
-        setText(text);
-    }
-
-    public void setText(String text) {
-        setText(text, true);
-    }
-
-    public void setText(String text, boolean preformatted) {
-        HTMLTextAreaModel.StyleInfo style = EMPTY_STYLE;
-        if(preformatted) {
-            style = new HTMLTextAreaModel.StyleInfo(style);
-            style.pre = true;
-        }
-        element = new HTMLTextAreaModel.TextElementImpl(style, text, true, true);
-        doCallback();
-    }
-
-    public Iterator<Element> iterator() {
-        return ((element != null)
-                ? Collections.<Element>singletonList(element)
-                : Collections.<Element>emptyList()).iterator();
-    }
+    public Style resolve(String classRef);
+    
 }

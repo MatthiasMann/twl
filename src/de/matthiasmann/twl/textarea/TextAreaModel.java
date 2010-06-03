@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -27,10 +27,11 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl.model;
+package de.matthiasmann.twl.textarea;
 
 import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.textarea.Style;
 
 /**
  * Data model for the TextArea widget.
@@ -43,13 +44,17 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         LEFT,
         RIGHT,
         CENTER,
-        BLOCK,
-        INLINE
+        JUSTIFY
     }
 
+    public enum Display {
+        INLINE,
+        BLOCK
+    }
+    
     public enum VAlignment {
         TOP,
-        CENTER,
+        MIDDLE,
         BOTTOM,
         FILL
     }
@@ -66,71 +71,13 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         LEFT,
         RIGHT
     }
-
-    public enum Unit {
-        PX(false),
-        EM(true),
-        EX(true),
-        PERCENT(false);
-
-        final boolean fontBased;
-        private Unit(boolean fontBased) {
-            this.fontBased = fontBased;
-        }
-
-        public boolean isFontBased() {
-            return fontBased;
-        }
-    }
-
-    public final class ValueUnit {
-        public final float value;
-        public final Unit unit;
-
-        public ValueUnit(float value, Unit unit) {
-            this.value = value;
-            this.unit = unit;
-        }
-    }
-
-    public static final ValueUnit ZERO_PX = new ValueUnit(0, Unit.PX);
     
     public interface Element {
         /**
-         * Returns the desired horizontal alignment for this element.
-         * @return the desired horizontal alignment for this element.
+         * Returns the style associated with this element
+         * @return the style associated with this element. Must not be null.
          */
-        public HAlignment getHorizontalAlignment();
-
-        /**
-         * Returns the desired vertical alignment for this element.
-         * @return the desired vertical alignment for this element.
-         */
-        public VAlignment getVerticalAlignment();
-
-        /**
-         * Returns the margin to the left border.
-         * @return the margin to the left border.
-         */
-        public ValueUnit getMarginLeft();
-
-        /**
-         * Returns the margin to the right border.
-         * @return the margin to the right border.
-         */
-        public ValueUnit getMarginRight();
-
-        /**
-         * Returns the clear behavior for this element.
-         * @return the clear behavior for this element.
-         */
-        public Clear getClear();
-
-        /**
-         * Returns the font name. The font name is mapped to a font using the themeInfo.
-         * @return the font name.
-         */
-        public String getFontName();
+        public Style getStyle();
     }
 
     public interface TextElement extends Element {
@@ -139,12 +86,6 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the text.
          */
         public String getText();
-
-        /**
-         * Returns the indentation for the first line of the text.
-         * @return the indentation for the first line of the text.
-         */
-        public ValueUnit getTextIndent();
 
         /**
          * Returns true if this element starts a new paragraph.
@@ -163,18 +104,6 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return true if this element ends the current paragraph.
          */
         public boolean isParagraphEnd();
-
-        /**
-         * Returns true if this element is a preformatted text (similar to &lt;pre/&gt;)
-         *
-         * The text in this element will keep it's spaces and evaluate tabs.
-         * It will start on a new line and will complete the last line.
-         * It does not insert a blank line after the element - use isParagraphEnd() for that
-         *
-         * @return true if this element is a preformatted text
-         * @see #isParagraphEnd()
-         */
-        public boolean isPreformatted();
     }
 
     public interface LinkElement extends TextElement {
@@ -198,67 +127,17 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * @return the tooltip or null for this image.
          */
         public String getToolTip();
-        
-        /**
-         * Returns the float behavior for this image.
-         * @return the float behavior for this image.
-         */
-        public FloatPosition getFloatPosition();
     }
 
     public interface WidgetElement extends Element {
         public String getWidgetName();
         public String getWidgetParam();
-        
-        /**
-         * Returns the float behavior for this image.
-         * @return the float behavior for this image.
-         */
-        public FloatPosition getFloatPosition();
     }
 
     public interface ListElement extends Element, Iterable<Element> {
-        /**
-         * Returns the image used for the bullet.
-         * 
-         * @param style a ParameterMap which can be used to lookup images.
-         * @return the image object for the bullet.
-         */
-        public Image getBulletImage(ParameterMap style);
     }
 
     public interface BlockElement extends Element, Iterable<Element> {
-        /**
-         * Returns the image used as backgroud for the block.
-         *
-         * @param style a ParameterMap which can be used to lookup images.
-         * @return the image object for the background.
-         */
-        public Image getBackgroundImage(ParameterMap style);
-
-        /**
-         * Returns the float behavior for this box.
-         * @return the float behavior for this box.
-         */
-        public FloatPosition getFloatPosition();
-
-        /**
-         * Returns the width of this block. Only used when getFloatPosition() != NONE
-         * @return the width of this block.
-         */
-        public ValueUnit getWidth();
-
-        /**
-         * Returns the margin to the top border.
-         * @return the margin to the top border.
-         */
-        public ValueUnit getMarginTop();
-
-        /**
-         * Returns the margin to the bottom border.
-         * @return the margin to the bottom border.
-         */
-        public ValueUnit getMarginBottom();
     }
 
     /**
