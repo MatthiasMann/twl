@@ -52,9 +52,11 @@ import java.util.logging.Logger;
 
 /**
  * A text area dor rendering complex text. Supports embedded images,
- * bullet point lists, hyper links, multiple fonts, block text and
- * embedded widgets.
+ * bullet point lists, hyper links, multiple fonts, block text,
+ * embedded widgets and floating elements.
  *
+ * It uses a simplified HTML/CSS model.
+ * 
  * @author Matthias Mann
  */
 public class TextArea extends Widget {
@@ -500,6 +502,11 @@ public class TextArea extends Widget {
 
         le.marginLeft = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_LEFT, box.boxWidth));
         le.marginRight = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
+
+        int height = convertToPX(style, StyleAttribute.HEIGHT, le.height);
+        if(height > 0) {
+            le.height = height;
+        }
 
         layout(box, e, le, floatPosition, display);
     }

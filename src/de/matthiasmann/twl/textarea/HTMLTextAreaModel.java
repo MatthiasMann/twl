@@ -53,17 +53,17 @@ import org.xmlpull.v1.XmlPullParserFactory;
  *  <li>{@code a}<br/>Attributes: {@code href}</li>
  *  <li>{@code p}</li>
  *  <li>{@code br}</li>
- *  <li>{@code img}<br/>Attributes: {@code src}, {@code alt}<br/>Styles: {@code float}, {@code display}</li>
+ *  <li>{@code img}<br/>Attributes: {@code src}, {@code alt}<br/>Styles: {@code float}, {@code display}, {@code width}, {@code height}</li>
  *  <li>{@code span}</li>
- *  <li>{@code div}<br/>Styles: {@code background-image}, {@code float}, {@code width} (required for floating divs)</li>
+ *  <li>{@code div}<br/>Styles: {@code background-image}, {@code float}, {@code width}<br/>Required styles for floating blocks: {@code width}<br/>Optional styles for floating blocks: {@code height}</li>
  *  <li>{@code ul}</li>
  *  <li>{@code li}<br/>Styles: {@code list-style-image}</li>
- *  <li>{@code button}<br/>Attributes: {@code name}, {@code value}, {@code float}, {@code display}</li>
+ *  <li>{@code button}<br/>Attributes: {@code name}, {@code value}<br/>Styles: {@code float}, {@code display}, {@code width}, {@code height}</li>
  * </ul>
  *
  * The following generic CSS attributes are supported:
  * <ul>
- *  <li>{@code font}<br/>References a font in the theme - does not behave like HTML</li>
+ *  <li>{@code font-family}<br/>References a font in the theme</li>
  *  <li>{@code text-align}</li>
  *  <li>{@code text-ident}</li>
  *  <li>{@code margin}</li>
@@ -71,6 +71,11 @@ import org.xmlpull.v1.XmlPullParserFactory;
  *  <li>{@code margin-left}</li>
  *  <li>{@code margin-right}</li>
  *  <li>{@code margin-bottom}</li>
+ *  <li>{@code padding}</li>
+ *  <li>{@code padding-top}</li>
+ *  <li>{@code padding-left}</li>
+ *  <li>{@code padding-right}</li>
+ *  <li>{@code padding-bottom}</li>
  *  <li>{@code clear}</li>
  *  <li>{@code vertical-align}</li>
  *  <li>{@code white-space}<br/>Only {@code normal} and {@code pre}</li>
