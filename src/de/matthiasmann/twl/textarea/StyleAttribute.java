@@ -47,10 +47,6 @@ public final class StyleAttribute<T> {
     // cascading attributes
     public static final StyleAttribute<HAlignment> HORIZONTAL_ALIGNMENT = new StyleAttribute<HAlignment>(true, HAlignment.class, HAlignment.LEFT);
     public static final StyleAttribute<VAlignment> VERTICAL_ALIGNMENT = new StyleAttribute<VAlignment>(true, VAlignment.class, VAlignment.BOTTOM);
-    public static final StyleAttribute<Value> MARGIN_TOP = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
-    public static final StyleAttribute<Value> MARGIN_LEFT = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
-    public static final StyleAttribute<Value> MARGIN_RIGHT = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
-    public static final StyleAttribute<Value> MARGIN_BOTTOM = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<Value> TEXT_IDENT = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<String> FONT_NAME = new StyleAttribute<String>(true, String.class, "default");
     public static final StyleAttribute<String> LIST_STYLE_IMAGE = new StyleAttribute<String>(true, String.class, "ul-bullet");
@@ -61,15 +57,28 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<Display> DISPLAY = new StyleAttribute<Display>(false, Display.class, Display.INLINE);
     public static final StyleAttribute<FloatPosition> FLOAT_POSITION = new StyleAttribute<FloatPosition>(false, FloatPosition.class, FloatPosition.NONE);
     public static final StyleAttribute<Value> WIDTH = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> HEIGHT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<String> BACKGROUND_IMAGE = new StyleAttribute<String>(false, String.class, null);
+    public static final StyleAttribute<Value> MARGIN_TOP = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> MARGIN_LEFT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> MARGIN_RIGHT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> MARGIN_BOTTOM = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> PADDING_TOP = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> PADDING_LEFT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> PADDING_RIGHT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> PADDING_BOTTOM = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
 
+    // boxes
+    public static final BoxAttribute MARGIN = new BoxAttribute(MARGIN_TOP, MARGIN_LEFT, MARGIN_RIGHT, MARGIN_BOTTOM);
+    public static final BoxAttribute PADDING = new BoxAttribute(PADDING_TOP, PADDING_LEFT, PADDING_RIGHT, PADDING_BOTTOM);
+    
     /**
-     * A cascading attribute will be looked up in the parent style if it is not set.
+     * A inherited attribute will be looked up in the parent style if it is not set.
      *
-     * @return true if this attribute is cascading.
+     * @return true if this attribute is inherited from the parent.
      */
-    public boolean getCascades() {
-        return cascades;
+    public boolean isInherited() {
+        return inherited;
     }
     
     public Class<T> getDataType() {
@@ -84,13 +93,13 @@ public final class StyleAttribute<T> {
         return ordinal;
     }
 
-    private final boolean cascades;
+    private final boolean inherited;
     private final Class<T> dataType;
     private final T defaultValue;
     private final int ordinal;
 
-    public StyleAttribute(boolean cascades, Class<T> dataType, T defaultValue) {
-        this.cascades = cascades;
+    private StyleAttribute(boolean inherited, Class<T> dataType, T defaultValue) {
+        this.inherited = inherited;
         this.dataType = dataType;
         this.defaultValue = defaultValue;
         this.ordinal = attributes.size();

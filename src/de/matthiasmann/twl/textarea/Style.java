@@ -95,11 +95,11 @@ public class Style {
      * @param attribute The attribute to lookup.
      * @param resolver A StyleClassResolver to resolve the classRef. Can be null.
      * @return The Style which defined the specified attribute, will never return null.
-     * @see StyleAttribute#getCascades()
+     * @see StyleAttribute#isInherited()
      * @see #getParent()
      */
     public Style resolve(StyleAttribute<?> attribute, StyleClassResolver resolver) {
-        if(!attribute.getCascades()) {
+        if(!attribute.isInherited()) {
             return this;
         }
 
@@ -167,10 +167,10 @@ public class Style {
 
     /**
      * Returns the parent of this Style or null. The parent is used to lookup
-     * cascading attributes which are not specified in this Style.
+     * attributes which can be inherited and are not specified in this Style.
      * 
      * @return the parent of this Style or null.
-     * @see StyleAttribute#getCascades()
+     * @see StyleAttribute#isInherited()
      */
     public Style getParent() {
         return parent;

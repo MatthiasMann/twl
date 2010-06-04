@@ -33,9 +33,6 @@ import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.model.HasCallback;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.Image;
-import de.matthiasmann.twl.textarea.CSSStyle;
-import de.matthiasmann.twl.textarea.Style;
-import de.matthiasmann.twl.textarea.StyleAttribute;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -278,6 +275,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         BlockElementImpl bei = new BlockElementImpl(getStyle());
                         addElement(bei);
                         containerStack.add(bei);
+                        pushStyle(null);
                     }
                     if("a".equals(name)) {
                         finishText();
@@ -314,6 +312,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     if("div".equals(name)) {
                         finishText();
                         popStyle();
+                        popStyle();
                         containerStack.remove(containerStack.size()-1);
                     }
                     if("a".equals(name)) {
@@ -328,7 +327,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     if(startLength[1] > 0) {
                         int pos = sb.length();
                         sb.append(buf, startLength[0], startLength[1]);
-                        if(!getStyle().get(StyleAttribute.PREFORMATTED, null)) {
+                        if(!isPre()) {
                             removeBreaks(pos);
                         }
                     }
@@ -345,22 +344,27 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         }
     }
 
+    private boolean isPre() {
+        return getStyle().get(StyleAttribute.PREFORMATTED, null);
+    }
+    
     private Style getStyle() {
         return styleStack.get(styleStack.size()-1);
     }
 
     private void pushStyle(XmlPullParser xpp) {
+        finishText();
+        
         Style parent = getStyle();
 
-        String classRef = xpp.getAttributeValue(null, "class");
-        String style = xpp.getAttributeValue(null, "style");
+        String classRef = (xpp != null) ? xpp.getAttributeValue(null, "class") : null;
+        String style = (xpp != null) ? xpp.getAttributeValue(null, "style") : null;
         Style newStyle;
 
-        if(classRef != null || style != null) {
-            finishText();
+        if(style != null) {
             newStyle = new CSSStyle(parent, classRef, style);
         } else {
-            newStyle = parent;
+            newStyle = new Style(parent, classRef);
         }
 
         styleStack.add(newStyle);

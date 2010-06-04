@@ -64,31 +64,19 @@ public class CSSStyle extends Style {
     }
 
     private void parseCSSAttribute(String key, String value) {
-        if("margin-top".equals(key)) {
-            parseValueUnit(StyleAttribute.MARGIN_TOP, value);
+        if(key.startsWith("margin")) {
+            parseBox(key.substring(6), value, StyleAttribute.MARGIN);
             return;
         }
-        if("margin-left".equals(key)) {
-            parseValueUnit(StyleAttribute.MARGIN_LEFT, value);
-            return;
-        }
-        if("margin-right".equals(key)) {
-            parseValueUnit(StyleAttribute.MARGIN_RIGHT, value);
-            return;
-        }
-        if("margin-bottom".equals(key)) {
-            parseValueUnit(StyleAttribute.MARGIN_BOTTOM, value);
-            return;
-        }
-        if("margin".equals(key)) {
-            parseMargin(value);
+        if(key.startsWith("padding")) {
+            parseBox(key.substring(7), value, StyleAttribute.PADDING);
             return;
         }
         if("text-indent".equals(key)) {
             parseValueUnit(StyleAttribute.TEXT_IDENT, value);
             return;
         }
-        if("font".equals(key)) {
+        if("font-family".equals(key) || "font".equals(key)) {
             put(StyleAttribute.FONT_NAME, value);
             return;
         }
@@ -124,6 +112,10 @@ public class CSSStyle extends Style {
             parseValueUnit(StyleAttribute.WIDTH, value);
             return;
         }
+        if("height".equals(key)) {
+            parseValueUnit(StyleAttribute.HEIGHT, value);
+            return;
+        }
         if("background-image".equals(key)) {
             parseURL(StyleAttribute.BACKGROUND_IMAGE, value);
             return;
@@ -131,35 +123,45 @@ public class CSSStyle extends Style {
         throw new IllegalArgumentException("Unsupported key: " + key);
     }
 
-    private void parseMargin(String value) {
-        Value[] vu = parseValueUnits(value);
-        switch(vu.length) {
-            case 1:
-                put(StyleAttribute.MARGIN_TOP, vu[0]);
-                put(StyleAttribute.MARGIN_LEFT, vu[0]);
-                put(StyleAttribute.MARGIN_RIGHT, vu[0]);
-                put(StyleAttribute.MARGIN_BOTTOM, vu[0]);
-                break;
-            case 2: // TB, LR
-                put(StyleAttribute.MARGIN_TOP, vu[0]);
-                put(StyleAttribute.MARGIN_LEFT, vu[1]);
-                put(StyleAttribute.MARGIN_RIGHT, vu[1]);
-                put(StyleAttribute.MARGIN_BOTTOM, vu[0]);
-                break;
-            case 3: // T, LR, B
-                put(StyleAttribute.MARGIN_TOP, vu[0]);
-                put(StyleAttribute.MARGIN_LEFT, vu[1]);
-                put(StyleAttribute.MARGIN_RIGHT, vu[1]);
-                put(StyleAttribute.MARGIN_BOTTOM, vu[2]);
-                break;
-            case 4: // T, R, B, L
-                put(StyleAttribute.MARGIN_TOP, vu[0]);
-                put(StyleAttribute.MARGIN_LEFT, vu[3]);
-                put(StyleAttribute.MARGIN_RIGHT, vu[1]);
-                put(StyleAttribute.MARGIN_BOTTOM, vu[2]);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid number of margin values: " + vu.length);
+    private void parseBox(String key, String value, BoxAttribute box) {
+        if("-top".equals(key)) {
+            parseValueUnit(box.top, value);
+        } else if("-left".equals(key)) {
+            parseValueUnit(box.left, value);
+        } else if("-right".equals(key)) {
+            parseValueUnit(box.right, value);
+        } else if("-bottom".equals(key)) {
+            parseValueUnit(box.bottom, value);
+        } else if("".equals(key)) {
+            Value[] vu = parseValueUnits(value);
+            switch(vu.length) {
+                case 1:
+                    put(box.top, vu[0]);
+                    put(box.left, vu[0]);
+                    put(box.right, vu[0]);
+                    put(box.bottom, vu[0]);
+                    break;
+                case 2: // TB, LR
+                    put(box.top, vu[0]);
+                    put(box.left, vu[1]);
+                    put(box.right, vu[1]);
+                    put(box.bottom, vu[0]);
+                    break;
+                case 3: // T, LR, B
+                    put(box.top, vu[0]);
+                    put(box.left, vu[1]);
+                    put(box.right, vu[1]);
+                    put(box.bottom, vu[2]);
+                    break;
+                case 4: // T, R, B, L
+                    put(box.top, vu[0]);
+                    put(box.left, vu[3]);
+                    put(box.right, vu[1]);
+                    put(box.bottom, vu[2]);
+                    break;
+                default:
+                    throw new IllegalArgumentException("Invalid number of margin values: " + vu.length);
+            }
         }
     }
 
