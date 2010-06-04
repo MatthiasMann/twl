@@ -65,7 +65,8 @@ public class HTMLTextAreaModelTest {
     public void testEmptySpan() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo<span/>Welt");
         Iterator<TextAreaModel.Element> i = m.iterator();
-        assertText(i, "default", "HalloWelt");
+        assertText(i, "default", "Hallo");
+        assertText(i, "default", "Welt");
         assertFalse(i.hasNext());
     }
 
@@ -93,7 +94,8 @@ public class HTMLTextAreaModelTest {
     public void testBREmptySpan() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/><span/>A new line");
         Iterator<TextAreaModel.Element> i = m.iterator();
-        assertText(i, "default", "Hallo Welt\nA new line");
+        assertText(i, "default", "Hallo Welt\n");
+        assertText(i, "default", "A new line");
         assertFalse(i.hasNext());
     }
 
@@ -101,7 +103,8 @@ public class HTMLTextAreaModelTest {
     public void testBREmptySpan2() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<span/><br/>A new line");
         Iterator<TextAreaModel.Element> i = m.iterator();
-        assertText(i, "default", "Hallo Welt\nA new line");
+        assertText(i, "default", "Hallo Welt");
+        assertText(i, "default", "\nA new line");
         assertFalse(i.hasNext());
     }
 
