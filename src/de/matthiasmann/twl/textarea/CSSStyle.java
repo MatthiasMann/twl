@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl.textarea;
 
-import de.matthiasmann.twl.textarea.TextAreaModel.VAlignment;
 import de.matthiasmann.twl.utils.ParameterStringParser;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -82,11 +81,7 @@ public class CSSStyle extends Style {
             return;
         }
         if("margin".equals(key)) {
-            Value vu = parseValueUnit(value);
-            put(StyleAttribute.MARGIN_TOP, vu);
-            put(StyleAttribute.MARGIN_LEFT, vu);
-            put(StyleAttribute.MARGIN_RIGHT, vu);
-            put(StyleAttribute.MARGIN_BOTTOM, vu);
+            parseMargin(value);
             return;
         }
         if("text-indent".equals(key)) {
@@ -136,6 +131,38 @@ public class CSSStyle extends Style {
         throw new IllegalArgumentException("Unsupported key: " + key);
     }
 
+    private void parseMargin(String value) {
+        Value[] vu = parseValueUnits(value);
+        switch(vu.length) {
+            case 1:
+                put(StyleAttribute.MARGIN_TOP, vu[0]);
+                put(StyleAttribute.MARGIN_LEFT, vu[0]);
+                put(StyleAttribute.MARGIN_RIGHT, vu[0]);
+                put(StyleAttribute.MARGIN_BOTTOM, vu[0]);
+                break;
+            case 2: // TB, LR
+                put(StyleAttribute.MARGIN_TOP, vu[0]);
+                put(StyleAttribute.MARGIN_LEFT, vu[1]);
+                put(StyleAttribute.MARGIN_RIGHT, vu[1]);
+                put(StyleAttribute.MARGIN_BOTTOM, vu[0]);
+                break;
+            case 3: // T, LR, B
+                put(StyleAttribute.MARGIN_TOP, vu[0]);
+                put(StyleAttribute.MARGIN_LEFT, vu[1]);
+                put(StyleAttribute.MARGIN_RIGHT, vu[1]);
+                put(StyleAttribute.MARGIN_BOTTOM, vu[2]);
+                break;
+            case 4: // T, R, B, L
+                put(StyleAttribute.MARGIN_TOP, vu[0]);
+                put(StyleAttribute.MARGIN_LEFT, vu[3]);
+                put(StyleAttribute.MARGIN_RIGHT, vu[1]);
+                put(StyleAttribute.MARGIN_BOTTOM, vu[2]);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid number of margin values: " + vu.length);
+        }
+    }
+
     private Value parseValueUnit(String value) {
         Value.Unit unit;
         int suffixLength = 2;
@@ -148,12 +175,23 @@ public class CSSStyle extends Style {
         } else if(value.endsWith("%")) {
             suffixLength = 1;
             unit = Value.Unit.PERCENT;
+        } else if("0".equals(value)) {
+            return Value.ZERO_PX;
         } else {
             throw new IllegalArgumentException("Unknown numeric suffix: " + value);
         }
 
         String numberPart = value.substring(0, value.length() - suffixLength).trim();
         return new Value(Float.parseFloat(numberPart), unit);
+    }
+
+    private Value[] parseValueUnits(String value) {
+        String[] parts = value.split("\\s+");
+        Value[] result = new Value[parts.length];
+        for(int i=0 ; i<parts.length ; i++) {
+            result[i] = parseValueUnit(parts[i]);
+        }
+        return result;
     }
 
     private void parseValueUnit(StyleAttribute attribute, String value) {
