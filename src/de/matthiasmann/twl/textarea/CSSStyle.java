@@ -213,7 +213,11 @@ public class CSSStyle extends Style {
 
     private void parseURL(StyleAttribute<String> attribute, String value) {
         if(value.startsWith("url(") && value.endsWith(")")) {
-            value = value.substring(4, value.length() - 1);
+            value = value.substring(4, value.length() - 1).trim();
+            if((value.startsWith("\"") && value.endsWith("\"")) ||
+                    (value.startsWith("'") && value.endsWith("'"))) {
+                value = value.substring(1, value.length() - 1);
+            }
         }
         put(attribute, value);
     }
