@@ -34,6 +34,8 @@ import de.matthiasmann.twl.textarea.TextAreaModel.Display;
 import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
 import de.matthiasmann.twl.textarea.TextAreaModel.HAlignment;
 import de.matthiasmann.twl.textarea.TextAreaModel.VAlignment;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 
 /**
@@ -89,8 +91,37 @@ public final class StyleAttribute<T> {
         return defaultValue;
     }
 
+    /**
+     * Returns a unique id for this StyleAttribute. This value is may change
+     * when this class is modified and should not be used for persistent storage.
+     * @return a unique id &lt; {@code getNumAttributes}
+     * @see #getNumAttributes()
+     */
     public int ordinal() {
         return ordinal;
+    }
+
+    /**
+     * Returns the name of this StyleAttribute.
+     * This method uses reflection to search for the field name.
+     * @return the name of this StyleAttribute.
+     */
+    public String name() {
+        try {
+            for(Field f : StyleAttribute.class.getFields()) {
+                if(Modifier.isStatic(f.getModifiers()) && f.get(null) == this) {
+                    return f.getName();
+                }
+            }
+        } catch(Throwable ex) {
+            // ignore
+        }
+        return "?";
+    }
+
+    @Override
+    public String toString() {
+        return name();
     }
 
     private final boolean inherited;
@@ -105,12 +136,45 @@ public final class StyleAttribute<T> {
         this.ordinal = attributes.size();
         attributes.add(this);
     }
-    
+
+    /**
+     * Returns the number of implemented StyleAttributes.
+     * @return the number of implemented StyleAttributes.
+     */
     public static int getNumAttributes() {
         return attributes.size();
     }
 
-    public static StyleAttribute getAttribute(int ordinal) {
+    /**
+     * Returns the StyleAttribute given it's unique id.
+     * @param ordinal the unique id of the desired StyleAttribute.
+     * @return the StyleAttribute given it's unique id.
+     * @throws IndexOutOfBoundsException if the given id is invalid.
+     * @see #ordinal()
+     */
+    public static StyleAttribute<?> getAttribute(int ordinal) throws IndexOutOfBoundsException {
         return attributes.get(ordinal);
+    }
+
+    /**
+     * Returns the StyleAttribute given it's name.
+     * @param name the name of the StyleAttribute.
+     * @return the StyleAttribute
+     * @throws IllegalArgumentException if no StyleAttribute with the given name exists.
+     * @see #name() 
+     */
+    public static StyleAttribute<?> getAttribute(String name) throws IllegalArgumentException {
+        try {
+            for(Field f : StyleAttribute.class.getFields()) {
+                if(Modifier.isStatic(f.getModifiers()) &&
+                        f.getType() == StyleAttribute.class &&
+                        f.getName().equals(name)) {
+                    return (StyleAttribute<?>)f.get(null);
+                }
+            }
+        } catch(Throwable ex) {
+            // ignore
+        }
+        throw new IllegalArgumentException("No style attribute " + name);
     }
 }

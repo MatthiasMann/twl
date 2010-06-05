@@ -29,67 +29,44 @@
  */
 package de.matthiasmann.twl.textarea;
 
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 /**
- * A class to hold a value and the unit in which it is specified.
  *
  * @author Matthias Mann
  */
-public final class Value {
-    public final float value;
-    public final Unit unit;
+public class StyleAttributeTest {
 
-    public Value(float value, Unit unit) {
-        this.value = value;
-        this.unit = unit;
-
-        if(unit == null) {
-            throw new NullPointerException("unit");
+    @Test
+    public void testOrdinal() {
+        for(int i=0 ; i<StyleAttribute.getNumAttributes() ; i++) {
+            StyleAttribute sa = StyleAttribute.getAttribute(i);
+            assertEquals(i, sa.ordinal());
         }
     }
 
-    @Override
-    public String toString() {
-        return value + unit.getPostfix();
+    @Test
+    public void testName() {
+        for(int i=0 ; i<StyleAttribute.getNumAttributes() ; i++) {
+            StyleAttribute sa1 = StyleAttribute.getAttribute(i);
+            StyleAttribute sa2 = StyleAttribute.getAttribute(sa1.name());
+            assertEquals(sa1, sa2);
+        }
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if(obj instanceof Value) {
-            final Value other = (Value)obj;
-            return (this.value == other.value) && (this.unit == other.unit);
-        }
-        return false;
+    @Test
+    public void testgetAttribute1() {
+        assertEquals(StyleAttribute.CLEAR, StyleAttribute.getAttribute("CLEAR"));
     }
 
-    @Override
-    public int hashCode() {
-        int hash = 3;
-        hash = 17 * hash + Float.floatToIntBits(this.value);
-        hash = 17 * hash + this.unit.hashCode();
-        return hash;
-    }
-
-    public static final Value ZERO_PX = new Value(0, Unit.PX);
-    
-    public enum Unit {
-        PX(false, "px"),
-        EM(true, "em"),
-        EX(true, "ex"),
-        PERCENT(false, "%");
-
-        final boolean fontBased;
-        final String postfix;
-        private Unit(boolean fontBased, String postfix) {
-            this.fontBased = fontBased;
-            this.postfix = postfix;
-        }
-
-        public boolean isFontBased() {
-            return fontBased;
-        }
-
-        public String getPostfix() {
-            return postfix;
+    @Test
+    public void testgetAttribute2() {
+        try {
+            StyleAttribute.getAttribute("foobar");
+            fail("Should not here");
+        } catch (Throwable ex) {
+            assertEquals(IllegalArgumentException.class, ex.getClass());
         }
     }
 }
