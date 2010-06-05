@@ -167,8 +167,7 @@ public final class StyleAttribute<T> {
         try {
             Field f = StyleAttribute.class.getField(name);
             if(Modifier.isStatic(f.getModifiers()) &&
-                    f.getType() == StyleAttribute.class &&
-                    f.getName().equals(name)) {
+                    f.getType() == StyleAttribute.class) {
                 return (StyleAttribute<?>)f.get(null);
             }
         } catch(Throwable ex) {
