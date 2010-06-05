@@ -165,12 +165,11 @@ public final class StyleAttribute<T> {
      */
     public static StyleAttribute<?> getAttribute(String name) throws IllegalArgumentException {
         try {
-            for(Field f : StyleAttribute.class.getFields()) {
-                if(Modifier.isStatic(f.getModifiers()) &&
-                        f.getType() == StyleAttribute.class &&
-                        f.getName().equals(name)) {
-                    return (StyleAttribute<?>)f.get(null);
-                }
+            Field f = StyleAttribute.class.getField(name);
+            if(Modifier.isStatic(f.getModifiers()) &&
+                    f.getType() == StyleAttribute.class &&
+                    f.getName().equals(name)) {
+                return (StyleAttribute<?>)f.get(null);
             }
         } catch(Throwable ex) {
             // ignore
