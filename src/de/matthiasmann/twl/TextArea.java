@@ -78,7 +78,7 @@ public class TextArea extends Widget {
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
 
-    private StyleClassResolver styleClassResolver;
+    StyleClassResolver styleClassResolver;
     private final Runnable modelCB;
     private TextAreaModel model;
     private ParameterMap fonts;
@@ -577,7 +577,7 @@ public class TextArea extends Widget {
         }
     }
 
-    private int convertToPX(Style style, StyleAttribute<Value> attribute, int full) {
+    int convertToPX(Style style, StyleAttribute<Value> attribute, int full) {
         style = style.resolve(attribute, styleClassResolver);
         Value valueUnit = style.getNoResolve(attribute, styleClassResolver);
         
@@ -679,33 +679,32 @@ public class TextArea extends Widget {
         while(idx < textEnd) {
             assert !isSkip(text.charAt(idx));
 
-            int count;
-            if(box.textAlignment == TextAreaModel.HAlignment.JUSTIFY) {
-                count = 1;
-            } else {
-                count = font.computeVisibleGlpyhs(text, idx, textEnd, box.getRemaining());
-            }
-            
-            int end;
-            if(box.isAtStartOfLine()) {
-                end = idx + Math.max(1, count);
-            } else {
-                end = idx + count;
-            }
+            int end = idx;
+            if(box.textAlignment != TextAreaModel.HAlignment.JUSTIFY) {
+                end = idx + font.computeVisibleGlpyhs(text, idx, textEnd, box.getRemaining());
+                if(end < textEnd) {
+                    // if we are at a punctuation then walk backwards until we hit
+                    // the word or a break. This ensures that the punctuation stays
+                    // at the end of a word
+                    while(end > idx && isPunctuation(text.charAt(end))) {
+                        end--;
+                    }
 
-            // if we are not at the end of this text element
-            // and the next character is not a space
-            if(end < textEnd && !isBreak(text.charAt(end))) {
-                // then we walk backwards until we find spaces
-                // this prevents the line ending in the middle of a word
-                while(end > idx && !isBreak(text.charAt(end-1))) {
+                    // if we are not at the end of this text element
+                    // and the next character is not a space
+                    if(!isBreak(text.charAt(end))) {
+                        // then we walk backwards until we find spaces
+                        // this prevents the line ending in the middle of a word
+                        while(end > idx && !isBreak(text.charAt(end-1))) {
+                            end--;
+                        }
+                    }
+                }
+
+                // now walks backwards until we hit the end of the previous word
+                while(end > idx && isSkip(text.charAt(end-1))) {
                     end--;
                 }
-            }
-
-            // now walks backwards until we hit the end of the previous word
-            while(end > idx && isSkip(text.charAt(end-1))) {
-                end--;
             }
 
             // if we found no word that fits
@@ -719,12 +718,11 @@ public class TextArea extends Widget {
                 while(end < textEnd && !isBreak(text.charAt(end))) {
                     end++;
                 }
+                // some characters need to stay at the end of a word
+                while(end < textEnd && isPunctuation(text.charAt(end))) {
+                    end++;
+                }
                 box.advancePastFloaters(font.computeTextWidth(text, idx, end));
-            }
-
-            // some characters need to stay at the end of a word
-            if(end < textEnd && isPunctuation(text.charAt(end))) {
-                end++;
             }
 
             if(idx < end) {
@@ -1041,28 +1039,26 @@ public class TextArea extends Widget {
         }
 
         void advancePastFloaters(int requiredWidth) {
-            while(lineWidth < requiredWidth) {
-                int targetY = Integer.MAX_VALUE;
-                if(!objLeft.isEmpty()) {
-                    LBox le = objLeft.get(objLeft.size()-1);
-                    if(le.height != Short.MAX_VALUE) {  // special case for list elements
+            if(lineWidth < requiredWidth) {
+                nextLine(false);
+                do {
+                    int targetY = Integer.MAX_VALUE;
+                    if(!objLeft.isEmpty()) {
+                        LBox le = objLeft.get(objLeft.size()-1);
+                        if(le.height != Short.MAX_VALUE) {  // special case for list elements
+                            targetY = Math.min(targetY, le.y + le.height);
+                        }
+                    }
+                    if(!objRight.isEmpty()) {
+                        LBox le = objRight.get(objRight.size()-1);
                         targetY = Math.min(targetY, le.y + le.height);
                     }
-                }
-                if(!objRight.isEmpty()) {
-                    LBox le = objRight.get(objRight.size()-1);
-                    targetY = Math.min(targetY, le.y + le.height);
-                }
-                if(targetY == Integer.MAX_VALUE) {
-                    return;
-                }
-                if(targetY >= 0) {
-                    nextLine(false);
-                    if(targetY > curY) {
-                        curY = targetY;
-                        checkFloaters();
+                    if(targetY == Integer.MAX_VALUE || targetY < curY) {
+                        return;
                     }
-                }
+                    curY = targetY;
+                    checkFloaters();
+                } while(lineWidth < requiredWidth);
             }
         }
 
