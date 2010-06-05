@@ -175,7 +175,7 @@ public class TextArea extends Widget {
         Widget w = widgets.get(name);
         if(w != null) {
             int idx = getChildIndex(w);
-            if(idx > 0) {
+            if(idx >= 0) {
                 super.removeChild(idx);
                 forceRelayout();
             }
