@@ -56,40 +56,44 @@ public abstract class MenuElement {
         return name;
     }
 
-    public void setName(String name) {
+    public MenuElement setName(String name) {
         String oldName = this.name;
         this.name = name;
         firePropertyChange("name", oldName, name);
+        return this;
     }
 
     public String getTheme() {
         return theme;
     }
 
-    public void setTheme(String theme) {
+    public MenuElement setTheme(String theme) {
         String oldTheme = this.theme;
         this.theme = theme;
         firePropertyChange("theme", oldTheme, theme);
+        return this;
     }
 
     public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public MenuElement setEnabled(boolean enabled) {
         boolean oldEnabled = this.enabled;
         this.enabled = enabled;
         firePropertyChange("enabled", oldEnabled, enabled);
+        return this;
     }
 
     public Object getTooltipContent() {
         return tooltipContent;
     }
 
-    public void setTooltipContent(Object tooltip) {
+    public MenuElement setTooltipContent(Object tooltip) {
         Object oldTooltip = this.tooltipContent;
         this.tooltipContent = tooltip;
         firePropertyChange("tooltipContent", oldTooltip, tooltip);
+        return this;
     }
 
     protected abstract Widget createMenuWidget(MenuManager mm, int level);
