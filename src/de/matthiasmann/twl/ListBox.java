@@ -643,7 +643,7 @@ public class ListBox<T> extends Widget {
             if(super.handleEvent(evt)) {
                 return true;
             }
-            return evt.isMouseEvent();
+            return evt.isMouseEventNoWheel();
         }
 
     }
