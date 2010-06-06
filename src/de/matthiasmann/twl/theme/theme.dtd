@@ -158,13 +158,19 @@
     border          CDATA #IMPLIED
     inset           CDATA #IMPLIED
     if              CDATA #IMPLIED
-    unless          CDATA #IMPLIED>
+    unless          CDATA #IMPLIED
+    frozenTime      CDATA #IMPLIED>
     
 <!ELEMENT frame EMPTY>
 <!ATTLIST frame
     ref             CDATA #REQUIRED
     duration        CDATA #REQUIRED
-    tint            CDATA #IMPLIED>
+    tint            CDATA #IMPLIED
+    zoom            CDATA #IMPLIED
+    zoomX           CDATA #IMPLIED
+    zoomY           CDATA #IMPLIED
+    zoomCenterX     CDATA #IMPLIED
+    zoomCenterY     CDATA #IMPLIED>
 
 <!ELEMENT frames EMPTY>
 <!ATTLIST frames
@@ -176,7 +182,12 @@
     height          CDATA #REQUIRED
     offsetx         CDATA #IMPLIED
     offsety         CDATA #IMPLIED
-    tint            CDATA #IMPLIED>
+    tint            CDATA #IMPLIED
+    zoom            CDATA #IMPLIED
+    zoomX           CDATA #IMPLIED
+    zoomY           CDATA #IMPLIED
+    zoomCenterX     CDATA #IMPLIED
+    zoomCenterY     CDATA #IMPLIED>
 
 <!ELEMENT repeat (repeat|frame)+>
 <!ATTLIST repeat

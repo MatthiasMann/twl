@@ -51,4 +51,14 @@ public interface AnimationState {
      * @return true if the state is set
      */
     public boolean getAnimationState(String state);
+
+    /**
+     * Checks if this state was changed based on user interaction or not.
+     * If this method returns false then the animation time should not be used
+     * for single shot animations.
+     *
+     * @param state the state name.
+     * @return true if single shot animations should run or not.
+     */
+    public boolean getShouldAnimateState(String state);
 }

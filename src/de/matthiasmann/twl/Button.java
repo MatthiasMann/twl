@@ -134,6 +134,11 @@ public class Button extends TextWidget {
             this.model.connect();
         }
         modelStateChanged();
+        AnimationState as = getAnimationState();
+        as.dontAnimate(STATE_ARMED);
+        as.dontAnimate(STATE_PRESSED);
+        as.dontAnimate(STATE_HOVER);
+        as.dontAnimate(STATE_SELECTED);
     }
 
     @Override

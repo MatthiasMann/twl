@@ -33,8 +33,12 @@ public class AnimatedImage implements Image, HasBorder {
         final float g;
         final float b;
         final float a;
+        final float zoomX;
+        final float zoomY;
+        final float zoomCenterX;
+        final float zoomCenterY;
 
-        Img(int duration, Image image, Color tintColor) {
+        Img(int duration, Image image, Color tintColor, float zoomX, float zoomY, float zoomCenterX, float zoomCenterY) {
             if(duration < 0) {
                 throw new IllegalArgumentException("duration");
             }
@@ -44,6 +48,10 @@ public class AnimatedImage implements Image, HasBorder {
             this.g = tintColor.getGreenFloat();
             this.b = tintColor.getBlueFloat();
             this.a = tintColor.getAlphaFloat();
+            this.zoomX = zoomX;
+            this.zoomY = zoomY;
+            this.zoomCenterX = zoomCenterX;
+            this.zoomCenterY = zoomCenterY;
         }
 
         int getWidth() {
@@ -60,16 +68,26 @@ public class AnimatedImage implements Image, HasBorder {
 
         void render(int time, Img next, int x, int y, int width, int height, AnimatedImage ai, AnimationState as) {
             float rr=r, gg=g, bb=b, aa=a;
+            float zx=zoomX, zy=zoomY, cx=zoomCenterX, cy=zoomCenterY;
             if(next != null) {
                 float t = time / (float)duration;
                 rr = blend(rr, next.r, t);
                 gg = blend(gg, next.g, t);
                 bb = blend(bb, next.b, t);
                 aa = blend(aa, next.a, t);
+                zx = blend(zx, next.zoomX, t);
+                zy = blend(zy, next.zoomY, t);
+                cx = blend(cx, next.zoomCenterX, t);
+                cy = blend(cy, next.zoomCenterY, t);
             }
             ai.renderer.pushGlobalTintColor(rr*ai.r, gg*ai.g, bb*ai.b, aa*ai.a);
             try {
-                image.draw(as, x, y, width, height);
+                int zWidth = (int)(width * zx);
+                int zHeight = (int)(height * zy);
+                image.draw(as,
+                        x + (int)((width - zWidth) * cx),
+                        y + (int)((height - zHeight) * cy),
+                        zWidth, zHeight);
             } finally {
                 ai.renderer.popGlobalTintColor();
             }
@@ -139,7 +157,7 @@ public class AnimatedImage implements Image, HasBorder {
                 if(time < e.duration && e.duration > 0) {
                     if(i+1 < children.length) {
                         next = children[i+1].getFirstImg();
-                    } else if(repeatCount == 0 || iteration < repeatCount) {
+                    } else if(repeatCount == 0 || iteration+1 < repeatCount) {
                         next = getFirstImg();
                     }
                     break;
@@ -164,8 +182,9 @@ public class AnimatedImage implements Image, HasBorder {
     final float a;
     final int width;
     final int height;
+    final int frozenTime;
 
-    AnimatedImage(Renderer renderer, Element root, String timeSource, Border border, Color tintColor) {
+    AnimatedImage(Renderer renderer, Element root, String timeSource, Border border, Color tintColor,int frozenTime) {
         this.renderer = renderer;
         this.root = root;
         this.timeSource = timeSource;
@@ -176,6 +195,7 @@ public class AnimatedImage implements Image, HasBorder {
         this.a = tintColor.getAlphaFloat();
         this.width = root.getWidth();
         this.height = root.getHeight();
+        this.frozenTime = frozenTime;
     }
 
     AnimatedImage(AnimatedImage src, Color tintColor) {
@@ -189,6 +209,7 @@ public class AnimatedImage implements Image, HasBorder {
         this.a = src.a * tintColor.getAlphaFloat();
         this.width = src.width;
         this.height = src.height;
+        this.frozenTime = src.frozenTime;
     }
 
     public int getWidth() {
@@ -206,7 +227,11 @@ public class AnimatedImage implements Image, HasBorder {
     public void draw(AnimationState as, int x, int y, int width, int height) {
         int time = 0;
         if(as != null) {
-            time = as.getAnimationTime(timeSource);
+            if(frozenTime < 0 || as.getShouldAnimateState(timeSource)) {
+                time = as.getAnimationTime(timeSource);
+            } else {
+                time = frozenTime;
+            }
         }
         root.render(time, null, x, y, width, height, this, as);
     }

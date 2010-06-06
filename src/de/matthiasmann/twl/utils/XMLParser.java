@@ -246,6 +246,18 @@ public class XMLParser implements Closeable {
         return parseInt(value);
     }
 
+    public float parseFloatFromAttribute(String attribName) throws XmlPullParserException {
+        return parseFloat(getAttributeNotNull(attribName));
+    }
+
+    public float parseFloatFromAttribute(String attribName, float defaultValue) throws XmlPullParserException {
+        String value = getAttributeValue(null, attribName);
+        if(value == null) {
+            return defaultValue;
+        }
+        return parseFloat(value);
+    }
+
     public <E extends Enum<E>> E parseEnumFromAttribute(String attribName, Class<E> enumClazz) throws XmlPullParserException {
         return parseEnum(enumClazz, getAttributeNotNull(attribName));
     }
@@ -319,6 +331,15 @@ public class XMLParser implements Closeable {
         } catch(NumberFormatException ex) {
             throw (XmlPullParserException)(new XmlPullParserException(
                     "Unable to parse integer", xpp, ex).initCause(ex));
+        }
+    }
+
+    protected float parseFloat(String value) throws XmlPullParserException {
+        try {
+            return Float.parseFloat(value);
+        } catch(NumberFormatException ex) {
+            throw (XmlPullParserException)(new XmlPullParserException(
+                    "Unable to parse float", xpp, ex).initCause(ex));
         }
     }
 

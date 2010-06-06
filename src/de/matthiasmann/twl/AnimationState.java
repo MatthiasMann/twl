@@ -112,17 +112,45 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         return false;
     }
 
+    /**
+     * Checks if this state was changed based on user interaction or not.
+     * If this method returns false then the animation time should not be used
+     * for single shot animations.
+     *
+     * @param stateName the state name.
+     * @return true if single shot animations should run or not.
+     */
+    public boolean getShouldAnimateState(String stateName) {
+        State state = HashEntry.get(stateTable, stateName);
+        if(state != null) {
+            return state.shouldAnimate;
+        }
+        if(parent != null) {
+            return parent.getShouldAnimateState(stateName);
+        }
+        return false;
+    }
+
     public void setAnimationState(String stateName, boolean active) {
         State state = getOrCreate(stateName);
         if(state.active != active) {
             state.active = active;
             state.lastChangedTime = getCurrentTime();
+            state.shouldAnimate = true;
         }
     }
 
     public void resetAnimationTime(String stateName) {
         State state = getOrCreate(stateName);
         state.lastChangedTime = getCurrentTime();
+        state.shouldAnimate = true;
+    }
+
+    public void dontAnimate(String stateName) {
+        State state = HashEntry.get(stateTable, stateName);
+        if(state != null) {
+            state.shouldAnimate = false;
+        }
     }
 
     private State getOrCreate(String stateName) {
@@ -149,6 +177,7 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
     static class State extends HashEntry<String, State> {
         long lastChangedTime;
         boolean active;
+        boolean shouldAnimate;
 
         public State(String key) {
             super(key);

@@ -489,11 +489,23 @@ class ImageManager {
         if(duration < 0) {
             throw new IllegalArgumentException("duration must be >= 0 ms");
         }
-        Color tint = ParserUtil.parseColorFromAttribute(xmlp, "tint", Color.WHITE);
+        AnimParams animParams = parseAnimParams(xmlp);
         Image image = getReferencedImage(xmlp);
-        AnimatedImage.Img img = new AnimatedImage.Img(duration, image, tint);
+        AnimatedImage.Img img = new AnimatedImage.Img(duration, image, animParams.tintColor,
+                animParams.zoomX, animParams.zoomY, animParams.zoomCenterX, animParams.zoomCenterY);
         xmlp.nextTag();
         return img;
+    }
+
+    private AnimParams parseAnimParams(XMLParser xmlp) throws XmlPullParserException {
+        AnimParams params = new AnimParams();
+        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", Color.WHITE);
+        float zoom = xmlp.parseFloatFromAttribute("zoom", 1.0f);
+        params.zoomX = xmlp.parseFloatFromAttribute("zoomX", zoom);
+        params.zoomY = xmlp.parseFloatFromAttribute("zoomY", zoom);
+        params.zoomCenterX = xmlp.parseFloatFromAttribute("zoomCenterX", 0.5f);
+        params.zoomCenterY = xmlp.parseFloatFromAttribute("zoomCenterY", 0.5f);
+        return params;
     }
 
     private void parseAnimFrames(XMLParser xmlp, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
@@ -507,7 +519,7 @@ class ImageManager {
         if(count < 1) {
             throw new IllegalArgumentException("count must be >= 1");
         }
-        Color tint = ParserUtil.parseColorFromAttribute(xmlp, "tint", Color.WHITE);
+        AnimParams animParams = parseAnimParams(xmlp);
         int xOffset = xmlp.parseIntFromAttribute("offsetx", 0);
         int yOffset = xmlp.parseIntFromAttribute("offsety", 0);
         if(count > 1 && (xOffset == 0 && yOffset == 0)) {
@@ -515,7 +527,8 @@ class ImageManager {
         }
         for(int i=0 ; i<count ; i++) {
             Image image = createImage(xmlp, params.x, params.y, params.w, params.h, Color.WHITE, false);
-            AnimatedImage.Img img = new AnimatedImage.Img(duration, image, tint);
+            AnimatedImage.Img img = new AnimatedImage.Img(duration, image, animParams.tintColor,
+                    animParams.zoomX, animParams.zoomY, animParams.zoomCenterX, animParams.zoomCenterY);
             frames.add(img);
             params.x += xOffset;
             params.y += yOffset;
@@ -575,12 +588,13 @@ class ImageManager {
     private Image parseAnimation(XMLParser xmlp, ImageParams params) throws XmlPullParserException, IOException {
         try {
             String timeSource = xmlp.getAttributeNotNull("timeSource");
+            int frozenTime = xmlp.parseIntFromAttribute("frozenTime", -1);
             AnimatedImage.Repeat root = parseAnimRepeat(xmlp);
             if(params.border == null) {
                 params.border = getBorder(root);
             }
             Image image = new AnimatedImage(renderer, root, timeSource, params.border,
-                    (params.tintColor == null) ? Color.WHITE : params.tintColor);
+                    (params.tintColor == null) ? Color.WHITE : params.tintColor, frozenTime);
             params.tintColor = null;
             return image;
         } catch(IllegalArgumentException ex) {
@@ -641,5 +655,12 @@ class ImageManager {
         int sizeOverwriteV = -1;
         boolean center;
         StateExpression condition;
+    }
+    static class AnimParams {
+        Color tintColor;
+        float zoomX;
+        float zoomY;
+        float zoomCenterX;
+        float zoomCenterY;
     }
 }
