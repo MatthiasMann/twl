@@ -178,7 +178,11 @@ public class MenuManager extends PopupWindow {
         Widget mouseOverWidget = getWidgetUnderMouse();
         if(lastMouseOverWidget != mouseOverWidget) {
             lastMouseOverWidget = mouseOverWidget;
-            startTimer();
+            if(isMenuBar && widget.getParent() == getOwner() && (widget instanceof Menu.SubMenuBtn)) {
+                popupTimer();   // no delay on menu bar itself
+            } else {
+                startTimer();
+            }
         }
         
         return widget;
