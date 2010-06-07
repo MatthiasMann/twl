@@ -42,6 +42,7 @@ public class Style {
     private final Style parent;
     private final String classRef;
     private final Object[] values;
+    private final Style altDefaults;
 
     /**
      * Creates an empty Style without a parent, class reference and no attributes
@@ -60,6 +61,7 @@ public class Style {
         this.parent = parent;
         this.classRef = classRef;
         this.values = new Object[StyleAttribute.getNumAttributes()];
+        this.altDefaults = null;
     }
 
     /**
@@ -78,10 +80,11 @@ public class Style {
         }
     }
 
-    private Style(Style parent, String classRef, Object[] values) {
+    private Style(Style parent, String classRef, Object[] values, Style altDefaults) {
         this.parent = parent;
         this.classRef = classRef;
         this.values = values.clone();
+        this.altDefaults = altDefaults;
     }
 
     /**
@@ -146,7 +149,11 @@ public class Style {
             }
         }
         if(value == null) {
-            return attribute.getDefaultValue();
+            if(altDefaults != null) {
+                return altDefaults.get(attribute, resolver);
+            } else {
+                return attribute.getDefaultValue();
+            }
         }
         return attribute.getDataType().cast(value);
     }
@@ -192,10 +199,10 @@ public class Style {
      * It is possible to set a attribute to null to 'unset' it.
      *
      * @param values The attributes to set in the new Style.
-     * @return a new Style with the same parent and classRef and modified attributes.
+     * @return a new Style with the same parent, classRef and modified attributes.
      */
     public Style with(Map<StyleAttribute<?>, Object> values) {
-        Style newStyle = new Style(parent, classRef, this.values);
+        Style newStyle = new Style(parent, classRef, this.values, this.altDefaults);
         newStyle.putAll(values);
         return newStyle;
     }
@@ -208,12 +215,23 @@ public class Style {
      * @param <V> The data type of the attribute
      * @param attribute The attribute to set.
      * @param value The new value of that attribute. Can be null.
-     * @return a new Style with the same parent and classRef and modified attribute.
+     * @return a new Style with the same parent, classRef and modified attribute.
      */
     public<V> Style with(StyleAttribute<V> attribute, V value) {
-        Style newStyle = new Style(parent, classRef, this.values);
+        Style newStyle = new Style(parent, classRef, this.values, this.altDefaults);
         newStyle.put(attribute, value);
         return newStyle;
+    }
+
+    /**
+     * Creates a copy of this Style with alternate default values.
+     * This will replace existing alternate defaults with the new ones.
+     *
+     * @param altDefaults The new alternate defaults. Can be null.
+     * @return a new Style with the same parent, classRef, values and the specified alternate defaults
+     */
+    public Style withAlternateDefaults(Style altDefaults) {
+        return new Style(parent, classRef, this.values, altDefaults);
     }
 
     protected void put(StyleAttribute<?> attribute, Object value) {

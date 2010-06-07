@@ -529,8 +529,9 @@ public class TextArea extends Widget {
         FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
         TextAreaModel.Display display = style.get(StyleAttribute.DISPLAY, styleClassResolver);
 
-        le.marginLeft = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_LEFT, box.boxWidth));
-        le.marginRight = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
+        le.marginTop = (short)convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
+        le.marginLeft = (short)convertToPX0(style, StyleAttribute.MARGIN_LEFT, box.boxWidth);
+        le.marginRight = (short)convertToPX0(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth);
 
         int height = convertToPX(style, StyleAttribute.HEIGHT, le.height);
         if(height > 0) {
@@ -548,61 +549,58 @@ public class TextArea extends Widget {
         }
 
         Style style = e.getStyle();
-        int width = convertToPX(style, StyleAttribute.WIDTH, box.lineWidth);
+        int width = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth);
         if(width > 0) {
             le.width = width;
         }
+
+        box.advancePastFloaters(width, le.marginLeft, le.marginRight);
         if(le.width > box.lineWidth) {
             le.width = box.lineWidth;
         }
 
-        switch(floatPos) {
-            case LEFT:
-                leftRight = true;
-                le.x = box.lineStartX;
+        if(leftRight) {
+            if(floatPos == FloatPosition.RIGHT) {
+                le.x = box.computeRightPadding(le.marginRight) - le.width;
+                box.objRight.add(le);
+            } else {
+                le.x = box.computeLeftPadding(le.marginLeft);
                 box.objLeft.add(le);
+            }
+        } else if(display == TextAreaModel.Display.INLINE) {
+            if(box.getRemaining() < le.width && !box.isAtStartOfLine()) {
+                box.nextLine(false);
+            }
+            le.x = box.getXAndAdvance(le.width);
+        } else {
+            switch(style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver)) {
+            case CENTER:
+            case JUSTIFY:
+                le.x = box.lineStartX + (box.lineWidth - le.width) / 2;
                 break;
 
             case RIGHT:
-                leftRight = true;
-                le.x = box.lineStartX + box.lineWidth - le.width;
-                box.objRight.add(le);
+                le.x = box.computeRightPadding(le.marginRight) - le.width;
                 break;
 
             default:
-                if(display == TextAreaModel.Display.INLINE) {
-                    if(box.getRemaining() < le.width && !box.isAtStartOfLine()) {
-                        box.nextLine(false);
-                    }
-                    le.x = box.getXAndAdvance(le.width);
-                } else {
-                    switch(style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver)) {
-                    case CENTER:
-                    case JUSTIFY:
-                        le.x = box.lineStartX + (box.lineWidth - le.width) / 2;
-                        break;
-
-                    case RIGHT:
-                        le.x = box.lineStartX + (box.lineWidth - le.width);
-                        break;
-
-                    default:
-                        le.x = box.lineStartX;
-                    }
-
-                    box.curX = box.lineWidth;
-                    break;
-                }
-                break;
+                le.x = box.computeLeftPadding(le.marginLeft);
+            }
         }
 
         layout.add(le);
+
         if(leftRight) {
             assert box.lineStartIdx == layout.size() - 1;
             box.lineStartIdx++;
-            le.y = box.curY;
+            le.y = box.computeTopPadding(le.marginTop);
             le.adjustWidget();
             box.computePadding();
+        } else {
+            if(display != TextAreaModel.Display.INLINE) {
+                box.nextLine(false);
+            }
+            box.setMarginBottom(convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, box.boxWidth));
         }
     }
 
@@ -630,7 +628,17 @@ public class TextArea extends Widget {
                 value *= full * 0.01f;
                 break;
         }
+        if(value >= Short.MAX_VALUE) {
+            return Short.MAX_VALUE;
+        }
+        if(value <= Short.MIN_VALUE) {
+            return Short.MIN_VALUE;
+        }
         return Math.round(value);
+    }
+
+    int convertToPX0(Style style, StyleAttribute<Value> attribute, int full) {
+        return Math.max(0, convertToPX(style, attribute, full));
     }
 
     private Font selectFont(Style style) {
@@ -675,7 +683,7 @@ public class TextArea extends Widget {
         final Style style = te.getStyle();
         final Font font = selectFont(style);
         final boolean pre = style.get(StyleAttribute.PREFORMATTED, styleClassResolver);
-        
+
         if(font == null) {
             return;
         }
@@ -699,6 +707,7 @@ public class TextArea extends Widget {
         }
 
         box.resetTextParams(te.isParagraphEnd());
+        box.setMarginBottom(convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, box.boxWidth));
     }
 
     private void layoutText(Box box, TextAreaModel.TextElement te, Font font,
@@ -753,6 +762,8 @@ public class TextArea extends Widget {
                 }
             }
 
+            boolean advancePastFloaters = false;
+
             // if we found no word that fits
             if(end == idx) {
                 // we may need a new line
@@ -768,11 +779,14 @@ public class TextArea extends Widget {
                 while(end < textEnd && isPunctuation(text.charAt(end))) {
                     end++;
                 }
-                box.advancePastFloaters(font.computeTextWidth(text, idx, end));
+                advancePastFloaters = true;
             }
 
             if(idx < end) {
                 LText lt = new LText(te, font, text, idx, end);
+                if(advancePastFloaters) {
+                    box.advancePastFloaters(lt.width, 0, 0);
+                }
                 if(box.textAlignment == TextAreaModel.HAlignment.JUSTIFY && box.getRemaining() < lt.width) {
                     box.nextLine(false);
                 }
@@ -783,6 +797,7 @@ public class TextArea extends Widget {
                 }
 
                 lt.x = box.getXAndAdvance(width);
+                lt.marginTop = (short)box.marginTop;
                 layout.add(lt);
             }
 
@@ -831,6 +846,7 @@ public class TextArea extends Widget {
 
                     LText lt = new LText(te, font, text, idx, end);
                     lt.x = box.getXAndAdvance(lt.width);
+                    lt.marginTop = (short)box.marginTop;
                     layout.add(lt);
                 }
 
@@ -841,8 +857,13 @@ public class TextArea extends Widget {
     }
 
     private void layoutListElement(Box box, TextAreaModel.ListElement le) {
-        Image image = selectImage(le.getStyle(), StyleAttribute.LIST_STYLE_IMAGE);
+        Style style = le.getStyle();
+        Image image = selectImage(style, StyleAttribute.LIST_STYLE_IMAGE);
         if(image != null) {
+            int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
+            box.curY = box.computeTopPadding(marginTop);
+            box.checkFloaters();
+            
             LImage li = new LImage(le, image);
             layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.Display.BLOCK);
             
@@ -875,15 +896,15 @@ public class TextArea extends Widget {
             bgImages.add(bgImage);
         }
 
-        int marginTop = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_TOP, 0));
-        int marginLeft = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_LEFT, box.boxWidth));
-        int marginRight = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
-        int marginBottom = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_BOTTOM, 0));
-        int paddingTop = Math.max(0, convertToPX(style, StyleAttribute.PADDING_TOP, 0));
-        int paddingBottom = Math.max(0, convertToPX(style, StyleAttribute.PADDING_BOTTOM, 0));
+        int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
+        int marginLeft = convertToPX0(style, StyleAttribute.MARGIN_LEFT, box.boxWidth);
+        int marginRight = convertToPX0(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth);
+        int marginBottom = convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, box.boxWidth);
+        int paddingTop = convertToPX0(style, StyleAttribute.PADDING_TOP, box.boxWidth);
+        int paddingBottom = convertToPX0(style, StyleAttribute.PADDING_BOTTOM, box.boxWidth);
 
         int bgX = box.computeLeftPadding(marginLeft);
-        int bgY = box.curY + marginTop;
+        int bgY = box.computeTopPadding(marginTop);
         int bgWidth;
         int bgHeight;
 
@@ -895,13 +916,13 @@ public class TextArea extends Widget {
             bgWidth = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth);
         }
 
-        int paddingLeft = Math.max(0, convertToPX(style, StyleAttribute.PADDING_LEFT, bgWidth));
-        int paddingRight = Math.max(0, convertToPX(style, StyleAttribute.PADDING_RIGHT, bgWidth));
+        int paddingLeft = convertToPX0(style, StyleAttribute.PADDING_LEFT, bgWidth);
+        int paddingRight = convertToPX0(style, StyleAttribute.PADDING_RIGHT, bgWidth);
 
         bgWidth += paddingLeft + paddingRight;
 
         if(floatPosition != TextAreaModel.FloatPosition.NONE) {
-            box.advancePastFloaters(bgWidth);
+            box.advancePastFloaters(bgWidth, marginLeft, marginRight);
             
             bgX = box.computeLeftPadding(marginLeft);
             bgY = Math.max(bgY, box.curY);
@@ -921,20 +942,22 @@ public class TextArea extends Widget {
         blockBox.clearFloater(TextAreaModel.Clear.BOTH);
         bgHeight = blockBox.curY - bgY + paddingBottom;
         bgHeight = Math.max(bgHeight, convertToPX(style, StyleAttribute.HEIGHT, bgHeight));
+        marginBottom = Math.max(marginBottom, blockBox.marginBottomAbs - blockBox.curY);
 
         // sync main box with layout
         box.lineStartIdx = layout.size();
 
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
-            box.curY = bgY + bgHeight + marginBottom;
+            box.curY = bgY + bgHeight;
+            box.setMarginBottom(marginBottom);
         } else {
             LBox dummy = new LBox(be);
-            dummy.marginLeft = marginLeft;
-            dummy.marginRight = marginRight;
+            dummy.marginLeft = (short)marginLeft;
+            dummy.marginRight = (short)marginRight;
             dummy.x = bgX;
             dummy.y = bgY;
             dummy.width = bgWidth;
-            dummy.height = bgHeight;
+            dummy.height = bgHeight + marginBottom;
 
             if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
                 box.objRight.add(dummy);
@@ -974,8 +997,10 @@ public class TextArea extends Widget {
         int lineStartIdx;
         int paddingLeft;
         int paddingRight;
+        int marginTop;
         int marginLeft;
         int marginRight;
+        int marginBottomAbs;
         int lineStartX;
         int lineWidth;
         int fontLineHeight;
@@ -1031,6 +1056,18 @@ public class TextArea extends Widget {
             return right;
         }
 
+        int computePaddingWidth(int marginLeft, int marginRight) {
+            return Math.max(0, computeRightPadding(marginRight) - computeLeftPadding(marginLeft));
+        }
+
+        int computeTopPadding(int marginTop) {
+            return Math.max(marginBottomAbs, curY + marginTop);
+        }
+
+        void setMarginBottom(int marginBottom) {
+            marginBottomAbs = Math.max(marginBottomAbs, curY + marginBottom);
+        }
+        
         int getRemaining() {
             return Math.max(0, lineWidth - curX + lineStartX);
         }
@@ -1084,8 +1121,8 @@ public class TextArea extends Widget {
             }
         }
 
-        void advancePastFloaters(int requiredWidth) {
-            if(lineWidth < requiredWidth) {
+        void advancePastFloaters(int requiredWidth, int marginLeft, int marginRight) {
+            if(computePaddingWidth(marginLeft, marginRight) < requiredWidth) {
                 nextLine(false);
                 do {
                     int targetY = Integer.MAX_VALUE;
@@ -1104,7 +1141,7 @@ public class TextArea extends Widget {
                     }
                     curY = targetY;
                     checkFloaters();
-                } while(lineWidth < requiredWidth);
+                } while(computePaddingWidth(marginLeft, marginRight) < requiredWidth);
             }
         }
 
@@ -1114,11 +1151,14 @@ public class TextArea extends Widget {
                     curY += fontLineHeight;
                     checkFloaters();
                     wasAutoBreak = false;
+                    marginTop = 0;
                     return true;
                 }
                 return false;
             }
             wasAutoBreak = !force;
+            marginTop = 0;
+            
             int lineHeight = 0;
             for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
                 LElement le = layout.get(idx);
@@ -1156,28 +1196,36 @@ public class TextArea extends Widget {
                 break;
             }
 
+            int targetY = curY;
+
             for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
                 LElement le = layout.get(idx);
+                targetY = Math.max(targetY, computeTopPadding(le.marginTop));
                 switch(le.element.getStyle().get(StyleAttribute.VERTICAL_ALIGNMENT, styleClassResolver)) {
                 case BOTTOM:
-                    le.y = curY + lineHeight - le.height;
+                    le.y = lineHeight - le.height;
                     break;
                 case TOP:
-                    le.y = curY;
+                    le.y = 0;
                     break;
                 case MIDDLE:
-                    le.y = curY + (lineHeight - le.height)/2;
+                    le.y = (lineHeight - le.height)/2;
                     break;
                 case FILL:
-                    le.y = curY;
+                    le.y = 0;
                     le.height = lineHeight;
                     break;
                 }
+            }
 
+            for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
+                LElement le = layout.get(idx);
+                le.y += targetY;
                 le.adjustWidget();
             }
+
             lineStartIdx = layout.size();
-            curY += lineHeight;
+            curY = targetY + lineHeight;
             checkFloaters();
             // curX is set by computePadding() inside checkFloaters()
             return true;
@@ -1191,8 +1239,9 @@ public class TextArea extends Widget {
 
         private void removeObjFromList(ArrayList<LBox> list) {
             for(int i=list.size() ; i-->0 ;) {
-                LElement e = list.get(i);
+                LBox e = list.get(i);
                 if(e.y + e.height <= curY) {
+                    // can't update marginBottomAbs here - results in layout error for text
                     list.remove(i);
                 }
             }
@@ -1204,8 +1253,6 @@ public class TextArea extends Widget {
                     textAlignment = TextAreaModel.HAlignment.LEFT;
                 }
                 nextLine(false);
-                curY += fontLineHeight;
-                checkFloaters();
                 inParagraph = false;
             }
             
@@ -1225,17 +1272,19 @@ public class TextArea extends Widget {
                 inParagraph = true;
             }
 
+            Style style = te.getStyle();
+
             if(te.isParagraphStart() || (!inParagraph && isAtStartOfLine())) {
-                int remaining = getRemaining();
-                Style style = te.getStyle();
-                marginLeft = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_LEFT, remaining));
-                marginRight = Math.max(0, convertToPX(style, StyleAttribute.MARGIN_RIGHT, remaining));
-                paddingLeft = Math.max(0, convertToPX(style, StyleAttribute.PADDING_LEFT, remaining));
-                paddingRight = Math.max(0, convertToPX(style, StyleAttribute.PADDING_RIGHT, remaining));
+                marginLeft = convertToPX0(style, StyleAttribute.MARGIN_LEFT, boxWidth);
+                marginRight = convertToPX0(style, StyleAttribute.MARGIN_RIGHT, boxWidth);
+                paddingLeft = convertToPX0(style, StyleAttribute.PADDING_LEFT, boxWidth);
+                paddingRight = convertToPX0(style, StyleAttribute.PADDING_RIGHT, boxWidth);
                 textAlignment = style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver);
                 computePadding();
-                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, remaining));
+                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, boxWidth));
             }
+
+            marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, boxWidth);
         }
     }
 
@@ -1245,6 +1294,7 @@ public class TextArea extends Widget {
         int y;
         int width;
         int height;
+        short marginTop;
 
         public LElement(TextAreaModel.Element element) {
             this.element = element;
@@ -1317,8 +1367,9 @@ public class TextArea extends Widget {
     }
 
     static class LBox extends LElement {
-        int marginLeft;
-        int marginRight;
+        short marginLeft;
+        short marginRight;
+        short marginBottom;
 
         public LBox(Element element) {
             super(element);

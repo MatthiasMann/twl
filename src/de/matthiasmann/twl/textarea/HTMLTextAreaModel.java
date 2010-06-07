@@ -98,6 +98,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private boolean paragraphEnd;
     private String href;
 
+    private static final Style DEFAULTS_P_END = new Style().with(StyleAttribute.MARGIN_BOTTOM, new Value(1.0f, Value.Unit.EM));
+
     /**
      * Creates a new {@code HTMLTextAreaModel} without content.
      */
@@ -384,11 +386,15 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private void finishText() {
         if(sb.length() > 0 || paragraphStart || paragraphEnd) {
+            Style style = getStyle();
+            if(paragraphEnd) {
+                style = style.withAlternateDefaults(DEFAULTS_P_END);
+            }
             TextElement e;
             if(href != null) {
-                e = new LinkElement(getStyle(), sb.toString(), paragraphStart, paragraphEnd, href);
+                e = new LinkElement(style, sb.toString(), paragraphStart, paragraphEnd, href);
             } else {
-                e = new TextElement(getStyle(), sb.toString(), paragraphStart, paragraphEnd);
+                e = new TextElement(style, sb.toString(), paragraphStart, paragraphEnd);
             }
             addElement(e);
             sb.setLength(0);
