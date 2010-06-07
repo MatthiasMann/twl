@@ -91,7 +91,6 @@ public class BitmapFont {
     private final int lineHeight;
     private final int baseLine;
     private final int spaceWidth;
-    private final int em;
     private final int ex;
 
     public BitmapFont(LWJGLRenderer renderer, XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
@@ -191,9 +190,6 @@ public class BitmapFont {
         Glyph g = getGlyph(' ');
         spaceWidth = (g != null) ? g.xadvance + g.width : 1;
 
-        Glyph gM = getGlyph('M');
-        em = (gM != null) ? gM.width : 1;
-
         Glyph gx = getGlyph('x');
         ex = (gx != null) ? gx.height : 1;
     }
@@ -226,7 +222,7 @@ public class BitmapFont {
     }
 
     public int getEM() {
-        return em;
+        return lineHeight;
     }
 
     public int getEX() {
