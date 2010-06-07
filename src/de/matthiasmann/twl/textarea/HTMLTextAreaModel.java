@@ -29,10 +29,8 @@
  */
 package de.matthiasmann.twl.textarea;
 
-import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.model.HasCallback;
 import de.matthiasmann.twl.utils.TextUtil;
-import de.matthiasmann.twl.renderer.Image;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -92,7 +90,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private boolean needToParse;
 
     private final ArrayList<Style> styleStack;
-    private final ArrayList<Container> containerStack;
+    private final ArrayList<ContainerElement> containerStack;
     private final StringBuilder sb;
     private final int[] startLength;
 
@@ -106,7 +104,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
         this.styleStack = new ArrayList<Style>();
-        this.containerStack = new ArrayList<Container>();
+        this.containerStack = new ArrayList<ContainerElement>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
     }
@@ -207,7 +205,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private void addElement(Element e) {
         int numOpenContainer = containerStack.size();
         if(numOpenContainer > 0) {
-            containerStack.get(numOpenContainer-1).elements.add(e);
+            containerStack.get(numOpenContainer-1).add(e);
         } else {
             elements.add(e);
         }
@@ -245,7 +243,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         pushStyle(xpp);
                         String src = TextUtil.notNull(xpp.getAttributeValue(null, "src"));
                         String alt = xpp.getAttributeValue(null, "alt");
-                        addElement(new ImageElementImpl(getStyle(), src, alt));
+                        addElement(new ImageElement(getStyle(), src, alt));
                     }
                     if("br".equals(name)) {
                         sb.append("\n");
@@ -260,12 +258,12 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         pushStyle(xpp);
                         String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
                         String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
-                        addElement(new WidgetElementImpl(getStyle(), btnName, btnParam));
+                        addElement(new WidgetElement(getStyle(), btnName, btnParam));
                     }
                     if("li".equals(name)) {
                         finishText();
                         pushStyle(xpp);
-                        ListElementImpl lei = new ListElementImpl(getStyle());
+                        ListElement lei = new ListElement(getStyle());
                         addElement(lei);
                         containerStack.add(lei);
                         paragraphStart = true;
@@ -277,7 +275,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     if("div".equals(name)) {
                         finishText();
                         pushStyle(xpp);
-                        BlockElementImpl bei = new BlockElementImpl(getStyle());
+                        BlockElement bei = new BlockElement(getStyle());
                         addElement(bei);
                         containerStack.add(bei);
                         pushStyle(null);
@@ -386,11 +384,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private void finishText() {
         if(sb.length() > 0 || paragraphStart || paragraphEnd) {
-            TextElementImpl e;
+            TextElement e;
             if(href != null) {
-                e = new LinkElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd, href);
+                e = new LinkElement(getStyle(), sb.toString(), paragraphStart, paragraphEnd, href);
             } else {
-                e = new TextElementImpl(getStyle(), sb.toString(), paragraphStart, paragraphEnd);
+                e = new TextElement(getStyle(), sb.toString(), paragraphStart, paragraphEnd);
             }
             addElement(e);
             sb.setLength(0);
@@ -460,119 +458,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
         @Override
         public void close() {
-        }
-    }
-
-    static class ElementImpl implements Element {
-        final Style style;
-
-        ElementImpl(Style style) {
-            this.style = style;
-        }
-
-        public Style getStyle() {
-            return style;
-        }
-    }
-
-    static class TextElementImpl extends ElementImpl implements TextElement {
-        private final String text;
-        private final boolean isParagraphStart;
-        private final boolean isParagraphEnd;
-
-        TextElementImpl(Style style, String text, boolean isParagraphStart, boolean isParagraphEnd) {
-            super(style);
-            this.text = text;
-            this.isParagraphStart = isParagraphStart;
-            this.isParagraphEnd = isParagraphEnd;
-        }
-
-        public String getText() {
-            return text;
-        }
-
-        public boolean isParagraphStart() {
-            return isParagraphStart;
-        }
-
-        public boolean isParagraphEnd() {
-            return isParagraphEnd;
-        }
-    }
-
-    static class LinkElementImpl extends TextElementImpl implements LinkElement {
-        private final String href;
-
-        public LinkElementImpl(Style style, String text, boolean isParagraphStart, boolean isParagraphEnd, String href) {
-            super(style, text, isParagraphStart, isParagraphEnd);
-            this.href = href;
-        }
-
-        public String getHREF() {
-            return href;
-        }
-    }
-
-    static class ImageElementImpl extends ElementImpl implements ImageElement {
-        private final String imageSrc;
-        private final String toolTip;
-
-        public ImageElementImpl(Style style, String imageSrc, String toolTip) {
-            super(style);
-            this.imageSrc = imageSrc;
-            this.toolTip = toolTip;
-        }
-
-        public Image getImage(ParameterMap style) {
-            return style.getImage(imageSrc);
-        }
-
-        public String getToolTip() {
-            return toolTip;
-        }
-    }
-
-    static class WidgetElementImpl extends ElementImpl implements WidgetElement {
-        private final String widgetName;
-        private final String widgetParam;
-
-        WidgetElementImpl(Style style, String widgetName, String widgetParam) {
-            super(style);
-            this.widgetName = widgetName;
-            this.widgetParam = widgetParam;
-        }
-
-        public String getWidgetName() {
-            return widgetName;
-        }
-
-        public String getWidgetParam() {
-            return widgetParam;
-        }
-    }
-
-    static class Container extends ElementImpl {
-        final ArrayList<Element> elements;
-
-        public Container(Style style) {
-            super(style);
-            this.elements = new ArrayList<Element>();
-        }
-
-        public Iterator<Element> iterator() {
-            return elements.iterator();
-        }
-    }
-
-    static class ListElementImpl extends Container implements ListElement {
-        public ListElementImpl(Style style) {
-            super(style);
-        }
-    }
-
-    static class BlockElementImpl extends Container implements BlockElement {
-        public BlockElementImpl(Style style) {
-            super(style);
         }
     }
 }

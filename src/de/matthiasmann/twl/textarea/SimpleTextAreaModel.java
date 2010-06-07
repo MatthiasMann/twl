@@ -63,7 +63,7 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
         if(preformatted) {
             style = style.with(StyleAttribute.PREFORMATTED, Boolean.TRUE);
         }
-        element = new HTMLTextAreaModel.TextElementImpl(style, text, true, true);
+        element = new TextElement(style, text, true, true);
         doCallback();
     }
 

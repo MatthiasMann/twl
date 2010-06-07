@@ -65,6 +65,10 @@ public class TextArea extends Widget {
         public Widget resolveWidget(String name, String param);
     }
 
+    public interface ImageResolver {
+        public Image resolveImage(String name);
+    }
+
     public interface Callback {
         /**
          * Called when a link has been clicked
@@ -77,6 +81,8 @@ public class TextArea extends Widget {
     
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
+    private final HashMap<String, Image> userImages;
+    private final ArrayList<ImageResolver> imageResolvers;
 
     StyleClassResolver styleClassResolver;
     private final Runnable modelCB;
@@ -102,6 +108,8 @@ public class TextArea extends Widget {
     public TextArea() {
         this.widgets = new HashMap<String, Widget>();
         this.widgetResolvers = new HashMap<String, WidgetResolver>();
+        this.userImages = new HashMap<String, Image>();
+        this.imageResolvers = new ArrayList<ImageResolver>();
         this.layout = new ArrayList<LElement>();
         this.bgImages = new ArrayList<LImage>();
         
@@ -186,6 +194,30 @@ public class TextArea extends Widget {
         widgets.clear();
         super.removeAllChildren();
         forceRelayout();
+    }
+
+    public void registerImage(String name, Image image) {
+        if(name == null) {
+            throw new NullPointerException("name");
+        }
+        userImages.put(name, image);
+    }
+
+    public void registerImageResolver(ImageResolver resolver) {
+        if(resolver == null) {
+            throw new NullPointerException("resolver");
+        }
+        if(!imageResolvers.contains(resolver)) {
+            imageResolvers.add(resolver);
+        }
+    }
+
+    public void unregisterImage(String name) {
+        userImages.remove(name);
+    }
+
+    public void unregisterImageResolver(ImageResolver imageResolver) {
+        imageResolvers.remove(imageResolver);
     }
 
     public void addCallback(Callback cb) {
@@ -455,10 +487,7 @@ public class TextArea extends Widget {
     }
     
     private void layoutImageElement(Box box, TextAreaModel.ImageElement ie) {
-        if(images == null) {
-            return;
-        }
-        final Image image = ie.getImage(images);
+        Image image = selectImage(ie.getImageName());
         if(image == null) {
             return;
         }
@@ -617,11 +646,28 @@ public class TextArea extends Widget {
 
     private Image selectImage(Style style, StyleAttribute<String> element) {
         String imageName = style.get(element, styleClassResolver);
-        if(imageName != null && images != null) {
-            return images.getImage(imageName);
+        if(imageName != null) {
+            return selectImage(imageName);
         } else {
             return null;
         }
+    }
+
+    private Image selectImage(String name) {
+        Image image = userImages.get(name);
+        if(image != null) {
+            return image;
+        }
+        for(int i=0 ; i<imageResolvers.size() ; i++) {
+            image = imageResolvers.get(i).resolveImage(name);
+            if(image != null) {
+                return image;
+            }
+        }
+        if(images != null) {
+            return images.getImage(name);
+        }
+        return null;
     }
 
     private void layoutTextElement(Box box, TextAreaModel.TextElement te) {

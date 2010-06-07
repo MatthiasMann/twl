@@ -29,9 +29,8 @@
  */
 package de.matthiasmann.twl.textarea;
 
-import de.matthiasmann.twl.ParameterMap;
-import de.matthiasmann.twl.renderer.Image;
-import de.matthiasmann.twl.textarea.Style;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * Data model for the TextArea widget.
@@ -72,20 +71,45 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         RIGHT
     }
     
-    public interface Element {
+    public abstract class Element {
+        private final Style style;
+
+        public Element(Style style) {
+            this.style = style;
+        }
+
         /**
          * Returns the style associated with this element
          * @return the style associated with this element. Must not be null.
          */
-        public Style getStyle();
+        public Style getStyle() {
+            return style;
+        }
     }
 
-    public interface TextElement extends Element {
+    public class TextElement extends Element {
+        private final String text;
+        private final boolean paragraphStart;
+        private final boolean paragraphEnd;
+
+        public TextElement(Style style, String text, boolean paragraphStart, boolean paragraphEnd) {
+            super(style);
+            this.text = text;
+            this.paragraphStart = paragraphStart;
+            this.paragraphEnd = paragraphEnd;
+        }
+
+        public TextElement(Style style, String text) {
+            this(style, text, false, false);
+        }
+
         /**
          * Returns ths text.
          * @return the text.
          */
-        public String getText();
+        public String getText() {
+            return text;
+        }
 
         /**
          * Returns true if this element starts a new paragraph.
@@ -94,7 +118,9 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * 
          * @return true if this element starts a new paragraph.
          */
-        public boolean isParagraphStart();
+        public boolean isParagraphStart() {
+            return paragraphStart;
+        }
 
         /**
          * Returns true if this element ends the current paragraph.
@@ -103,41 +129,109 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
          * 
          * @return true if this element ends the current paragraph.
          */
-        public boolean isParagraphEnd();
+        public boolean isParagraphEnd() {
+            return paragraphEnd;
+        }
     }
 
-    public interface LinkElement extends TextElement {
+    public class LinkElement extends TextElement {
+        private final String href;
+
+        public LinkElement(Style style, String text, boolean paragraphStart, boolean paragraphEnd, String href) {
+            super(style, text, paragraphStart, paragraphEnd);
+            this.href = href;
+        }
+
+        public LinkElement(Style style, String text, String href) {
+            this(style, text, false, false, href);
+        }
+
         /**
          * Returns the href of the link.
          * @return the href of the link.
          */
-        public String getHREF();
+        public String getHREF() {
+            return href;
+        }
     }
 
-    public interface ImageElement extends Element {
+    public class ImageElement extends Element {
+        private final String imageName;
+        private final String tooltip;
+
+        public ImageElement(Style style, String imageName, String tooltip) {
+            super(style);
+            this.imageName = imageName;
+            this.tooltip = tooltip;
+        }
+
+        public ImageElement(Style style, String imageName) {
+            this(style, imageName, null);
+        }
+
         /**
-         * Returns the image for this image element.
-         * @param style a ParameterMap which can be used to lookup images.
-         * @return the image object.
+         * Returns the image name for this image element.
+         * @return the image name for this image element.
          */
-        public Image getImage(ParameterMap style);
+        public String getImageName() {
+            return imageName;
+        }
 
         /**
          * Returns the tooltip or null for this image.
          * @return the tooltip or null for this image.
          */
-        public String getToolTip();
+        public String getToolTip() {
+            return tooltip;
+        }
     }
 
-    public interface WidgetElement extends Element {
-        public String getWidgetName();
-        public String getWidgetParam();
+    public class WidgetElement extends Element {
+        private final String widgetName;
+        private final String widgetParam;
+
+        public WidgetElement(Style style, String widgetName, String widgetParam) {
+            super(style);
+            this.widgetName = widgetName;
+            this.widgetParam = widgetParam;
+        }
+
+        public String getWidgetName() {
+            return widgetName;
+        }
+
+        public String getWidgetParam() {
+            return widgetParam;
+        }
     }
 
-    public interface ListElement extends Element, Iterable<Element> {
+    public abstract class ContainerElement extends Element implements Iterable<Element> {
+        protected final ArrayList<Element> children;
+
+        public ContainerElement(Style style) {
+            super(style);
+            this.children = new ArrayList<Element>();
+        }
+
+        public Iterator<Element> iterator() {
+            return children.iterator();
+        }
+
+        public void add(Element element) {
+            this.children.add(element);
+        }
     }
 
-    public interface BlockElement extends Element, Iterable<Element> {
+    public class ListElement extends ContainerElement {
+        public ListElement(Style style) {
+            super(style);
+        }
+    }
+
+    public class BlockElement extends ContainerElement {
+        public BlockElement(Style style) {
+            super(style);
+        }
     }
 
     /**
