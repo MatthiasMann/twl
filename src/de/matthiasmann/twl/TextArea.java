@@ -94,11 +94,10 @@ public class TextArea extends Widget {
     private MouseCursor mouseCursorNormal;
     private MouseCursor mouseCursorLink;
 
-    final ArrayList<LElement> layout;
-    private final ArrayList<LImage> bgImages;
+    final LClip layoutRoot;
+    final ArrayList<LImage> allBGImages;
     private boolean inLayoutCode;
-    private int lastWidth;
-    private int lastHeight;
+    private boolean forceRelayout;
 
     private int lastMouseX;
     private int lastMouseY;
@@ -110,8 +109,8 @@ public class TextArea extends Widget {
         this.widgetResolvers = new HashMap<String, WidgetResolver>();
         this.userImages = new HashMap<String, Image>();
         this.imageResolvers = new ArrayList<ImageResolver>();
-        this.layout = new ArrayList<LElement>();
-        this.bgImages = new ArrayList<LImage>();
+        this.layoutRoot = new LClip(null);
+        this.allBGImages = new ArrayList<LImage>();
         
         this.modelCB = new Runnable() {
             public void run() {
@@ -267,7 +266,7 @@ public class TextArea extends Widget {
     @Override
     public int getPreferredInnerHeight() {
         validateLayout();
-        return lastHeight;
+        return layoutRoot.height;
     }
     
     @Override
@@ -303,12 +302,13 @@ public class TextArea extends Widget {
         //System.out.println(this+" minWidth="+getMinWidth()+" width="+getWidth()+" maxWidth="+getMaxWidth());
         
         // only recompute the layout when it has changed
-        if(lastWidth != targetWidth) {
-            this.lastWidth = targetWidth;
+        if(layoutRoot.width != targetWidth || forceRelayout) {
+            layoutRoot.width = targetWidth;
             this.inLayoutCode = true;
+            this.forceRelayout = false;
 
             clearLayout();
-            Box box = new Box(0, 0, targetWidth);
+            Box box = new Box(layoutRoot, 0, 0, targetWidth);
 
             try {
                 if(model != null) {
@@ -319,14 +319,17 @@ public class TextArea extends Widget {
                     
                     // finish floaters
                     box.clearFloater(Clear.BOTH);
+
+                    // set position & size of all widget elements
+                    layoutRoot.adjustWidget(getInnerX(), getInnerY());
                 }
                 updateMouseHover();
             } finally {
                 inLayoutCode = false;
             }
 
-            if(lastHeight != box.curY) {
-                lastHeight = box.curY;
+            if(layoutRoot.height != box.curY) {
+                layoutRoot.height = box.curY;
                 // call outside of inLayoutCode range
                 invalidateLayout();
             }
@@ -335,22 +338,16 @@ public class TextArea extends Widget {
 
     @Override
     protected void paintWidget(GUI gui) {
-        final ArrayList<LElement> ll = layout;
-        final ArrayList<LImage> bi = bgImages;
+        final ArrayList<LImage> bi = allBGImages;
         final int innerX = getInnerX();
         final int innerY = getInnerY();
         final AnimationState as = getAnimationState();
-        final LElement hoverElement = curLElementUnderMouse;
 
         for(int i=0,n=bi.size() ; i<n ; i++) {
             bi.get(i).draw(innerX, innerY, as);
         }
 
-        for(int i=0,n=ll.size() ; i<n ; i++) {
-            LElement le = ll.get(i);
-            as.setAnimationState(STATE_HOVER, hoverElement == le);
-            le.draw(innerX, innerY, as);
-        }
+        layoutRoot.draw(innerX, innerY, as);
     }
 
     @Override
@@ -425,19 +422,10 @@ public class TextArea extends Widget {
         return super.getTooltipContentAt(mouseX, mouseY);
     }
 
-    private LElement findElement(int x, int y) {
-        for(LElement le : layout) {
-            if(le.isInside(x, y)) {
-                return le;
-            }
-        }
-        return null;
-    }
-
     private void updateMouseHover() {
         LElement le = null;
         if(lastMouseInside) {
-            le = findElement(lastMouseX - getInnerX(), lastMouseY - getInnerY());
+            le = layoutRoot.find(lastMouseX - getInnerX(), lastMouseY - getInnerY());
         }
         if(curLElementUnderMouse != le) {
             curLElementUnderMouse = le;
@@ -452,16 +440,13 @@ public class TextArea extends Widget {
     }
 
     void forceRelayout() {
-        lastWidth = -1;
+        forceRelayout = true;
         invalidateLayout();
     }
     
     private void clearLayout() {
-        for(int i=0,n=layout.size() ; i<n ; i++) {
-            layout.get(i).destroy();
-        }
-        layout.clear();
-        bgImages.clear();
+        layoutRoot.destroy();
+        allBGImages.clear();
         super.removeAllChildren();
     }
 
@@ -588,13 +573,12 @@ public class TextArea extends Widget {
             }
         }
 
-        layout.add(le);
+        box.layout.add(le);
 
         if(leftRight) {
-            assert box.lineStartIdx == layout.size() - 1;
+            assert box.lineStartIdx == box.layout.size() - 1;
             box.lineStartIdx++;
             le.y = box.computeTopPadding(le.marginTop);
-            le.adjustWidget();
             box.computePadding();
         } else {
             if(display != TextAreaModel.Display.INLINE) {
@@ -726,7 +710,7 @@ public class TextArea extends Widget {
 
         // check if we skipped white spaces and the previous element in this
         // row was not a text cell
-        if(textStart > idx && box.prevOnLineNotText()) {
+        if(textStart > idx && box.prevOnLineEndsNotWithSpace()) {
             box.curX += font.getSpaceWidth();
         }
 
@@ -798,7 +782,7 @@ public class TextArea extends Widget {
 
                 lt.x = box.getXAndAdvance(width);
                 lt.marginTop = (short)box.marginTop;
-                layout.add(lt);
+                box.layout.add(lt);
             }
 
             // find the start of the next word
@@ -847,7 +831,7 @@ public class TextArea extends Widget {
                     LText lt = new LText(te, font, text, idx, end);
                     lt.x = box.getXAndAdvance(lt.width);
                     lt.marginTop = (short)box.marginTop;
-                    layout.add(lt);
+                    box.layout.add(lt);
                 }
 
                 idx = end;
@@ -893,7 +877,7 @@ public class TextArea extends Widget {
         Image image = selectImage(style, StyleAttribute.BACKGROUND_IMAGE);
         if(image != null) {
             bgImage = new LImage(be, image);
-            bgImages.add(bgImage);
+            box.clip.bgImages.add(bgImage);
         }
 
         int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
@@ -935,17 +919,25 @@ public class TextArea extends Widget {
             bgX = box.computeRightPadding(marginRight) - bgWidth;
         }
 
-        Box blockBox = new Box(bgY + paddingTop, bgX + paddingLeft,
+        LClip clip = new LClip(be);
+        box.layout.add(clip);
+        
+        Box blockBox = new Box(clip, paddingTop, paddingLeft,
                 Math.max(0, bgWidth - paddingLeft - paddingRight));
         layoutElements(blockBox, be);
         blockBox.nextLine(false);
         blockBox.clearFloater(TextAreaModel.Clear.BOTH);
-        bgHeight = blockBox.curY - bgY + paddingBottom;
+        bgHeight = blockBox.curY + paddingBottom;
         bgHeight = Math.max(bgHeight, convertToPX(style, StyleAttribute.HEIGHT, bgHeight));
         marginBottom = Math.max(marginBottom, blockBox.marginBottomAbs - blockBox.curY);
 
+        clip.x = bgX;
+        clip.y = bgY;
+        clip.width = bgWidth;
+        clip.height = bgHeight;
+        
         // sync main box with layout
-        box.lineStartIdx = layout.size();
+        box.lineStartIdx = box.layout.size();
 
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
             box.curY = bgY + bgHeight;
@@ -988,6 +980,8 @@ public class TextArea extends Widget {
     }
 
     class Box {
+        final LClip clip;
+        final ArrayList<LElement> layout;
         final ArrayList<LBox> objLeft = new ArrayList<LBox>();
         final ArrayList<LBox> objRight = new ArrayList<LBox>();
         final int boxLeft;
@@ -1008,7 +1002,9 @@ public class TextArea extends Widget {
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
 
-        public Box(int boxTop, int boxLeft, int boxWidth) {
+        public Box(LClip clip, int boxTop, int boxLeft, int boxWidth) {
+            this.clip = clip;
+            this.layout = clip.layout;
             this.boxLeft = boxLeft;
             this.boxWidth = boxWidth;
             this.curX = boxLeft;
@@ -1082,9 +1078,17 @@ public class TextArea extends Widget {
             return lineStartIdx == layout.size();
         }
 
-        boolean prevOnLineNotText() {
+        boolean prevOnLineEndsNotWithSpace() {
             int layoutSize = layout.size();
-            return lineStartIdx < layoutSize && !(layout.get(layoutSize-1) instanceof LText);
+            if(lineStartIdx < layoutSize) {
+                LElement le = layout.get(layoutSize-1);
+                if(le instanceof LText) {
+                    LText lt = (LText)le;
+                    return !isSkip(lt.text.charAt(lt.end-1));
+                }
+                return true;
+            }
+            return false;
         }
 
         void checkFloaters() {
@@ -1221,7 +1225,6 @@ public class TextArea extends Widget {
             for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
                 LElement le = layout.get(idx);
                 le.y += targetY;
-                le.adjustWidget();
             }
 
             lineStartIdx = layout.size();
@@ -1300,13 +1303,16 @@ public class TextArea extends Widget {
             this.element = element;
         }
 
-        void adjustWidget() {}
+        void adjustWidget(int offX, int offY) {}
         void draw(int offX, int offY, AnimationState as) {}
         void destroy() {}
 
         boolean isInside(int x, int y) {
             return (x >= this.x) && (x < this.x + this.width) &&
                     (y >= this.y) && (y < this.y + this.height);
+        }
+        LElement find(int x, int y) {
+            return this;
         }
     }
 
@@ -1360,8 +1366,8 @@ public class TextArea extends Widget {
         }
 
         @Override
-        void adjustWidget() {
-            widget.setPosition(x + widget.getParent().getInnerX(), y + widget.getParent().getInnerY());
+        void adjustWidget(int offX, int offY) {
+            widget.setPosition(x + offX, y + offY);
             widget.setSize(width, height);
         }
     }
@@ -1389,6 +1395,83 @@ public class TextArea extends Widget {
         @Override
         void draw(int offX, int offY, AnimationState as) {
             img.draw(as, x+offX, y+offY, width, height);
+        }
+    }
+
+    class LClip extends LBox {
+        final ArrayList<LElement> layout;
+        final ArrayList<LImage> bgImages;
+
+        public LClip(Element element) {
+            super(element);
+            this.layout = new ArrayList<LElement>();
+            this.bgImages = new ArrayList<LImage>();
+        }
+
+        @Override
+        void draw(int offX, int offY, AnimationState as) {
+            offX += x;
+            offY += y;
+            GUI gui = getGUI();
+            gui.clipEnter(offX, offY, width, height);
+            try {
+                drawNoClip(offX, offY, as);
+            } finally {
+                gui.clipLeave();
+            }
+        }
+
+        void drawNoClip(int offX, int offY, AnimationState as) {
+            final ArrayList<LElement> ll = layout;
+            final TextAreaModel.Element hoverElement;
+            if(curLElementUnderMouse != null) {
+                hoverElement = curLElementUnderMouse.element;
+            } else {
+                hoverElement = null;
+            }
+            for(int i=0,n=ll.size() ; i<n ; i++) {
+                LElement le = ll.get(i);
+                as.setAnimationState(STATE_HOVER, hoverElement == le.element);
+                le.draw(offX, offY, as);
+            }
+        }
+
+        @Override
+        void adjustWidget(int offX, int offY) {
+            offX += x;
+            offY += y;
+            for(int i=0,n=layout.size() ; i<n ; i++) {
+                layout.get(i).adjustWidget(offX, offY);
+            }
+            offX -= getInnerX();
+            offY -= getInnerY();
+            for(int i=0,n=bgImages.size() ; i<n ; i++) {
+                LImage img = bgImages.get(i);
+                img.x += offX;
+                img.y += offY;
+                allBGImages.add(img);
+            }
+        }
+
+        @Override
+        void destroy() {
+            for(int i=0,n=layout.size() ; i<n ; i++) {
+                layout.get(i).destroy();
+            }
+            layout.clear();
+            bgImages.clear();
+        }
+
+        @Override
+        LElement find(int x, int y) {
+            x -= this.x;
+            y -= this.y;
+            for(LElement le : layout) {
+                if(le.isInside(x, y)) {
+                    return le.find(x, y);
+                }
+            }
+            return null;
         }
     }
 
