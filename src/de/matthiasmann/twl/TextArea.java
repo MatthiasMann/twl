@@ -769,7 +769,7 @@ public class TextArea extends Widget {
             if(idx < end) {
                 LText lt = new LText(te, font, text, idx, end);
                 if(advancePastFloaters) {
-                    box.advancePastFloaters(lt.width, 0, 0);
+                    box.advancePastFloaters(lt.width, box.marginLeft, box.marginRight);
                 }
                 if(box.textAlignment == TextAreaModel.HAlignment.JUSTIFY && box.getRemaining() < lt.width) {
                     box.nextLine(false);
@@ -967,15 +967,15 @@ public class TextArea extends Widget {
         }
     }
 
-    private boolean isSkip(char ch) {
+    static boolean isSkip(char ch) {
         return Character.isWhitespace(ch);
     }
 
-    private boolean isPunctuation(char ch) {
+    static boolean isPunctuation(char ch) {
         return ":;,.-!?".indexOf(ch) >= 0;
     }
 
-    private boolean isBreak(char ch) {
+    static boolean isBreak(char ch) {
         return Character.isWhitespace(ch) || isPunctuation(ch);
     }
 
