@@ -234,6 +234,83 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         }
     }
 
+    public class TableCellElement extends ContainerElement {
+        private final int colspan;
+
+        public TableCellElement(Style style) {
+            this(style, 1, 1);
+        }
+
+        public TableCellElement(Style style, int colspan, int rowspan) {
+            super(style);
+            this.colspan = colspan;
+        }
+
+        public int getColspan() {
+            return colspan;
+        }
+    }
+    
+    public class TableElement extends Element {
+        private final int numColumns;
+        private final int numRows;
+        private final int cellSpacing;
+        private final int cellPadding;
+        private final TableCellElement[] cells;
+
+        public TableElement(Style style, int numColumns, int numRows, int cellSpacing, int cellPadding) {
+            super(style);
+            if(numColumns < 0 ) {
+                throw new IllegalArgumentException("numColumns");
+            }
+            if(numRows < 0) {
+                throw new IllegalArgumentException("numRows");
+            }
+
+            this.numColumns = numColumns;
+            this.numRows = numRows;
+            this.cellSpacing = cellSpacing;
+            this.cellPadding = cellPadding;
+            this.cells = new TableCellElement[numRows * numColumns];
+        }
+
+        public int getNumColumns() {
+            return numColumns;
+        }
+
+        public int getNumRows() {
+            return numRows;
+        }
+
+        public int getCellPadding() {
+            return cellPadding;
+        }
+
+        public int getCellSpacing() {
+            return cellSpacing;
+        }
+
+        public TableCellElement getCell(int row, int column) {
+            if(column < 0 || column >= numColumns) {
+                throw new IndexOutOfBoundsException("column");
+            }
+            if(row < 0 || row >= numRows) {
+                throw new IndexOutOfBoundsException("row");
+            }
+            return cells[row * numColumns + column];
+        }
+
+        public void setSell(int row, int column, TableCellElement cell) {
+            if(column < 0 || column >= numColumns) {
+                throw new IndexOutOfBoundsException("column");
+            }
+            if(row < 0 || row >= numRows) {
+                throw new IndexOutOfBoundsException("row");
+            }
+            cells[row * numColumns + column] = cell;
+        }
+    }
+
     /**
      * Adds a model change callback which is called when the model is modified.
      * @param cb the callback - must not be null.

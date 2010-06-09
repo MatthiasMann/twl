@@ -464,6 +464,8 @@ public class TextArea extends Widget {
                 layoutListElement(box, (TextAreaModel.ListElement)e);
             } else if(e instanceof TextAreaModel.BlockElement) {
                 layoutBlockElement(box, (TextAreaModel.BlockElement)e);
+            } else if(e instanceof TextAreaModel.TableElement) {
+                layoutTableElement(box, (TextAreaModel.TableElement)e);
             } else {
                 Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE,
                         "Unknown Element subclass: " + e.getClass());
@@ -873,12 +875,7 @@ public class TextArea extends Widget {
         final Style style = be.getStyle();
         final FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
 
-        LImage bgImage = null;
-        Image image = selectImage(style, StyleAttribute.BACKGROUND_IMAGE);
-        if(image != null) {
-            bgImage = new LImage(be, image);
-            box.clip.bgImages.add(bgImage);
-        }
+        LImage bgImage = createBGImage(box, be);
 
         int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
         int marginLeft = convertToPX0(style, StyleAttribute.MARGIN_LEFT, box.boxWidth);
@@ -965,6 +962,183 @@ public class TextArea extends Widget {
             bgImage.width = bgWidth;
             bgImage.height = bgHeight;
         }
+    }
+
+    private void layoutTableElement(Box box, TextAreaModel.TableElement te) {
+        final int numColumns = te.getNumColumns();
+        final int numRows = te.getNumRows();
+        final int cellSpacing = te.getCellSpacing();
+        final int cellPadding = te.getCellPadding();
+        final Style tableStyle = te.getStyle();
+
+        if(numColumns == 0 || numRows == 0) {
+            return;
+        }
+
+        box.nextLine(false);
+
+        box.curY = box.computeTopPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_TOP, box.boxWidth));
+        box.checkFloaters();
+        
+        int left = box.computeLeftPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_LEFT, box.boxWidth));
+        int right = box.computeRightPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
+        int tableWidth = Math.min(right - left, convertToPX0(tableStyle, StyleAttribute.WIDTH, box.boxWidth));
+
+        if(tableWidth <= 0) {
+            tableWidth = Math.max(0, right - left);
+        }
+
+        int columnWidth[] = new int[numColumns];
+        int columnSpacing[] = new int[numColumns + 1];
+        int columnWidthSum = 0;
+        int columnsWithoutWidth = 0;
+
+        columnSpacing[0] = Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_LEFT, box.boxWidth));
+        
+        for(int col=0 ; col<numColumns ; col++) {
+            int width = 0;
+            int marginLeft = 0;
+            int marginRight = 0;
+            for(int row=0 ; row<numRows ; row++) {
+                TextAreaModel.TableCellElement cell = te.getCell(row, col);
+                if(cell != null && cell.getColspan() == 1) {
+                    Style cellStyle = cell.getStyle();
+                    width = Math.max(width, convertToPX(cellStyle, StyleAttribute.WIDTH, tableWidth));
+                    marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth));
+                    marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth));
+                }
+            }
+            columnWidth[col] = width;
+            columnSpacing[col  ] = Math.max(columnSpacing[col], marginLeft);
+            columnSpacing[col+1] = Math.max( cellSpacing, marginRight);
+            columnWidthSum += width;
+            if(width <= 0) {
+                columnsWithoutWidth++;
+            }
+        }
+
+        columnSpacing[numColumns] = Math.max(columnSpacing[numColumns],
+                convertToPX0(tableStyle, StyleAttribute.PADDING_RIGHT, box.boxWidth));
+        
+        int columnSpacingSum = 0;
+        for(int spacing : columnSpacing) {
+            columnSpacingSum += spacing;
+        }
+
+        if(columnsWithoutWidth > 0) {
+            int remainingWidth = Math.max(0, tableWidth - columnSpacingSum - columnWidthSum);
+            for(int col=0 ; col<numColumns ; col++) {
+                if(columnWidth[col] <= 0) {
+                    int width = remainingWidth / columnsWithoutWidth;
+                    columnWidth[col] = width;
+                    columnsWithoutWidth--;
+                    remainingWidth -= width;
+                    columnWidthSum += width;
+                }
+            }
+        }
+
+        int availableColumnWidth = Math.max(0, tableWidth - columnSpacingSum);
+        if(availableColumnWidth != columnWidthSum && columnWidthSum > 0) {
+            int available = availableColumnWidth;
+            int toDistribute = columnWidthSum;
+
+            for(int col=0 ; col<numColumns ; col++) {
+                int width = columnWidth[col];
+                int newWidth = (toDistribute > 0) ? width * available / toDistribute : 0;
+                columnWidth[col] = newWidth;
+                available -= newWidth;
+                toDistribute -= width;
+            }
+        }
+
+
+        LImage tableBGImage = createBGImage(box, te);
+        
+        box.textAlignment = TextAreaModel.HAlignment.LEFT;
+        box.curY += Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_TOP, box.boxWidth));
+
+        LImage bgImages[] = new LImage[numColumns];
+
+        for(int row=0 ; row<numRows ; row++) {
+            if(row > 0) {
+                box.curY += cellSpacing;
+            }
+            
+            int x = left;
+            for(int col=0 ; col<numColumns ; col++) {
+                x += columnSpacing[col];
+                TextAreaModel.TableCellElement cell = te.getCell(row, col);
+                int width = columnWidth[col];
+                if(cell != null) {
+                    for(int c=1 ; c<cell.getColspan() ; c++) {
+                        width += columnSpacing[col+c] + columnWidth[col+c];
+                    }
+
+                    Style cellStyle = cell.getStyle();
+
+                    int paddingTop = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_TOP, tableWidth));
+                    int paddingBottom = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_BOTTOM, tableWidth));
+                    int paddingLeft = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_LEFT, tableWidth));
+                    int paddingRight = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_RIGHT, tableWidth));
+
+                    LClip clip = new LClip(cell);
+                    clip.x = x;
+                    clip.y = box.curY;
+                    clip.width = width;
+                    box.layout.add(clip);
+
+                    LImage bgImage = createBGImage(box, cell);
+                    if(bgImage != null) {
+                        bgImage.x = x;
+                        bgImage.width = width;
+                        bgImages[col] = bgImage;
+                    }
+                    
+                    Box cellBox = new Box(clip, paddingTop, paddingLeft,
+                            Math.max(0, width - paddingLeft - paddingRight));
+                    layoutElements(cellBox, cell);
+                    cellBox.nextLine(false);
+                    cellBox.clearFloater(TextAreaModel.Clear.BOTH);
+
+                    clip.height = cellBox.curY + paddingBottom;
+                    clip.height = Math.max(clip.height, convertToPX(cellStyle, StyleAttribute.HEIGHT, clip.height));
+                    
+                    col += Math.max(0, cell.getColspan()-1);
+                }
+                x += width;
+            }
+            box.nextLine(false);
+
+            for(int col=0 ; col<numColumns ; col++) {
+                LImage bgImage = bgImages[col];
+                if(bgImage != null) {
+                    bgImage.height = box.curY - bgImage.y;
+                    bgImages[col] = null;   // clear for next row
+                }
+            }
+        }
+
+        box.curY += Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_TOP, box.boxWidth));
+
+        if(tableBGImage != null) {
+            tableBGImage.height = box.curY - tableBGImage.y;
+            tableBGImage.x = left;
+            tableBGImage.width = tableWidth;
+        }
+        
+        box.setMarginBottom(convertToPX0(tableStyle, StyleAttribute.MARGIN_BOTTOM, box.boxWidth));
+    }
+
+    private LImage createBGImage(Box box, TextAreaModel.Element element) {
+        Image image = selectImage(element.getStyle(), StyleAttribute.BACKGROUND_IMAGE);
+        if(image != null) {
+            LImage bgImage = new LImage(element, image);
+            bgImage.y = box.curY;
+            box.clip.bgImages.add(bgImage);
+            return bgImage;
+        }
+        return null;
     }
 
     static boolean isSkip(char ch) {

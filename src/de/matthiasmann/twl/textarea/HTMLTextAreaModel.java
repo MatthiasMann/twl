@@ -41,6 +41,7 @@ import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
@@ -90,10 +91,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private boolean needToParse;
 
     private final ArrayList<Style> styleStack;
-    private final ArrayList<ContainerElement> containerStack;
     private final StringBuilder sb;
     private final int[] startLength;
 
+    private ContainerElement curContainer;
     private boolean paragraphStart;
     private boolean paragraphEnd;
     private String href;
@@ -106,7 +107,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
         this.styleStack = new ArrayList<Style>();
-        this.containerStack = new ArrayList<ContainerElement>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
     }
@@ -205,9 +205,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     private void addElement(Element e) {
-        int numOpenContainer = containerStack.size();
-        if(numOpenContainer > 0) {
-            containerStack.get(numOpenContainer-1).add(e);
+        if(curContainer != null) {
+            curContainer.add(e);
         } else {
             elements.add(e);
         }
@@ -226,129 +225,174 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
             styleStack.clear();
             styleStack.add(new Style(null, null));
-            containerStack.clear();
+            curContainer = null;
             sb.setLength(0);
-            paragraphStart = false;
-            paragraphEnd = false;
-            href = null;
 
-            int type;
-            while((type=xpp.nextToken()) != XmlPullParser.END_DOCUMENT) {
-                switch(type) {
-                case XmlPullParser.START_TAG: {
-                    String name = xpp.getName();
-                    if("span".equals(name)) {
-                        pushStyle(xpp);
-                    }
-                    if("img".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                        String src = TextUtil.notNull(xpp.getAttributeValue(null, "src"));
-                        String alt = xpp.getAttributeValue(null, "alt");
-                        addElement(new ImageElement(getStyle(), src, alt));
-                    }
-                    if("br".equals(name)) {
-                        sb.append("\n");
-                    }
-                    if("p".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                        paragraphStart = true;
-                    }
-                    if("button".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                        String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
-                        String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
-                        addElement(new WidgetElement(getStyle(), btnName, btnParam));
-                    }
-                    if("li".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                        ListElement lei = new ListElement(getStyle());
-                        addElement(lei);
-                        containerStack.add(lei);
-                        paragraphStart = true;
-                    }
-                    if("ul".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                    }
-                    if("div".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                        BlockElement bei = new BlockElement(getStyle());
-                        addElement(bei);
-                        containerStack.add(bei);
-                        pushStyle(null);
-                    }
-                    if("a".equals(name)) {
-                        finishText();
-                        pushStyle(xpp);
-                        href = xpp.getAttributeValue(null, "href");
-                    }
-                    break;
-                }
-                case XmlPullParser.END_TAG: {
-                    String name = xpp.getName();
-                    if("span".equals(name)) {
-                        popStyle();
-                    }
-                    if("img".equals(name)) {
-                        popStyle();
-                    }
-                    if("p".equals(name)) {
-                        paragraphEnd = true;
-                        finishText();
-                        popStyle();
-                    }
-                    if("button".equals(name)) {
-                        popStyle();
-                    }
-                    if("li".equals(name)) {
-                        paragraphEnd = true;
-                        finishText();
-                        popStyle();
-                        containerStack.remove(containerStack.size()-1);
-                    }
-                    if("ul".equals(name)) {
-                        popStyle();
-                    }
-                    if("div".equals(name)) {
-                        finishText();
-                        popStyle();
-                        popStyle();
-                        containerStack.remove(containerStack.size()-1);
-                    }
-                    if("a".equals(name)) {
-                        finishText();
-                        popStyle();
-                        href = null;
-                    }
-                    break;
-                }
-                case XmlPullParser.TEXT: {
-                    char[] buf = xpp.getTextCharacters(startLength);
-                    if(startLength[1] > 0) {
-                        int pos = sb.length();
-                        sb.append(buf, startLength[0], startLength[1]);
-                        if(!isPre()) {
-                            removeBreaks(pos);
-                        }
-                    }
-                    break;
-                }
-                case XmlPullParser.ENTITY_REF:
-                    sb.append(xpp.getText());
-                    break;
-                }
-            }
+            parseMain(xpp);
             finishText();
         } catch(Exception ex) {
              getLogger().log(Level.SEVERE, "Unable to parse XHTML document", ex);
         }
     }
 
+    private void parseContainer(XmlPullParser xpp, ContainerElement container) throws XmlPullParserException, IOException {
+        ContainerElement prevContainer = curContainer;
+        curContainer = container;
+        pushStyle(null);
+        parseMain(xpp);
+        popStyle();
+        curContainer = prevContainer;
+    }
+
+    private void parseMain(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        paragraphStart = false;
+        paragraphEnd = false;
+        href = null;
+
+        int level = 1;
+        int type;
+        while(level > 0 && (type=xpp.nextToken()) != XmlPullParser.END_DOCUMENT) {
+            switch(type) {
+            case XmlPullParser.START_TAG: {
+                ++level;
+                String name = xpp.getName();
+                if("br".equals(name)) {
+                    sb.append("\n");
+                    break;
+                }
+                finishText();
+                pushStyle(xpp);
+                if("img".equals(name)) {
+                    String src = TextUtil.notNull(xpp.getAttributeValue(null, "src"));
+                    String alt = xpp.getAttributeValue(null, "alt");
+                    addElement(new ImageElement(getStyle(), src, alt));
+                }
+                if("p".equals(name)) {
+                    paragraphStart = true;
+                }
+                if("button".equals(name)) {
+                    String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
+                    String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
+                    addElement(new WidgetElement(getStyle(), btnName, btnParam));
+                }
+                if("li".equals(name)) {
+                    ListElement lei = new ListElement(getStyle());
+                    parseContainer(xpp, lei);
+                    addElement(lei);
+                    paragraphStart = true;
+                    --level;
+                }
+                if("div".equals(name)) {
+                    BlockElement bei = new BlockElement(getStyle());
+                    addElement(bei);
+                    parseContainer(xpp, bei);
+                    --level;
+                }
+                if("a".equals(name)) {
+                    href = xpp.getAttributeValue(null, "href");
+                }
+                if("table".equals(name)) {
+                    parseTable(xpp);
+                    --level;
+                }
+                break;
+            }
+            case XmlPullParser.END_TAG: {
+                --level;
+                String name = xpp.getName();
+                if("br".equals(name)) {
+                    break;
+                }
+                if("p".equals(name)) {
+                    paragraphEnd = true;
+                }
+                if("li".equals(name)) {
+                    paragraphEnd = true;
+                }
+                finishText();
+                popStyle();
+                if("a".equals(name)) {
+                    href = null;
+                }
+                break;
+            }
+            case XmlPullParser.TEXT: {
+                char[] buf = xpp.getTextCharacters(startLength);
+                if(startLength[1] > 0) {
+                    int pos = sb.length();
+                    sb.append(buf, startLength[0], startLength[1]);
+                    if(!isPre()) {
+                        removeBreaks(pos);
+                    }
+                }
+                break;
+            }
+            case XmlPullParser.ENTITY_REF:
+                sb.append(xpp.getText());
+                break;
+            }
+        }
+    }
+
+    private void parseTable(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        ArrayList<TableCellElement> cells = new ArrayList<TableCellElement>();
+        int numColumns = 0;
+        int cellSpacing = parseInt(xpp, "cellspacing", 0);
+        int cellPadding = parseInt(xpp, "cellpadding", 0);
+        Style tableStyle = getStyle();
+
+        for(;;) {
+            switch (xpp.nextTag()) {
+                case XmlPullParser.START_TAG: {
+                    pushStyle(xpp);
+                    String name = xpp.getName();
+                    if("td".equals(name) || "th".equals(name)) {
+                        int colspan = parseInt(xpp, "colspan", 1);
+                        int rowspan = parseInt(xpp, "rowspan", 1);
+                        TableCellElement cell = new TableCellElement(getStyle(), colspan, rowspan);
+                        parseContainer(xpp, cell);
+
+                        cells.add(cell);
+                        for(int col=1 ; col<colspan ; col++) {
+                            cells.add(null);
+                        }
+                    }
+                    break;
+                }
+                case XmlPullParser.END_TAG: {
+                    popStyle();
+                    String name = xpp.getName();
+                    if("tr".equals(name)) {
+                        if(numColumns == 0) {
+                            numColumns = cells.size();
+                        }
+                    }
+                    if("table".equals(name)) {
+                        int numRows = (numColumns > 0) ? (cells.size() + numColumns - 1) / numColumns : 0;
+                        TableElement tableElement = new TableElement(tableStyle, numColumns, numRows, cellSpacing, cellPadding);
+                        if(numColumns > 0) {
+                            for(int i=0 ; i<cells.size() ; i++) {
+                                TableCellElement cell = cells.get(i);
+                                tableElement.setSell(i / numColumns, i % numColumns, cell);
+                            }
+                        }
+                        addElement(tableElement);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private static int parseInt(XmlPullParser xpp, String attribute, int defaultValue) {
+        String value = xpp.getAttributeValue(null, attribute);
+        if(value == null) {
+            return defaultValue;
+        } else {
+            return Integer.parseInt(value);
+        }
+    }
+    
     private boolean isPre() {
         return getStyle().get(StyleAttribute.PREFORMATTED, null);
     }
@@ -358,8 +402,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     private void pushStyle(XmlPullParser xpp) {
-        finishText();
-        
         Style parent = getStyle();
 
         String classRef = (xpp != null) ? xpp.getAttributeValue(null, "class") : null;
@@ -376,11 +418,9 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     private void popStyle() {
-        if(styleStack.size() > 1) {
-            if(getStyle() != styleStack.get(styleStack.size()-2)) {
-                finishText();
-            }
-            styleStack.remove(styleStack.size()-1);
+        int stackSize = styleStack.size();
+        if(stackSize > 1) {
+            styleStack.remove(stackSize-1);
         }
     }
 
