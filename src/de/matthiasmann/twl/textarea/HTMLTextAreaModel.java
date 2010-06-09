@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -218,7 +219,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             xppf.setNamespaceAware(false);
             xppf.setValidating(false);
             XmlPullParser xpp = xppf.newPullParser();
-            xpp.setInput(new CompositeReader("<html>", html, "</html>"));
+            if((html.length() > 5 && html.charAt(0) == '<' && html.charAt(1) == '?') || html.startsWith("<html>")) {
+                xpp.setInput(new StringReader(html));
+            } else {
+                xpp.setInput(new CompositeReader("<html>", html, "</html>"));
+            }
             xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
             xpp.nextTag();
