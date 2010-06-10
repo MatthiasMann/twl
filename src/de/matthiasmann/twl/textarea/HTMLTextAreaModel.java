@@ -337,6 +337,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private void parseTable(XmlPullParser xpp) throws XmlPullParserException, IOException {
         ArrayList<TableCellElement> cells = new ArrayList<TableCellElement>();
+        ArrayList<Style> rowStyles = new ArrayList<Style>();
         int numColumns = 0;
         int cellSpacing = parseInt(xpp, "cellspacing", 0);
         int cellPadding = parseInt(xpp, "cellpadding", 0);
@@ -357,6 +358,9 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                             cells.add(null);
                         }
                     }
+                    if("tr".equals(name)) {
+                        rowStyles.add(getStyle());
+                    }
                     break;
                 }
                 case XmlPullParser.END_TAG: {
@@ -368,12 +372,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         }
                     }
                     if("table".equals(name)) {
-                        int numRows = (numColumns > 0) ? (cells.size() + numColumns - 1) / numColumns : 0;
-                        TableElement tableElement = new TableElement(tableStyle, numColumns, numRows, cellSpacing, cellPadding);
-                        if(numColumns > 0) {
-                            for(int i=0 ; i<cells.size() ; i++) {
-                                TableCellElement cell = cells.get(i);
-                                tableElement.setSell(i / numColumns, i % numColumns, cell);
+                        TableElement tableElement = new TableElement(tableStyle,
+                                numColumns, rowStyles.size(), cellSpacing, cellPadding);
+                        for(int row=0,idx=0 ; row<rowStyles.size() ; row++) {
+                            tableElement.setRowStyle(row, rowStyles.get(row));
+                            for(int col=0 ; col<numColumns && idx<cells.size() ; col++,idx++) {
+                                TableCellElement cell = cells.get(idx);
+                                tableElement.setSell(row, col, cell);
                             }
                         }
                         addElement(tableElement);

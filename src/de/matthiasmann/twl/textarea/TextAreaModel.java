@@ -229,6 +229,7 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         private final int cellSpacing;
         private final int cellPadding;
         private final TableCellElement[] cells;
+        private final Style[] rowStyles;
 
         public TableElement(Style style, int numColumns, int numRows, int cellSpacing, int cellPadding) {
             super(style);
@@ -244,6 +245,7 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
             this.cellSpacing = cellSpacing;
             this.cellPadding = cellPadding;
             this.cells = new TableCellElement[numRows * numColumns];
+            this.rowStyles = new Style[numRows];
         }
 
         public int getNumColumns() {
@@ -272,6 +274,10 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
             return cells[row * numColumns + column];
         }
 
+        public Style getRowStyle(int row) {
+            return rowStyles[row];
+        }
+
         public void setSell(int row, int column, TableCellElement cell) {
             if(column < 0 || column >= numColumns) {
                 throw new IndexOutOfBoundsException("column");
@@ -280,6 +286,10 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
                 throw new IndexOutOfBoundsException("row");
             }
             cells[row * numColumns + column] = cell;
+        }
+
+        public void setRowStyle(int row, Style style) {
+            rowStyles[row] = style;
         }
     }
 

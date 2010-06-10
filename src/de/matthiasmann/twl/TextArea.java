@@ -1140,6 +1140,25 @@ public class TextArea extends Widget {
                 box.curY += cellSpacing;
             }
             
+            LImage rowBGImage = null;
+            Style rowStyle = te.getRowStyle(row);
+            if(rowStyle != null) {
+                int marginTop = convertToPX0(rowStyle, StyleAttribute.MARGIN_TOP, tableWidth);
+                box.curY = box.computeTopPadding(marginTop);
+                
+                Image image = selectImage(rowStyle, StyleAttribute.BACKGROUND_IMAGE);
+                if(image != null) {
+                    rowBGImage = new LImage(te, image);
+                    rowBGImage.y = box.curY;
+                    rowBGImage.x = left;
+                    rowBGImage.width = tableWidth;
+                    box.clip.bgImages.add(rowBGImage);
+                }
+
+                box.curY += convertToPX0(rowStyle, StyleAttribute.PADDING_TOP, tableWidth);
+                box.minLineHeight = convertToPX0(rowStyle, StyleAttribute.HEIGHT, tableWidth);
+            }
+
             int x = left;
             for(int col=0 ; col<numColumns ; col++) {
                 x += columnSpacing[col];
@@ -1191,9 +1210,20 @@ public class TextArea extends Widget {
                     bgImages[col] = null;   // clear for next row
                 }
             }
+
+            if(rowStyle != null) {
+                box.curY += convertToPX0(rowStyle, StyleAttribute.PADDING_BOTTOM, tableWidth);
+                
+                if(rowBGImage != null) {
+                    rowBGImage.height = box.curY - rowBGImage.y;
+                }
+
+                doMarginBottom(box, rowStyle);
+            }
         }
 
         box.curY += Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_TOP, box.boxWidth));
+        box.checkFloaters();
 
         if(tableBGImage != null) {
             tableBGImage.height = box.curY - tableBGImage.y;
@@ -1246,6 +1276,7 @@ public class TextArea extends Widget {
         int lineStartX;
         int lineWidth;
         int fontLineHeight;
+        int minLineHeight;
         boolean inParagraph;
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
@@ -1410,7 +1441,7 @@ public class TextArea extends Widget {
             wasAutoBreak = !force;
             marginTop = 0;
             
-            int lineHeight = 0;
+            int lineHeight = minLineHeight;
             for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
                 LElement le = layout.get(idx);
                 lineHeight = Math.max(lineHeight, le.height);
@@ -1474,6 +1505,7 @@ public class TextArea extends Widget {
                 le.y += targetY;
             }
 
+            minLineHeight = 0;
             lineStartIdx = layout.size();
             curY = targetY + lineHeight;
             checkFloaters();
