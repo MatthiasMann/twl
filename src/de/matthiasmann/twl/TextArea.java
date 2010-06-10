@@ -333,6 +333,10 @@ public class TextArea extends Widget {
             this.inLayoutCode = true;
             this.forceRelayout = false;
 
+            if(styleClassResolver != null) {
+                styleClassResolver.startLayout();
+            }
+            
             clearLayout();
             Box box = new Box(layoutRoot, targetWidth, 0, 0, 0);
 
@@ -352,6 +356,10 @@ public class TextArea extends Widget {
                 updateMouseHover();
             } finally {
                 inLayoutCode = false;
+            }
+
+            if(styleClassResolver != null) {
+                styleClassResolver.layoutFinished();
             }
 
             if(layoutRoot.height != box.curY) {
@@ -1633,7 +1641,9 @@ public class TextArea extends Widget {
             GUI gui = getGUI();
             gui.clipEnter(offX, offY, width, height);
             try {
-                drawNoClip(offX, offY, as);
+                if(!gui.clipEmpty()) {
+                    drawNoClip(offX, offY, as);
+                }
             } finally {
                 gui.clipLeave();
             }

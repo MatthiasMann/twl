@@ -1052,6 +1052,10 @@ public final class GUI extends Widget {
         renderer.setClipRect(rect);
         numClipRects++;
     }
+
+    boolean clipEmpty() {
+        return clipRects[numClipRects-1].isEmpty();
+    }
     
     void clipLeave() {
         numClipRects--;

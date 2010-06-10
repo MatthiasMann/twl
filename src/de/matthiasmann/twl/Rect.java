@@ -122,4 +122,8 @@ public class Rect {
     public Dimension getSize() {
         return new Dimension(getWidth(), getHeight());
     }
+
+    public boolean isEmpty() {
+        return x1 <= x0 || y1 <= y0;
+    }
 }
