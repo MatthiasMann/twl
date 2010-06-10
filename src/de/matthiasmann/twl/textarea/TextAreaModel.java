@@ -89,18 +89,10 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
 
     public class TextElement extends Element {
         private final String text;
-        private final boolean paragraphStart;
-        private final boolean paragraphEnd;
-
-        public TextElement(Style style, String text, boolean paragraphStart, boolean paragraphEnd) {
-            super(style);
-            this.text = text;
-            this.paragraphStart = paragraphStart;
-            this.paragraphEnd = paragraphEnd;
-        }
 
         public TextElement(Style style, String text) {
-            this(style, text, false, false);
+            super(style);
+            this.text = text;
         }
 
         /**
@@ -110,40 +102,14 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         public String getText() {
             return text;
         }
-
-        /**
-         * Returns true if this element starts a new paragraph.
-         *
-         * Causes this element to start on a new line.
-         * 
-         * @return true if this element starts a new paragraph.
-         */
-        public boolean isParagraphStart() {
-            return paragraphStart;
-        }
-
-        /**
-         * Returns true if this element ends the current paragraph.
-         *
-         * A blank line is inserted after this element.
-         * 
-         * @return true if this element ends the current paragraph.
-         */
-        public boolean isParagraphEnd() {
-            return paragraphEnd;
-        }
     }
 
     public class LinkElement extends TextElement {
         private final String href;
 
-        public LinkElement(Style style, String text, boolean paragraphStart, boolean paragraphEnd, String href) {
-            super(style, text, paragraphStart, paragraphEnd);
-            this.href = href;
-        }
-
         public LinkElement(Style style, String text, String href) {
-            this(style, text, false, false, href);
+            super(style, text);
+            this.href = href;
         }
 
         /**
@@ -205,7 +171,7 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         }
     }
 
-    public abstract class ContainerElement extends Element implements Iterable<Element> {
+    public class ContainerElement extends Element implements Iterable<Element> {
         protected final ArrayList<Element> children;
 
         public ContainerElement(Style style) {
@@ -219,6 +185,12 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
 
         public void add(Element element) {
             this.children.add(element);
+        }
+    }
+
+    public class ParagraphElement extends ContainerElement {
+        public ParagraphElement(Style style) {
+            super(style);
         }
     }
 
@@ -238,10 +210,10 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         private final int colspan;
 
         public TableCellElement(Style style) {
-            this(style, 1, 1);
+            this(style, 1);
         }
 
-        public TableCellElement(Style style, int colspan, int rowspan) {
+        public TableCellElement(Style style, int colspan) {
             super(style);
             this.colspan = colspan;
         }

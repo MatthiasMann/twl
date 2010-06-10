@@ -29,45 +29,53 @@
  */
 package de.matthiasmann.twl.textarea;
 
-import de.matthiasmann.twl.model.HasCallback;
-import java.util.Collections;
-import java.util.Iterator;
-
 /**
- * A simple text area model which represents the complete text as a single
- * paragraph without any styles.
  *
  * @author Matthias Mann
  */
-public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
+public class StyleSheetKey {
 
-    private static final Style EMPTY_STYLE = new Style();
+    final String element;
+    final String className;
 
-    private Element element;
-
-    public SimpleTextAreaModel() {
+    public StyleSheetKey(String element, String className) {
+        this.element = element;
+        this.className = className;
     }
 
-    public SimpleTextAreaModel(String text) {
-        setText(text);
-    }
-
-    public void setText(String text) {
-        setText(text, true);
-    }
-
-    public void setText(String text, boolean preformatted) {
-        Style style = EMPTY_STYLE;
-        if(preformatted) {
-            style = style.with(StyleAttribute.PREFORMATTED, Boolean.TRUE);
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof StyleSheetKey) {
+            final StyleSheetKey other = (StyleSheetKey)obj;
+            return ((this.element == null) ? (other.element == null) : this.element.equals(other.element)) &&
+                    ((this.className == null) ? (other.className == null) : this.className.equals(other.className));
         }
-        element = new TextElement(style, text);
-        doCallback();
+        return false;
     }
 
-    public Iterator<Element> iterator() {
-        return ((element != null)
-                ? Collections.<Element>singletonList(element)
-                : Collections.<Element>emptyList()).iterator();
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 53 * hash + (this.element != null ? this.element.hashCode() : 0);
+        hash = 53 * hash + (this.className != null ? this.className.hashCode() : 0);
+        return hash;
+    }
+
+    public boolean matches(StyleSheetKey what) {
+        if(what == null) {
+            return false;
+        }
+        if(this.element != null && !this.element.equals(what.element)) {
+            return false;
+        }
+        if(this.className != null && !this.className.equals(what.className)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public String toString() {
+        return (className != null) ? element+"."+className : element;
     }
 }

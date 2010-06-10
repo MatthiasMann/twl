@@ -41,12 +41,15 @@ import java.util.logging.Logger;
  */
 public class CSSStyle extends Style {
 
+    protected CSSStyle() {
+    }
+
     public CSSStyle(String cssStyle) {
         parseCSS(cssStyle);
     }
 
-    public CSSStyle(Style parent, String classRef, String cssStyle) {
-        super(parent, classRef);
+    public CSSStyle(Style parent, StyleSheetKey styleSheetKey, String cssStyle) {
+        super(parent, styleSheetKey);
         parseCSS(cssStyle);
     }
 
@@ -63,7 +66,7 @@ public class CSSStyle extends Style {
         }
     }
 
-    private void parseCSSAttribute(String key, String value) {
+    protected void parseCSSAttribute(String key, String value) {
         if(key.startsWith("margin")) {
             parseBox(key.substring(6), value, StyleAttribute.MARGIN);
             return;

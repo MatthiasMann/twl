@@ -33,8 +33,11 @@ package de.matthiasmann.twl.textarea;
  *
  * @author Matthias Mann
  */
-public interface StyleClassResolver {
+public interface StyleSheetResolver {
 
-    public Style resolve(String classRef);
-    
+    public void startLayout();
+
+    public Style resolve(Style style);
+
+    public void layoutFinished();
 }

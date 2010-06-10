@@ -40,9 +40,8 @@ import java.util.Map;
 public class Style {
 
     private final Style parent;
-    private final String classRef;
+    private final StyleSheetKey styleSheetKey;
     private final Object[] values;
-    private final Style altDefaults;
 
     /**
      * Creates an empty Style without a parent, class reference and no attributes
@@ -55,13 +54,12 @@ public class Style {
      * Creates an Style with the given parent and class reference.
      *
      * @param parent the parent style. Can be null.
-     * @param classRef the class reference. Can be null.
+     * @param styleSheetKey key for style sheet lookup. Can be null.
      */
-    public Style(Style parent, String classRef) {
+    public Style(Style parent, StyleSheetKey styleSheetKey) {
         this.parent = parent;
-        this.classRef = classRef;
+        this.styleSheetKey = styleSheetKey;
         this.values = new Object[StyleAttribute.getNumAttributes()];
-        this.altDefaults = null;
     }
 
     /**
@@ -69,22 +67,21 @@ public class Style {
      * given attributes.
      *
      * @param parent the parent style. Can be null.
-     * @param classRef the class reference. Can be null.
+     * @param styleSheetKey key for style sheet lookup. Can be null.
      * @param values a map with attributes for this Style. Can be null.
      */
-    public Style(Style parent, String classRef, Map<StyleAttribute<?>, Object> values) {
-        this(parent, classRef);
+    public Style(Style parent, StyleSheetKey styleSheetKey, Map<StyleAttribute<?>, Object> values) {
+        this(parent, styleSheetKey);
         
         if(values != null) {
             putAll(values);
         }
     }
 
-    private Style(Style parent, String classRef, Object[] values, Style altDefaults) {
-        this.parent = parent;
-        this.classRef = classRef;
-        this.values = values.clone();
-        this.altDefaults = altDefaults;
+    protected Style(Style src) {
+        this.parent = src.parent;
+        this.styleSheetKey = src.styleSheetKey;
+        this.values = src.values.clone();
     }
 
     /**
@@ -92,16 +89,17 @@ public class Style {
      *
      * If a attribute does not cascade then this method does nothing.
      *
-     * If a StyleClassResolverm is specified then this method will treat class
-     * Styles referenced by classRef as if they are part of a Style in this chain.
+     * If a StyleSheetResolver is specified then this method will treat
+     * style sheet styles referenced by this Style as if they are part
+     * of a Style in this chain.
      * 
      * @param attribute The attribute to lookup.
-     * @param resolver A StyleClassResolver to resolve the classRef. Can be null.
+     * @param resolver A StyleSheetResolver to resolve the style sheet key. Can be null.
      * @return The Style which defined the specified attribute, will never return null.
      * @see StyleAttribute#isInherited()
      * @see #getParent()
      */
-    public Style resolve(StyleAttribute<?> attribute, StyleClassResolver resolver) {
+    public Style resolve(StyleAttribute<?> attribute, StyleSheetResolver resolver) {
         if(!attribute.isInherited()) {
             return this;
         }
@@ -109,14 +107,14 @@ public class Style {
         return doResolve(this, attribute.ordinal(), resolver);
     }
 
-    private static Style doResolve(Style style, int ord, StyleClassResolver resolver) {
+    private static Style doResolve(Style style, int ord, StyleSheetResolver resolver) {
         for(;;) {
             if(style.values[ord] != null) {
                 return style;
             }
-            if(resolver != null && style.classRef != null && style.classRef.length() > 0) {
-                Style classStyle = resolver.resolve(style.classRef);
-                if(classStyle != null && classStyle.values[ord] != null) {
+            if(resolver != null) {
+                Style styleSheetStyle = resolver.resolve(style);
+                if(styleSheetStyle != null && styleSheetStyle.values[ord] != null) {
                     // return main style here because class style has no parent chain
                     return style;
                 }
@@ -132,28 +130,24 @@ public class Style {
     /**
      * Retrives the value of the specified attribute without resolving the style.
      *
-     * If the attribute is not set in this Style and a StyleClassResolver was
-     * specified then the Style referenced by the classRef will be used instead.
+     * If the attribute is not set in this Style and a StyleSheetResolver was
+     * specified then the lookup is continued in the style sheet.
      *
      * @param <V> The data type of the attribute
      * @param attribute The attribute to lookup.
-     * @param resolver A StyleClassResolver to resolve the classRef. Can be null.
+     * @param resolver A StyleSheetResolver to resolve the style sheet key. Can be null.
      * @return The attribute value if it was set, or the default value of the attribute.
      */
-    public<V> V getNoResolve(StyleAttribute<V> attribute, StyleClassResolver resolver) {
+    public<V> V getNoResolve(StyleAttribute<V> attribute, StyleSheetResolver resolver) {
         Object value = values[attribute.ordinal()];
-        if(value == null && resolver != null && classRef != null && classRef.length() > 0) {
-            Style classStyle = resolver.resolve(classRef);
-            if(classStyle != null) {
-                value = classStyle.values[attribute.ordinal()];
+        if(value == null && resolver != null) {
+            Style styleSheetStyle = resolver.resolve(this);
+            if(styleSheetStyle != null) {
+                value = styleSheetStyle.values[attribute.ordinal()];
             }
         }
         if(value == null) {
-            if(altDefaults != null) {
-                return altDefaults.get(attribute, resolver);
-            } else {
-                return attribute.getDefaultValue();
-            }
+            return attribute.getDefaultValue();
         }
         return attribute.getDataType().cast(value);
     }
@@ -163,12 +157,12 @@ public class Style {
      *
      * @param <V> The data type of the attribute
      * @param attribute The attribute to lookup.
-     * @param resolver A StyleClassResolver to resolve the classRef. Can be null.
+     * @param resolver A StyleSheetResolver to resolve the style sheet key. Can be null.
      * @return The attribute value if it was set, or the default value of the attribute.
-     * @see #resolve(de.matthiasmann.twl.textarea.StyleAttribute, de.matthiasmann.twl.textarea.StyleClassResolver)
-     * @see #getNoResolve(de.matthiasmann.twl.textarea.StyleAttribute, de.matthiasmann.twl.textarea.StyleClassResolver)
+     * @see #resolve(de.matthiasmann.twl.textarea.StyleAttribute, de.matthiasmann.twl.textarea.StyleSheetResolver)
+     * @see #getNoResolve(de.matthiasmann.twl.textarea.StyleAttribute, de.matthiasmann.twl.textarea.StyleSheetResolver)
      */
-    public<V> V get(StyleAttribute<V> attribute, StyleClassResolver resolver) {
+    public<V> V get(StyleAttribute<V> attribute, StyleSheetResolver resolver) {
         return resolve(attribute, resolver).getNoResolve(attribute, resolver);
     }
 
@@ -184,13 +178,13 @@ public class Style {
     }
 
     /**
-     * Returns the class reference for this Style or null. A class style is used
-     * to lookup attributes which are not set in this Style.
+     * Returns the style sheet key for this Style or null.
+     * It is used to lookup attributes which are not set in this Style.
      * 
-     * @return the class reference for this Style or null.
+     * @return the style sheet key this Style or null.
      */
-    public String getClassRef() {
-        return classRef;
+    public StyleSheetKey getStyleSheetKey() {
+        return styleSheetKey;
     }
 
     /**
@@ -199,10 +193,10 @@ public class Style {
      * It is possible to set a attribute to null to 'unset' it.
      *
      * @param values The attributes to set in the new Style.
-     * @return a new Style with the same parent, classRef and modified attributes.
+     * @return a new Style with the same parent, styleSheetKey and modified attributes.
      */
     public Style with(Map<StyleAttribute<?>, Object> values) {
-        Style newStyle = new Style(parent, classRef, this.values, this.altDefaults);
+        Style newStyle = new Style(this);
         newStyle.putAll(values);
         return newStyle;
     }
@@ -215,23 +209,12 @@ public class Style {
      * @param <V> The data type of the attribute
      * @param attribute The attribute to set.
      * @param value The new value of that attribute. Can be null.
-     * @return a new Style with the same parent, classRef and modified attribute.
+     * @return a new Style with the same parent, styleSheetKey and modified attribute.
      */
     public<V> Style with(StyleAttribute<V> attribute, V value) {
-        Style newStyle = new Style(parent, classRef, this.values, this.altDefaults);
+        Style newStyle = new Style(this);
         newStyle.put(attribute, value);
         return newStyle;
-    }
-
-    /**
-     * Creates a copy of this Style with alternate default values.
-     * This will replace existing alternate defaults with the new ones.
-     *
-     * @param altDefaults The new alternate defaults. Can be null.
-     * @return a new Style with the same parent, classRef, values and the specified alternate defaults
-     */
-    public Style withAlternateDefaults(Style altDefaults) {
-        return new Style(parent, classRef, this.values, altDefaults);
     }
 
     protected void put(StyleAttribute<?> attribute, Object value) {
@@ -249,6 +232,15 @@ public class Style {
     protected void putAll(Map<StyleAttribute<?>, Object> values) {
         for(Map.Entry<StyleAttribute<?>, Object> e : values.entrySet()) {
             put(e.getKey(), e.getValue());
+        }
+    }
+
+    protected void putAll(Style src) {
+        for(int i=0,n=values.length ; i<n ; i++) {
+            Object value = src.values[i];
+            if(value != null) {
+                this.values[i] = value;
+            }
         }
     }
 
