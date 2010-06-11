@@ -59,6 +59,9 @@ import org.xmlpull.v1.XmlPullParserFactory;
  *  <li>{@code ul}</li>
  *  <li>{@code li}<br/>Styles: {@code list-style-image}</li>
  *  <li>{@code button}<br/>Attributes: {@code name}, {@code value}<br/>Styles: {@code float}, {@code display}, {@code width}, {@code height}</li>
+ *  <li>{@code table}<br/>Attributes: {@code cellspacing}, {@code cellpadding}<br/>Required styles: {@code width}</li>
+ *  <li>{@code tr}<br/>Styles: {@code height}</li>
+ *  <li>{@code td}<br/>Attributes: {@code colspan}<br/>Styles: {@code width}</li>
  * </ul>
  *
  * The following generic CSS attributes are supported:
@@ -88,7 +91,9 @@ import org.xmlpull.v1.XmlPullParserFactory;
 public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     
     private final ArrayList<Element> elements;
+    private final ArrayList<String> styleSheetLinks;
     private String html;
+    private String title;
     private boolean needToParse;
 
     private final ArrayList<Style> styleStack;
@@ -103,6 +108,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      */
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
+        this.styleSheetLinks = new ArrayList<String>();
         this.styleStack = new ArrayList<Style>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
@@ -147,6 +153,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     public void setHtml(String html) {
         this.html = html;
         this.elements.clear();
+        this.styleSheetLinks.clear();
+        this.title = null;
         needToParse = true;
         doCallback();
     }
@@ -194,11 +202,33 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     public Iterator<Element> iterator() {
+        maybeParse();
+        return elements.iterator();
+    }
+
+    /**
+     * Returns all links to CSS style sheets
+     * @return an Iterable containing all hrefs
+     */
+    public Iterable<String> getStyleSheetLinks() {
+        maybeParse();
+        return styleSheetLinks;
+    }
+
+    /**
+     * Returns the title of this XHTML document or null if it has no title.
+     * @return the title of this XHTML document or null if it has no title.
+     */
+    public String getTitle() {
+        maybeParse();
+        return title;
+    }
+
+    private void maybeParse() {
         if(needToParse) {
             parseHTML();
             needToParse = false;
         }
-        return elements.iterator();
     }
 
     private void addElement(Element e) {
@@ -215,10 +245,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             xppf.setNamespaceAware(false);
             xppf.setValidating(false);
             XmlPullParser xpp = xppf.newPullParser();
-            if((html.length() > 5 && html.charAt(0) == '<' && html.charAt(1) == '?') || html.startsWith("<html>")) {
+            if(html.length() > 5 && html.charAt(0) == '<' && (
+                    html.charAt(1) == '?' || html.charAt(1) == '!' || html.startsWith("<html>"))) {
                 xpp.setInput(new StringReader(html));
             } else {
-                xpp.setInput(new CompositeReader("<html>", html, "</html>"));
+                xpp.setInput(new CompositeReader("<html><body>", html, "</body></html>"));
             }
             xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
@@ -253,8 +284,12 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         while(level > 0 && (type=xpp.nextToken()) != XmlPullParser.END_DOCUMENT) {
             switch(type) {
             case XmlPullParser.START_TAG: {
-                ++level;
                 String name = xpp.getName();
+                if("head".equals(name)) {
+                    parseHead(xpp);
+                    break;
+                }
+                ++level;
                 if("br".equals(name)) {
                     sb.append("\n");
                     break;
@@ -331,6 +366,35 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             case XmlPullParser.ENTITY_REF:
                 sb.append(xpp.getText());
                 break;
+            }
+        }
+    }
+
+    private void parseHead(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        int level = 1;
+        while(level > 0) {
+            switch (xpp.nextTag()) {
+                case XmlPullParser.START_TAG: {
+                    ++level;
+                    String name = xpp.getName();
+                    if("link".equals(name)) {
+                        String linkhref = xpp.getAttributeValue(null, "href");
+                        if("stylesheet".equals(xpp.getAttributeValue(null, "rel")) &&
+                                "text/css".equals(xpp.getAttributeValue(null, "type")) &&
+                                linkhref != null) {
+                            styleSheetLinks.add(linkhref);
+                        }
+                    }
+                    if("title".equals(name)) {
+                        title = xpp.nextText();
+                        --level;
+                    }
+                    break;
+                }
+                case XmlPullParser.END_TAG: {
+                    --level;
+                    break;
+                }
             }
         }
     }
