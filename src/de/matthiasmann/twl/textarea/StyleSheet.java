@@ -35,6 +35,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.IdentityHashMap;
 
 /**
@@ -133,7 +134,20 @@ public class StyleSheet implements StyleSheetResolver {
                     for(int i=0,n=selectors.size() ; i<n ; i++) {
                         Selector selector = selectors.get(i);
                         rules.add(selector);
+                        int score = 0;
                         for(Selector s=selector ; s!=null ; s=s.parent) {
+                            if(s.directChild) {
+                                score += 0x1;
+                            }
+                            if(s.className != null) {
+                                score += 0x100;
+                            }
+                            if(s.element != null) {
+                                score += 0x10000;
+                            }
+                        }
+                        for(Selector s=selector ; s!=null ; s=s.parent) {
+                            s.score = score;
                             s.style = style;
                         }
                     }
@@ -170,45 +184,59 @@ public class StyleSheet implements StyleSheetResolver {
             return (cacheData == this) ? null : (Style)cacheData;
         }
 
-        ArrayList<Selector> candidates = new ArrayList<Selector>();
+        Selector[] candidates = new Selector[rules.size()];
+        int numCandidates = 0;
+        
+        // find all possible candidates
         for(int i=0,n=rules.size() ; i<n ; i++) {
             Selector selector = rules.get(i);
             if(selector.matches(styleSheetKey)) {
-                candidates.add(selector);
+                candidates[numCandidates++] = selector;
             }
         }
 
+        // follow the parent chain and check multi selector rules
         Style parent = style;
-        while(!candidates.isEmpty() && (parent=parent.getParent()) != null) {
+        while(numCandidates > 0 && (parent=parent.getParent()) != null) {
             styleSheetKey = parent.getStyleSheetKey();
-            for(int i=candidates.size() ; i-->0 ;) {
-                Selector selector = candidates.get(i);
-                if(selector.parent != null) {
-                    if(selector.parent.matches(styleSheetKey)) {
-                        candidates.set(i, selector.parent);
-                    } else if(selector.directChild) {
-                        candidates.remove(i);
+            if(styleSheetKey != null) {
+                for(int i=numCandidates ; i-->0 ;) {
+                    Selector selector = candidates[i];
+                    if(selector.parent != null) {
+                        if(selector.parent.matches(styleSheetKey)) {
+                            candidates[i] = selector.parent;
+                        } else if(selector.directChild) {
+                            System.arraycopy(candidates, i+1, candidates, i, --numCandidates - i);
+                        }
                     }
                 }
             }
         }
 
+        // remove not fully matched rules
+        for(int i=numCandidates ; i-->0 ;) {
+            if(candidates[i].parent != null) {
+                System.arraycopy(candidates, i+1, candidates, i, --numCandidates - i);
+            }
+        }
+
+        if(numCandidates > 1) {
+            Arrays.sort(candidates, 0, numCandidates);
+        }
+        
         Style result = null;
         boolean copy = true;
         
-        for(int i=0,n=candidates.size() ; i<n ; i++) {
-            Selector selector = candidates.get(i);
-            if(selector.parent == null) {
-                Style ruleStyle = selector.style;
-                if(result == null) {
-                    result = ruleStyle;
-                } else {
-                    if(copy) {
-                        result = new Style(result);
-                        copy = false;
-                    }
-                    result.putAll(ruleStyle);
+        for(int i=0,n=numCandidates ; i<n ; i++) {
+            Style ruleStyle = candidates[i].style;
+            if(result == null) {
+                result = ruleStyle;
+            } else {
+                if(copy) {
+                    result = new Style(result);
+                    copy = false;
                 }
+                result.putAll(ruleStyle);
             }
         }
 
@@ -216,15 +244,20 @@ public class StyleSheet implements StyleSheetResolver {
         return result;
     }
 
-    static class Selector extends StyleSheetKey {
+    static class Selector extends StyleSheetKey implements Comparable<Selector> {
         final boolean directChild;
         final Selector parent;
         CSSStyle style;
+        int score;
 
         public Selector(String element, String className, boolean directChild, Selector parent) {
             super(element, className);
             this.directChild = directChild;
             this.parent = parent;
+        }
+
+        public int compareTo(Selector other) {
+            return this.score - other.score;
         }
     }
 }

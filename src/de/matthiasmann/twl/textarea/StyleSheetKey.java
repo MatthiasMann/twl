@@ -62,9 +62,6 @@ public class StyleSheetKey {
     }
 
     public boolean matches(StyleSheetKey what) {
-        if(what == null) {
-            return false;
-        }
         if(this.element != null && !this.element.equals(what.element)) {
             return false;
         }
