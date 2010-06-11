@@ -55,4 +55,22 @@ public class StyleSheetTest {
         StyleSheet ss = new StyleSheet();
         ss.parse(new StringReader("div, img { margin-right: 5px; margin-left: 5px; }"));
     }
+
+    @Test
+    public void testParse7() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader(".bla { height: 5% }"));
+    }
+
+    @Test
+    public void testParse8() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("*.bla { height: 5% }"));
+    }
+
+    @Test
+    public void testParse9() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("*.bla blub { height: 5% }"));
+    }
 }

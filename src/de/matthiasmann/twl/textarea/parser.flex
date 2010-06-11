@@ -59,27 +59,7 @@ package de.matthiasmann.twl.textarea;
     }
 
     public void expect(int token) throws java.io.IOException {
-        if(next() != token) unexpected();
-    }
-
-    public String value() {
-        int start = 0;
-        int end = sb.length();
-        while(start < end && Character.isWhitespace(sb.charAt(start))) start++;
-        while(end > start && Character.isWhitespace(sb.charAt(end-1))) end--;
-        return sb.substring(start, end);
-    }
-
-    private int token = -1;
-    public int peek() throws java.io.IOException {
-        if(token < 0) token = yylex();
-        return token;
-    }
-    public int next() throws java.io.IOException {
-        if(token < 0) return yylex();
-        int tmp = token;
-        token = -1;
-        return tmp;
+        if(yylex() != token) unexpected();
     }
 %}
 

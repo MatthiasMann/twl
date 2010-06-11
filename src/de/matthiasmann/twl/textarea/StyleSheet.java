@@ -62,63 +62,65 @@ public class StyleSheet implements StyleSheetResolver {
     
     public void parse(Reader r) throws IOException {
         Parser parser = new Parser(r);
-        Selector parent = null;
-        boolean directChild = false;
         ArrayList<Selector> selectors = new ArrayList<Selector>();
-        for(;;) {
-            String element = null;
-            switch(parser.next()) {
-                case Parser.EOF:
-                    return;
-                case Parser.GT:
-                    directChild = true;
-                    break;
-                case Parser.IDENT:
-                    element = parser.yytext();
-                case Parser.STAR: {
-                    String className = null;
-                    if(parser.peek() == Parser.DOT) {
-                        parser.next();
-                        parser.expect(Parser.IDENT);
-                        className = parser.yytext();
-                    }
-                    parent = new Selector(element, className, directChild, parent);
-                    directChild = false;
-                    break;
+        int what;
+        while((what=parser.yylex()) != Parser.EOF) {
+            Selector parent = null;
+            boolean directChild = false;
+
+            selectorloop: for(;;) {
+                String element;
+                String className = null;
+                switch (what) {
+                    default:
+                        parser.unexpected();    // throws exception
+                        // fall though will not happen but keeps compiler quite
+                    case Parser.STAR:
+                    case Parser.DOT:
+                        element = null;
+                        break;
+                    case Parser.IDENT:
+                        element = parser.yytext();
+                        break;
                 }
-                case Parser.DOT: {
+                if(what == Parser.DOT || ((what = parser.yylex()) == Parser.DOT)) {
                     parser.expect(Parser.IDENT);
-                    String className = parser.yytext();
-                    parent = new Selector(null, className, directChild, parent);
-                    directChild = false;
-                    break;
+                    className = parser.yytext();
+                    what = parser.yylex();
                 }
-                case Parser.COMMA:
-                    if(parent != null) {
-                        selectors.add(parent);
-                        parent = null;
-                    }
-                    break;
+                parent = new Selector(element, className, directChild, parent);
+                switch (what) {
+                    case Parser.GT:
+                        directChild = true;
+                        what = parser.yylex();
+                        break;
+                    case Parser.COMMA:
+                    case Parser.STYLE_BEGIN:
+                        break selectorloop;
+                }
+            }
+
+            selectors.add(parent);
+
+            switch (what) {
+                default:
+                    parser.unexpected();    // throws exception
+                    // fall though will not happen but keeps compiler quite
+                    
                 case Parser.STYLE_BEGIN: {
-                    if(parent != null) {
-                        selectors.add(parent);
-                        parent = null;
-                    }
-                    
                     CSSStyle style = new CSSStyle();
-                    
-                    int what;
-                    while((what=parser.next()) != Parser.STYLE_END) {
+
+                    while((what=parser.yylex()) != Parser.STYLE_END) {
                         if(what != Parser.IDENT) {
                             parser.unexpected();
                         }
                         String key = parser.yytext();
                         parser.expect(Parser.COLON);
-                        what = parser.next();
+                        what = parser.yylex();
                         if(what != Parser.SEMICOLON && what != Parser.STYLE_END) {
                             parser.unexpected();
                         }
-                        String value = parser.value();
+                        String value = parser.sb.toString().trim();
                         try {
                             style.parseCSSAttribute(key, value);
                         } catch (IllegalArgumentException ex) {
@@ -139,6 +141,9 @@ public class StyleSheet implements StyleSheetResolver {
                     selectors.clear();
                     break;
                 }
+
+                case Parser.COMMA:
+                    break;
             }
         }
     }
