@@ -6,8 +6,6 @@
 package de.matthiasmann.twl.textarea;
 
 import java.io.StringReader;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -72,5 +70,41 @@ public class StyleSheetTest {
     public void testParse9() throws Exception {
         StyleSheet ss = new StyleSheet();
         ss.parse(new StringReader("*.bla blub { height: 5% }"));
+    }
+
+    @Test
+    public void testParse10() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("#id12 { height: 5% }"));
+    }
+
+    @Test
+    public void testParse11() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("p#id12{ height: 5% }"));
+    }
+
+    @Test
+    public void testParse12() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("#id12.bar { height: 5% }"));
+    }
+
+    @Test
+    public void testParse13() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader(".bar#id12 { height: 5% }"));
+    }
+
+    @Test
+    public void testParse14() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("p.bar#id12 { height: 5% }"));
+    }
+
+    @Test
+    public void testParse15() throws Exception {
+        StyleSheet ss = new StyleSheet();
+        ss.parse(new StringReader("p#id12.bar { height: 5% }"));
     }
 }

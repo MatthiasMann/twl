@@ -412,9 +412,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         String style = null;
         
         if(xpp != null) {
-            String classRef = xpp.getAttributeValue(null, "class");
+            String className = xpp.getAttributeValue(null, "class");
             String element = xpp.getName();
-            key = new StyleSheetKey(element, classRef);
+            String id = xpp.getAttributeValue(null, "id");
+            key = new StyleSheetKey(element, className, id);
             style = xpp.getAttributeValue(null, "style");
         }
         

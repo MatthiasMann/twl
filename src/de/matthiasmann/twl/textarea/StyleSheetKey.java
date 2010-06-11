@@ -37,10 +37,12 @@ public class StyleSheetKey {
 
     final String element;
     final String className;
+    final String id;
 
-    public StyleSheetKey(String element, String className) {
+    public StyleSheetKey(String element, String className, String id) {
         this.element = element;
         this.className = className;
+        this.id = id;
     }
 
     @Override
@@ -48,7 +50,8 @@ public class StyleSheetKey {
         if(obj instanceof StyleSheetKey) {
             final StyleSheetKey other = (StyleSheetKey)obj;
             return ((this.element == null) ? (other.element == null) : this.element.equals(other.element)) &&
-                    ((this.className == null) ? (other.className == null) : this.className.equals(other.className));
+                    ((this.className == null) ? (other.className == null) : this.className.equals(other.className)) &&
+                    ((this.id == null) ? (other.id == null) : this.id.equals(other.id));
         }
         return false;
     }
@@ -58,6 +61,7 @@ public class StyleSheetKey {
         int hash = 7;
         hash = 53 * hash + (this.element != null ? this.element.hashCode() : 0);
         hash = 53 * hash + (this.className != null ? this.className.hashCode() : 0);
+        hash = 53 * hash + (this.id != null ? this.id.hashCode() : 0);
         return hash;
     }
 
@@ -68,11 +72,21 @@ public class StyleSheetKey {
         if(this.className != null && !this.className.equals(what.className)) {
             return false;
         }
+        if(this.id != null && !this.id.equals(what.id)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     public String toString() {
-        return (className != null) ? element+"."+className : element;
+        StringBuilder sb = new StringBuilder().append(element);
+        if(className != null) {
+            sb.append('.').append(className);
+        }
+        if(id != null) {
+            sb.append('#').append(id);
+        }
+        return sb.toString();
     }
 }

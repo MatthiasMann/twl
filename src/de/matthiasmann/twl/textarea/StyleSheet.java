@@ -69,26 +69,34 @@ public class StyleSheet implements StyleSheetResolver {
             Selector selector = null;
 
             selectorloop: for(;;) {
-                String element;
+                String element = null;
                 String className = null;
+                String id = null;
                 switch (what) {
                     default:
                         parser.unexpected();    // throws exception
                         // fall though will not happen but keeps compiler quite
-                    case Parser.STAR:
                     case Parser.DOT:
-                        element = null;
+                    case Parser.HASH:
                         break;
                     case Parser.IDENT:
                         element = parser.yytext();
+                        // fall through
+                    case Parser.STAR:
+                        what = parser.yylex();
                         break;
                 }
-                if(what == Parser.DOT || ((what = parser.yylex()) == Parser.DOT)) {
+                while(what == Parser.DOT || what == Parser.HASH) {
                     parser.expect(Parser.IDENT);
-                    className = parser.yytext();
+                    String text = parser.yytext();
+                    if(what == Parser.DOT) {
+                        className = text;
+                    } else {
+                        id = text;
+                    }
                     what = parser.yylex();
                 }
-                selector = new Selector(element, className, selector);
+                selector = new Selector(element, className, id, selector);
                 switch (what) {
                     case Parser.GT:
                         selector.directChild = true;
@@ -147,6 +155,9 @@ public class StyleSheet implements StyleSheetResolver {
                             }
                             if(s.element != null) {
                                 score += 0x10000;
+                            }
+                            if(s.id != null) {
+                                score += 0x1000000;
                             }
                         }
                         // only needed on head
@@ -246,8 +257,8 @@ public class StyleSheet implements StyleSheetResolver {
         CSSStyle style;
         int score;
 
-        public Selector(String element, String className, Selector tail) {
-            super(element, className);
+        public Selector(String element, String className, String id, Selector tail) {
+            super(element, className, id);
             this.tail = tail;
         }
 

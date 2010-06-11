@@ -39,15 +39,16 @@ package de.matthiasmann.twl.textarea;
 
 %{
     static final int EOF = 0;
-    static final int DOT = 1;
-    static final int COMMA = 2;
-    static final int IDENT = 3;
-    static final int STAR = 4;
-    static final int STYLE_BEGIN = 5;
-    static final int STYLE_END = 6;
-    static final int COLON = 7;
-    static final int SEMICOLON = 8;
-    static final int GT = 9;
+    static final int IDENT = 1;
+    static final int STAR = 2;
+    static final int DOT = 3;
+    static final int HASH = 4;
+    static final int GT = 5;
+    static final int COMMA = 6;
+    static final int STYLE_BEGIN = 7;
+    static final int STYLE_END = 8;
+    static final int COLON = 9;
+    static final int SEMICOLON = 10;
 
     final StringBuilder sb = new StringBuilder();
     private void append() {
@@ -78,6 +79,7 @@ Identifier = [-]?[_a-z][_a-z0-9-]*
     ","                 { return COMMA; }
     "*"                 { return STAR; }
     ">"                 { return GT; }
+    "#"                 { return HASH; }
     "{"                 { yybegin(YYSTYLE); return STYLE_BEGIN; }
 
     {Comment}           { /* ignore */ }
