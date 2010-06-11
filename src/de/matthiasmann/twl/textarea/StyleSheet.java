@@ -150,10 +150,10 @@ public class StyleSheet implements StyleSheetResolver {
                             if(s.directChild) {
                                 score += 0x1;
                             }
-                            if(s.className != null) {
+                            if(s.element != null) {
                                 score += 0x100;
                             }
-                            if(s.element != null) {
+                            if(s.className != null) {
                                 score += 0x10000;
                             }
                             if(s.id != null) {
