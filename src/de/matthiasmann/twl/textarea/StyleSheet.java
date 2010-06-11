@@ -66,8 +66,7 @@ public class StyleSheet implements StyleSheetResolver {
         ArrayList<Selector> selectors = new ArrayList<Selector>();
         int what;
         while((what=parser.yylex()) != Parser.EOF) {
-            Selector parent = null;
-            boolean directChild = false;
+            Selector selector = null;
 
             selectorloop: for(;;) {
                 String element;
@@ -89,10 +88,10 @@ public class StyleSheet implements StyleSheetResolver {
                     className = parser.yytext();
                     what = parser.yylex();
                 }
-                parent = new Selector(element, className, directChild, parent);
+                selector = new Selector(element, className, selector);
                 switch (what) {
                     case Parser.GT:
-                        directChild = true;
+                        selector.directChild = true;
                         what = parser.yylex();
                         break;
                     case Parser.COMMA:
@@ -100,8 +99,12 @@ public class StyleSheet implements StyleSheetResolver {
                         break selectorloop;
                 }
             }
-
-            selectors.add(parent);
+            
+            // to ensure that the head of the selector matches the head of the
+            // style and not skip ahead we use the directChild flag
+            // this causes an offset of 1 for all scores which doesn't matter
+            selector.directChild = true;
+            selectors.add(selector);
 
             switch (what) {
                 default:
@@ -132,10 +135,10 @@ public class StyleSheet implements StyleSheetResolver {
                     }
 
                     for(int i=0,n=selectors.size() ; i<n ; i++) {
-                        Selector selector = selectors.get(i);
+                        selector = selectors.get(i);
                         rules.add(selector);
                         int score = 0;
-                        for(Selector s=selector ; s!=null ; s=s.parent) {
+                        for(Selector s=selector ; s!=null ; s=s.tail) {
                             if(s.directChild) {
                                 score += 0x1;
                             }
@@ -146,10 +149,9 @@ public class StyleSheet implements StyleSheetResolver {
                                 score += 0x10000;
                             }
                         }
-                        for(Selector s=selector ; s!=null ; s=s.parent) {
-                            s.score = score;
-                            s.style = style;
-                        }
+                        // only needed on head
+                        selector.score = score;
+                        selector.style = style;
                     }
 
                     selectors.clear();
@@ -171,8 +173,7 @@ public class StyleSheet implements StyleSheetResolver {
     }
 
     public Style resolve(Style style) {
-        StyleSheetKey styleSheetKey;
-        while((styleSheetKey = style.getStyleSheetKey()) == null) {
+        while(style.getStyleSheetKey() == null) {
             style = style.getParent();
             if(style == null) {
                 return null;
@@ -190,43 +191,20 @@ public class StyleSheet implements StyleSheetResolver {
         // find all possible candidates
         for(int i=0,n=rules.size() ; i<n ; i++) {
             Selector selector = rules.get(i);
-            if(selector.matches(styleSheetKey)) {
+            if(matches(selector, style)) {
                 candidates[numCandidates++] = selector;
             }
         }
 
-        // follow the parent chain and check multi selector rules
-        Style parent = style;
-        while(numCandidates > 0 && (parent=parent.getParent()) != null) {
-            styleSheetKey = parent.getStyleSheetKey();
-            if(styleSheetKey != null) {
-                for(int i=numCandidates ; i-->0 ;) {
-                    Selector selector = candidates[i];
-                    if(selector.parent != null) {
-                        if(selector.parent.matches(styleSheetKey)) {
-                            candidates[i] = selector.parent;
-                        } else if(selector.directChild) {
-                            System.arraycopy(candidates, i+1, candidates, i, --numCandidates - i);
-                        }
-                    }
-                }
-            }
-        }
-
-        // remove not fully matched rules
-        for(int i=numCandidates ; i-->0 ;) {
-            if(candidates[i].parent != null) {
-                System.arraycopy(candidates, i+1, candidates, i, --numCandidates - i);
-            }
-        }
-
+        // sort according to rule priority - this needs a stable sort
         if(numCandidates > 1) {
             Arrays.sort(candidates, 0, numCandidates);
         }
         
         Style result = null;
         boolean copy = true;
-        
+
+        // merge all matching rules
         for(int i=0,n=numCandidates ; i<n ; i++) {
             Style ruleStyle = candidates[i].style;
             if(result == null) {
@@ -244,16 +222,33 @@ public class StyleSheet implements StyleSheetResolver {
         return result;
     }
 
+    private boolean matches(Selector selector, Style style) {
+        do {
+            StyleSheetKey styleSheetKey = style.getStyleSheetKey();
+            if(styleSheetKey != null) {
+                if(selector.matches(styleSheetKey)) {
+                    selector = selector.tail;
+                    if(selector == null) {
+                        return true;
+                    }
+                } else if(selector.directChild) {
+                    return false;
+                }
+            }
+            style = style.getParent();
+        }while(style != null);
+        return false;
+    }
+
     static class Selector extends StyleSheetKey implements Comparable<Selector> {
-        final boolean directChild;
-        final Selector parent;
+        final Selector tail;
+        boolean directChild;
         CSSStyle style;
         int score;
 
-        public Selector(String element, String className, boolean directChild, Selector parent) {
+        public Selector(String element, String className, Selector tail) {
             super(element, className);
-            this.directChild = directChild;
-            this.parent = parent;
+            this.tail = tail;
         }
 
         public int compareTo(Selector other) {
