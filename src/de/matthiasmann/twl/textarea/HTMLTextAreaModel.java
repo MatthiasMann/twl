@@ -230,14 +230,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             needToParse = false;
         }
     }
-
-    private void addElement(Element e) {
-        if(curContainer != null) {
-            curContainer.add(e);
-        } else {
-            elements.add(e);
-        }
-    }
     
     private void parseHTML() {
         try {
@@ -254,12 +246,26 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
             xpp.nextTag();
+            xpp.require(XmlPullParser.START_TAG, null, "html");
 
             styleStack.clear();
             styleStack.add(new Style(null, null));
             curContainer = null;
             sb.setLength(0);
 
+            while(xpp.nextTag() != XmlPullParser.END_TAG) {
+                xpp.require(XmlPullParser.START_TAG, null, null);
+                String name = xpp.getName();
+                if("head".equals(name)) {
+                    parseHead(xpp);
+                } else if("body".equals(name)) {
+                    pushStyle(xpp);
+                    BlockElement be = new BlockElement(getStyle());
+                    elements.add(be);
+                    parseContainer(xpp, be);
+                }
+            }
+            
             parseMain(xpp);
             finishText();
         } catch(Exception ex) {
@@ -299,34 +305,34 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 if("img".equals(name)) {
                     String src = TextUtil.notNull(xpp.getAttributeValue(null, "src"));
                     String alt = xpp.getAttributeValue(null, "alt");
-                    addElement(new ImageElement(getStyle(), src, alt));
+                    curContainer.add(new ImageElement(getStyle(), src, alt));
                 }
                 if("p".equals(name)) {
                     ParagraphElement pe = new ParagraphElement(getStyle());
                     parseContainer(xpp, pe);
-                    addElement(pe);
+                    curContainer.add(pe);
                     --level;
                 }
                 if("button".equals(name)) {
                     String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
                     String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
-                    addElement(new WidgetElement(getStyle(), btnName, btnParam));
+                    curContainer.add(new WidgetElement(getStyle(), btnName, btnParam));
                 }
                 if("ul".equals(name)) {
                     ContainerElement ce = new ContainerElement(getStyle());
                     parseContainer(xpp, ce);
-                    addElement(ce);
+                    curContainer.add(ce);
                     --level;
                 }
                 if("li".equals(name)) {
                     ListElement lei = new ListElement(getStyle());
                     parseContainer(xpp, lei);
-                    addElement(lei);
+                    curContainer.add(lei);
                     --level;
                 }
                 if("div".equals(name)) {
                     BlockElement bei = new BlockElement(getStyle());
-                    addElement(bei);
+                    curContainer.add(bei);
                     parseContainer(xpp, bei);
                     --level;
                 }
@@ -445,7 +451,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                                 tableElement.setSell(row, col, cell);
                             }
                         }
-                        addElement(tableElement);
+                        curContainer.add(tableElement);
                         return;
                     }
                 }
@@ -510,7 +516,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             } else {
                 e = new TextElement(style, sb.toString());
             }
-            addElement(e);
+            curContainer.add(e);
             sb.setLength(0);
         }
     }
