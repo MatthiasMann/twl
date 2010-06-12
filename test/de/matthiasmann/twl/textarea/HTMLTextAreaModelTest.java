@@ -29,9 +29,6 @@
  */
 package de.matthiasmann.twl.textarea;
 
-import de.matthiasmann.twl.textarea.HTMLTextAreaModel;
-import de.matthiasmann.twl.textarea.TextAreaModel;
-import de.matthiasmann.twl.textarea.StyleAttribute;
 import java.util.Iterator;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -48,7 +45,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testSimpleText() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo Welt");
         assertFalse(i.hasNext());
     }
@@ -56,7 +54,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testNewLine() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt\nNot a new line");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo Welt Not a new line");
         assertFalse(i.hasNext());
     }
@@ -64,7 +63,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testEmptySpan() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo<span/>Welt");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo");
         assertText(i, "default", "Welt");
         assertFalse(i.hasNext());
@@ -73,7 +73,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testEmptyDiv() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo<div/>Welt");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo");
         TextAreaModel.BlockElement be = next(i, TextAreaModel.BlockElement.class);
         assertEquals(TextAreaModel.FloatPosition.NONE, be.getStyle().get(StyleAttribute.FLOAT_POSITION, null));
@@ -85,7 +86,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testBR() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/>A new line");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo Welt\nA new line");
         assertFalse(i.hasNext());
     }
@@ -93,7 +95,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testBREmptySpan() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/><span/>A new line");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo Welt\n");
         assertText(i, "default", "A new line");
         assertFalse(i.hasNext());
@@ -102,7 +105,8 @@ public class HTMLTextAreaModelTest {
     @Test
     public void testBREmptySpan2() {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<span/><br/>A new line");
-        Iterator<TextAreaModel.Element> i = m.iterator();
+        Iterator<TextAreaModel.Element> i1 = m.iterator();
+        Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo Welt");
         assertText(i, "default", "\nA new line");
         assertFalse(i.hasNext());
@@ -118,5 +122,10 @@ public class HTMLTextAreaModelTest {
     private void assertText(Iterator<TextAreaModel.Element> i, String style, String text) {
         TextAreaModel.TextElement te = next(i, TextAreaModel.TextElement.class);
         assertEquals(text, te.getText());
+    }
+
+    private Iterator<TextAreaModel.Element> assertBlock(Iterator<TextAreaModel.Element> i) {
+        TextAreaModel.BlockElement be = next(i, TextAreaModel.BlockElement.class);
+        return be.iterator();
     }
 }
