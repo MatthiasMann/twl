@@ -1018,18 +1018,10 @@ public class TextArea extends Widget {
             box.curY = bgY + clip.height;
             box.setMarginBottom(clip.marginBottom);
         } else {
-            LElement dummy = new LElement(be);
-            dummy.marginLeft = (short)marginLeft;
-            dummy.marginRight = (short)marginRight;
-            dummy.x = bgX;
-            dummy.y = bgY;
-            dummy.width = bgWidth;
-            dummy.height = clip.height + clip.marginBottom;
-
             if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
-                box.objRight.add(dummy);
+                box.objRight.add(clip);
             } else {
-                box.objLeft.add(dummy);
+                box.objLeft.add(clip);
             }
             box.computePadding();
         }
@@ -1409,12 +1401,12 @@ public class TextArea extends Widget {
                     if(!objLeft.isEmpty()) {
                         LElement le = objLeft.get(objLeft.size()-1);
                         if(le.height != Short.MAX_VALUE) {  // special case for list elements
-                            targetY = Math.min(targetY, le.y + le.height);
+                            targetY = Math.min(targetY, le.bottom());
                         }
                     }
                     if(!objRight.isEmpty()) {
                         LElement le = objRight.get(objRight.size()-1);
-                        targetY = Math.min(targetY, le.y + le.height);
+                        targetY = Math.min(targetY, le.bottom());
                     }
                     if(targetY == Integer.MAX_VALUE || targetY < curY) {
                         return;
@@ -1490,8 +1482,7 @@ public class TextArea extends Widget {
                         break;
                     }
                     targetY = Math.max(targetY, computeTopPadding(le.marginTop - le.y));
-                    marginBottomNext = Math.max(marginBottomNext,
-                            le.y + le.height + le.marginBottom - lineHeight);
+                    marginBottomNext = Math.max(marginBottomNext, le.bottom() - lineHeight);
                 }
                 
                 for(int idx=lineStartIdx ; idx<layout.size() ; idx++) {
@@ -1521,7 +1512,7 @@ public class TextArea extends Widget {
         private void removeObjFromList(ArrayList<LElement> list) {
             for(int i=list.size() ; i-->0 ;) {
                 LElement e = list.get(i);
-                if(e.y + e.height <= curY) {
+                if(e.bottom() <= curY) {
                     // can't update marginBottomAbs here - results in layout error for text
                     list.remove(i);
                 }
@@ -1573,6 +1564,10 @@ public class TextArea extends Widget {
         }
         LElement find(int x, int y) {
             return this;
+        }
+
+        int bottom() {
+            return y + height + marginBottom;
         }
     }
 
