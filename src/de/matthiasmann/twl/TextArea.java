@@ -30,9 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.textarea.TextAreaModel;
-import de.matthiasmann.twl.textarea.TextAreaModel.Clear;
-import de.matthiasmann.twl.textarea.TextAreaModel.Element;
-import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.Image;
@@ -338,7 +335,7 @@ public class TextArea extends Widget {
             }
             
             clearLayout();
-            Box box = new Box(layoutRoot, targetWidth, 0, 0, 0);
+            Box box = new Box(layoutRoot, 0, 0, 0);
 
             try {
                 if(model != null) {
@@ -348,7 +345,7 @@ public class TextArea extends Widget {
                     box.nextLine(false);
                     
                     // finish floaters
-                    box.clearFloater(Clear.BOTH);
+                    box.clearFloater(TextAreaModel.Clear.BOTH);
 
                     // set position & size of all widget elements
                     layoutRoot.adjustWidget(getInnerX(), getInnerY());
@@ -551,7 +548,7 @@ public class TextArea extends Widget {
     private void layout(Box box, TextAreaModel.Element e, LElement le) {
         Style style = e.getStyle();
 
-        FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
+        TextAreaModel.FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
         TextAreaModel.Display display = style.get(StyleAttribute.DISPLAY, styleClassResolver);
 
         le.marginTop = (short)convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
@@ -567,8 +564,8 @@ public class TextArea extends Widget {
         layout(box, e, le, floatPosition, display);
     }
     
-    private void layout(Box box, TextAreaModel.Element e, LElement le, FloatPosition floatPos, TextAreaModel.Display display) {
-        boolean leftRight = floatPos != FloatPosition.NONE;
+    private void layout(Box box, TextAreaModel.Element e, LElement le, TextAreaModel.FloatPosition floatPos, TextAreaModel.Display display) {
+        boolean leftRight = (floatPos != TextAreaModel.FloatPosition.NONE);
 
         if(leftRight || display != TextAreaModel.Display.INLINE) {
             box.nextLine(false);
@@ -590,7 +587,7 @@ public class TextArea extends Widget {
         }
 
         if(leftRight) {
-            if(floatPos == FloatPosition.RIGHT) {
+            if(floatPos == TextAreaModel.FloatPosition.RIGHT) {
                 le.x = box.computeRightPadding(le.marginRight) - le.width;
                 box.objRight.add(le);
             } else {
@@ -946,25 +943,38 @@ public class TextArea extends Widget {
         doMarginBottom(box, style);
     }
 
+    private Box layoutBox(LClip clip, int continerWidth, int paddingLeft, int paddingRight, TextAreaModel.ContainerElement ce) {
+        Style style = ce.getStyle();
+        int paddingTop = convertToPX0(style, StyleAttribute.PADDING_TOP, continerWidth);
+        int paddingBottom = convertToPX0(style, StyleAttribute.PADDING_BOTTOM, continerWidth);
+        int marginBottom = convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, continerWidth);
+
+        Box box = new Box(clip, paddingLeft, paddingRight, paddingTop);
+        layoutElements(box, ce);
+        box.nextLine(false);
+        box.clearFloater(TextAreaModel.Clear.BOTH);
+        clip.height = box.curY + paddingBottom;
+        clip.height = Math.max(clip.height, convertToPX(style, StyleAttribute.HEIGHT, clip.height));
+        clip.marginBottom = (short)Math.max(marginBottom, box.marginBottomAbs - box.curY);
+        return box;
+    }
+
     private void layoutBlockElement(Box box, TextAreaModel.BlockElement be) {
         box.nextLine(false);
 
         final Style style = be.getStyle();
-        final FloatPosition floatPosition = style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
+        final TextAreaModel.FloatPosition floatPosition =
+                style.get(StyleAttribute.FLOAT_POSITION, styleClassResolver);
 
         LImage bgImage = createBGImage(box, be);
 
         int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
         int marginLeft = convertToPX0(style, StyleAttribute.MARGIN_LEFT, box.boxWidth);
         int marginRight = convertToPX0(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth);
-        int marginBottom = convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, box.boxWidth);
-        int paddingTop = convertToPX0(style, StyleAttribute.PADDING_TOP, box.boxWidth);
-        int paddingBottom = convertToPX0(style, StyleAttribute.PADDING_BOTTOM, box.boxWidth);
 
         int bgX = box.computeLeftPadding(marginLeft);
         int bgY = box.computeTopPadding(marginTop);
         int bgWidth;
-        int bgHeight;
 
         int remaining = Math.max(0, box.computeRightPadding(marginRight) - bgX);
 
@@ -994,27 +1004,19 @@ public class TextArea extends Widget {
         }
 
         LClip clip = new LClip(be);
-        box.layout.add(clip);
-        
-        Box blockBox = new Box(clip, bgWidth, paddingLeft, paddingRight, paddingTop);
-        layoutElements(blockBox, be);
-        blockBox.nextLine(false);
-        blockBox.clearFloater(TextAreaModel.Clear.BOTH);
-        bgHeight = blockBox.curY + paddingBottom;
-        bgHeight = Math.max(bgHeight, convertToPX(style, StyleAttribute.HEIGHT, bgHeight));
-        marginBottom = Math.max(marginBottom, blockBox.marginBottomAbs - blockBox.curY);
-
         clip.x = bgX;
         clip.y = bgY;
         clip.width = bgWidth;
-        clip.height = bgHeight;
-        
+        box.layout.add(clip);
+
+        layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be);
+
         // sync main box with layout
         box.lineStartIdx = box.layout.size();
 
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
-            box.curY = bgY + bgHeight;
-            box.setMarginBottom(marginBottom);
+            box.curY = bgY + clip.height;
+            box.setMarginBottom(clip.marginBottom);
         } else {
             LElement dummy = new LElement(be);
             dummy.marginLeft = (short)marginLeft;
@@ -1022,7 +1024,7 @@ public class TextArea extends Widget {
             dummy.x = bgX;
             dummy.y = bgY;
             dummy.width = bgWidth;
-            dummy.height = bgHeight + marginBottom;
+            dummy.height = clip.height + clip.marginBottom;
 
             if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
                 box.objRight.add(dummy);
@@ -1036,7 +1038,7 @@ public class TextArea extends Widget {
             bgImage.x = bgX;
             bgImage.y = bgY;
             bgImage.width = bgWidth;
-            bgImage.height = bgHeight;
+            bgImage.height = clip.height;
         }
     }
 
@@ -1169,19 +1171,8 @@ public class TextArea extends Widget {
 
                     Style cellStyle = cell.getStyle();
 
-                    int paddingTop = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_TOP, tableWidth));
-                    int paddingBottom = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_BOTTOM, tableWidth));
                     int paddingLeft = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_LEFT, tableWidth));
                     int paddingRight = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_RIGHT, tableWidth));
-                    int marginTop = convertToPX0(cellStyle, StyleAttribute.MARGIN_TOP, tableWidth);
-                    int marginBottom = convertToPX0(cellStyle, StyleAttribute.MARGIN_BOTTOM, tableWidth);
-
-                    LClip clip = new LClip(cell);
-                    clip.x = x;
-                    clip.y = box.curY;
-                    clip.width = width;
-                    clip.marginTop = (short)marginTop;
-                    box.layout.add(clip);
 
                     LImage bgImage = createBGImage(box, cell);
                     if(bgImage != null) {
@@ -1190,14 +1181,14 @@ public class TextArea extends Widget {
                         bgImages[col] = bgImage;
                     }
                     
-                    Box cellBox = new Box(clip, width, paddingLeft, paddingRight, paddingTop);
-                    layoutElements(cellBox, cell);
-                    cellBox.nextLine(false);
-                    cellBox.clearFloater(TextAreaModel.Clear.BOTH);
+                    LClip clip = new LClip(cell);
+                    clip.x = x;
+                    clip.y = box.curY;
+                    clip.width = width;
+                    clip.marginTop = (short)convertToPX0(cellStyle, StyleAttribute.MARGIN_TOP, tableWidth);
+                    box.layout.add(clip);
 
-                    clip.height = cellBox.curY + paddingBottom;
-                    clip.height = Math.max(clip.height, convertToPX(cellStyle, StyleAttribute.HEIGHT, clip.height));
-                    clip.marginBottom = (short)Math.max(marginBottom, cellBox.marginBottomAbs - cellBox.curY);
+                    layoutBox(clip, tableWidth, paddingLeft, paddingRight, cell);
 
                     col += Math.max(0, cell.getColspan()-1);
                 }
@@ -1284,11 +1275,11 @@ public class TextArea extends Widget {
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
 
-        public Box(LClip clip, int boxWidth, int paddingLeft, int paddingRight, int paddingTop) {
+        public Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
             this.clip = clip;
             this.layout = clip.layout;
             this.boxLeft = paddingLeft;
-            this.boxWidth = Math.max(0, boxWidth - paddingLeft - paddingRight);
+            this.boxWidth = Math.max(0, clip.width - paddingLeft - paddingRight);
             this.boxMarginOffsetLeft = paddingLeft;
             this.boxMarginOffsetRight = paddingRight;
             this.curX = this.boxLeft;
@@ -1644,7 +1635,7 @@ public class TextArea extends Widget {
     static class LImage extends LElement {
         final Image img;
 
-        public LImage(Element element, Image img) {
+        public LImage(TextAreaModel.Element element, Image img) {
             super(element);
             this.img = img;
             this.width = img.getWidth();
@@ -1661,7 +1652,7 @@ public class TextArea extends Widget {
         final ArrayList<LElement> layout;
         final ArrayList<LImage> bgImages;
 
-        public LClip(Element element) {
+        public LClip(TextAreaModel.Element element) {
             super(element);
             this.layout = new ArrayList<LElement>();
             this.bgImages = new ArrayList<LImage>();
