@@ -2,8 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/LWJGL-bin/lwjgl-2.2.2/jar/lwjgl_util.jar"/>
-	<classpathentry kind="lib" path="/LWJGL-bin/lwjgl-2.2.2/jar/lwjgl.jar"/>
-	<classpathentry kind="lib" path="/Dependencies/xpp3-1.1.4c/xpp3-1.1.4c.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/LWJGL"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.USER_LIBRARY/XPP3"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
