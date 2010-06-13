@@ -40,6 +40,9 @@ import java.util.ArrayList;
  */
 public class TabbedPane extends Widget {
 
+    public static final String STATE_FIRST_TAB = "firstTab";
+    public static final String STATE_LAST_TAB = "lastTab";
+    
     public enum TabPosition {
         TOP(true),
         LEFT(false),
@@ -101,6 +104,7 @@ public class TabbedPane extends Widget {
         if(tabs.size() == 1) {
             setActiveTab(tab);
         }
+        updateTabStates();
         return tab;
     }
 
@@ -137,6 +141,7 @@ public class TabbedPane extends Widget {
         if(idx >= 0 && !tabs.isEmpty()) {
             setActiveTab(tabs.get(Math.min(tabs.size()-1, idx)));
         }
+        updateTabStates();
     }
 
     public void cycleTabs(int direction) {
@@ -240,6 +245,15 @@ public class TabbedPane extends Widget {
         throw new UnsupportedOperationException("use addTab/removeTab");
     }
 
+    protected void updateTabStates() {
+        for(int i=0,n=tabs.size() ; i<n ; i++) {
+            Tab tab = tabs.get(i);
+            AnimationState animationState = tab.button.getAnimationState();
+            animationState.setAnimationState(STATE_FIRST_TAB, i == 0);
+            animationState.setAnimationState(STATE_LAST_TAB, i == n-1);
+        }
+    }
+    
     private void validateTab(Tab tab) {
         if(tab.button.getParent() != tabBox) {
             throw new IllegalArgumentException("Invalid tab");
