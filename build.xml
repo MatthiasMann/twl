@@ -72,12 +72,12 @@
         <zip zipfile="${dist.dir}/twl-src.zip" basedir="src"/>
     </target>
 
-    <target name="build-pngdecoder-jar">
+    <target name="build-pngdecoder-jar" depends="jar">
         <jar basedir="${build.classes.dir}" jarfile="${dist.dir}/PNGDecoder.jar">
             <include name="de/matthiasmann/twl/utils/PNGDecoder*.class"/>
         </jar>
     </target>
 
-    <target name="-post-jar" depends="build-src-zip, build-pngdecoder-jar">
+    <target name="makedist" depends="default, build-src-zip, build-pngdecoder-jar">
     </target>
 </project>
