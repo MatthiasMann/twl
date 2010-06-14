@@ -292,12 +292,11 @@ public final class GUI extends Widget {
 
     @Override
     public void adjustSize() {
-        rootPane.adjustSize();
     }
 
     @Override
-    protected void sizeChanged() {
-        rootPane.setSize(getWidth(), getHeight());
+    protected void layout() {
+        layoutChildFullInnerArea(rootPane);
     }
 
     @Override
