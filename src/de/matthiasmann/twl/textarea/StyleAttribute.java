@@ -59,7 +59,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<Display> DISPLAY = new StyleAttribute<Display>(false, Display.class, Display.INLINE);
     public static final StyleAttribute<FloatPosition> FLOAT_POSITION = new StyleAttribute<FloatPosition>(false, FloatPosition.class, FloatPosition.NONE);
     public static final StyleAttribute<Value> WIDTH = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
-    public static final StyleAttribute<Value> HEIGHT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> HEIGHT = new StyleAttribute<Value>(false, Value.class, Value.AUTO);
     public static final StyleAttribute<String> BACKGROUND_IMAGE = new StyleAttribute<String>(false, String.class, null);
     public static final StyleAttribute<Value> MARGIN_TOP = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<Value> MARGIN_LEFT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);

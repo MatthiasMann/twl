@@ -38,6 +38,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -92,6 +93,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     
     private final ArrayList<Element> elements;
     private final ArrayList<String> styleSheetLinks;
+    private final HashMap<String, Element> idMap;
     private String html;
     private String title;
     private boolean needToParse;
@@ -101,7 +103,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private final int[] startLength;
 
     private ContainerElement curContainer;
-    private String href;
 
     /**
      * Creates a new {@code HTMLTextAreaModel} without content.
@@ -109,6 +110,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     public HTMLTextAreaModel() {
         this.elements = new ArrayList<Element>();
         this.styleSheetLinks = new ArrayList<String>();
+        this.idMap = new HashMap<String, Element>();
         this.styleStack = new ArrayList<Style>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
@@ -154,6 +156,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.html = html;
         this.elements.clear();
         this.styleSheetLinks.clear();
+        this.idMap.clear();
         this.title = null;
         needToParse = true;
         doCallback();
@@ -224,6 +227,15 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         return title;
     }
 
+    public Element getElementById(String id) {
+        maybeParse();
+        return idMap.get(id);
+    }
+
+    public void domModified() {
+        doCallback();
+    }
+    
     private void maybeParse() {
         if(needToParse) {
             parseHTML();
@@ -283,8 +295,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     private void parseMain(XmlPullParser xpp) throws XmlPullParserException, IOException {
-        href = null;
-
         int level = 1;
         int type;
         while(level > 0 && (type=xpp.nextToken()) != XmlPullParser.END_DOCUMENT) {
@@ -301,47 +311,53 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     break;
                 }
                 finishText();
-                pushStyle(xpp);
+                Style style = pushStyle(xpp);
+                Element element;
+
                 if("img".equals(name)) {
                     String src = TextUtil.notNull(xpp.getAttributeValue(null, "src"));
                     String alt = xpp.getAttributeValue(null, "alt");
-                    curContainer.add(new ImageElement(getStyle(), src, alt));
-                }
-                if("p".equals(name)) {
-                    ParagraphElement pe = new ParagraphElement(getStyle());
+                    element = new ImageElement(style, src, alt);
+                } else if("p".equals(name)) {
+                    ParagraphElement pe = new ParagraphElement(style);
                     parseContainer(xpp, pe);
-                    curContainer.add(pe);
+                    element = pe;
                     --level;
-                }
-                if("button".equals(name)) {
+                } else if("button".equals(name)) {
                     String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
                     String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
-                    curContainer.add(new WidgetElement(getStyle(), btnName, btnParam));
-                }
-                if("ul".equals(name)) {
-                    ContainerElement ce = new ContainerElement(getStyle());
+                    element = new WidgetElement(style, btnName, btnParam);
+                } else if("ul".equals(name)) {
+                    ContainerElement ce = new ContainerElement(style);
                     parseContainer(xpp, ce);
-                    curContainer.add(ce);
+                    element = ce;
                     --level;
-                }
-                if("li".equals(name)) {
-                    ListElement lei = new ListElement(getStyle());
-                    parseContainer(xpp, lei);
-                    curContainer.add(lei);
+                } else if("li".equals(name)) {
+                    ListElement le = new ListElement(style);
+                    parseContainer(xpp, le);
+                    element = le;
                     --level;
-                }
-                if("div".equals(name)) {
-                    BlockElement bei = new BlockElement(getStyle());
-                    curContainer.add(bei);
-                    parseContainer(xpp, bei);
+                } else if("div".equals(name)) {
+                    BlockElement be = new BlockElement(style);
+                    parseContainer(xpp, be);
+                    element = be;
                     --level;
-                }
-                if("a".equals(name)) {
-                    href = xpp.getAttributeValue(null, "href");
-                }
-                if("table".equals(name)) {
-                    parseTable(xpp);
+                } else if("a".equals(name)) {
+                    LinkElement le = new LinkElement(style, xpp.getAttributeValue(null, "href"));
+                    parseContainer(xpp, le);
+                    element = le;
                     --level;
+                } else if("table".equals(name)) {
+                    element = parseTable(xpp, style);
+                    --level;
+                } else {
+                    break;
+                }
+
+                curContainer.add(element);
+                String id = style.getStyleSheetKey().getId();
+                if(id != null) {
+                    idMap.put(id, element);
                 }
                 break;
             }
@@ -353,9 +369,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 }
                 finishText();
                 popStyle();
-                if("a".equals(name)) {
-                    href = null;
-                }
                 break;
             }
             case XmlPullParser.TEXT: {
@@ -405,13 +418,12 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         }
     }
 
-    private void parseTable(XmlPullParser xpp) throws XmlPullParserException, IOException {
+    private TableElement parseTable(XmlPullParser xpp, Style tableStyle) throws XmlPullParserException, IOException {
         ArrayList<TableCellElement> cells = new ArrayList<TableCellElement>();
         ArrayList<Style> rowStyles = new ArrayList<Style>();
         int numColumns = 0;
         int cellSpacing = parseInt(xpp, "cellspacing", 0);
         int cellPadding = parseInt(xpp, "cellpadding", 0);
-        Style tableStyle = getStyle();
 
         for(;;) {
             switch (xpp.nextTag()) {
@@ -451,8 +463,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                                 tableElement.setSell(row, col, cell);
                             }
                         }
-                        curContainer.add(tableElement);
-                        return;
+                        return tableElement;
                     }
                 }
             }
@@ -476,7 +487,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         return styleStack.get(styleStack.size()-1);
     }
 
-    private void pushStyle(XmlPullParser xpp) {
+    private Style pushStyle(XmlPullParser xpp) {
         Style parent = getStyle();
         StyleSheetKey key = null;
         String style = null;
@@ -498,6 +509,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         }
 
         styleStack.add(newStyle);
+        return newStyle;
     }
 
     private void popStyle() {
@@ -510,12 +522,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private void finishText() {
         if(sb.length() > 0) {
             Style style = getStyle();
-            TextElement e;
-            if(href != null) {
-                e = new LinkElement(style, sb.toString(), href);
-            } else {
-                e = new TextElement(style, sb.toString());
-            }
+            TextElement e = new TextElement(style, sb.toString());
             curContainer.add(e);
             sb.setLength(0);
         }

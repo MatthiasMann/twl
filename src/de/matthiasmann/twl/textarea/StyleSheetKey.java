@@ -45,6 +45,18 @@ public class StyleSheetKey {
         this.id = id;
     }
 
+    public String getClassName() {
+        return className;
+    }
+
+    public String getElement() {
+        return element;
+    }
+
+    public String getId() {
+        return id;
+    }
+
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof StyleSheetKey) {

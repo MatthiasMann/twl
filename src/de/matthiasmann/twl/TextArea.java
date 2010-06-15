@@ -427,8 +427,8 @@ public class TextArea extends Widget {
             }
 
             if(evt.getType() == Event.Type.MOUSE_CLICKED) {
-                if(curLElementUnderMouse != null && (curLElementUnderMouse.element instanceof TextAreaModel.LinkElement)) {
-                    String href = ((TextAreaModel.LinkElement)curLElementUnderMouse.element).getHREF();
+                if(curLElementUnderMouse != null && curLElementUnderMouse.href != null) {
+                    String href = curLElementUnderMouse.href;
                     if(callbacks != null) {
                         for(Callback l : callbacks) {
                             l.handleLinkClicked(href);
@@ -463,7 +463,7 @@ public class TextArea extends Widget {
             updateTooltip();
         }
         
-        if(le != null && le.element instanceof TextAreaModel.LinkElement) {
+        if(le != null && le.href != null) {
             setMouseCursor(mouseCursorLink);
         } else {
             setMouseCursor(mouseCursorNormal);
@@ -499,6 +499,8 @@ public class TextArea extends Widget {
                 layoutBlockElement(box, (TextAreaModel.BlockElement)e);
             } else if(e instanceof TextAreaModel.TableElement) {
                 layoutTableElement(box, (TextAreaModel.TableElement)e);
+            } else if(e instanceof TextAreaModel.LinkElement) {
+                layoutLinkElement(box, (TextAreaModel.LinkElement)e);
             } else if(e instanceof TextAreaModel.ContainerElement) {
                 layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
             } else {
@@ -515,6 +517,7 @@ public class TextArea extends Widget {
         }
 
         LImage li = new LImage(ie, image);
+        li.href = box.href;
         layout(box, ie, li);
     }
 
@@ -556,7 +559,16 @@ public class TextArea extends Widget {
         le.marginRight = (short)convertToPX0(style, StyleAttribute.MARGIN_RIGHT, box.boxWidth);
         le.marginBottom = (short)convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, box.boxWidth);
 
-        int height = convertToPX(style, StyleAttribute.HEIGHT, le.height);
+        int autoHeight = le.height;
+        int width = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth, le.width);
+        if(width > 0) {
+            if(le.width > 0) {
+                autoHeight = width * le.height / le.width;
+            }
+            le.width = width;
+        }
+        
+        int height = convertToPX(style, StyleAttribute.HEIGHT, le.height, autoHeight);
         if(height > 0) {
             le.height = height;
         }
@@ -576,12 +588,8 @@ public class TextArea extends Widget {
         }
 
         Style style = e.getStyle();
-        int width = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth);
-        if(width > 0) {
-            le.width = width;
-        }
 
-        box.advancePastFloaters(width, le.marginLeft, le.marginRight);
+        box.advancePastFloaters(le.width, le.marginLeft, le.marginRight);
         if(le.width > box.lineWidth) {
             le.width = box.lineWidth;
         }
@@ -627,7 +635,7 @@ public class TextArea extends Widget {
         }
     }
 
-    int convertToPX(Style style, StyleAttribute<Value> attribute, int full) {
+    int convertToPX(Style style, StyleAttribute<Value> attribute, int full, int auto) {
         style = style.resolve(attribute, styleClassResolver);
         Value valueUnit = style.getNoResolve(attribute, styleClassResolver);
         
@@ -650,6 +658,8 @@ public class TextArea extends Widget {
             case PERCENT:
                 value *= full * 0.01f;
                 break;
+            case AUTO:
+                return auto;
         }
         if(value >= Short.MAX_VALUE) {
             return Short.MAX_VALUE;
@@ -661,7 +671,7 @@ public class TextArea extends Widget {
     }
 
     int convertToPX0(Style style, StyleAttribute<Value> attribute, int full) {
-        return Math.max(0, convertToPX(style, attribute, full));
+        return Math.max(0, convertToPX(style, attribute, full, 0));
     }
 
     private Font selectFont(Style style) {
@@ -836,6 +846,7 @@ public class TextArea extends Widget {
 
                 lt.x = box.getXAndAdvance(width);
                 lt.marginTop = (short)box.marginTop;
+                lt.href = box.href;
                 box.layout.add(lt);
             }
 
@@ -912,6 +923,13 @@ public class TextArea extends Widget {
         layoutElements(box, ce);
         doMarginBottom(box, style);
     }
+
+    private void layoutLinkElement(Box box, TextAreaModel.LinkElement le) {
+        String oldHref = box.href;
+        box.href = le.getHREF();
+        layoutContainerElement(box, le);
+        box.href = oldHref;
+    }
     
     private void layoutListElement(Box box, TextAreaModel.ListElement le) {
         Style style = le.getStyle();
@@ -954,7 +972,7 @@ public class TextArea extends Widget {
         box.nextLine(false);
         box.clearFloater(TextAreaModel.Clear.BOTH);
         clip.height = box.curY + paddingBottom;
-        clip.height = Math.max(clip.height, convertToPX(style, StyleAttribute.HEIGHT, clip.height));
+        clip.height = Math.max(clip.height, convertToPX(style, StyleAttribute.HEIGHT, clip.height, clip.height));
         clip.marginBottom = (short)Math.max(marginBottom, box.marginBottomAbs - box.curY);
         return box;
     }
@@ -981,7 +999,7 @@ public class TextArea extends Widget {
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
             bgWidth = remaining;
         } else {
-            bgWidth = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth);
+            bgWidth = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth, box.lineWidth);
         }
 
         int paddingLeft = convertToPX0(style, StyleAttribute.PADDING_LEFT, bgWidth);
@@ -1070,9 +1088,9 @@ public class TextArea extends Widget {
                 TextAreaModel.TableCellElement cell = te.getCell(row, col);
                 if(cell != null && cell.getColspan() == 1) {
                     Style cellStyle = cell.getStyle();
-                    width = Math.max(width, convertToPX(cellStyle, StyleAttribute.WIDTH, tableWidth));
-                    marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth));
-                    marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth));
+                    width = Math.max(width, convertToPX(cellStyle, StyleAttribute.WIDTH, tableWidth, tableWidth/numColumns));
+                    marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
+                    marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
                 }
             }
             columnWidth[col] = width;
@@ -1266,6 +1284,7 @@ public class TextArea extends Widget {
         boolean inParagraph;
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
+        String href;
 
         public Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
             this.clip = clip;
@@ -1520,7 +1539,11 @@ public class TextArea extends Widget {
         }
 
         void setupTextParams(Style style, Font font, boolean isParagraphStart) {
-            fontLineHeight = font.getLineHeight();
+            if(font != null) {
+                fontLineHeight = font.getLineHeight();
+            } else {
+                fontLineHeight = 0;
+            }
 
             if(isParagraphStart) {
                 nextLine(false);
@@ -1532,7 +1555,7 @@ public class TextArea extends Widget {
                 marginRight = convertToPX0(style, StyleAttribute.MARGIN_RIGHT, boxWidth);
                 textAlignment = style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver);
                 computePadding();
-                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, boxWidth));
+                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, boxWidth, 0));
             }
 
             marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, boxWidth);
@@ -1549,6 +1572,7 @@ public class TextArea extends Widget {
         short marginLeft;
         short marginRight;
         short marginBottom;
+        String href;
 
         public LElement(TextAreaModel.Element element) {
             this.element = element;

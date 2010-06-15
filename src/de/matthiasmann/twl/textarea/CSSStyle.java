@@ -182,6 +182,8 @@ public class CSSStyle extends Style {
             unit = Value.Unit.PERCENT;
         } else if("0".equals(value)) {
             return Value.ZERO_PX;
+        } else if("auto".equals(value)) {
+            return Value.AUTO;
         } else {
             throw new IllegalArgumentException("Unknown numeric suffix: " + value);
         }

@@ -70,12 +70,14 @@ public final class Value {
     }
 
     public static final Value ZERO_PX = new Value(0, Unit.PX);
+    public static final Value AUTO = new Value(0, Unit.AUTO);
     
     public enum Unit {
         PX(false, "px"),
         EM(true, "em"),
         EX(true, "ex"),
-        PERCENT(false, "%");
+        PERCENT(false, "%"),
+        AUTO(false, "auto");
 
         final boolean fontBased;
         final String postfix;

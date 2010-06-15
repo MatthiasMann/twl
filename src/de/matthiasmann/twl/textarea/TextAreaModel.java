@@ -72,26 +72,45 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
     }
     
     public abstract class Element {
-        private final Style style;
+        private Style style;
 
-        public Element(Style style) {
+        protected Element(Style style) {
+            notNull(style, "style");
             this.style = style;
         }
 
         /**
          * Returns the style associated with this element
-         * @return the style associated with this element. Must not be null.
+         * @return the style associated with this element
          */
         public Style getStyle() {
             return style;
         }
+
+        /**
+         * Replaces the style associated with this element.
+         * This method does not cause the model callback to be fired.
+         *
+         * @param style the new style. Must not be null.
+         */
+        public void setStyle(Style style) {
+            notNull(style, "style");
+            this.style = style;
+        }
+
+        static void notNull(Object o, String name) {
+            if(o == null) {
+                throw new NullPointerException(name);
+            }
+        }
     }
 
     public class TextElement extends Element {
-        private final String text;
+        private String text;
 
         public TextElement(Style style, String text) {
             super(style);
+            notNull(text, "text");
             this.text = text;
         }
 
@@ -102,22 +121,16 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         public String getText() {
             return text;
         }
-    }
-
-    public class LinkElement extends TextElement {
-        private final String href;
-
-        public LinkElement(Style style, String text, String href) {
-            super(style, text);
-            this.href = href;
-        }
 
         /**
-         * Returns the href of the link.
-         * @return the href of the link.
+         * Replaces the text of this element.
+         * This method does not cause the model callback to be fired.
+         *
+         * @param text the new text. Must not be null.
          */
-        public String getHREF() {
-            return href;
+        public void setText(String text) {
+            notNull(text, "text");
+            this.text = text;
         }
     }
 
@@ -145,7 +158,7 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
 
         /**
          * Returns the tooltip or null for this image.
-         * @return the tooltip or null for this image.
+         * @return the tooltip or null for this image. Can be null.
          */
         public String getToolTip() {
             return tooltip;
@@ -191,6 +204,33 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
     public class ParagraphElement extends ContainerElement {
         public ParagraphElement(Style style) {
             super(style);
+        }
+    }
+
+    public class LinkElement extends ContainerElement {
+        private String href;
+
+        public LinkElement(Style style, String href) {
+            super(style);
+            this.href = href;
+        }
+
+        /**
+         * Returns the href of the link.
+         * @return the href of the link. Can be null.
+         */
+        public String getHREF() {
+            return href;
+        }
+
+        /*
+         * Replaces the href of this link.
+         * This method does not cause the model callback to be fired.
+         *
+         * @param href the new href of the link, can be null.
+         */
+        public void setHref(String href) {
+            this.href = href;
         }
     }
 
