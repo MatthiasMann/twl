@@ -206,9 +206,6 @@ public class ResizableFrame extends Widget {
         fadeDurationShow = themeInfo.getParameter("fadeDurationShow", 0);
         fadeDurationHide = themeInfo.getParameter("fadeDurationHide", 0);
         invalidateLayout();
-        layoutTitle();
-        layoutCloseButton();
-        layoutResizeHandle();
 
         if(super.isVisible() && !hasKeyboardFocus() &&
                 (getTintAnimator() != null || !Color.WHITE.equals(fadeColorInactive))) {
@@ -292,8 +289,6 @@ public class ResizableFrame extends Widget {
     }
 
     protected void layoutTitle() {
-        setArea(getY(), getX(), getRight(), getBottom());
-        
         int titleX = getTitleX(titleAreaLeft);
         int titleY = getTitleY(titleAreaTop);
         int titleWidth = Math.max(0, getTitleX(titleAreaRight) - titleX);
