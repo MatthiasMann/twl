@@ -1025,6 +1025,8 @@ public class TextArea extends Widget {
         clip.x = bgX;
         clip.y = bgY;
         clip.width = bgWidth;
+        clip.marginLeft = (short)marginLeft;
+        clip.marginRight = (short)marginRight;
         box.layout.add(clip);
 
         layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be);
