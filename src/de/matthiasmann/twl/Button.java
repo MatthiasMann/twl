@@ -243,6 +243,7 @@ public class Button extends TextWidget {
         } else {
             super.setCharSequence(text);
         }
+        invalidateLayout();
     }
 
     @Override
