@@ -144,6 +144,13 @@ public class TabbedPane extends Widget {
         updateTabStates();
     }
 
+    public void removeAllTabs() {
+        container.removeAllChildren();
+        tabBox.removeAllChildren();
+        tabs.clear();
+        activeTab = null;
+    }
+
     public void cycleTabs(int direction) {
         if(!tabs.isEmpty()) {
             int idx = tabs.indexOf(activeTab);
