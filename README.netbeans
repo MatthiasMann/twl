@@ -1,0 +1,29 @@
+To compile TWL with Netbeans you need to setup the required libraries.
+
+These can be obtained from their websites:
+* lwjgl-2.4.2.zip (or later) from http://www.lwjgl.org/
+* xpp3-1.1.4c_all.zip (or later) from http://www.extreme.indiana.edu/dist/java-repository/xpp3/distributions/
+
+Unzip these files to a folder on your PC.
+Do not put them into your system, JDK/JRE or Netbeans folder.
+
+Alternatively you can download http://twl.l33tlabs.org/demo/twl.zip which contains all required libraries too.
+
+
+1. Open the Netbeans library manager (Tools -> Libraries)
+
+2.1. Click "New Library" to add a User Library, name it "LWJGL" and select as type "Class Library" (should be selected by default).
+2.2. The library "LWJGL" should now be selected in the list.
+2.3. On the "Classpath" tab click "Add JAR/Folder".
+2.4. Navigate to the folder where you unziped the LWJGL zip, and select the following jar file: lwjgl.jar
+
+3.1. Click "New" to add another User Library, name it "MXP1".
+3.2. The library "MXP1" should now be selected in the list.
+2.3. On the "Classpath" tab click "Add JAR/Folder".
+2.4. Navigate to the folder where you unziped the xpp3 zip, and select the following jar file: xpp3-1.1.4c.jar
+
+3. Close the dialog with "Ok"
+
+Once these steps are complete, TWL will compile.
+
+*XPP3 is an implementation of the MXP1 API
