@@ -1,0 +1,21 @@
+To set up Eclipse for building TWL, a couple steps are needed.
+
+Before starting, you will need to download the following packages, and unzip them somewhere on your PC:
+
+* lwjgl-2.4.2.zip from http://www.lwjgl.org/
+* xpp3-1.1.4c_all.zip (or later) from http://www.extreme.indiana.edu/dist/java-repository/xpp3/distributions/
+
+The contents of these files are included in the TWL required libraries archive:
+ 
+http://twl.l33tlabs.org/demo/twl.zip
+
+1. Open the Eclipse preferences panel (Window menu, Preferences)
+2. Navigate to Java/Build Path/User Libraries
+3. Click "New" to add a User Library, name it "LWJGL". It is not a system library.
+4. Select "LWJGL" in the list, and click "Add JARs".
+5. Navigate to the LWJGL distribution directory, and select the following jar files: jinput.jar, lwjgl.jar, lwjgl_util.jar
+6. Click "New" to add another User Library, name it "XPP3". It is not a system library.
+7. Select "XPP3" in the list, and click "Add JARs".
+8. Navigate to the XPP3 distribution directory, and select the following jar files: xpp3-1.1.4c.jar
+
+Once these steps are complete, TWL will compile.
