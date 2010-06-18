@@ -30,7 +30,6 @@
 package de.matthiasmann.twl.model;
 
 import de.matthiasmann.twl.utils.CallbackSupport;
-import de.matthiasmann.twl.model.ListModel.ChangeListener;
 
 /**
  * Abstract base class to simplify implementating ListModels.

@@ -201,7 +201,7 @@ public class CSSStyle extends Style {
         return result;
     }
 
-    private void parseValueUnit(StyleAttribute attribute, String value) {
+    private void parseValueUnit(StyleAttribute<?> attribute, String value) {
         put(attribute, parseValueUnit(value));
     }
 

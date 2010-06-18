@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl.model;
 
-import de.matthiasmann.twl.model.ListModel.ChangeListener;
 import java.util.ArrayList;
 
 /**

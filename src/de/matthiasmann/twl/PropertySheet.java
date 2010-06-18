@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.TableBase.CellRenderer;
 import de.matthiasmann.twl.model.AbstractListModel;
 import de.matthiasmann.twl.model.AbstractTreeTableModel;
 import de.matthiasmann.twl.model.AbstractTreeTableNode;

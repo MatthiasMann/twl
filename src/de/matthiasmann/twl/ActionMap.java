@@ -159,7 +159,7 @@ public class ActionMap {
      * @see #FLAG_ON_RELEASE
      * @see #FLAG_ON_REPEAT
      */
-    public void addMapping(String action, Class targetClass, String methodName, Object[] params, int flags) throws IllegalArgumentException {
+    public void addMapping(String action, Class<?> targetClass, String methodName, Object[] params, int flags) throws IllegalArgumentException {
         for(Method m : targetClass.getMethods()) {
             if(m.getName().equals(methodName) && Modifier.isStatic(m.getModifiers())) {
                 if(ClassUtils.isParamsCompatible(m.getParameterTypes(), params)) {
