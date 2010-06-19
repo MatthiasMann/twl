@@ -40,6 +40,7 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 
@@ -209,17 +210,20 @@ public class Widget {
      */
     public final Widget getRootWidget() {
         Widget w = this;
-        while(w.parent != null) {
-            w = w.parent;
+        Widget p;
+        while((p=w.parent) != null) {
+            w = p;
         }
         return w;
     }
 
     /**
-     * Returns the GUI root of this widget tree if it has one.
+     * Returns the GUI root of this widget tree if it has one.<p>
      *
      * Once a widget is added (indirectly) to a GUI object it will be part of
-     * that GUI tree.
+     * that GUI tree.<p>
+     *
+     * This method is NOT thread safe.
      *
      * @return the GUI root or null if the root is not a GUI instance.
      * @see #afterAddToGUI(de.matthiasmann.twl.GUI)
@@ -2162,7 +2166,7 @@ public class Widget {
         }
     }
 
-    private final void drawWidgetTint(GUI gui) {
+    private void drawWidgetTint(GUI gui) {
         if(tintAnimator.isFadeActive()) {
             updateTintAnimation();
         }
@@ -2175,7 +2179,7 @@ public class Widget {
         }
     }
 
-    private final void drawWidgetClip(GUI gui) {
+    private void drawWidgetClip(GUI gui) {
         if(clip) {
             gui.clipEnter(posX, posY, width, height);
             try {
@@ -2377,8 +2381,9 @@ public class Widget {
                     return true;
                 }
                 if(WARN_ON_UNHANDLED_ACTION) {
-                    Logger.getLogger(getClass().getName()).warning("Unhandled action '" +
-                            action + "' for class '" + getClass().getName() + "'");
+                    Logger.getLogger(getClass().getName()).log(Level.WARNING,
+                            "Unhandled action '{0}' for class '{1}'",
+                            new Object[]{ action, getClass().getName() });
                 }
             }
         }
