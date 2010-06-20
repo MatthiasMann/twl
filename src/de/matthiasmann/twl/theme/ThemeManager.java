@@ -34,6 +34,8 @@ import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.DebugHook;
 import de.matthiasmann.twl.DialogLayout;
 import de.matthiasmann.twl.Dimension;
+import de.matthiasmann.twl.InputMap;
+import de.matthiasmann.twl.KeyStroke;
 import de.matthiasmann.twl.ListBox;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
@@ -51,6 +53,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -77,7 +80,7 @@ public class ThemeManager {
     private final ImageManager imageManager;
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
-    private final HashMap<String, InputMapImpl> inputMaps;
+    private final HashMap<String, InputMap> inputMaps;
     final HashMap<String, Object> constants;
     private final MathInterpreter mathInterpreter;
     private Font defaultFont;
@@ -92,7 +95,7 @@ public class ThemeManager {
         this.imageManager = new ImageManager(renderer);
         this.fonts  = new HashMap<String, Font>();
         this.themes = new HashMap<String, ThemeInfoImpl>();
-        this.inputMaps = new HashMap<String, InputMapImpl>();
+        this.inputMaps = new HashMap<String, InputMap>();
         this.constants = new HashMap<String, Object>();
         this.emptyMap = new ParameterMapImpl(this, null);
         this.emptyList = new ParameterListImpl(this, null);
@@ -325,31 +328,28 @@ public class ThemeManager {
         xmlp.require(XmlPullParser.END_TAG, null, "themes");
     }
 
-    private InputMapImpl getInputMap(XMLParser xmlp, String name) throws XmlPullParserException {
-        InputMapImpl im = inputMaps.get(name);
+    private InputMap getInputMap(XMLParser xmlp, String name) throws XmlPullParserException {
+        InputMap im = inputMaps.get(name);
         if(im == null) {
             throw xmlp.error("Undefined input map: " + name);
         }
         return im;
     }
 
-    private InputMapImpl parseInputMap(XMLParser xmlp) throws XmlPullParserException, IOException {
-        InputMapImpl base = null;
+    private InputMap parseInputMap(XMLParser xmlp) throws XmlPullParserException, IOException {
+        InputMap base = null;
         String baseName = xmlp.getAttributeValue(null, "ref");
         if(baseName != null) {
             base = getInputMap(xmlp, baseName);
         }
-
-        InputMapImpl im;
-        if(base != null) {
-            im = new InputMapImpl(base);
-        } else {
-            im = new InputMapImpl();
+        if(base == null) {
+            base = InputMap.empty();
         }
 
         xmlp.nextTag();
-        im.parse(xmlp);
-        
+
+        LinkedHashSet<KeyStroke> keyStrokes = InputMap.parseBody(xmlp);
+        InputMap im = base.addKeyStrokes(keyStrokes);
         return im;
     }
 

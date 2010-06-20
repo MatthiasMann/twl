@@ -27,17 +27,19 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl.theme;
+package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.utils.TextUtil;
 import org.lwjgl.input.Keyboard;
 
 /**
+ * A class to represent a key stroke and it's associated action.
+ *
+ * NOTE: equals() and hashCode() do NOT check the action.
  *
  * @author Matthias Mann
  */
-final class KeyStroke {
+public final class KeyStroke {
 
     private static final int SHIFT = 1;
     private static final int CTRL = 2;
@@ -57,11 +59,20 @@ final class KeyStroke {
         this.action = action;
     }
 
-    String getAction() {
+    /**
+     * Returns the action name for this key stroke
+     * @return the action name
+     */
+    public String getAction() {
         return action;
     }
 
-    String getKeyString() {
+    /**
+     * Returns the key stroke in parsable form
+     * @return the key stroke
+     * @see #parse(java.lang.String, java.lang.String)
+     */
+    public String getStroke() {
         StringBuilder sb = new StringBuilder();
         if((modifier & SHIFT) == SHIFT) {
             sb.append("shift ");
@@ -84,32 +95,77 @@ final class KeyStroke {
         }
         return sb.toString();
     }
-    
-    boolean match(Event e, int mappedEventModifiers) {
-        assert e.isKeyEvent();
-        if(mappedEventModifiers != modifier) {
-            return false;
+
+    /**
+     * Two KeyStroke objects are equal if the have the same key stroke, it does not compare the action.
+     *
+     * @param obj the other object to compare against
+     * @return true if the other object is a KeyStroke and responds to the same input event
+     * @see #getStroke()
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof KeyStroke) {
+            final KeyStroke other = (KeyStroke)obj;
+            return (this.modifier == other.modifier) &&
+                    (this.keyCode == other.keyCode) &&
+                    (this.keyChar == other.keyChar);
         }
-        if(keyCode != Keyboard.KEY_NONE && keyCode != e.getKeyCode()) {
-            return false;
-        }
-        if(keyChar != Keyboard.CHAR_NONE && (!e.hasKeyChar() || keyChar != e.getKeyChar())) {
-            return false;
-        }
-        return true;
+        return false;
     }
 
-    static KeyStroke parse(String s, String action) {
-        int idx = TextUtil.skipSpaces(s, 0);
+    /**
+     * Computes the hash code for this key stroke without the action.
+     * @return the hash code
+     */
+    @Override
+    public int hashCode() {
+        int hash = 5;
+        hash = 83 * hash + this.modifier;
+        hash = 83 * hash + this.keyCode;
+        hash = 83 * hash + this.keyChar;
+        return hash;
+    }
+
+    /**
+     * Parses a key stroke from string representation.<p>
+     * The following syntax is supported:<ul>
+     * <li>{@code <modifiers>* <keyName>}</li>
+     * <li>{@code <modifiers>* typed <character>}</li>
+     * </ul>
+     * Thw folloiwng modifiers are supported;<ul>
+     * <li>{@code ctrl}</li>
+     * <li>{@code shift}</li>
+     * <li>{@code meta}</li>
+     * <li>{@code alt}</li>
+     * <li>{@code cmd}</li>
+     * </ul>
+     * All matching is case insensitive.
+     * 
+     * @param stroke the key stroke
+     * @param action the action to associate
+     * @return the parsed KeyStroke
+     * @throws IllegalArgumentException if the key stroke can't be parsed
+     * @see Keyboard#getKeyIndex(java.lang.String)
+     */
+    public static KeyStroke parse(String stroke, String action) {
+        if(stroke == null) {
+            throw new NullPointerException("stroke");
+        }
+        if(action == null) {
+            throw new NullPointerException("action");
+        }
+
+        int idx = TextUtil.skipSpaces(stroke, 0);
         int modifers = 0;
         char keyChar = Keyboard.CHAR_NONE;
         int keyCode = Keyboard.KEY_NONE;
         boolean typed = false;
         boolean end = false;
 
-        while(idx < s.length()) {
-            int endIdx = TextUtil.indexOf(s, ' ', idx);
-            String part = s.substring(idx, endIdx);
+        while(idx < stroke.length()) {
+            int endIdx = TextUtil.indexOf(stroke, ' ', idx);
+            String part = stroke.substring(idx, endIdx);
 
             if(end) {
                 throw new IllegalArgumentException("Unexpected: " + part);
@@ -144,7 +200,7 @@ final class KeyStroke {
                 end = true;
             }
 
-            idx = TextUtil.skipSpaces(s, endIdx+1);
+            idx = TextUtil.skipSpaces(stroke, endIdx+1);
         }
 
         if(!end) {
@@ -152,6 +208,41 @@ final class KeyStroke {
         }
 
         return new KeyStroke(modifers, keyCode, keyChar, action);
+    }
+
+    /**
+     * Creates a KeyStroke from the KEY_PRESSED event.
+     *
+     * @param event the input event
+     * @param action the action to associate
+     * @return the KeyStroke for this event and action
+     * @throws IllegalArgumentException if the event is not a Type.KEY_PRESSED
+     */
+    public static KeyStroke fromEvent(Event event, String action) {
+        if(event == null) {
+            throw new NullPointerException("event");
+        }
+        if(action == null) {
+            throw new NullPointerException("action");
+        }
+        if(event.getType() != Event.Type.KEY_PRESSED) {
+            throw new IllegalArgumentException("Event is not a Type.KEY_PRESSED");
+        }
+        int modifiers = convertModifier(event);
+        return new KeyStroke(modifiers, event.getKeyCode(), (char)Keyboard.CHAR_NONE, action);
+    }
+
+    boolean match(Event e, int mappedEventModifiers) {
+        if(mappedEventModifiers != modifier) {
+            return false;
+        }
+        if(keyCode != Keyboard.KEY_NONE && keyCode != e.getKeyCode()) {
+            return false;
+        }
+        if(keyChar != Keyboard.CHAR_NONE && (!e.hasKeyChar() || keyChar != e.getKeyChar())) {
+            return false;
+        }
+        return true;
     }
 
     static int convertModifier(Event event) {
