@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.textarea;
 
 import de.matthiasmann.twl.model.HasCallback;
+import de.matthiasmann.twl.utils.MultiStringReader;
 import de.matthiasmann.twl.utils.TextUtil;
 import java.io.IOException;
 import java.io.InputStream;
@@ -94,9 +95,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private final ArrayList<Element> elements;
     private final ArrayList<String> styleSheetLinks;
     private final HashMap<String, Element> idMap;
-    private String html;
     private String title;
-    private boolean needToParse;
 
     private final ArrayList<Style> styleStack;
     private final StringBuilder sb;
@@ -130,21 +129,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * Creates a new {@code HTMLTextAreaModel} and parses the content of the
      * given {@code Reader}.
      *
-     * @see #readHTMLFromStream(java.io.Reader)
+     * @see #parseXHTML(java.io.Reader)
      * @param r the reader to parse html from
      * @throws IOException if an error occured while reading
      */
     public HTMLTextAreaModel(Reader r) throws IOException {
         this();
-        readHTMLFromStream(r);
-    }
-
-    /**
-     * Returns the current HTML.
-     * @return the current HTML. Can be null.
-     */
-    public String getHtml() {
-        return html;
+        parseXHTML(r);
     }
 
     /**
@@ -153,13 +144,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * @param html the html.
      */
     public void setHtml(String html) {
-        this.html = html;
-        this.elements.clear();
-        this.styleSheetLinks.clear();
-        this.idMap.clear();
-        this.title = null;
-        needToParse = true;
-        doCallback();
+        Reader r;
+        if(isXHTML(html)) {
+            r = new StringReader(html);
+        } else {
+            r = new MultiStringReader("<html><body>", html, "</body></html>");
+        }
+        parseXHTML(r);
     }
 
     /**
@@ -168,19 +159,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * @param r the reader to parse html from
      * @throws IOException if an error occured while reading
      * @see #setHtml(java.lang.String)
+     * @deprecated use {@link #parseXHTML(java.io.Reader)}
      */
     public void readHTMLFromStream(Reader r) throws IOException {
-        char[] buf = new char[1024];
-        int read, off = 0;
-        while((read=r.read(buf, off, buf.length-off)) > 0) {
-            off += read;
-            if(off == buf.length) {
-                char[] newBuf = new char[buf.length * 2];
-                System.arraycopy(buf, 0, newBuf, 0, off);
-                buf = newBuf;
-            }
-        }
-        setHtml(new String(buf, 0, off));
+        parseXHTML(r);
     }
 
     /**
@@ -188,12 +170,12 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      *
      * @param url the URL to parse.
      * @throws IOException if an error occured while reading
-     * @see #readHTMLFromStream(java.io.Reader) 
+     * @see #parseXHTML(java.io.Reader)
      */
     public void readHTMLFromURL(URL url) throws IOException {
         InputStream in = url.openStream();
         try {
-            readHTMLFromStream(new InputStreamReader(in));
+            parseXHTML(new InputStreamReader(in, "UTF8"));
         } finally {
             try {
                 in.close();
@@ -205,7 +187,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     public Iterator<Element> iterator() {
-        maybeParse();
         return elements.iterator();
     }
 
@@ -214,7 +195,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * @return an Iterable containing all hrefs
      */
     public Iterable<String> getStyleSheetLinks() {
-        maybeParse();
         return styleSheetLinks;
     }
 
@@ -223,38 +203,33 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * @return the title of this XHTML document or null if it has no title.
      */
     public String getTitle() {
-        maybeParse();
         return title;
     }
 
     public Element getElementById(String id) {
-        maybeParse();
         return idMap.get(id);
     }
 
     public void domModified() {
         doCallback();
     }
-    
-    private void maybeParse() {
-        if(needToParse) {
-            parseHTML();
-            needToParse = false;
-        }
-    }
-    
-    private void parseHTML() {
+
+    /**
+     * Parse a XHTML document. The root element must be &lt;html&gt;
+     * @param reader the reader used to read the XHTML document.
+     */
+    public void parseXHTML(Reader reader) {
+        this.elements.clear();
+        this.styleSheetLinks.clear();
+        this.idMap.clear();
+        this.title = null;
+
         try {
             XmlPullParserFactory xppf = XmlPullParserFactory.newInstance();
             xppf.setNamespaceAware(false);
             xppf.setValidating(false);
             XmlPullParser xpp = xppf.newPullParser();
-            if(html.length() > 5 && html.charAt(0) == '<' && (
-                    html.charAt(1) == '?' || html.charAt(1) == '!' || html.startsWith("<html>"))) {
-                xpp.setInput(new StringReader(html));
-            } else {
-                xpp.setInput(new CompositeReader("<html><body>", html, "</body></html>"));
-            }
+            xpp.setInput(reader);
             xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
             xpp.nextTag();
@@ -280,8 +255,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             
             parseMain(xpp);
             finishText();
-        } catch(Exception ex) {
-             getLogger().log(Level.SEVERE, "Unable to parse XHTML document", ex);
+        } catch(Throwable ex) {
+             Logger.getLogger(HTMLTextAreaModel.class.getName()).log(Level.SEVERE, "Unable to parse XHTML document", ex);
+        } finally {
+            // data was modified
+            doCallback();
         }
     }
 
@@ -478,6 +456,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             return Integer.parseInt(value);
         }
     }
+
+    private static boolean isXHTML(String doc) {
+        if(doc.length() > 5 && doc.charAt(0) == '<') {
+            return doc.startsWith("<?xml") || doc.startsWith("<!DOCTYPE") || doc.startsWith("<html>");
+        }
+        return false;
+    }
     
     private boolean isPre() {
         return getStyle().get(StyleAttribute.PREFORMATTED, null);
@@ -547,48 +532,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 sb.deleteCharAt(idx);
             }
             wasSpace = isSpace;
-        }
-    }
-
-    Logger getLogger() {
-        return Logger.getLogger(HTMLTextAreaModel.class.getName());
-    }
-    
-    static class CompositeReader extends Reader {
-        private final String[] strings;
-        private int nr;
-        private int pos;
-
-        public CompositeReader(String ... strings) {
-            this.strings = strings;
-            while(strings[nr].length() == 0) {
-                nr++;
-            }
-        }
-
-        @Override
-        public int read(char[] cbuf, int off, int len) throws IOException {
-            if(nr == strings.length) {
-                return -1;
-            }
-            String cur = strings[nr];
-            int remain = cur.length() - pos;
-            if(len > remain) {
-                len = remain;
-            }
-            cur.getChars(pos, pos+len, cbuf, off);
-            pos += len;
-            if(pos == cur.length()) {
-                pos = 0;
-                do {
-                    nr++;
-                } while(nr < strings.length && strings[nr].length() == 0);
-            }
-            return len;
-        }
-
-        @Override
-        public void close() {
         }
     }
 }
