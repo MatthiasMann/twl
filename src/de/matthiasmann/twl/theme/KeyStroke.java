@@ -61,6 +61,30 @@ final class KeyStroke {
         return action;
     }
 
+    String getKeyString() {
+        StringBuilder sb = new StringBuilder();
+        if((modifier & SHIFT) == SHIFT) {
+            sb.append("shift ");
+        }
+        if((modifier & CTRL) == CTRL) {
+            sb.append("ctrl ");
+        }
+        if((modifier & ALT) == ALT) {
+            sb.append("alt ");
+        }
+        if((modifier & CMD) == CMD) {
+            sb.append("cmd ");
+        } else if((modifier & META) == META) {
+            sb.append("meta ");
+        }
+        if(keyCode != Keyboard.KEY_NONE) {
+            sb.append(Keyboard.getKeyName(keyCode));
+        } else {
+            sb.append("typed ").append(keyChar);
+        }
+        return sb.toString();
+    }
+    
     boolean match(Event e, int mappedEventModifiers) {
         assert e.isKeyEvent();
         if(mappedEventModifiers != modifier) {

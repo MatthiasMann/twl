@@ -340,32 +340,16 @@ public class ThemeManager {
             base = getInputMap(xmlp, baseName);
         }
 
-        ArrayList<KeyStroke> keyStrokes = new ArrayList<KeyStroke>();
-        xmlp.nextTag();
-        while(!xmlp.isEndTag()) {
-            xmlp.require(XmlPullParser.START_TAG, null, "action");
-            String name = xmlp.getAttributeNotNull("name");
-            String key = xmlp.nextText();
-            try {
-                KeyStroke ks = KeyStroke.parse(key, name);
-                keyStrokes.add(ks);
-            } catch (IllegalArgumentException ex) {
-                throw xmlp.error("can't parse Keystroke", ex);
-            }
-            xmlp.require(XmlPullParser.END_TAG, null, "action");
-            xmlp.nextTag();
-        }
-
         InputMapImpl im;
         if(base != null) {
-            if(keyStrokes.isEmpty()) {
-                return base;
-            }
             im = new InputMapImpl(base);
         } else {
             im = new InputMapImpl();
         }
-        im.addMappings(keyStrokes);
+
+        xmlp.nextTag();
+        im.parse(xmlp);
+        
         return im;
     }
 

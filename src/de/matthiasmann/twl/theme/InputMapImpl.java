@@ -31,7 +31,16 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.InputMap;
+import de.matthiasmann.twl.utils.XMLParser;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmlpull.v1.XmlSerializer;
 
 /**
  *
@@ -71,4 +80,61 @@ public class InputMapImpl implements InputMap {
         return null;
     }
 
+    void parse(XMLParser xmlp) throws XmlPullParserException, IOException {
+        ArrayList<KeyStroke> newStrokes = new ArrayList<KeyStroke>();
+        while(!xmlp.isEndTag()) {
+            xmlp.require(XmlPullParser.START_TAG, null, "action");
+            String name = xmlp.getAttributeNotNull("name");
+            String key = xmlp.nextText();
+            try {
+                KeyStroke ks = KeyStroke.parse(key, name);
+                newStrokes.add(ks);
+            } catch (IllegalArgumentException ex) {
+                throw xmlp.error("can't parse Keystroke", ex);
+            }
+            xmlp.require(XmlPullParser.END_TAG, null, "action");
+            xmlp.nextTag();
+        }
+        addMappings(newStrokes);
+    }
+
+    /**
+     * Parses a stand alone &lt;inputMapDef&gt; XML file
+     *
+     * @param url the URL ton the XML file
+     * @throws XmlPullParserException if a parse error occured
+     * @throws IOException if an IO related error occured
+     */
+    public void parse(URL url) throws XmlPullParserException, IOException {
+        XMLParser xmlp = new XMLParser(url);
+        try {
+            xmlp.require(XmlPullParser.START_DOCUMENT, null, null);
+            xmlp.nextTag();
+            xmlp.require(XmlPullParser.START_TAG, null, "inputMapDef");
+            xmlp.nextTag();
+            parse(xmlp);
+            xmlp.require(XmlPullParser.END_TAG, null, "inputMapDef");
+        } finally {
+            xmlp.close();
+        }
+    }
+
+    public void writeXML(OutputStream os) throws XmlPullParserException, IOException {
+        XmlPullParserFactory factory = XmlPullParserFactory.newInstance();
+        XmlSerializer serializer = factory.newSerializer();
+        serializer.setOutput(os, "UTF8");
+        serializer.startDocument("UTF8", Boolean.TRUE);
+        serializer.text("\n");
+        serializer.startTag(null, "inputMapDef");
+        for(KeyStroke ks : keyStrokes) {
+            serializer.text("\n    ");
+            serializer.startTag(null, "action");
+            serializer.attribute(null, "name", ks.getAction());
+            serializer.text(ks.getKeyString());
+            serializer.endTag(null, "action");
+        }
+        serializer.text("\n");
+        serializer.endTag(null, "inputMapDef");
+        serializer.endDocument();
+    }
 }
