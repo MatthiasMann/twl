@@ -42,6 +42,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -108,81 +109,46 @@ class ImageManager {
         return ParserUtil.resolve(cursors, ref, name);
     }
 
-    void parseTextures(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
-        xmlp.require(XmlPullParser.START_TAG, null, "textures");
-        String fmt = xmlp.getAttributeValue(null, "format");
-        String filter = xmlp.getAttributeValue(null, "filter");
-        String fileName = xmlp.getAttributeNotNull("file");
+    void parseImages(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
+        xmlp.require(XmlPullParser.START_TAG, null, null);
 
-        try {
-            Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
-            if(texture == null) {
-                throw new NullPointerException("loadTexture returned null");
-            }
-            this.currentTexture = texture;
+        Texture texture = null;
+        String fileName = xmlp.getAttributeValue(null, "file");
+        if(fileName != null) {
+            String fmt = xmlp.getAttributeValue(null, "format");
+            String filter = xmlp.getAttributeValue(null, "filter");
 
             try {
+                texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
+                if(texture == null) {
+                    throw new NullPointerException("loadTexture returned null");
+                }
+            } catch (IOException ex) {
+                throw xmlp.error("Unable to load image file: " + fileName, ex);
+            }
+        }
+
+        this.currentTexture = texture;
+
+        try {
+            xmlp.nextTag();
+            while(!xmlp.isEndTag()) {
+                String name = xmlp.getAttributeNotNull("name");
+                checkImageName(name, xmlp);
+                String tagName = xmlp.getName();
+                if("cursor".equals(xmlp.getName())) {
+                    parseCursor(xmlp, name);
+                } else {
+                    Image image = parseImage(xmlp, tagName);
+                    images.put(name, image);
+                }
+                xmlp.require(XmlPullParser.END_TAG, null, tagName);
                 xmlp.nextTag();
-                while(!xmlp.isEndTag()) {
-                    String name = xmlp.getAttributeNotNull("name");
-                    checkImageName(name, xmlp);
-                    String tagName = xmlp.getName();
-                    if("cursor".equals(xmlp.getName())) {
-                        parseCursor(xmlp, name, texture);
-                    } else {
-                        Image image = parseImage(xmlp, tagName);
-                        images.put(name, image);
-                    }
-                    xmlp.require(XmlPullParser.END_TAG, null, tagName);
-                    xmlp.nextTag();
-                }
-            } finally {
-                texture.themeLoadingDone();
-                currentTexture = null;
             }
-        } catch (Exception ex) {
-            throw xmlp.error("Unable to load texture: " + fileName, ex);
+        } finally {
+            currentTexture = null;
+            texture.themeLoadingDone();
         }
-    }
-
-    public void parseTextureDirect(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
-        xmlp.require(XmlPullParser.START_TAG, null, "texture");
-        String fmt = xmlp.getAttributeValue(null, "format");
-        String filter = xmlp.getAttributeValue(null, "filter");
-        String fileName = xmlp.getAttributeNotNull("file");
-        String name = xmlp.getAttributeNotNull("name");
-        checkImageName(name, xmlp);
-
-        try {
-            Texture texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);
-            if(texture == null) {
-                throw new NullPointerException("loadTexture returned null");
-            }
-            this.currentTexture = texture;
-
-            try {
-                ImageParams params = new ImageParams();
-                parseStdAttributes(xmlp, params);
-                boolean tiled = xmlp.parseBoolFromAttribute("tiled", false);
-                Image image = createImage(xmlp, 0, 0, texture.getWidth(), texture.getHeight(), params.tintColor, tiled);
-                params.tintColor = null;
-                params.condition = ParserUtil.parseCondition(xmlp);
-                if(tiled) {
-                    params.repeatX = false;
-                    params.repeatY = false;
-                }
-                image = adjustImage(image, params);
-                images.put(name, image);
-            } finally {
-                texture.themeLoadingDone();
-                currentTexture = null;
-            }
-        } catch (Exception ex) {
-            throw xmlp.error("Unable to load texture: " + fileName, ex);
-        }
-
-        xmlp.nextTag();
-        xmlp.require(XmlPullParser.END_TAG, null, "texture");
     }
 
     private void checkImageName(String name, XMLParser xmlp) throws XmlPullParserException, XmlPullParserException {
@@ -199,7 +165,7 @@ class ImageManager {
         return border;
     }
 
-    private void parseCursor(XMLParser xmlp, String name, Texture texture) throws IOException, XmlPullParserException {
+    private void parseCursor(XMLParser xmlp, String name) throws IOException, XmlPullParserException {
         String ref = xmlp.getAttributeValue(null, "ref");
         MouseCursor cursor;
         if(ref != null) {
@@ -209,7 +175,7 @@ class ImageManager {
             parseRectFromAttribute(xmlp, imageParams);
             int hotSpotX = xmlp.parseIntFromAttribute("hotSpotX");
             int hotSpotY = xmlp.parseIntFromAttribute("hotSpotY");
-            cursor = texture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY);
+            cursor = currentTexture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY);
         }
         if(cursor != null) {
             cursors.put(name, cursor);
@@ -249,7 +215,9 @@ class ImageManager {
     }
 
     private Image parseImageDelegate(XMLParser xmlp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
-        if("texture".equals(tagName)) {
+        if("area".equals(tagName)) {
+            return parseArea(xmlp, params);
+        } else if("texture".equals(tagName)) {
             return parseTexture(xmlp, params);
         } else if("hvsplit".equals(tagName)) {
             return parseHVSplit(xmlp, params);
@@ -338,6 +306,60 @@ class ImageManager {
         return image;
     }
 
+    private Image parseArea(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
+        parseRectFromAttribute(xmlp, params);
+        boolean tiled = xmlp.parseBoolFromAttribute("tiled", false);
+        final int[] splitx = parseSplit2(xmlp, "splitx", Math.abs(params.w));
+        final int[] splity = parseSplit2(xmlp, "splity", Math.abs(params.h));
+        final Image image;
+        if(splitx != null || splity != null) {
+            boolean noCenter = xmlp.parseBoolFromAttribute("nocenter", false);
+            final int columns = (splitx != null) ? 3 : 1;
+            final int rows = (splity != null) ? 3 : 1;
+            final Image[] imageParts = new Image[columns * rows];
+            for(int r=0,idx=0 ; r<rows ; r++) {
+                final int imgY, imgH;
+                if(splity != null) {
+                    imgY = params.y + splity[r];
+                    imgH = (splity[r+1] - splity[r]) * Integer.signum(params.h);
+                } else {
+                    imgY = params.y;
+                    imgH = params.h;
+                }
+                for(int c=0 ; c<columns ; c++,idx++) {
+                    final int imgX, imgW;
+                    if(splitx != null) {
+                        imgX = params.x + splitx[c];
+                        imgW = (splitx[c+1] - splitx[c]) * Integer.signum(params.w);
+                    } else {
+                        imgX = params.x;
+                        imgW = params.w;
+                    }
+
+                    boolean isCenter = (r == rows/2) && (c == columns/2);
+                    if(noCenter && isCenter) {
+                        imageParts[idx] = new EmptyImage(imgW, imgH);
+                    } else {
+                        imageParts[idx] = createImage(xmlp, imgX, imgY, imgW, imgH, params.tintColor, isCenter & tiled);
+                    }
+                }
+            }
+            image = new GridImage(imageParts,
+                    (splitx != null) ? SPLIT_WEIGHTS_3 : SPLIT_WEIGHTS_1,
+                    (splity != null) ? SPLIT_WEIGHTS_3 : SPLIT_WEIGHTS_1,
+                    params.border);
+        } else {
+            image = createImage(xmlp, params.x, params.y, params.w, params.h, params.tintColor, tiled);
+        }
+        xmlp.nextTag();
+        params.tintColor = null;
+        if(tiled) {
+            params.repeatX = false;
+            params.repeatY = false;
+        }
+        return image;
+    }
+
     private Image parseAlias(XMLParser xmlp) throws XmlPullParserException, XmlPullParserException, IOException {
         Image image = getReferencedImage(xmlp);
         xmlp.nextTag();
@@ -368,6 +390,58 @@ class ImageManager {
         return off;
     }
 
+    private static int[] parseSplit2(XMLParser xmlp, String attribName, int size) throws XmlPullParserException {
+        String splitStr = xmlp.getAttributeValue(null, attribName);
+        if(splitStr != null) {
+            int comma = splitStr.indexOf(',');
+            if(comma < 0) {
+                throw xmlp.error(attribName + " requires 2 values");
+            }
+            try {
+                int[] result = new int[4];
+                for(int i=0,start=0 ; i<2 ; i++) {
+                    String part = splitStr.substring(start, comma).trim();
+                    if(part.length() == 0) {
+                        throw new NumberFormatException("empty string");
+                    }
+                    int off = 0;
+                    int sign = 1;
+                    switch (part.charAt(0)) {
+                        case 'b':
+                        case 'B':
+                        case 'r':
+                        case 'R':
+                            off = size;
+                            sign = -1;
+                            // fall through
+                        case 't':
+                        case 'T':
+                        case 'l':
+                        case 'L':
+                            part = part.substring(1).trim();
+                            break;
+                    }
+                    int value = Integer.parseInt(part);
+                    result[i+1] = Math.max(0, Math.min(size, off + sign*value));
+
+                    start = comma +  1;
+                    comma = splitStr.length();
+                }
+                if(result[1] > result[2]) {
+                    int tmp = result[1];
+                    result[1] = result[2];
+                    result[2] = tmp;
+                }
+                result[3] = size;
+                return result;
+            } catch(NumberFormatException ex) {
+                throw xmlp.error("Unable to parse " + attribName + ": \"" + splitStr + "\"", ex);
+            }
+        } else {
+            return null;
+        }
+    }
+
     private void parseSubImages(XMLParser xmlp, Image[] textures) throws XmlPullParserException, IOException {
         for(int i=0 ; i<textures.length ; i++) {
             xmlp.require(XmlPullParser.START_TAG, null, null);
@@ -388,7 +462,6 @@ class ImageManager {
             Image image = new GridImage(textures, weightsX, weightsY, params.border);
             return image;
         } catch(IllegalArgumentException ex) {
-            ex.printStackTrace();
             throw xmlp.error("Invalid value", ex);
         }
     }
@@ -553,7 +626,7 @@ class ImageManager {
         while(xmlp.isStartTag()) {
             if(lastRepeatsEndless && !hasWarned) {
                 hasWarned = true;
-                getLogger().warning("Animation frames after an endless repeat won't be displayed: " + xmlp.getPositionDescription());
+                getLogger().log(Level.WARNING, "Animation frames after an endless repeat won''t be displayed: {0}", xmlp.getPositionDescription());
             }
             String tagName = xmlp.getName();
             parseAnimElements(xmlp, tagName, children);
@@ -606,6 +679,7 @@ class ImageManager {
         if(w == 0 || h == 0) {
             return new EmptyImage(Math.abs(w), Math.abs(h));
         }
+
         // adjust position for flip
         if(w < 0) {
             x -= w;
@@ -614,19 +688,54 @@ class ImageManager {
             y -= h;
         }
 
-        Texture texture = currentTexture;
-        if(x >= texture.getWidth() || x+Math.abs(w) <= 0 ||
-                y >= texture.getHeight() || y+Math.abs(h) <= 0) {
-            getLogger().warning("texture partly outside of file: " + xmlp.getPositionDescription());
+        final Texture texture = currentTexture;
+        final int texWidth = texture.getWidth();
+        final int texHeight = texture.getHeight();
+
+        int x1 = x + w;
+        int y1 = y + h;
+
+        if(x < 0 || x > texWidth || x1 < 0 || x1 > texWidth ||
+                y < 0 || y > texHeight || y1 < 0 || y1 > texHeight) {
+            getLogger().log(Level.WARNING, "texture partly outside of file: {0}", xmlp.getPositionDescription());
+            x = Math.max(0, Math.min(x, texWidth));
+            w = Math.max(0, Math.min(x1, texWidth)) - x;
+            y = Math.max(0, Math.min(y, texHeight));
+            h = Math.max(0, Math.min(y1, texHeight)) - y;
         }
+        
         return texture.getImage(x, y, w, h, tintColor, tiled);
     }
     
     private void parseRectFromAttribute(XMLParser xmlp, ImageParams params) throws XmlPullParserException {
-        params.x = xmlp.parseIntFromAttribute("x");
-        params.y = xmlp.parseIntFromAttribute("y");
-        params.w = xmlp.parseIntFromAttribute("width");
-        params.h = xmlp.parseIntFromAttribute("height");
+        if(currentTexture == null) {
+            throw xmlp.error("can't create area outside of <imagefile> object");
+        }
+        String xywh = xmlp.getAttributeValue(null, "xywh");
+        if(xywh != null) {
+            if("*".equals(xywh)) {
+                params.x = 0;
+                params.y = 0;
+                params.w = currentTexture.getWidth();
+                params.h = currentTexture.getHeight();
+            } else try {
+                int[] coords = ParserUtil.parseIntArray(xywh);
+                if(coords.length != 4) {
+                    throw xmlp.error("xywh requires 4 integer arguments");
+                }
+                params.x = coords[0];
+                params.y = coords[1];
+                params.w = coords[2];
+                params.h = coords[3];
+            } catch(IllegalArgumentException ex) {
+                throw xmlp.error("can't parse xywh argument", ex);
+            }
+        } else {
+            params.x = xmlp.parseIntFromAttribute("x");
+            params.y = xmlp.parseIntFromAttribute("y");
+            params.w = xmlp.parseIntFromAttribute("width");
+            params.h = xmlp.parseIntFromAttribute("height");
+        }
     }
 
     private void parseStdAttributes(XMLParser xmlp, ImageParams params) throws XmlPullParserException {

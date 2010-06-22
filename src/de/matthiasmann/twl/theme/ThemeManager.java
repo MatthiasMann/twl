@@ -276,10 +276,8 @@ public class ThemeManager {
         while(!xmlp.isEndTag()) {
             xmlp.require(XmlPullParser.START_TAG, null, null);
             final String tagName = xmlp.getName();
-            if("textures".equals(tagName)) {
-                imageManager.parseTextures(xmlp, baseUrl);
-            } else if("texture".equals(tagName)) {
-                imageManager.parseTextureDirect(xmlp, baseUrl);
+            if("images".equals(tagName) || "textures".equals(tagName)) {
+                imageManager.parseImages(xmlp, baseUrl);
             } else if("include".equals(tagName)) {
                 String fontFileName = xmlp.getAttributeNotNull("filename");
                 parseThemeFile(new URL(baseUrl, fontFileName));
