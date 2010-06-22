@@ -7,7 +7,7 @@
 <!ELEMENT themes (images|fontDef|inputMapDef|theme|constantDef|include)*>
 
 <!ELEMENT images (area|alias|composed|select|grid|animation|repeatImage|cursor)*>
-<!ATTLIST imagess
+<!ATTLIST images
     file    CDATA #IMPLIED
     format  CDATA #IMPLIED
     filter  CDATA #IMPLIED>
@@ -180,7 +180,9 @@
 <!ELEMENT fontDef (fontParam)*>
 <!ATTLIST fontDef
     name            CDATA #IMPLIED
-    default         (true|false) #IMPLIED>
+    default         (true|false) #IMPLIED
+    filename        CDATA #IMPLIED
+    color           CDATA #IMPLIED>
 
 <!ELEMENT inputMapDef (action)*>
 <!ATTLIST inputMapDef
