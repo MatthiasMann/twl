@@ -12,8 +12,8 @@
     format  CDATA #IMPLIED
     filter  CDATA #IMPLIED>
 
-<!ELEMENT texture EMPTY>
-<!ATTLIST texture
+<!ELEMENT area EMPTY>
+<!ATTLIST area
     name            CDATA #IMPLIED
     xywh            CDATA #REQUIRED
     tiled           (true|false) #IMPLIED
