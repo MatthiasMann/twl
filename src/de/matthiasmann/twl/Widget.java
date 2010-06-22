@@ -2382,7 +2382,7 @@ public class Widget {
                 }
                 if(WARN_ON_UNHANDLED_ACTION) {
                     Logger.getLogger(getClass().getName()).log(Level.WARNING,
-                            "Unhandled action '{0}' for class '{1}'",
+                            "Unhandled action ''{0}'' for class ''{1}''",
                             new Object[]{ action, getClass().getName() });
                 }
             }

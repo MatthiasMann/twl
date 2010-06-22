@@ -504,8 +504,7 @@ public class TextArea extends Widget {
             } else if(e instanceof TextAreaModel.ContainerElement) {
                 layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
             } else {
-                Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE,
-                        "Unknown Element subclass: " + e.getClass());
+                Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Unknown Element subclass: {0}", e.getClass());
             }
         }
     }
@@ -534,7 +533,7 @@ public class TextArea extends Widget {
         }
 
         if(widget.getParent() != null) {
-            Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Widget already added: " + widget);
+            Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Widget already added: {0}", widget);
             return;
         }
 
