@@ -46,6 +46,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
@@ -229,14 +230,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             try {
                 format = LWJGLTexture.Format.valueOf(formatStr.toUpperCase());
             } catch(IllegalArgumentException ex) {
-                getLogger().warning("Unknown texture format: " + formatStr);
+                getLogger().log(Level.WARNING, "Unknown texture format: {0}", formatStr);
             }
         }
         if(filterStr != null) {
             try {
                 filter = LWJGLTexture.Filter.valueOf(filterStr.toUpperCase());
             } catch(IllegalArgumentException ex) {
-                getLogger().warning("Unknown texture filter: " + filterStr);
+                getLogger().log(Level.WARNING, "Unknown texture filter: {0}", filterStr);
             }
         }
         return load(url, format, filter);
