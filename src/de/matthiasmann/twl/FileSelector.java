@@ -85,7 +85,9 @@ public class FileSelector extends DialogLayout {
     private final MRUListModel<String> filesMRU;
 
     private final TreeComboBox currentFolder;
+    private final Label labelCurrentFolder;
     private final FileTable fileTable;
+    private final ScrollPane fileTableSP;
     private final Button btnUp;
     private final Button btnFolderMRU;
     private final Button btnFilesMRU;
@@ -104,6 +106,9 @@ public class FileSelector extends DialogLayout {
 
     private FileSystemModel fsm;
     private FileSystemTreeModel model;
+
+    private Widget userWidgetBottom;
+    private Widget userWidgetRight;
 
     /**
      * Create a FileSelector without persistent state
@@ -198,7 +203,7 @@ public class FileSelector extends DialogLayout {
         autoCompletion.setExecutorService(Executors.newSingleThreadExecutor());
         currentFolder.getEditField().setAutoCompletionWindow(autoCompletion);
 
-        setAllowMultiSelection(true);
+        fileTable.setAllowMultiSelection(true);
         fileTable.addCallback(new TableBase.Callback() {
             public void mouseDoubleClicked(int row, int column) {
                 acceptSelection();
@@ -222,10 +227,10 @@ public class FileSelector extends DialogLayout {
             }
         });
         
-        Label labelCurrentFolder = new Label("Folder");
+        labelCurrentFolder = new Label("Folder");
         labelCurrentFolder.setLabelFor(currentFolder);
 
-        ScrollPane scrollPane = new ScrollPane(fileTable);
+        fileTableSP = new ScrollPane(fileTable);
 
         Runnable showBtnCallback = new Runnable() {
             public void run() {
@@ -247,11 +252,20 @@ public class FileSelector extends DialogLayout {
         btnShowHidden.setTheme("buttonShowHidden");
         btnShowHidden.addCallback(showBtnCallback);
 
+        addActionMapping("goOneLevelUp", "goOneLevelUp");
+        addActionMapping("acceptSelection", "acceptSelection");
+    }
+    
+    protected void createLayout() {
+        setHorizontalGroup(null);
+        setVerticalGroup(null);
+        removeAllChildren();
+
         add(labelCurrentFolder);
         add(currentFolder);
         add(btnFolderMRU);
         add(btnUp);
-        add(scrollPane);
+        add(fileTableSP);
         add(fileFilterBox);
         add(btnOk);
         add(btnCancel);
@@ -298,22 +312,41 @@ public class FileSelector extends DialogLayout {
 
         Group hMainGroup = createSequentialGroup()
                 .addGroup(hShowBtns)
-                .addWidget(scrollPane);
+                .addWidget(fileTableSP);
         Group vMainGroup = createParallelGroup()
                 .addGroup(vShowBtns)
-                .addWidget(scrollPane);
+                .addWidget(fileTableSP);
 
-        setHorizontalGroup(createParallelGroup()
+        Group horz = createParallelGroup()
                 .addGroup(hCurrentFolder)
-                .addGroup(hMainGroup)
-                .addGroup(hButtonGroup));
-        setVerticalGroup(createSequentialGroup()
-                .addGroup(vCurrentFolder)
-                .addGroup(vMainGroup)
-                .addGroup(vButtonGroup));
+                .addGroup(hMainGroup);
 
-        addActionMapping("goOneLevelUp", "goOneLevelUp");
-        addActionMapping("acceptSelection", "acceptSelection");
+        Group vert = createSequentialGroup()
+                .addGroup(vCurrentFolder)
+                .addGroup(vMainGroup);
+
+        if(userWidgetBottom != null) {
+            horz.addWidget(userWidgetBottom);
+            vert.addWidget(userWidgetBottom);
+        }
+
+        if(userWidgetRight != null) {
+            horz = createParallelGroup().addGroup(createSequentialGroup()
+                    .addGroup(horz)
+                    .addWidget(userWidgetRight));
+            vert = createSequentialGroup().addGroup(createParallelGroup()
+                    .addGroup(vert)
+                    .addWidget(userWidgetRight));
+        }
+
+        setHorizontalGroup(horz.addGroup(hButtonGroup));
+        setVerticalGroup(vert.addGroup(vButtonGroup));
+    }
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        createLayout();
     }
 
     public FileSystemModel getFileSystemModel() {
@@ -363,6 +396,32 @@ public class FileSelector extends DialogLayout {
 
     public void removeCallback(Callback callback) {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
+    }
+
+    public Widget getUserWidgetBottom() {
+        return userWidgetBottom;
+    }
+
+    public void setUserWidgetBottom(Widget userWidgetBottom) {
+        this.userWidgetBottom = userWidgetBottom;
+        createLayout();
+    }
+
+    public Widget getUserWidgetRight() {
+        return userWidgetRight;
+    }
+
+    public void setUserWidgetRight(Widget userWidgetRight) {
+        this.userWidgetRight = userWidgetRight;
+        createLayout();
+    }
+
+    public FileTable getFileTable() {
+        return fileTable;
+    }
+
+    public void setOkButtonEnabled(boolean enabled) {
+        btnOk.setEnabled(enabled);
     }
 
     public Object getCurrentFolder() {
