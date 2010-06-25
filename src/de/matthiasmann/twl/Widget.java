@@ -913,7 +913,7 @@ public class Widget {
     }
     
     /**
-     * Changes the theme name of this widget - DOES NOT call applyTheme()
+     * Changes the theme name of this widget - DOES NOT call reapplyTheme()
      *
      * If the theme name is empty then this widget won't receive theme data
      * and is not included in the theme path, but it's children are still
@@ -922,6 +922,7 @@ public class Widget {
      * @param theme The new theme path element
      * @throws java.lang.NullPointerException if theme is null
      * @see GUI#applyTheme(ThemeManager)
+     * @see #reapplyTheme()
      * @see #getThemePath()
      * @see #isAbsoluteTheme(java.lang.String)
      */
