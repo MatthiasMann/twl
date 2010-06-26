@@ -62,6 +62,11 @@ public class FileSelector extends DialogLayout {
         public void canceled();
     }
 
+    public interface Callback2 extends Callback {
+        public void folderChanged(Object folder);
+        public void selectionChanged(FileTable.Entry[] selection);
+    }
+
     public static class NamedFileFilter {
         private final String name;
         private final FileSystemModel.FileFilter fileFilter;
@@ -222,7 +227,7 @@ public class FileSelector extends DialogLayout {
             public void run() {
                 int idx = fileFilterBox.getSelected();
                 if(idx >= 0) {
-                    setFileFilter(fileFiltersModel.getFileFilter(idx));
+                    setFileFilter(idx);
                 }
             }
         });
@@ -474,8 +479,11 @@ public class FileSelector extends DialogLayout {
         if(filter == null) {
             throw new NullPointerException("filter");
         }
-        activeFileFilter = filter;
-        fileTable.setFileFilter(filter.getFileFilter());
+        int idx = fileFiltersModel.findFilter(filter);
+        if(idx < 0) {
+            throw new IllegalArgumentException("filter not registered");
+        }
+        fileFilterBox.setSelected(idx);
     }
 
     public NamedFileFilter getFileFilter() {
@@ -518,6 +526,12 @@ public class FileSelector extends DialogLayout {
         fireAcceptCallback(selection);
     }
 
+    void setFileFilter(int idx) {
+        NamedFileFilter filter = fileFiltersModel.getFileFilter(idx);
+        activeFileFilter = filter;
+        fileTable.setFileFilter(filter.getFileFilter());
+    }
+
    void fireAcceptCallback(FileTable.Entry[] selection) {
         if(callbacks != null) {
             Object[] objects = new Object[selection.length];
@@ -538,7 +552,8 @@ public class FileSelector extends DialogLayout {
     void selectionChanged() {
         boolean foldersSelected = false;
         boolean filesSelected = false;
-        for(FileTable.Entry entry : fileTable.getSelection()) {
+        FileTable.Entry[] selection = fileTable.getSelection();
+        for(FileTable.Entry entry : selection) {
             if(entry.isFolder) {
                 foldersSelected = true;
             } else {
@@ -550,11 +565,26 @@ public class FileSelector extends DialogLayout {
         } else {
             btnOk.setEnabled(filesSelected && !foldersSelected);
         }
+        if(callbacks != null) {
+            for(Callback cb : callbacks) {
+                if(cb instanceof Callback2) {
+                    ((Callback2)cb).selectionChanged(selection);
+                }
+            }
+        }
     }
 
     protected void setCurrentNode(TreeTableNode node) {
         currentFolder.setCurrentNode(node);
         refreshFileTable();
+        if(callbacks != null) {
+            Object curFolder = getCurrentFolder();
+            for(Callback cb : callbacks) {
+                if(cb instanceof Callback2) {
+                    ((Callback2)cb).folderChanged(curFolder);
+                }
+            }
+        }
     }
 
     void refreshFileTable() {
@@ -691,6 +721,9 @@ public class FileSelector extends DialogLayout {
                 filters.remove(idx);
                 fireEntriesDeleted(idx, idx);
             }
+        }
+        public int findFilter(NamedFileFilter filter) {
+            return filters.indexOf(filter);
         }
         private void removeAll() {
             filters.clear();
