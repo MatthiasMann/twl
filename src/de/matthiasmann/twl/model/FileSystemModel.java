@@ -41,6 +41,8 @@ import java.nio.channels.ReadableByteChannel;
  */
 public interface FileSystemModel {
 
+    public static final String SPECIAL_FOLDER_HOME = "user.home";
+    
     public interface FileFilter {
         public boolean accept(FileSystemModel model, Object file);
     }
@@ -80,6 +82,8 @@ public interface FileSystemModel {
     public Object[] listRoots();
     
     public Object[] listFolder(Object file, FileFilter filter);
+
+    public Object getSpecialFolder(String key);
     
     public InputStream openStream(Object file) throws IOException;
     

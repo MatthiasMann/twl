@@ -94,6 +94,7 @@ public class FileSelector extends DialogLayout {
     private final FileTable fileTable;
     private final ScrollPane fileTableSP;
     private final Button btnUp;
+    private final Button btnHome;
     private final Button btnFolderMRU;
     private final Button btnFilesMRU;
     private final Button btnOk;
@@ -154,6 +155,14 @@ public class FileSelector extends DialogLayout {
         btnUp.addCallback(new Runnable() {
             public void run() {
                 goOneLevelUp();
+            }
+        });
+
+        btnHome = new Button();
+        btnHome.setTheme("buttonHome");
+        btnHome.addCallback(new Runnable() {
+            public void run() {
+                goHome();
             }
         });
 
@@ -282,12 +291,14 @@ public class FileSelector extends DialogLayout {
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
                 .addWidget(btnFolderMRU)
-                .addWidget(btnUp);
+                .addWidget(btnUp)
+                .addWidget(btnHome);
         Group vCurrentFolder = createParallelGroup()
                 .addWidget(labelCurrentFolder)
                 .addWidget(currentFolder)
                 .addWidget(btnFolderMRU)
-                .addWidget(btnUp);
+                .addWidget(btnUp)
+                .addWidget(btnHome);
 
         Group hButtonGroup = createSequentialGroup()
                 .addWidget(fileFilterBox)
@@ -511,6 +522,15 @@ public class FileSelector extends DialogLayout {
         TreeTableNode parent = node.getParent();
         if(parent != null) {
             setCurrentNode(parent);
+        }
+    }
+
+    public void goHome() {
+        if(fsm != null) {
+            Object folder = fsm.getSpecialFolder(FileSystemModel.SPECIAL_FOLDER_HOME);
+            if(folder != null) {
+                setCurrentFolder(folder);
+            }
         }
     }
 

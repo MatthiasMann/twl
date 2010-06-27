@@ -186,6 +186,18 @@ public class JavaFileSystemModel implements FileSystemModel {
         }
     }
 
+    public Object getSpecialFolder(String key) {
+        File file = null;
+        if(SPECIAL_FOLDER_HOME.equals(key)) {
+            file = new File(System.getProperty("user.home"));
+        }
+        if(file != null && file.canRead() && file.isDirectory()) {
+            return file;
+        } else {
+            return null;
+        }
+    }
+
     public ReadableByteChannel openChannel(Object file) throws IOException {
         return new FileInputStream((File)file).getChannel();
     }
