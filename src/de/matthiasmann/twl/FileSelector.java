@@ -46,7 +46,9 @@ import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
+import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.concurrent.Executors;
 import java.util.prefs.Preferences;
 
@@ -378,6 +380,7 @@ public class FileSelector extends DialogLayout {
             autoCompletion.setDataSource(null);
         } else {
             model = new FileSystemTreeModel(fsm);
+            model.setSorter(new NameSorter(fsm));
             currentFolder.setModel(model);
             currentFolder.setSeparator(fsm.getSeparator());
             autoCompletion.setDataSource(new FileSystemAutoCompletionDataSource(fsm,
@@ -748,6 +751,18 @@ public class FileSelector extends DialogLayout {
         private void removeAll() {
             filters.clear();
             fireAllChanged();
+        }
+    }
+
+    public static class NameSorter implements Comparator<Object> {
+        private final FileSystemModel fsm;
+
+        public NameSorter(FileSystemModel fsm) {
+            this.fsm = fsm;
+        }
+
+        public int compare(Object o1, Object o2) {
+            return NaturalSortComparator.naturalCompare(fsm.getName(o1), fsm.getName(o2));
         }
     }
 }
