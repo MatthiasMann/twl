@@ -100,7 +100,7 @@ public class TextArea extends Widget {
     private int lastMouseX;
     private int lastMouseY;
     private boolean lastMouseInside;
-    private LElement curLElementUnderMouse;
+    LElement curLElementUnderMouse;
 
     public TextArea() {
         this.widgets = new HashMap<String, Widget>();

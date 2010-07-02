@@ -236,7 +236,7 @@ public class TreePathDisplay extends Widget {
         protected boolean handleEvent(Event evt) {
             if(evt.isMouseEvent()) {
                 if(evt.getType() == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
-                    editPath(currentNode);
+                    editPath(getCurrentNode());
                     return true;
                 }
                 return evt.getType() != Event.Type.MOUSE_WHEEL;
@@ -258,7 +258,7 @@ public class TreePathDisplay extends Widget {
 
             switch(key) {
             case Keyboard.KEY_RETURN:
-                if(fireResolvePath(editField.getText())) {
+                if(fireResolvePath(getEditField().getText())) {
                     endEdit();
                 }
                 break;

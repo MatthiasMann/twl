@@ -54,9 +54,9 @@ public class ColorSelector extends DialogLayout {
     final ByteBuffer imgData;
     final IntBuffer imgDataInt;
 
-    private ColorSpace colorSpace;
-    private float[] colorValues;
-    private ColorValueModel[] colorValueModels;
+    ColorSpace colorSpace;
+    float[] colorValues;
+    ColorValueModel[] colorValueModels;
     private boolean useColorArea2D = true;
     private boolean showPreview = false;
     private boolean useLabels = true;
@@ -65,9 +65,9 @@ public class ColorSelector extends DialogLayout {
     private boolean showRGBAdjuster = true;
     private boolean showAlphaAdjuster = true;
     private Runnable[] callbacks;
-    private int currentColor;
+    int currentColor;
     private ARGBModel[] argbModels;
-    private EditField hexColorEditField;
+    EditField hexColorEditField;
     private TintAnimator previewTintAnimator;
     private boolean recreateLayout;
 

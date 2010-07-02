@@ -48,13 +48,13 @@ import org.lwjgl.input.Keyboard;
  */
 public class FolderBrowser extends Widget {
 
-    private final FileSystemModel fsm;
-    private final ListBox<Object> listbox;
-    private final FolderModel model;
+    final FileSystemModel fsm;
+    final ListBox<Object> listbox;
+    final FolderModel model;
     private final BoxLayout curFolderGroup;
     private Runnable[] selectionChangedCallbacks;
 
-    private Comparator<String> folderComparator;
+    Comparator<String> folderComparator;
     private Object currentFolder;
     private Runnable[] callbacks;
     

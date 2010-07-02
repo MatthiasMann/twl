@@ -43,12 +43,12 @@ public class Graph extends Widget {
 
     private final GraphArea area;
 
-    private GraphModel model;
+    GraphModel model;
     private ParameterMap themeLineStyles;
     private int sizeMultipleX = 1;
     private int sizeMultipleY = 1;
 
-    private LineStyle[] lineStyles = new LineStyle[8];
+    LineStyle[] lineStyles = new LineStyle[8];
     private float[] renderXYBuffer = new float[128];
 
     public Graph() {
@@ -110,7 +110,7 @@ public class Graph extends Widget {
         Arrays.fill(lineStyles, null);
     }
 
-    private void syncLineStyles() {
+    void syncLineStyles() {
         int numLines = model.getNumLines();
         if(lineStyles.length < numLines) {
             LineStyle[] newLineStyles = new LineStyle[numLines];

@@ -66,9 +66,9 @@ public class TreeComboBox extends ComboBoxBase {
 
     private static final String DEFAULT_POPUP_THEME = "treecomboboxPopup";
 
-    private final TableSingleSelectionModel selectionModel;
-    private final TreePathDisplay display;
-    private final TreeTable table;
+    final TableSingleSelectionModel selectionModel;
+    final TreePathDisplay display;
+    final TreeTable table;
 
     private TreeTableModel model;
     private Callback[] callbacks;

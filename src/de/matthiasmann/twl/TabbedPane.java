@@ -268,8 +268,8 @@ public class TabbedPane extends Widget {
     }
 
     public class Tab extends HasCallback implements BooleanModel {
-        private final ToggleButton button;
-        private Widget pane;
+        final ToggleButton button;
+        Widget pane;
 
         Tab() {
             button = new ToggleButton(this);

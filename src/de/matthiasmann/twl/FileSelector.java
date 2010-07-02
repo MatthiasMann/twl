@@ -89,7 +89,7 @@ public class FileSelector extends DialogLayout {
 
     private final IntegerModel flags;
     private final MRUListModel<String> folderMRU;
-    private final MRUListModel<String> filesMRU;
+    final MRUListModel<String> filesMRU;
 
     private final TreeComboBox currentFolder;
     private final Label labelCurrentFolder;
@@ -112,7 +112,7 @@ public class FileSelector extends DialogLayout {
     private Callback[] callbacks;
     private NamedFileFilter activeFileFilter;
 
-    private FileSystemModel fsm;
+    FileSystemModel fsm;
     private FileSystemTreeModel model;
 
     private Widget userWidgetBottom;
@@ -196,11 +196,7 @@ public class FileSelector extends DialogLayout {
         btnCancel.setTheme("buttonCancel");
         btnCancel.addCallback(new Runnable() {
             public void run() {
-                if(callbacks != null) {
-                    for(Callback cb : callbacks) {
-                        cb.canceled();
-                    }
-                }
+                fireCanceled();
             }
         });
 
@@ -236,10 +232,7 @@ public class FileSelector extends DialogLayout {
         fileFilterBox.setVisible(false);
         fileFilterBox.addCallback(new Runnable() {
             public void run() {
-                int idx = fileFilterBox.getSelected();
-                if(idx >= 0) {
-                    setFileFilter(idx);
-                }
+                fileFilterChanged();
             }
         });
         
@@ -250,8 +243,6 @@ public class FileSelector extends DialogLayout {
 
         Runnable showBtnCallback = new Runnable() {
             public void run() {
-                fileTable.setShowFolders(btnShowFolders.getModel().isSelected());
-                fileTable.setShowHidden(btnShowHidden.getModel().isSelected());
                 refreshFileTable();
             }
         };
@@ -549,13 +540,16 @@ public class FileSelector extends DialogLayout {
         fireAcceptCallback(selection);
     }
 
-    void setFileFilter(int idx) {
-        NamedFileFilter filter = fileFiltersModel.getFileFilter(idx);
-        activeFileFilter = filter;
-        fileTable.setFileFilter(filter.getFileFilter());
+    void fileFilterChanged() {
+        int idx = fileFilterBox.getSelected();
+            if(idx >= 0) {
+            NamedFileFilter filter = fileFiltersModel.getFileFilter(idx);
+            activeFileFilter = filter;
+            fileTable.setFileFilter(filter.getFileFilter());
+        }
     }
 
-   void fireAcceptCallback(FileTable.Entry[] selection) {
+    void fireAcceptCallback(FileTable.Entry[] selection) {
         if(callbacks != null) {
             Object[] objects = new Object[selection.length];
             for(int i=0 ; i<selection.length ; i++) {
@@ -570,7 +564,15 @@ public class FileSelector extends DialogLayout {
                 cb.filesSelected(objects);
             }
         }
-   }
+    }
+
+    void fireCanceled() {
+        if(callbacks != null) {
+            for(Callback cb : callbacks) {
+                cb.canceled();
+            }
+        }
+    }
 
     void selectionChanged() {
         boolean foldersSelected = false;
@@ -611,6 +613,8 @@ public class FileSelector extends DialogLayout {
     }
 
     void refreshFileTable() {
+        fileTable.setShowFolders(btnShowFolders.getModel().isSelected());
+        fileTable.setShowHidden(btnShowHidden.getModel().isSelected());
         fileTable.setCurrentFolder(fsm, getCurrentFolder());
     }
 
@@ -748,7 +752,7 @@ public class FileSelector extends DialogLayout {
         public int findFilter(NamedFileFilter filter) {
             return filters.indexOf(filter);
         }
-        private void removeAll() {
+        void removeAll() {
             filters.clear();
             fireAllChanged();
         }
