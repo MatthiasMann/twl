@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -31,10 +31,13 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.model.FileSystemModel;
+import de.matthiasmann.twl.model.FileSystemTreeModel.FolderFilter;
 import de.matthiasmann.twl.model.JavaFileSystemModel;
 import de.matthiasmann.twl.model.SimpleListModel;
+import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.input.Keyboard;
 
@@ -239,7 +242,6 @@ public class FolderBrowser extends Widget {
     protected void layout() {
         curFolderGroup.setPosition(getInnerX(), getInnerY());
         curFolderGroup.setSize(getInnerWidth(), curFolderGroup.getHeight());
-        //curFolderGroup.setMaxComponentSize(getInnerWidth()*9/10);
         listbox.setPosition(getInnerX(), curFolderGroup.getBottom());
         listbox.setSize(getInnerWidth(), Math.max(0, getInnerBottom() - listbox.getY()));
     }
@@ -254,7 +256,6 @@ public class FolderBrowser extends Widget {
     
     class FolderModel extends SimpleListModel<Object> {
         private Object[] folders = new Object[0];
-        private final Logger logger = Logger.getLogger(FolderModel.class.getName());
 
         public boolean listFolders(Object parent) {
             Object[] newFolders;
@@ -264,22 +265,12 @@ public class FolderBrowser extends Widget {
                 newFolders = fsm.listFolder(parent, FolderFilter.instance);
             }
             if(newFolders == null) {
-                logger.warning("can't list folder:" + parent);
+                Logger.getLogger(FolderModel.class.getName()).log(Level.WARNING, "can''t list folder: {0}", parent);
                 return false;
             }
-            if(folderComparator != null) {
-                Arrays.sort(newFolders, new Comparator<Object>() {
-                    public int compare(Object o1, Object o2) {
-                        return folderComparator.compare(fsm.getName(o1), fsm.getName(o2));
-                    }
-                });
-            } else {
-                Arrays.sort(newFolders, new Comparator<Object>() {
-                    public int compare(Object o1, Object o2) {
-                        return fsm.getName(o1).compareTo(fsm.getName(o2));
-                    }
-                });
-            }
+            Arrays.sort(newFolders, new FileSelector.NameSorter(fsm, (folderComparator != null)
+                    ? folderComparator
+                    : NaturalSortComparator.stringComparator));
             folders = newFolders;
             fireAllChanged();
             return true;
@@ -301,13 +292,6 @@ public class FolderBrowser extends Widget {
         public int findFolder(Object folder) {
             int idx = fsm.find(folders, folder);
             return (idx < 0) ? ListBox.NO_SELECTION : idx;
-        }
-    }
-
-    static class FolderFilter implements FileSystemModel.FileFilter {
-        public static final FolderFilter instance = new FolderFilter();
-        public boolean accept(FileSystemModel fsm, Object pathname) {
-            return fsm.isFolder(pathname);
         }
     }
 }

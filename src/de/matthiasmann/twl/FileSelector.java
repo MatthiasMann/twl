@@ -754,15 +754,35 @@ public class FileSelector extends DialogLayout {
         }
     }
 
+    /**
+     * A file object comparator which delegates to a String comprataor to sort based
+     * on the name of the file objects.
+     */
     public static class NameSorter implements Comparator<Object> {
         private final FileSystemModel fsm;
+        private final Comparator<String> nameComparator;
 
+        /**
+         * Creates a new comparator which uses {@code NaturalSortComparator.stringComparator} to sort the names
+         * @param fsm the file system model
+         */
         public NameSorter(FileSystemModel fsm) {
             this.fsm = fsm;
+            this.nameComparator = NaturalSortComparator.stringComparator;
+        }
+
+        /**
+         * Creates a new comparator which uses the specified String comparator to sort the names
+         * @param fsm the file system model
+         * @param nameComparator the name comparator
+         */
+        public NameSorter(FileSystemModel fsm, Comparator<String> nameComparator) {
+            this.fsm = fsm;
+            this.nameComparator = nameComparator;
         }
 
         public int compare(Object o1, Object o2) {
-            return NaturalSortComparator.naturalCompare(fsm.getName(o1), fsm.getName(o2));
+            return nameComparator.compare(fsm.getName(o1), fsm.getName(o2));
         }
     }
 }
