@@ -650,9 +650,10 @@ public class ListBox<T> extends Widget {
 
     void entriesInserted(int first, int last) {
         int delta = last - first + 1;
+        int prevNumEntries = numEntries;
         numEntries += delta;
         int fv = getFirstVisible();
-        if(fv >= first) {
+        if(fv >= first && prevNumEntries >= labels.length) {
             fv += delta;
             setFirstVisible(fv);
         }
