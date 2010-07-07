@@ -268,10 +268,6 @@ public class FileSelector extends DialogLayout {
         setVerticalGroup(null);
         removeAllChildren();
 
-        add(labelCurrentFolder);
-        add(currentFolder);
-        add(btnFolderMRU);
-        add(btnUp);
         add(fileTableSP);
         add(fileFilterBox);
         add(btnOk);
@@ -279,6 +275,10 @@ public class FileSelector extends DialogLayout {
         add(btnRefresh);
         add(btnShowFolders);
         add(btnShowHidden);
+        add(labelCurrentFolder);
+        add(currentFolder);
+        add(btnFolderMRU);
+        add(btnUp);
         
         Group hCurrentFolder = createSequentialGroup()
                 .addWidget(labelCurrentFolder)
