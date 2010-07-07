@@ -844,6 +844,7 @@ public final class GUI extends Widget {
         popup.getOwner().recalcOpenPopups(this);
         sendPopupEvent(Event.Type.POPUP_CLOSED);
         popupEventOccured = true;
+        closeInfoFromWidget(popup);
         requestKeyboardFocus(getTopPane());
     }
 
