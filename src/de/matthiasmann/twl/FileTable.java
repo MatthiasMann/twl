@@ -72,6 +72,7 @@ public class FileTable extends Table {
     private final FileTableModel fileTableModel;
     private final Runnable selectionChangedListener;
     private TableSelectionModel fileTableSelectionModel;
+    private TableSearchWindow tableSearchWindow;
     private SortColumn sortColumn = SortColumn.NAME;
     private SortOrder sortOrder = SortOrder.ASCENDING;
 
@@ -169,13 +170,19 @@ public class FileTable extends Table {
         if(fileTableSelectionModel != null) {
             fileTableSelectionModel.removeSelectionChangeListener(selectionChangedListener);
         }
+        if(tableSearchWindow != null) {
+            tableSearchWindow.setModel(null, 0);
+        }
         if(allowMultiSelection) {
             fileTableSelectionModel = new DefaultTableSelectionModel();
         } else {
             fileTableSelectionModel = new TableSingleSelectionModel();
         }
         fileTableSelectionModel.addSelectionChangeListener(selectionChangedListener);
+        tableSearchWindow = new TableSearchWindow(this, fileTableSelectionModel);
+        tableSearchWindow.setModel(fileTableModel, 0);
         setSelectionManager(new TableRowSelectionManager(fileTableSelectionModel));
+        setKeyboardSearchHandler(tableSearchWindow);
         selectionChanged();
     }
 
@@ -211,6 +218,9 @@ public class FileTable extends Table {
             sortFilesAndUpdateModel(entries, numFolders);
         } else {
             sortFilesAndUpdateModel(EMPTY, 0);
+        }
+        if(tableSearchWindow != null) {
+            tableSearchWindow.cancelSearch();
         }
     }
 
