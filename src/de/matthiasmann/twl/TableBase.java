@@ -117,6 +117,27 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         public void positionWidget(Widget widget, int x, int y, int w, int h);
     }
 
+    public interface KeyboardSearchHandler {
+        /**
+         * Update search with this key event
+         *
+         * @param evt the key event
+         * @return true if the event was handled
+         */
+        public boolean handleKeyEvent(Event evt);
+
+        /**
+         * Returns true if the search is active.
+         * @return true if the search is active.
+         */
+        public boolean isActive();
+
+        /**
+         * Called when the table position ot size has changed.
+         */
+        public void updateInfoWindowPosition();
+    }
+
     public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
     public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
     public static final String STATE_ROW_SELECTED = "rowSelected";
@@ -139,6 +160,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected boolean hasCellWidgetCreators;
     protected ColumnHeader[] columnHeaders;
     protected TableSelectionManager selectionManager;
+    protected KeyboardSearchHandler keyboardSearchHandler;
     protected Callback[] callbacks;
 
     protected Image imageColumnDivider;
@@ -205,6 +227,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     public void setDefaultSelectionManager() {
         setSelectionManager(new TableRowSelectionManager());
+    }
+
+    public KeyboardSearchHandler getKeyboardSearchHandler() {
+        return keyboardSearchHandler;
+    }
+
+    public void setKeyboardSearchHandler(KeyboardSearchHandler keyboardSearchHandler) {
+        this.keyboardSearchHandler = keyboardSearchHandler;
     }
 
     public void addCallback(Callback callback) {
@@ -490,10 +520,21 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     @Override
+    protected void positionChanged() {
+        super.positionChanged();
+        if(keyboardSearchHandler != null) {
+            keyboardSearchHandler.updateInfoWindowPosition();
+        }
+    }
+
+    @Override
     protected void sizeChanged() {
         super.sizeChanged();
         if(isFixedWidthMode()) {
             updateAllColumnWidth = true;
+        }
+        if(keyboardSearchHandler != null) {
+            keyboardSearchHandler.updateInfoWindowPosition();
         }
     }
 
@@ -930,6 +971,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     @Override
     protected boolean handleEvent(Event evt) {
+        if(evt.isKeyEvent() &&
+                keyboardSearchHandler != null &&
+                keyboardSearchHandler.isActive() &&
+                keyboardSearchHandler.handleKeyEvent(evt)) {
+            return true;
+        }
+        
         if(super.handleEvent(evt)) {
             return true;
         }
@@ -937,7 +985,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         if(evt.isMouseEvent()) {
             return handleMouseEvent(evt);
         }
-        
+
+        if(evt.isKeyEvent() &&
+                keyboardSearchHandler != null &&
+                keyboardSearchHandler.handleKeyEvent(evt)) {
+            return true;
+        }
+
         return false;
     }
 
