@@ -60,6 +60,9 @@ public class InfoWindow extends Widget {
         if(getParent() != null) {
             return true;
         }
+        if(isParentInfoWindow(owner)) {
+            return false;
+        }
         GUI gui = owner.getGUI();
         if(gui != null) {
             gui.openInfo(this);
@@ -105,5 +108,15 @@ public class InfoWindow extends Widget {
     @Override
     public int getPreferredInnerHeight() {
         return BoxLayout.computePreferredHeightHorizontal(this);
+    }
+
+    private static boolean isParentInfoWindow(Widget w) {
+        while(w != null) {
+            if(w instanceof InfoWindow) {
+                return true;
+            }
+            w = w.getParent();
+        }
+        return false;
     }
 }
