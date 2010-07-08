@@ -137,6 +137,7 @@
     xywh            CDATA #IMPLIED
     hotSpotX        CDATA #IMPLIED
     hotSpotY        CDATA #IMPLIED
+    imageRef        CDATA #IMPLIED
     ref             CDATA #IMPLIED>
 
 <!ELEMENT include EMPTY>

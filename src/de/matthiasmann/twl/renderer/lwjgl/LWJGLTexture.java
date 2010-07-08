@@ -222,9 +222,9 @@ public class LWJGLTexture implements Texture, Resource {
         return new TextureArea(this, x, y, width, height, tintColor, tiled);
     }
 
-    public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY) {
-        if(renderer.isUseSWMouseCursors()) {
-            return new SWCursor(this, x, y, width, height, hotSpotX, hotSpotY);
+    public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY, Image imageRef) {
+        if(renderer.isUseSWMouseCursors() || imageRef != null) {
+            return new SWCursor(this, x, y, width, height, hotSpotX, hotSpotY, imageRef);
         }
         if(texData != null) {
             LWJGLCursor cursor = new LWJGLCursor(texData, texDataFmt,

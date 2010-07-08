@@ -63,7 +63,7 @@ public interface Texture extends Resource {
      */
     public Image getImage(int x, int y, int width, int height, Color tintColor, boolean tiled);
 
-    public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY);
+    public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY, Image imageRef);
 
     /**
      * After calling this function getImage() and createCursor() may fail to work

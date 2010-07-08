@@ -75,13 +75,13 @@ class ImageManager {
 
     Image getReferencedImage(XMLParser xmlp) throws XmlPullParserException {
         String ref = xmlp.getAttributeNotNull("ref");
-        if(ref.endsWith(".*")) {
-            throw xmlp.error("wildcard mapping not allowed");
-        }
         return getReferencedImage(xmlp, ref);
     }
 
     Image getReferencedImage(XMLParser xmlp, String ref) throws XmlPullParserException {
+        if(ref.endsWith(".*")) {
+            throw xmlp.error("wildcard mapping not allowed");
+        }
         Image img = images.get(ref);
         if(img == null) {
             throw xmlp.error("referenced image \"" + ref + "\" not found");
@@ -175,7 +175,13 @@ class ImageManager {
             parseRectFromAttribute(xmlp, imageParams);
             int hotSpotX = xmlp.parseIntFromAttribute("hotSpotX");
             int hotSpotY = xmlp.parseIntFromAttribute("hotSpotY");
-            cursor = currentTexture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY);
+            String imageRefStr = xmlp.getAttributeValue(null, "imageRef");
+
+            Image imageRef = null;
+            if(imageRefStr != null) {
+                imageRef = getReferencedImage(xmlp, imageRefStr);
+            }
+            cursor = currentTexture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY, imageRef);
         }
         if(cursor != null) {
             cursors.put(name, cursor);

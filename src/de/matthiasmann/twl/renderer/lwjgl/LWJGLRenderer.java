@@ -31,6 +31,7 @@ package de.matthiasmann.twl.renderer.lwjgl;
 
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.Rect;
+import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.CacheContext;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.FontParameter;
@@ -50,6 +51,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.LWJGLException;
+import org.lwjgl.Sys;
 import org.lwjgl.input.Cursor;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.opengl.ContextCapabilities;
@@ -81,6 +83,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private int mouseY;
     private LWJGLCacheContext cacheContext;
 
+    final AnimationState swCursorAnimState;
     final ArrayList<TextureArea> textureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintStack tintStack;
@@ -104,6 +107,18 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         } else {
             emptyCursor = null;
         }
+
+        swCursorAnimState = new AnimationState() {
+            public int getAnimationTime(String state) {
+                return (int)Sys.getTime() & Integer.MAX_VALUE;
+            }
+            public boolean getAnimationState(String state) {
+                return false;
+            }
+            public boolean getShouldAnimateState(String state) {
+                return true;
+            }
+        };
     }
 
     public boolean isUseQuadsForLines() {
@@ -118,6 +133,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return useSWMouseCursors;
     }
 
+    /**
+     * Controls if the mouse cursor is rendered via SW or HW cursors.
+     * HW cursors have reduced support for transparency and cursor size.
+     *
+     * This must be set before loading a theme !
+     * 
+     * @param useSWMouseCursors
+     */
     public void setUseSWMouseCursors(boolean useSWMouseCursors) {
         this.useSWMouseCursors = useSWMouseCursors;
     }
