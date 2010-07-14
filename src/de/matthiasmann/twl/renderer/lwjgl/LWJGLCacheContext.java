@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GLContext;
@@ -47,12 +48,14 @@ public class LWJGLCacheContext implements CacheContext {
     final LWJGLRenderer renderer;
     final HashMap<String, LWJGLTexture> textures;
     final HashMap<String, BitmapFont> fontCache;
+    final ArrayList<LWJGLTexture> allTextures;
     boolean valid;
 
     protected LWJGLCacheContext(LWJGLRenderer renderer) {
         this.renderer = renderer;
         this.textures = new HashMap<String, LWJGLTexture>();
         this.fontCache = new HashMap<String, BitmapFont>();
+        this.allTextures = new ArrayList<LWJGLTexture>();
         valid = true;
     }
 
@@ -60,13 +63,16 @@ public class LWJGLCacheContext implements CacheContext {
         String urlString = url.toString();
         LWJGLTexture texture = textures.get(urlString);
         if(texture == null) {
-            texture = createTexture(url, fmt, filter);
+            texture = createTexture(url, fmt, filter, null);
             textures.put(urlString, texture);
         }
         return texture;
     }
 
-    private LWJGLTexture createTexture(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
+    LWJGLTexture createTexture(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter, TexturePostProcessing tpp) throws IOException {
+        if(!valid) {
+            throw new IllegalStateException("CacheContext already destroyed");
+        }
         InputStream is = textureUrl.openStream();
         try {
             PNGDecoder dec = new PNGDecoder(is);
@@ -85,7 +91,13 @@ public class LWJGLCacheContext implements CacheContext {
             dec.decode(buf, stride, fmt);
             buf.flip();
 
-            return new LWJGLTexture(renderer, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
+            if(tpp != null) {
+                tpp.process(buf, stride, dec.getWidth(), dec.getHeight(), fmt);
+            }
+
+            LWJGLTexture texture = new LWJGLTexture(renderer, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
+            allTextures.add(texture);
+            return texture;
         } finally {
             try {
                 is.close();
@@ -110,7 +122,7 @@ public class LWJGLCacheContext implements CacheContext {
 
     public void destroy() {
         try {
-            for(LWJGLTexture t : textures.values()) {
+            for(LWJGLTexture t : allTextures) {
                 t.destroy();
             }
             for(BitmapFont f : fontCache.values()) {
@@ -119,6 +131,7 @@ public class LWJGLCacheContext implements CacheContext {
         } finally {
             textures.clear();
             fontCache.clear();
+            allTextures.clear();
             valid = false;
         }
     }

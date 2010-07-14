@@ -353,10 +353,19 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     }
 
     public LWJGLTexture load(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
+        return load(textureUrl, fmt, filter, null);
+    }
+
+    public LWJGLTexture load(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter, TexturePostProcessing tpp) throws IOException {
         if(textureUrl == null) {
             throw new NullPointerException("textureUrl");
         }
-        return activeCacheContext().loadTexture(textureUrl, fmt, filter);
+        LWJGLCacheContext cc = activeCacheContext();
+        if(tpp != null) {
+            return cc.createTexture(textureUrl, fmt, filter, tpp);
+        } else {
+            return cc.loadTexture(textureUrl, fmt, filter);
+        }
     }
 
     public void pushGlobalTintColor(float r, float g, float b, float a) {
