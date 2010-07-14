@@ -155,6 +155,35 @@ public class XMLParser implements Closeable {
         return xpp.nextText();
     }
 
+    public char[] nextText(int[] startAndLength) throws XmlPullParserException, IOException {
+        warnUnusedAttributes();
+        for(;;) {
+            int token = xpp.nextToken();
+            switch (token) {
+                case XmlPullParser.TEXT:
+                    return xpp.getTextCharacters(startAndLength);
+                case XmlPullParser.ENTITY_REF: {
+                    String replaced = xpp.getText();
+                    startAndLength[0] = 0;
+                    startAndLength[1] = replaced.length();
+                    return replaced.toCharArray();
+                }
+                case XmlPullParser.COMMENT:
+                    break;
+                default:
+                    handleType(token);
+                    return null;
+            }
+        }
+    }
+
+    public void skipText() throws XmlPullParserException, IOException {
+        int token = xpp.getEventType();
+        while(token == XmlPullParser.TEXT || token == XmlPullParser.ENTITY_REF || token == XmlPullParser.COMMENT) {
+            token = xpp.nextToken();
+        }
+    }
+    
     public boolean isStartTag() throws XmlPullParserException {
         return xpp.getEventType() == XmlPullParser.START_TAG;
     }
@@ -358,9 +387,10 @@ public class XMLParser implements Closeable {
 
     protected void warnUnusedAttributes() {
         if(!unusedAttributes.isEmpty()) {
+            String positionDescription = getPositionDescription();
             for(int i=-1 ; (i=unusedAttributes.nextSetBit(i+1))>=0 ;) {
-                getLogger().log(Level.WARNING, "Unused attribute '" + xpp.getAttributeName(i) + "' on '" +
-                        xpp.getName() + "' at " + getPositionDescription());
+                getLogger().log(Level.WARNING, "Unused attribute ''{0}'' on ''{1}'' at {2}",
+                        new Object[]{xpp.getAttributeName(i), xpp.getName(), positionDescription});
             }
         }
     }
