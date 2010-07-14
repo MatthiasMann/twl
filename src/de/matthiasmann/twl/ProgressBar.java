@@ -36,7 +36,7 @@ import de.matthiasmann.twl.renderer.Image;
  *
  * @author Matthias Mann
  */
-public class ProgressBar extends Widget {
+public class ProgressBar extends TextWidget {
 
     public static final String STATE_VALUE_CHANGED = "valueChanged";
     
@@ -64,6 +64,14 @@ public class ProgressBar extends Widget {
         }
     }
 
+    public String getText() {
+        return (String)getCharSequence();
+    }
+
+    public void setText(String text) {
+        setCharSequence(text);
+    }
+    
     public Image getProgressImage() {
         return progressImage;
     }
@@ -105,6 +113,7 @@ public class ProgressBar extends Widget {
             }
             progressImage.draw(getAnimationState(), getInnerX(), getInnerY(), imageWidth + scaledWidth, height);
         }
+        super.paintWidget(gui);
     }
 
     @Override
