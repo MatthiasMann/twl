@@ -45,10 +45,16 @@ public final class Value {
         if(unit == null) {
             throw new NullPointerException("unit");
         }
+        if(unit == Unit.AUTO && value != 0f) {
+            throw new IllegalArgumentException("value must be 0 for Unit.AUTO");
+        }
     }
 
     @Override
     public String toString() {
+        if(unit == Unit.AUTO) {
+            return unit.getPostfix();
+        }
         return value + unit.getPostfix();
     }
 
