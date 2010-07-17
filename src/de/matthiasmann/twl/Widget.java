@@ -1357,7 +1357,7 @@ public class Widget {
     }
 
     /**
-     * Returns the current action map. If now action map has been set then
+     * Returns the current action map. If no action map has been set then
      * {@code null} is returned.
      * @return the current action map or null.
      */
@@ -1365,6 +1365,18 @@ public class Widget {
         return actionMap;
     }
 
+    /**
+     * Returns the current action map. If no action map has been set then
+     * a new one is created and set (setActionMap is not called).
+     * @return the current action map (or the new action map).
+     */
+    public ActionMap getOrCreateActionMap() {
+        if(actionMap == null) {
+            actionMap = new ActionMap();
+        }
+        return actionMap;
+    }
+    
     /**
      * Installs an action map for this widget.
      * @param actionMap the new action map or null.
@@ -1514,10 +1526,7 @@ public class Widget {
      * @see #getInputMap()
      */
     protected void addActionMapping(String action, String methodName, Object ... params) {
-        if(actionMap == null) {
-            actionMap = new ActionMap();
-        }
-        actionMap.addMapping(action, this, methodName, params, ActionMap.FLAG_ON_PRESSED);
+        getOrCreateActionMap().addMapping(action, this, methodName, params, ActionMap.FLAG_ON_PRESSED);
     }
 
     /**
