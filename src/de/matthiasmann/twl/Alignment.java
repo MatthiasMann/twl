@@ -59,5 +59,12 @@ public enum Alignment {
     public HAlignment getFontHAlignment() {
         return fontHAlignment;
     }
-    
+
+    public int computePositionX(int containerWidth, int objectWidth) {
+        return Math.max(0, containerWidth - objectWidth) * hpos / 2;
+    }
+
+    public int computePositionY(int containerHeight, int objectHeight) {
+        return Math.max(0, containerHeight - objectHeight) * vpos / 2;
+    }
 }
