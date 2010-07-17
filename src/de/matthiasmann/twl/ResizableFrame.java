@@ -109,6 +109,7 @@ public class ResizableFrame extends Widget {
     private DragMode resizeHandleDragMode;
     
     public ResizableFrame() {
+        title = "";
         cursors = new MouseCursor[DragMode.values().length];
         setCanAcceptKeyboardFocus(true);
     }
