@@ -50,6 +50,8 @@ package de.matthiasmann.twl.textarea;
     static final int COLON = 9;
     static final int SEMICOLON = 10;
 
+    boolean sawWhitespace;
+
     final StringBuilder sb = new StringBuilder();
     private void append() {
         sb.append(zzBuffer, zzStartRead, zzMarkedPos-zzStartRead);
@@ -77,14 +79,14 @@ Identifier = [-]?[_a-z][_a-z0-9-]*
 <YYINITIAL> {
     "."                 { return DOT; }
     ","                 { return COMMA; }
-    "*"                 { return STAR; }
+    "*"                 { sawWhitespace = false; return STAR; }
     ">"                 { return GT; }
     "#"                 { return HASH; }
     "{"                 { yybegin(YYSTYLE); return STYLE_BEGIN; }
 
     {Comment}           { /* ignore */ }
-    {WhiteSpace}        { /* ignore */ }
-    {Identifier}        { return IDENT; }
+    {WhiteSpace}*       { sawWhitespace = true; }
+    {Identifier}        { sawWhitespace = false; return IDENT; }
 }
 
 <YYSTYLE> {

@@ -72,6 +72,7 @@ public class StyleSheet implements StyleSheetResolver {
                 String element = null;
                 String className = null;
                 String id = null;
+                parser.sawWhitespace = false;
                 switch (what) {
                     default:
                         parser.unexpected();    // throws exception
@@ -86,7 +87,7 @@ public class StyleSheet implements StyleSheetResolver {
                         what = parser.yylex();
                         break;
                 }
-                while(what == Parser.DOT || what == Parser.HASH) {
+                while((what == Parser.DOT || what == Parser.HASH) && !parser.sawWhitespace) {
                     parser.expect(Parser.IDENT);
                     String text = parser.yytext();
                     if(what == Parser.DOT) {
