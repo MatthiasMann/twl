@@ -85,7 +85,7 @@ Identifier = [-]?[_a-z][_a-z0-9-]*
     "{"                 { yybegin(YYSTYLE); return STYLE_BEGIN; }
 
     {Comment}           { /* ignore */ }
-    {WhiteSpace}*       { sawWhitespace = true; }
+    {WhiteSpace}+       { sawWhitespace = true; }
     {Identifier}        { sawWhitespace = false; return IDENT; }
 }
 
