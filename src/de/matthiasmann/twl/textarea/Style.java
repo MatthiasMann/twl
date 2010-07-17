@@ -109,6 +109,9 @@ public class Style {
 
     private static Style doResolve(Style style, int ord, StyleSheetResolver resolver) {
         for(;;) {
+            if(style.parent == null) {
+                return style;
+            }
             if(style.values[ord] != null) {
                 return style;
             }
@@ -118,9 +121,6 @@ public class Style {
                     // return main style here because class style has no parent chain
                     return style;
                 }
-            }
-            if(style.parent == null) {
-                return style;
             }
             style = style.parent;
         }
