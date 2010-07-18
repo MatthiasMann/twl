@@ -39,17 +39,65 @@ import org.lwjgl.input.Keyboard;
 public final class Event {
 
     public enum Type {
+        /**
+         * The mouse has entered the widget.
+         * You need to return true from {@link Widget#handleEvent(de.matthiasmann.twl.Event) } in order to receive further mouse events.
+         */
         MOUSE_ENTERED(true, false),
+        /**
+         * The mouse has moved over the widget - no mouse buttons are pressed.
+         * You need to return true from {@link Widget#handleEvent(de.matthiasmann.twl.Event) } in order to receive further mouse events.
+         */
         MOUSE_MOVED(true, false),
+        /**
+         * A mouse button has been pressed. The pressed button is available via {@link Event#getMouseButton() }
+         */
         MOUSE_BTNDOWN(true, false),
+        /**
+         * A mouse button has been released. The released button is available via {@link Event#getMouseButton() }
+         */
         MOUSE_BTNUP(true, false),
+        /**
+         * A click event with the left mouse button. A click is defined by a MOUSE_BTNDOWN event followed
+         * by a MOUSE_BTNUP without moving the mouse outside the click distance. The MOUSE_BTNUP event is
+         * sent before the MOUSE_CLICKED.
+         */
         MOUSE_CLICKED(true, false),
+        /**
+         * The mouse has moved while at least one mouse button was pressed. The widget automatically
+         * captures the mouse when a drag is started, which means that the widgets will receive mouse
+         * events from this drag also outside of it's bounds. The drag ends when the last mouse button
+         * is released.
+         *
+         * NOTE: This enum has a typo - because of backwards compatibility it will not be fixed.
+         * 
+         * @see Event#isMouseDragEvent()
+         * @see Event#isMouseDragEnd()
+         */
         MOUSE_DRAGED(true, false),
+        /**
+         * The mouse has left the widget.
+         */
         MOUSE_EXITED(true, false),
+        /**
+         * The mouse wheel has been turned. The amount is available via {@link Event#getMouseWheelDelta() }
+         */
         MOUSE_WHEEL(true, false),
+        /**
+         * A key has been pressed. Not all keys generate characters.
+         */
         KEY_PRESSED(false, true),
+        /**
+         * A key has been released. No character data is available.
+         */
         KEY_RELEASED(false, true),
+        /**
+         * A popup has been opened. Input event delivery will stop until the popup is closed.
+         */
         POPUP_OPENED(false, false),
+        /**
+         * A popup has closed. Input events delivery will resume if no other popups are open.
+         */
         POPUP_CLOSED(false, false);
         
         final boolean isMouseEvent;
