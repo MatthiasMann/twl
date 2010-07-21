@@ -99,6 +99,10 @@ public class CSSStyle extends Style {
             parseURL(StyleAttribute.LIST_STYLE_IMAGE, value);
             return;
         }
+        if("list-style-type".equals(key)) {
+            parseEnum(StyleAttribute.LIST_STYLE_TYPE, OLT, value);
+            return;
+        }
         if("clear".equals(key)) {
             parseEnum(StyleAttribute.CLEAR, value);
             return;
@@ -230,9 +234,18 @@ public class CSSStyle extends Style {
     }
     
     private static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
+    private static final HashMap<String, TextAreaModel.OrderedListType> OLT = new HashMap<String, TextAreaModel.OrderedListType>();
 
     static {
         PRE.put("pre", Boolean.TRUE);
         PRE.put("normal", Boolean.FALSE);
+
+        OLT.put("decimal", TextAreaModel.OrderedListType.DECIMAL);
+        OLT.put("lower-roman", TextAreaModel.OrderedListType.LOWER_ROMAN);
+        OLT.put("upper-roman", TextAreaModel.OrderedListType.UPPER_ROMAN);
+        OLT.put("lower-latin", TextAreaModel.OrderedListType.LOWER_LATIN);
+        OLT.put("upper-latin", TextAreaModel.OrderedListType.UPPER_LATIN);
+        OLT.put("lower-alpha", TextAreaModel.OrderedListType.LOWER_LATIN);
+        OLT.put("upper-alpha", TextAreaModel.OrderedListType.UPPER_LATIN);
     }
 }

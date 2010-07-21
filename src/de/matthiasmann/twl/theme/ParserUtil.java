@@ -32,6 +32,7 @@ package de.matthiasmann.twl.theme;
 import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
 import java.text.ParseException;
 import java.util.HashMap;
@@ -80,7 +81,7 @@ final class ParserUtil {
             int elements = countElements(value);
             int values[] = new int[elements];
             parseIntArray(value, values, 0, elements);
-
+            
             switch(elements) {
             case 1:
                 return new Border(values[0]);
@@ -116,14 +117,6 @@ final class ParserUtil {
         }
     }
     
-    static int indexOf(String str, char ch, int idx) {
-        idx = str.indexOf(ch, idx);
-        if(idx < 0) {
-            return str.length();
-        }
-        return idx;
-    }
-
     static String appendDot(String name) {
         int len = name.length();
         if(len > 0 && name.charAt(len-1) != '.') {
@@ -146,11 +139,11 @@ final class ParserUtil {
         parseIntArray(str, result, 0, result.length);
         return result;
     }
-    
+
     static void parseIntArray(String str, int[] result, int offset, int elements) {
         int pos = 0;
         for(int resultIdx=0 ; resultIdx<elements ; resultIdx++) {
-            int comma = indexOf(str, ',', pos);
+            int comma = TextUtil.indexOf(str, ',', pos);
             result[resultIdx+offset] = Integer.parseInt(str.substring(pos, comma));
             pos = comma + 1;
         }
@@ -163,7 +156,7 @@ final class ParserUtil {
         int count = 0;
         for(int pos=0 ; pos<str.length() ;) {
             count++;
-            pos = indexOf(str, ',', pos) + 1;
+            pos = TextUtil.indexOf(str, ',', pos) + 1;
         }
         return count;
     }

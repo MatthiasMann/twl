@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.textarea;
 
+import de.matthiasmann.twl.utils.TextUtil;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -69,6 +70,41 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         NONE,
         LEFT,
         RIGHT
+    }
+
+    public enum OrderedListType {
+        DECIMAL {
+            @Override
+            public String format(int nr) {
+                return Integer.toString(nr);
+            }
+        },
+        UPPER_ROMAN {
+            @Override
+            public String format(int nr) {
+                return TextUtil.toRomanNumberString(nr);
+            }
+        },
+        LOWER_ROMAN {
+            @Override
+            public String format(int nr) {
+                return TextUtil.toRomanNumberString(nr).toLowerCase();
+            }
+        },
+        UPPER_LATIN {
+            @Override
+            public String format(int nr) {
+                return TextUtil.toLatinNumberString(nr);
+            }
+        },
+        LOWER_LATIN {
+            @Override
+            public String format(int nr) {
+                return TextUtil.toLatinNumberString(nr).toLowerCase();
+            }
+        };
+        
+        public abstract String format(int nr);
     }
     
     public abstract class Element {
@@ -196,6 +232,14 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
             return children.iterator();
         }
 
+        public Element getElement(int index) {
+            return children.get(index);
+        }
+        
+        public int getNumElements() {
+            return children.size();
+        }
+
         public void add(Element element) {
             this.children.add(element);
         }
@@ -234,9 +278,41 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         }
     }
 
+    public class AnkorElement extends Element {
+        private final String name;
+
+        public AnkorElement(Style style, String name) {
+            super(style);
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+    
+    /**
+     * A list item in an unordered list
+     */
     public class ListElement extends ContainerElement {
         public ListElement(Style style) {
             super(style);
+        }
+    }
+
+    /**
+     * An ordered list. All contained elements are treated as list items.
+     */
+    public class OrderedListElement extends ContainerElement {
+        private final int start;
+
+        public OrderedListElement(Style style, int start) {
+            super(style);
+            this.start = start;
+        }
+
+        public int getStart() {
+            return start;
         }
     }
 

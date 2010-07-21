@@ -95,6 +95,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private final ArrayList<Element> elements;
     private final ArrayList<String> styleSheetLinks;
     private final HashMap<String, Element> idMap;
+    private final HashMap<String, AnkorElement> ankorMap;
     private String title;
 
     private final ArrayList<Style> styleStack;
@@ -110,6 +111,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.elements = new ArrayList<Element>();
         this.styleSheetLinks = new ArrayList<String>();
         this.idMap = new HashMap<String, Element>();
+        this.ankorMap = new HashMap<String, AnkorElement>();
         this.styleStack = new ArrayList<Style>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
@@ -210,6 +212,16 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         return idMap.get(id);
     }
 
+    /**
+     * Returns the first element following the ankor.
+     *
+     * @param ankor the ankor name
+     * @return the first element following the ankor
+     */
+    public AnkorElement getAnkorElement(String ankor) {
+        return ankorMap.get(ankor);
+    }
+
     public void domModified() {
         doCallback();
     }
@@ -222,6 +234,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.elements.clear();
         this.styleSheetLinks.clear();
         this.idMap.clear();
+        this.ankorMap.clear();
         this.title = null;
 
         try {
@@ -305,10 +318,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
                     String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
                     element = new WidgetElement(style, btnName, btnParam);
-                } else if("ul".equals(name)) {
+                } else if("ul".equals(name) || "h1".equals(name)) {
                     ContainerElement ce = new ContainerElement(style);
                     parseContainer(xpp, ce);
                     element = ce;
+                    --level;
+                } else if("ol".equals(name)) {
+                    element = parseOL(xpp, style);
                     --level;
                 } else if("li".equals(name)) {
                     ListElement le = new ListElement(style);
@@ -321,7 +337,17 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     element = be;
                     --level;
                 } else if("a".equals(name)) {
-                    LinkElement le = new LinkElement(style, xpp.getAttributeValue(null, "href"));
+                    String ankor = xpp.getAttributeValue(null, "name");
+                    if(ankor != null) {
+                        AnkorElement ae = new AnkorElement(style, ankor);
+                        ankorMap.put(ankor, ae);
+                        curContainer.add(ae);
+                    }
+                    String href = xpp.getAttributeValue(null, "href");
+                    if(href == null) {
+                        break;
+                    }
+                    LinkElement le = new LinkElement(style, href);
                     parseContainer(xpp, le);
                     element = le;
                     --level;
@@ -333,10 +359,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 }
 
                 curContainer.add(element);
-                String id = style.getStyleSheetKey().getId();
-                if(id != null) {
-                    idMap.put(id, element);
-                }
+                registerElement(element);
                 break;
             }
             case XmlPullParser.END_TAG: {
@@ -402,7 +425,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         int numColumns = 0;
         int cellSpacing = parseInt(xpp, "cellspacing", 0);
         int cellPadding = parseInt(xpp, "cellpadding", 0);
-
+        
         for(;;) {
             switch (xpp.nextTag()) {
                 case XmlPullParser.START_TAG: {
@@ -412,6 +435,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                         int colspan = parseInt(xpp, "colspan", 1);
                         TableCellElement cell = new TableCellElement(getStyle(), colspan);
                         parseContainer(xpp, cell);
+                        registerElement(cell);
 
                         cells.add(cell);
                         for(int col=1 ; col<colspan ; col++) {
@@ -448,13 +472,54 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         }
     }
 
+    private OrderedListElement parseOL(XmlPullParser xpp, Style olStyle) throws XmlPullParserException, IOException {
+        int start = parseInt(xpp, "start", 1);
+        OrderedListElement ole = new OrderedListElement(olStyle, start);
+        registerElement(ole);
+        for(;;) {
+            switch (xpp.nextTag()) {
+                case XmlPullParser.START_TAG: {
+                    pushStyle(xpp);
+                    String name = xpp.getName();
+                    if("li".equals(name)) {
+                        ContainerElement ce = new ContainerElement(getStyle());
+                        parseContainer(xpp, ce);
+                        registerElement(ce);
+                        ole.add(ce);
+                    }
+                    break;
+                }
+                case XmlPullParser.END_TAG: {
+                    popStyle();
+                    String name = xpp.getName();
+                    if("ol".equals(name)) {
+                        return ole;
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private void registerElement(Element element) {
+        StyleSheetKey styleSheetKey = element.getStyle().getStyleSheetKey();
+        if(styleSheetKey != null) {
+            String id = styleSheetKey.getId();
+            if(id != null) {
+                idMap.put(id, element);
+            }
+        }
+    }
+
     private static int parseInt(XmlPullParser xpp, String attribute, int defaultValue) {
         String value = xpp.getAttributeValue(null, attribute);
-        if(value == null) {
-            return defaultValue;
-        } else {
-            return Integer.parseInt(value);
+        if(value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (IllegalArgumentException ignore) {
+            }
         }
+        return defaultValue;
     }
 
     private static boolean isXHTML(String doc) {
@@ -508,6 +573,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         if(sb.length() > 0) {
             Style style = getStyle();
             TextElement e = new TextElement(style, sb.toString());
+            registerElement(e);
             curContainer.add(e);
             sb.setLength(0);
         }

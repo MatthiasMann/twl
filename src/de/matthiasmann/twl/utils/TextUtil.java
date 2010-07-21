@@ -103,6 +103,21 @@ public final class TextUtil {
         return n;
     }
 
+    /**
+     * Searches for a specific character.
+     * @param str the String to search in
+     * @param ch the character to search
+     * @param start the start index. must be >= 0.
+     * @return the index of the character or str.length().
+     */
+    public static int indexOf(String str, char ch, int start) {
+        int idx = str.indexOf(ch, start);
+        if(idx < 0) {
+            return str.length();
+        }
+        return idx;
+    }
+
     public static int skipSpaces(CharSequence s, int start) {
         return skipSpaces(s, start, s.length());
     }
@@ -120,5 +135,65 @@ public final class TextUtil {
             buf[i] = ch;
         }
         return new String(buf);
+    }
+
+    private static final String ROMAN_NUMBERS = "ↂMↂↁMↁMCMDCDCXCLXLXIXVIVI";
+    private static final String ROMAN_VALUES = "\u2710\u2328\u1388\u0FA0\u03E8\u0384\u01F4\u0190\144\132\62\50\12\11\5\4\1";
+
+    /**
+     * The largest number which can be converted into a roman number.
+     * @see #toRomanNumberString(int)
+     */
+    public static final int MAX_ROMAN_INTEGER = 39999;
+    
+    /**
+     * Creates an upper case roman number string for the given value.
+     *
+     * Values above 3999 need characters from unicode block "Number Forms" to be displayed correctly.
+     *
+     * @param value the value. Must be &gt;= 1 and &lt;= {@link #MAX_ROMAN_INTEGER}
+     * @return the roman number string in upper case
+     * @throws IllegalArgumentException if the value is out of range
+     */
+    public static String toRomanNumberString(int value) throws IllegalArgumentException {
+        if(value < 1 || value > MAX_ROMAN_INTEGER) {
+            throw new IllegalArgumentException();
+        }
+        StringBuilder sb = new StringBuilder();
+        int idxValues = 0;
+        int idxNumbers = 0;
+        do {
+            final int romanValue = ROMAN_VALUES.charAt(idxValues);
+            final int romanNumberLen = (idxValues & 1) + 1;
+            while(value >= romanValue) {
+                sb.append(ROMAN_NUMBERS, idxNumbers, idxNumbers+romanNumberLen);
+                value -= romanValue;
+            }
+            idxNumbers += romanNumberLen;
+        } while (++idxValues < 17);
+        return sb.toString();
+    }
+
+    private static void toLatinNumberString(int value, StringBuilder sb) {
+        if(value >= 26) {
+            toLatinNumberString(value / 26 - 1, sb);
+            value %= 26;
+        }
+        sb.append((char)('A' + value));
+    }
+
+    /**
+     * Creates a string which represents the specified value via latin characters like "A" ... "Z", "AA" ... "AZ", ...
+     * @param value the value. Must be &gt;= 1.
+     * @return the latin number string
+     * @throws IllegalArgumentException if the value if &lt; 1
+     */
+    public static String toLatinNumberString(int value) throws IllegalArgumentException {
+        if(value < 1) {
+            throw new IllegalArgumentException("value");
+        }
+        StringBuilder sb = new StringBuilder();
+        toLatinNumberString(value-1, sb);
+        return sb.toString();
     }
 }

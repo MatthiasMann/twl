@@ -250,6 +250,16 @@ public class TextArea extends Widget {
                     "Can't create default style sheet", ex);
         }
     }
+
+    public Rect getElementRect(TextAreaModel.Element element) {
+        int[] offset = new int[2];
+        LElement le = layoutRoot.find(element, offset);
+        if(le != null) {
+            return new Rect(le.x + offset[0], le.y + offset[1], le.width, le.height);
+        } else {
+            return null;
+        }
+    }
     
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
@@ -340,12 +350,8 @@ public class TextArea extends Widget {
             try {
                 if(model != null) {
                     layoutElements(box, model);
-                    
-                    // finish the last line
-                    box.nextLine(false);
-                    
-                    // finish floaters
-                    box.clearFloater(TextAreaModel.Clear.BOTH);
+
+                    box.finish();
 
                     // set position & size of all widget elements
                     layoutRoot.adjustWidget(getInnerX(), getInnerY());
@@ -483,29 +489,37 @@ public class TextArea extends Widget {
 
     private void layoutElements(Box box, Iterable<TextAreaModel.Element> elements) {
         for(TextAreaModel.Element e : elements) {
-            box.clearFloater(e.getStyle().get(StyleAttribute.CLEAR, styleClassResolver));
-            
-            if(e instanceof TextAreaModel.TextElement) {
-                layoutTextElement(box, (TextAreaModel.TextElement)e);
-            } else if(e instanceof TextAreaModel.ParagraphElement) {
-                layoutParagraphElement(box, (TextAreaModel.ParagraphElement)e);
-            } else if(e instanceof TextAreaModel.ImageElement) {
-                layoutImageElement(box, (TextAreaModel.ImageElement)e);
-            } else if(e instanceof TextAreaModel.WidgetElement) {
-                layoutWidgetElement(box, (TextAreaModel.WidgetElement)e);
-            } else if(e instanceof TextAreaModel.ListElement) {
-                layoutListElement(box, (TextAreaModel.ListElement)e);
-            } else if(e instanceof TextAreaModel.BlockElement) {
-                layoutBlockElement(box, (TextAreaModel.BlockElement)e);
-            } else if(e instanceof TextAreaModel.TableElement) {
-                layoutTableElement(box, (TextAreaModel.TableElement)e);
-            } else if(e instanceof TextAreaModel.LinkElement) {
-                layoutLinkElement(box, (TextAreaModel.LinkElement)e);
-            } else if(e instanceof TextAreaModel.ContainerElement) {
-                layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
-            } else {
-                Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Unknown Element subclass: {0}", e.getClass());
-            }
+            layoutElement(box, e);
+        }
+    }
+
+    private void layoutElement(Box box, TextAreaModel.Element e) {
+        box.clearFloater(e.getStyle().get(StyleAttribute.CLEAR, styleClassResolver));
+
+        if(e instanceof TextAreaModel.TextElement) {
+            layoutTextElement(box, (TextAreaModel.TextElement)e);
+        } else if(e instanceof TextAreaModel.ParagraphElement) {
+            layoutParagraphElement(box, (TextAreaModel.ParagraphElement)e);
+        } else if(e instanceof TextAreaModel.ImageElement) {
+            layoutImageElement(box, (TextAreaModel.ImageElement)e);
+        } else if(e instanceof TextAreaModel.WidgetElement) {
+            layoutWidgetElement(box, (TextAreaModel.WidgetElement)e);
+        } else if(e instanceof TextAreaModel.ListElement) {
+            layoutListElement(box, (TextAreaModel.ListElement)e);
+        } else if(e instanceof TextAreaModel.OrderedListElement) {
+            layoutOrderedListElement(box, (TextAreaModel.OrderedListElement)e);
+        } else if(e instanceof TextAreaModel.BlockElement) {
+            layoutBlockElement(box, (TextAreaModel.BlockElement)e);
+        } else if(e instanceof TextAreaModel.TableElement) {
+            layoutTableElement(box, (TextAreaModel.TableElement)e);
+        } else if(e instanceof TextAreaModel.LinkElement) {
+            layoutLinkElement(box, (TextAreaModel.LinkElement)e);
+        } else if(e instanceof TextAreaModel.ContainerElement) {
+            layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
+        } else if(e instanceof TextAreaModel.AnkorElement) {
+            box.addAnkor((TextAreaModel.AnkorElement)e);
+        } else {
+            Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Unknown Element subclass: {0}", e.getClass());
         }
     }
     
@@ -937,9 +951,8 @@ public class TextArea extends Widget {
 
         Image image = selectImage(style, StyleAttribute.LIST_STYLE_IMAGE);
         if(image != null) {
-            box.checkFloaters();
-            
             LImage li = new LImage(le, image);
+            li.width += convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
             layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.Display.BLOCK);
             
             int imageHeight = li.height;
@@ -960,6 +973,57 @@ public class TextArea extends Widget {
         doMarginBottom(box, style);
     }
 
+    private void layoutOrderedListElement(Box box, TextAreaModel.OrderedListElement ole) {
+        Style style = ole.getStyle();
+        Font font = selectFont(style);
+
+        if(font == null) {
+            return;
+        }
+        
+        doMarginTop(box, style);
+
+        int start = Math.max(1, ole.getStart());
+        int count = ole.getNumElements();
+        TextAreaModel.OrderedListType type = style.get(StyleAttribute.LIST_STYLE_TYPE, styleClassResolver);
+
+        String[] labels = new String[count];
+        int maxLabelWidth = convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
+        for(int i=0 ; i<count ; i++) {
+            labels[i] = type.format(start + i).concat(".");
+            int width = font.computeTextWidth(labels[i]);
+            maxLabelWidth = Math.max(maxLabelWidth, width);
+        }
+
+        for(int i=0 ; i<count ; i++) {
+            String label = labels[i];
+            TextAreaModel.Element li = ole.getElement(i);
+            Style liStyle = li.getStyle();
+            doMarginTop(box, liStyle);
+            
+            LText lt = new LText(ole, font, label, 0, label.length());
+            int labelWidth = lt.width;
+            int labelHeight = lt.height;
+
+            lt.width += convertToPX0(liStyle, StyleAttribute.PADDING_LEFT, box.boxWidth);
+            layout(box, ole, lt, TextAreaModel.FloatPosition.LEFT, TextAreaModel.Display.BLOCK);
+            lt.x += Math.max(0, maxLabelWidth - labelWidth);
+            lt.height = Short.MAX_VALUE;
+
+            layoutElement(box, li);
+            box.nextLine(false);
+
+            lt.height = labelHeight;
+
+            box.objLeft.remove(lt);
+            box.computePadding();
+
+            doMarginBottom(box, liStyle);
+        }
+
+        doMarginBottom(box, style);
+    }
+
     private Box layoutBox(LClip clip, int continerWidth, int paddingLeft, int paddingRight, TextAreaModel.ContainerElement ce) {
         Style style = ce.getStyle();
         int paddingTop = convertToPX0(style, StyleAttribute.PADDING_TOP, continerWidth);
@@ -968,8 +1032,7 @@ public class TextArea extends Widget {
 
         Box box = new Box(clip, paddingLeft, paddingRight, paddingTop);
         layoutElements(box, ce);
-        box.nextLine(false);
-        box.clearFloater(TextAreaModel.Clear.BOTH);
+        box.finish();
         clip.height = box.curY + paddingBottom;
         clip.height = Math.max(clip.height, convertToPX(style, StyleAttribute.HEIGHT, clip.height, clip.height));
         clip.marginBottom = (short)Math.max(marginBottom, box.marginBottomAbs - box.curY);
@@ -1286,6 +1349,7 @@ public class TextArea extends Widget {
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
         String href;
+        ArrayList<TextAreaModel.AnkorElement> ankors;
 
         public Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
             this.clip = clip;
@@ -1511,6 +1575,8 @@ public class TextArea extends Widget {
                 }
             }
 
+            processAnkors(targetY, lineHeight);
+            
             minLineHeight = 0;
             lineStartIdx = layout.size();
             wasAutoBreak = !force;
@@ -1521,6 +1587,12 @@ public class TextArea extends Widget {
             checkFloaters();
             // curX is set by computePadding() inside checkFloaters()
             return true;
+        }
+
+        void finish() {
+            nextLine(false);
+            clearFloater(TextAreaModel.Clear.BOTH);
+            processAnkors(curY, 0);
         }
 
         int computeNextTabStop(Font font) {
@@ -1561,6 +1633,25 @@ public class TextArea extends Widget {
 
             marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, boxWidth);
         }
+
+        void addAnkor(TextAreaModel.AnkorElement ae) {
+            if(ankors == null) {
+                ankors = new ArrayList<TextAreaModel.AnkorElement>();
+            }
+            ankors.add(ae);
+        }
+
+        private void processAnkors(int y, int height) {
+            if(ankors != null && !ankors.isEmpty()) {
+                for(int i=0 ; i<ankors.size() ; i++) {
+                    LElement le = new LElement(ankors.get(i));
+                    le.y = y;
+                    le.height = height;
+                    layout.add(lineStartIdx, le);
+                }
+                ankors.clear();
+            }
+        }
     }
 
     static class LElement {
@@ -1589,6 +1680,12 @@ public class TextArea extends Widget {
         }
         LElement find(int x, int y) {
             return this;
+        }
+        LElement find(TextAreaModel.Element element, int[] offset) {
+            if(this.element == element) {
+                return this;
+            }
+            return null;
         }
 
         int bottom() {
@@ -1741,6 +1838,24 @@ public class TextArea extends Widget {
             for(LElement le : layout) {
                 if(le.isInside(x, y)) {
                     return le.find(x, y);
+                }
+            }
+            return null;
+        }
+
+        @Override
+        LElement find(TextAreaModel.Element element, int[] offset) {
+            if(this.element == element) {
+                return this;
+            }
+            for(LElement le : layout) {
+                LElement match = le.find(element, offset);
+                if(match != null) {
+                    if(offset != null) {
+                        offset[0] += this.x;
+                        offset[1] += this.y;
+                    }
+                    return match;
                 }
             }
             return null;

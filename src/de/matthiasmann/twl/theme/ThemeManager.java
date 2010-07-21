@@ -46,6 +46,7 @@ import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.utils.AbstractMathInterpreter;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
 import java.net.URL;
@@ -210,10 +211,10 @@ public class ThemeManager {
     }
 
     private ThemeInfo findThemeInfo(String themePath, boolean warn) {
-        int start = ParserUtil.indexOf(themePath, '.', 0);
+        int start = TextUtil.indexOf(themePath, '.', 0);
         ThemeInfo info = themes.get(themePath.substring(0, start));
         while(info != null && ++start < themePath.length()) {
-            int next = ParserUtil.indexOf(themePath, '.', start);
+            int next = TextUtil.indexOf(themePath, '.', start);
             info = info.getChildTheme(themePath.substring(start, next));
             start = next;
         }

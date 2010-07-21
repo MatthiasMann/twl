@@ -33,6 +33,7 @@ import de.matthiasmann.twl.textarea.TextAreaModel.Clear;
 import de.matthiasmann.twl.textarea.TextAreaModel.Display;
 import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
 import de.matthiasmann.twl.textarea.TextAreaModel.HAlignment;
+import de.matthiasmann.twl.textarea.TextAreaModel.OrderedListType;
 import de.matthiasmann.twl.textarea.TextAreaModel.VAlignment;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -52,6 +53,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<Value> TEXT_IDENT = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<String> FONT_NAME = new StyleAttribute<String>(true, String.class, "default");
     public static final StyleAttribute<String> LIST_STYLE_IMAGE = new StyleAttribute<String>(true, String.class, "ul-bullet");
+    public static final StyleAttribute<OrderedListType> LIST_STYLE_TYPE = new StyleAttribute<OrderedListType>(true, OrderedListType.class, OrderedListType.DECIMAL);
     public static final StyleAttribute<Boolean> PREFORMATTED = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
 
     // non cascading attribute
