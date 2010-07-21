@@ -516,8 +516,6 @@ public class TextArea extends Widget {
             layoutLinkElement(box, (TextAreaModel.LinkElement)e);
         } else if(e instanceof TextAreaModel.ContainerElement) {
             layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
-        } else if(e instanceof TextAreaModel.AnkorElement) {
-            box.addAnkor((TextAreaModel.AnkorElement)e);
         } else {
             Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Unknown Element subclass: {0}", e.getClass());
         }
@@ -729,6 +727,7 @@ public class TextArea extends Widget {
         final Font font = selectFont(style);
 
         doMarginTop(box, style);
+        LElement ankor = box.addAnkor(pe);
         box.setupTextParams(style, font, true);
         
         layoutElements(box, pe);
@@ -739,6 +738,7 @@ public class TextArea extends Widget {
         box.nextLine(false);
         box.inParagraph = false;
 
+        ankor.height = box.curY - ankor.y;
         doMarginBottom(box, style);
     }
     
@@ -933,6 +933,7 @@ public class TextArea extends Widget {
     private void layoutContainerElement(Box box, TextAreaModel.ContainerElement ce) {
         Style style = ce.getStyle();
         doMarginTop(box, style);
+        box.addAnkor(ce);
         layoutElements(box, ce);
         doMarginBottom(box, style);
     }
@@ -982,6 +983,7 @@ public class TextArea extends Widget {
         }
         
         doMarginTop(box, style);
+        LElement ankor = box.addAnkor(ole);
 
         int start = Math.max(1, ole.getStart());
         int count = ole.getNumElements();
@@ -1021,6 +1023,7 @@ public class TextArea extends Widget {
             doMarginBottom(box, liStyle);
         }
 
+        ankor.height = box.curY - ankor.y;
         doMarginBottom(box, style);
     }
 
@@ -1128,6 +1131,7 @@ public class TextArea extends Widget {
         }
 
         doMarginTop(box, tableStyle);
+        LElement ankor = box.addAnkor(te);
         
         int left = box.computeLeftPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_LEFT, box.boxWidth));
         int right = box.computeRightPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
@@ -1200,10 +1204,9 @@ public class TextArea extends Widget {
                 toDistribute -= width;
             }
         }
-
-
-        LImage tableBGImage = createBGImage(box, te);
         
+        LImage tableBGImage = createBGImage(box, te);
+
         box.textAlignment = TextAreaModel.HAlignment.LEFT;
         box.curY += Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_TOP, box.boxWidth));
 
@@ -1298,6 +1301,11 @@ public class TextArea extends Widget {
             tableBGImage.width = tableWidth;
         }
 
+        // ankor.y already set (by addAnkor)
+        ankor.x = left;
+        ankor.width = tableWidth;
+        ankor.height = box.curY - ankor.y;
+
         doMarginBottom(box, tableStyle);
     }
 
@@ -1336,6 +1344,7 @@ public class TextArea extends Widget {
         int curY;
         int curX;
         int lineStartIdx;
+        int lastProcessedAnkorIdx;
         int marginTop;
         int marginLeft;
         int marginRight;
@@ -1349,7 +1358,6 @@ public class TextArea extends Widget {
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
         String href;
-        ArrayList<TextAreaModel.AnkorElement> ankors;
 
         public Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
             this.clip = clip;
@@ -1634,22 +1642,22 @@ public class TextArea extends Widget {
             marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, boxWidth);
         }
 
-        void addAnkor(TextAreaModel.AnkorElement ae) {
-            if(ankors == null) {
-                ankors = new ArrayList<TextAreaModel.AnkorElement>();
-            }
-            ankors.add(ae);
+        LElement addAnkor(TextAreaModel.Element e) {
+            LElement le = new LElement(e);
+            le.y = curY;
+            le.x = boxLeft;
+            le.width = boxWidth;
+            clip.ankors.add(le);
+            return le;
         }
 
         private void processAnkors(int y, int height) {
-            if(ankors != null && !ankors.isEmpty()) {
-                for(int i=0 ; i<ankors.size() ; i++) {
-                    LElement le = new LElement(ankors.get(i));
+            while(lastProcessedAnkorIdx < clip.ankors.size()) {
+                LElement le = clip.ankors.get(lastProcessedAnkorIdx++);
+                if(le.height == 0) {
                     le.y = y;
                     le.height = height;
-                    layout.add(lineStartIdx, le);
                 }
-                ankors.clear();
             }
         }
     }
@@ -1768,11 +1776,13 @@ public class TextArea extends Widget {
     class LClip extends LElement {
         final ArrayList<LElement> layout;
         final ArrayList<LImage> bgImages;
+        final ArrayList<LElement> ankors;
 
         public LClip(TextAreaModel.Element element) {
             super(element);
             this.layout = new ArrayList<LElement>();
             this.bgImages = new ArrayList<LImage>();
+            this.ankors = new ArrayList<LElement>();
         }
 
         @Override
@@ -1848,8 +1858,16 @@ public class TextArea extends Widget {
             if(this.element == element) {
                 return this;
             }
-            for(LElement le : layout) {
-                LElement match = le.find(element, offset);
+            LElement match = find(layout, element, offset);
+            if(match == null) {
+                match = find(ankors, element, offset);
+            }
+            return match;
+        }
+        
+        private LElement find(ArrayList<LElement> l, TextAreaModel.Element e, int[] offset) {
+            for(int i=0,n=l.size() ; i<n ; i++) {
+                LElement match = l.get(i).find(e, offset);
                 if(match != null) {
                     if(offset != null) {
                         offset[0] += this.x;

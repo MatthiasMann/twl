@@ -277,19 +277,6 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
             this.href = href;
         }
     }
-
-    public class AnkorElement extends Element {
-        private final String name;
-
-        public AnkorElement(Style style, String name) {
-            super(style);
-            this.name = name;
-        }
-
-        public String getName() {
-            return name;
-        }
-    }
     
     /**
      * A list item in an unordered list

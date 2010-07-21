@@ -95,7 +95,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     private final ArrayList<Element> elements;
     private final ArrayList<String> styleSheetLinks;
     private final HashMap<String, Element> idMap;
-    private final HashMap<String, AnkorElement> ankorMap;
     private String title;
 
     private final ArrayList<Style> styleStack;
@@ -111,7 +110,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.elements = new ArrayList<Element>();
         this.styleSheetLinks = new ArrayList<String>();
         this.idMap = new HashMap<String, Element>();
-        this.ankorMap = new HashMap<String, AnkorElement>();
         this.styleStack = new ArrayList<Style>();
         this.sb = new StringBuilder();
         this.startLength = new int[2];
@@ -212,16 +210,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         return idMap.get(id);
     }
 
-    /**
-     * Returns the first element following the ankor.
-     *
-     * @param ankor the ankor name
-     * @return the first element following the ankor
-     */
-    public AnkorElement getAnkorElement(String ankor) {
-        return ankorMap.get(ankor);
-    }
-
     public void domModified() {
         doCallback();
     }
@@ -234,7 +222,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.elements.clear();
         this.styleSheetLinks.clear();
         this.idMap.clear();
-        this.ankorMap.clear();
         this.title = null;
 
         try {
@@ -337,12 +324,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     element = be;
                     --level;
                 } else if("a".equals(name)) {
-                    String ankor = xpp.getAttributeValue(null, "name");
-                    if(ankor != null) {
-                        AnkorElement ae = new AnkorElement(style, ankor);
-                        ankorMap.put(ankor, ae);
-                        curContainer.add(ae);
-                    }
                     String href = xpp.getAttributeValue(null, "href");
                     if(href == null) {
                         break;
