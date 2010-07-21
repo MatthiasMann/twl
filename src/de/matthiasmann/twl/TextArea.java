@@ -992,7 +992,7 @@ public class TextArea extends Widget {
         String[] labels = new String[count];
         int maxLabelWidth = convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
         for(int i=0 ; i<count ; i++) {
-            labels[i] = type.format(start + i).concat(".");
+            labels[i] = type.format(start + i).concat(". ");
             int width = font.computeTextWidth(labels[i]);
             maxLabelWidth = Math.max(maxLabelWidth, width);
         }
