@@ -36,38 +36,26 @@ import de.matthiasmann.twl.utils.TextUtil;
  *
  * @author Matthias Mann
  */
-public enum OrderedListType {
-    DECIMAL(null),
-    UPPER_ROMAN(null) {
-        @Override
-        public String format(int nr) {
-            if(nr >= 1 && nr <= TextUtil.MAX_ROMAN_INTEGER) {
-                return TextUtil.toRomanNumberString(nr);
-            } else {
-                return Integer.toString(nr);
-            }
-        }
-    },
-    LOWER_ROMAN(null) {
-        @Override
-        public String format(int nr) {
-            if(nr >= 1 && nr <= TextUtil.MAX_ROMAN_INTEGER) {
-                return TextUtil.toRomanNumberString(nr).toLowerCase();
-            } else {
-                return Integer.toString(nr);
-            }
-        }
-    },
-    UPPER_ALPHA("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
-    LOWER_ALPHA("abcdefghijklmnopqrstuvwxyz"),
-    LOWER_GREEK("αβγδεζηθικλμνξοπρστυφχψω"),
-    UPPER_NORWEGIAN("ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ"),
-    LOWER_NORWEGIAN("abcdefghijklmnopqrstuvwxyzæøå"),
-    UPPER_RUSSIAN_SHORT("АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ"),
-    LOWER_RUSSIAN_SHORT("абвгдежзиклмнопрстуфхцчшщэюя");
+public class OrderedListType {
 
-    final String characterList;
-    OrderedListType(String characterList) {
+    public static final OrderedListType DECIMAL = new OrderedListType();
+    
+    protected final String characterList;
+
+    /**
+     * Creates a new OrderedListType which just uses {@link Integer#toString(int) }
+     */
+    public OrderedListType() {
+        this.characterList = null;
+    }
+
+    /**
+     * Creates a new OrderedListType which uses {@link TextUtil#toCharListNumber(int, java.lang.String) }
+     * for positive numbers and {@link Integer#toString(int) } for the rest.
+     *
+     * @param characterList the character list
+     */
+    public OrderedListType(String characterList) {
         this.characterList = characterList;
     }
 

@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.textarea;
 
 import de.matthiasmann.twl.utils.ParameterStringParser;
+import de.matthiasmann.twl.utils.TextUtil;
 import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -233,18 +234,40 @@ public class CSSStyle extends Style {
         put(attribute, value);
     }
     
-    private static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
-    private static final HashMap<String, OrderedListType> OLT = new HashMap<String, OrderedListType>();
+    static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
+    static final HashMap<String, OrderedListType> OLT = new HashMap<String, OrderedListType>();
 
+    static OrderedListType createRoman(final boolean lowercase) {
+        return new OrderedListType() {
+            @Override
+            public String format(int nr) {
+                if(nr >= 1 && nr <= TextUtil.MAX_ROMAN_INTEGER) {
+                    String str = TextUtil.toRomanNumberString(nr);
+                    return lowercase ? str.toLowerCase() : str;
+                } else {
+                    return Integer.toString(nr);
+                }
+            }
+        };
+    }
+    
     static {
         PRE.put("pre", Boolean.TRUE);
         PRE.put("normal", Boolean.FALSE);
 
-        for(OrderedListType olt : OrderedListType.values()) {
-            OLT.put(olt.toString().toLowerCase().replace('_', '-'), olt);
-        }
-        // add alias
-        OLT.put("lower-latin", OrderedListType.LOWER_ALPHA);
-        OLT.put("upper-latin", OrderedListType.UPPER_ALPHA);
+        OrderedListType upper_alpha = new OrderedListType("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+        OrderedListType lower_alpha = new OrderedListType("abcdefghijklmnopqrstuvwxyz");
+        OLT.put("decimal", OrderedListType.DECIMAL);
+        OLT.put("upper-alpha", upper_alpha);
+        OLT.put("lower-alpha", lower_alpha);
+        OLT.put("upper-latin", upper_alpha);
+        OLT.put("lower-latin", lower_alpha);
+        OLT.put("upper-roman", createRoman(false));
+        OLT.put("lower-roman", createRoman(true));
+        OLT.put("lower-greek", new OrderedListType("αβγδεζηθικλμνξοπρστυφχψω"));
+        OLT.put("upper-norwegian", new OrderedListType("ABCDEFGHIJKLMNOPQRSTUVWXYZÆØÅ"));
+        OLT.put("lower-norwegian", new OrderedListType("abcdefghijklmnopqrstuvwxyzæøå"));
+        OLT.put("upper-russian-short", new OrderedListType("АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЩЭЮЯ"));
+        OLT.put("lower-russian-short", new OrderedListType("абвгдежзиклмнопрстуфхцчшщэюя"));
     }
 }
