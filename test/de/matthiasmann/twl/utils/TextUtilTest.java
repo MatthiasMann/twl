@@ -126,7 +126,7 @@ public class TextUtilTest {
         assertEquals("MMMCMXCIX", TextUtil.toRomanNumberString(3999));
         assertEquals("MMM", TextUtil.toRomanNumberString(3000));
         assertEquals("Mↁ", TextUtil.toRomanNumberString(4000));
-        assertEquals("ↁ", TextUtil.toRomanNumberString(5000));
+        assertEquals("\u2181", TextUtil.toRomanNumberString(5000)); // ensure that correct encoding
         assertEquals("ↁM", TextUtil.toRomanNumberString(6000));
         assertEquals("ↁMM", TextUtil.toRomanNumberString(7000));
         assertEquals("ↁMMM", TextUtil.toRomanNumberString(8000));
@@ -138,7 +138,7 @@ public class TextUtilTest {
 
     @Test
     public void testRomanNumbers7() {
-        assertEquals("ↂ", TextUtil.toRomanNumberString(10000));
+        assertEquals("\u2182", TextUtil.toRomanNumberString(10000)); // ensure that correct encoding
         assertEquals("ↂↂ", TextUtil.toRomanNumberString(20000));
         assertEquals("ↂↂↂ", TextUtil.toRomanNumberString(30000));
         assertEquals("ↂↂↂMↂ", TextUtil.toRomanNumberString(39000));
@@ -146,24 +146,5 @@ public class TextUtilTest {
         assertEquals("ↂↂↂMↂCMXC", TextUtil.toRomanNumberString(39990));
         assertEquals("ↂↂↂMↂCMXCVIII", TextUtil.toRomanNumberString(39998));
         assertEquals("ↂↂↂMↂCMXCIX", TextUtil.toRomanNumberString(39999));
-    }
-
-    @Test
-    public void testLatinNumbers1() {
-        assertEquals("A", TextUtil.toLatinNumberString(1));
-        assertEquals("B", TextUtil.toLatinNumberString(2));
-        assertEquals("C", TextUtil.toLatinNumberString(3));
-        assertEquals("Y", TextUtil.toLatinNumberString(25));
-        assertEquals("Z", TextUtil.toLatinNumberString(26));
-        assertEquals("AA", TextUtil.toLatinNumberString(27));
-        assertEquals("AB", TextUtil.toLatinNumberString(28));
-        assertEquals("AY", TextUtil.toLatinNumberString(51));
-        assertEquals("AZ", TextUtil.toLatinNumberString(52));
-        assertEquals("BA", TextUtil.toLatinNumberString(53));
-        assertEquals("BB", TextUtil.toLatinNumberString(54));
-        assertEquals("BY", TextUtil.toLatinNumberString(77));
-        assertEquals("BZ", TextUtil.toLatinNumberString(78));
-        assertEquals("CA", TextUtil.toLatinNumberString(79));
-        assertEquals("CB", TextUtil.toLatinNumberString(80));
     }
 }

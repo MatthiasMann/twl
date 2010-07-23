@@ -34,6 +34,7 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
+import de.matthiasmann.twl.textarea.OrderedListType;
 import de.matthiasmann.twl.textarea.Style;
 import de.matthiasmann.twl.textarea.StyleAttribute;
 import de.matthiasmann.twl.textarea.StyleSheet;
@@ -598,8 +599,6 @@ public class TextArea extends Widget {
             }
         }
 
-        Style style = e.getStyle();
-
         box.advancePastFloaters(le.width, le.marginLeft, le.marginRight);
         if(le.width > box.lineWidth) {
             le.width = box.lineWidth;
@@ -619,7 +618,7 @@ public class TextArea extends Widget {
             }
             le.x = box.getXAndAdvance(le.width);
         } else {
-            switch(style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver)) {
+            switch(e.getStyle().get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver)) {
             case CENTER:
             case JUSTIFY:
                 le.x = box.lineStartX + (box.lineWidth - le.width) / 2;
@@ -987,7 +986,7 @@ public class TextArea extends Widget {
 
         int start = Math.max(1, ole.getStart());
         int count = ole.getNumElements();
-        TextAreaModel.OrderedListType type = style.get(StyleAttribute.LIST_STYLE_TYPE, styleClassResolver);
+        OrderedListType type = style.get(StyleAttribute.LIST_STYLE_TYPE, styleClassResolver);
 
         String[] labels = new String[count];
         int maxLabelWidth = convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
@@ -1337,6 +1336,7 @@ public class TextArea extends Widget {
         final ArrayList<LElement> layout;
         final ArrayList<LElement> objLeft = new ArrayList<LElement>();
         final ArrayList<LElement> objRight = new ArrayList<LElement>();
+        final StringBuilder lineInfo = new StringBuilder();
         final int boxLeft;
         final int boxWidth;
         final int boxMarginOffsetLeft;
@@ -1354,6 +1354,8 @@ public class TextArea extends Widget {
         int lineWidth;
         int fontLineHeight;
         int minLineHeight;
+        int lastLineEnd;
+        int lastLineBottom;
         boolean inParagraph;
         boolean wasAutoBreak;
         TextAreaModel.HAlignment textAlignment;
@@ -1368,10 +1370,10 @@ public class TextArea extends Widget {
             this.boxMarginOffsetRight = paddingRight;
             this.curX = this.boxLeft;
             this.curY = paddingTop;
-            this.lineStartIdx = layout.size();
             this.lineStartX = boxLeft;
             this.lineWidth = boxWidth;
             this.textAlignment = TextAreaModel.HAlignment.LEFT;
+            assert layout.isEmpty();
         }
 
         void computePadding() {
@@ -1583,8 +1585,12 @@ public class TextArea extends Widget {
                 }
             }
 
-            processAnkors(targetY, lineHeight);
+            if(targetY > lastLineBottom) {
+                lineInfo.append((char)targetY).append((char)0);
+            }
             
+            processAnkors(targetY, lineHeight);
+
             minLineHeight = 0;
             lineStartIdx = layout.size();
             wasAutoBreak = !force;
@@ -1601,6 +1607,9 @@ public class TextArea extends Widget {
             nextLine(false);
             clearFloater(TextAreaModel.Clear.BOTH);
             processAnkors(curY, 0);
+            int lineInfoLength = lineInfo.length();
+            clip.lineInfo = new char[lineInfoLength];
+            lineInfo.getChars(0, lineInfoLength, clip.lineInfo, 0);
         }
 
         int computeNextTabStop(Font font) {
@@ -1659,6 +1668,12 @@ public class TextArea extends Widget {
                     le.height = height;
                 }
             }
+            if(lineStartIdx > lastLineEnd) {
+                lineInfo.append((char)0).append((char)(lineStartIdx - lastLineEnd));
+            }
+            lastLineBottom = y + height;
+            lineInfo.append((char)lastLineBottom).append((char)(layout.size() - lineStartIdx));
+            lastLineEnd = layout.size();
         }
     }
 
@@ -1777,6 +1792,7 @@ public class TextArea extends Widget {
         final ArrayList<LElement> layout;
         final ArrayList<LImage> bgImages;
         final ArrayList<LElement> ankors;
+        char[] lineInfo;
 
         public LClip(TextAreaModel.Element element) {
             super(element);
@@ -1845,9 +1861,34 @@ public class TextArea extends Widget {
         LElement find(int x, int y) {
             x -= this.x;
             y -= this.y;
-            for(LElement le : layout) {
-                if(le.isInside(x, y)) {
-                    return le.find(x, y);
+            int lineTop = 0;
+            int layoutIdx = 0;
+            for(int lineIdx=0 ; lineIdx<lineInfo.length && y >= lineTop ;) {
+                int lineBottom = lineInfo[lineIdx++];
+                int layoutCount = lineInfo[lineIdx++];
+                if(layoutCount > 0) {
+                    if(lineBottom == 0 || y < lineBottom) {
+                        for(int i=0 ; i<layoutCount ; i++) {
+                            LElement le = layout.get(layoutIdx + i);
+                            if(le.isInside(x, y)) {
+                                return le.find(x, y);
+                            }
+                        }
+                        if(lineBottom > 0 && x >= layout.get(layoutIdx).x) {
+                            LElement prev = null;
+                            for(int i=0 ; i<layoutCount ; i++) {
+                                LElement le = layout.get(layoutIdx + i);
+                                if(le.x >= x && (prev == null || prev.element == le.element)) {
+                                    return le;
+                                }
+                                prev = le;
+                            }
+                        }
+                    }
+                    layoutIdx += layoutCount;
+                }
+                if(lineBottom > 0) {
+                    lineTop = lineBottom;
                 }
             }
             return null;

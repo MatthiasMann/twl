@@ -33,7 +33,6 @@ import de.matthiasmann.twl.textarea.TextAreaModel.Clear;
 import de.matthiasmann.twl.textarea.TextAreaModel.Display;
 import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
 import de.matthiasmann.twl.textarea.TextAreaModel.HAlignment;
-import de.matthiasmann.twl.textarea.TextAreaModel.OrderedListType;
 import de.matthiasmann.twl.textarea.TextAreaModel.VAlignment;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

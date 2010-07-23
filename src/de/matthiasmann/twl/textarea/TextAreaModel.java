@@ -72,41 +72,6 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         RIGHT
     }
 
-    public enum OrderedListType {
-        DECIMAL {
-            @Override
-            public String format(int nr) {
-                return Integer.toString(nr);
-            }
-        },
-        UPPER_ROMAN {
-            @Override
-            public String format(int nr) {
-                return TextUtil.toRomanNumberString(nr);
-            }
-        },
-        LOWER_ROMAN {
-            @Override
-            public String format(int nr) {
-                return TextUtil.toRomanNumberString(nr).toLowerCase();
-            }
-        },
-        UPPER_LATIN {
-            @Override
-            public String format(int nr) {
-                return TextUtil.toLatinNumberString(nr);
-            }
-        },
-        LOWER_LATIN {
-            @Override
-            public String format(int nr) {
-                return TextUtil.toLatinNumberString(nr).toLowerCase();
-            }
-        };
-        
-        public abstract String format(int nr);
-    }
-    
     public abstract class Element {
         private Style style;
 

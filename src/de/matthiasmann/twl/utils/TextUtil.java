@@ -173,27 +173,23 @@ public final class TextUtil {
         } while (++idxValues < 17);
         return sb.toString();
     }
-
-    private static void toLatinNumberString(int value, StringBuilder sb) {
-        if(value >= 26) {
-            toLatinNumberString(value / 26 - 1, sb);
-            value %= 26;
-        }
-        sb.append((char)('A' + value));
-    }
-
+    
     /**
-     * Creates a string which represents the specified value via latin characters like "A" ... "Z", "AA" ... "AZ", ...
+     * Create a string which represents the specified value using the specified list of characters.
      * @param value the value. Must be &gt;= 1.
-     * @return the latin number string
-     * @throws IllegalArgumentException if the value if &lt; 1
+     * @param list the character list to use. Must contain at least 4 characters.
+     * @return IllegalArgumentException if the value is &lt; 1
      */
-    public static String toLatinNumberString(int value) throws IllegalArgumentException {
+    public static String toCharListNumber(int value, String list) throws IllegalArgumentException {
         if(value < 1) {
             throw new IllegalArgumentException("value");
         }
-        StringBuilder sb = new StringBuilder();
-        toLatinNumberString(value-1, sb);
-        return sb.toString();
+        int pos = 16;
+        char[] tmp = new char[pos];
+        do {
+            tmp[--pos] = list.charAt(--value % list.length());
+            value /= list.length();
+        }while(value > 0);
+        return new String(tmp, pos, tmp.length - pos);
     }
 }

@@ -234,18 +234,17 @@ public class CSSStyle extends Style {
     }
     
     private static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
-    private static final HashMap<String, TextAreaModel.OrderedListType> OLT = new HashMap<String, TextAreaModel.OrderedListType>();
+    private static final HashMap<String, OrderedListType> OLT = new HashMap<String, OrderedListType>();
 
     static {
         PRE.put("pre", Boolean.TRUE);
         PRE.put("normal", Boolean.FALSE);
 
-        OLT.put("decimal", TextAreaModel.OrderedListType.DECIMAL);
-        OLT.put("lower-roman", TextAreaModel.OrderedListType.LOWER_ROMAN);
-        OLT.put("upper-roman", TextAreaModel.OrderedListType.UPPER_ROMAN);
-        OLT.put("lower-latin", TextAreaModel.OrderedListType.LOWER_LATIN);
-        OLT.put("upper-latin", TextAreaModel.OrderedListType.UPPER_LATIN);
-        OLT.put("lower-alpha", TextAreaModel.OrderedListType.LOWER_LATIN);
-        OLT.put("upper-alpha", TextAreaModel.OrderedListType.UPPER_LATIN);
+        for(OrderedListType olt : OrderedListType.values()) {
+            OLT.put(olt.toString().toLowerCase().replace('_', '-'), olt);
+        }
+        // add alias
+        OLT.put("lower-latin", OrderedListType.LOWER_ALPHA);
+        OLT.put("upper-latin", OrderedListType.UPPER_ALPHA);
     }
 }
