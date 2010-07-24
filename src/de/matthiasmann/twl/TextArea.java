@@ -1097,7 +1097,7 @@ public class TextArea extends Widget {
         box.lineStartIdx = box.layout.size();
 
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
-            box.curY = bgY + clip.height;
+            box.advanceToY(bgY + clip.height);
             box.setMarginBottom(clip.marginBottom);
         } else {
             if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
