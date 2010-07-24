@@ -919,9 +919,7 @@ public class TextArea extends Widget {
 
     private void doMarginTop(Box box, Style style) {
         int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
-        box.nextLine(false);
-        box.curY = box.computeTopPadding(marginTop);
-        box.checkFloaters();
+        box.advanceToY(box.computeTopPadding(marginTop));
     }
 
     private void doMarginBottom(Box box, Style style) {
@@ -959,11 +957,11 @@ public class TextArea extends Widget {
             li.height = Short.MAX_VALUE;
 
             layoutElements(box, le);
-            box.nextLine(false);
 
             li.height = imageHeight;
 
             box.objLeft.remove(li);
+            box.advanceToY(li.bottom());
             box.computePadding();
         } else {
             layoutElements(box, le);
@@ -1012,11 +1010,11 @@ public class TextArea extends Widget {
             lt.height = Short.MAX_VALUE;
 
             layoutElement(box, li);
-            box.nextLine(false);
 
             lt.height = labelHeight;
 
             box.objLeft.remove(lt);
+            box.advanceToY(lt.bottom());
             box.computePadding();
 
             doMarginBottom(box, liStyle);
@@ -1478,12 +1476,16 @@ public class TextArea extends Widget {
                     }
                 }
                 if(targetY >= 0) {
-                    nextLine(false);
-                    if(targetY > curY) {
-                        curY = targetY;
-                        checkFloaters();
-                    }
+                    advanceToY(targetY);
                 }
+            }
+        }
+
+        void advanceToY(int targetY) {
+            nextLine(false);
+            if(targetY > curY) {
+                curY = targetY;
+                checkFloaters();
             }
         }
 
