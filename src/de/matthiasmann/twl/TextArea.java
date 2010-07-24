@@ -919,6 +919,7 @@ public class TextArea extends Widget {
 
     private void doMarginTop(Box box, Style style) {
         int marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, box.boxWidth);
+        box.nextLine(false);    // need to complete line before computing targetY
         box.advanceToY(box.computeTopPadding(marginTop));
     }
 
