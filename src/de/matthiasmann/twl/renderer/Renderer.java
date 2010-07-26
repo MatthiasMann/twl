@@ -43,6 +43,12 @@ import java.util.Map;
 public interface Renderer {
 
     /**
+     * Returns the elapsed time in milliseconds.
+     * @return the elapsed time in milliseconds.
+     */
+    public long getTimeMillis();
+    
+    /**
      * Setup rendering for TWL.
      * Must be called before any Font or Image objects is drawn.
      */

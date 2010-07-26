@@ -193,6 +193,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         height = ib16.get(3);
     }
 
+    public long getTimeMillis() {
+        long res = Sys.getTimerResolution();
+        long time = Sys.getTime();
+        if(res != 1000) {
+            time = (time * 1000) / res;
+        }
+        return time;
+    }
+
     /**
      * Setup GL to start rendering the GUI. It assumes default GL state.
      */

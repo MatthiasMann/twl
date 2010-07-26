@@ -220,7 +220,7 @@ public class TintAnimator {
     /**
      * A time source which uses the GUI object of the specified widget
      */
-    public static class GUITimeSource implements TimeSource {
+    public static final class GUITimeSource implements TimeSource {
         private final Widget owner;
         private long startTime;
 
@@ -242,7 +242,7 @@ public class TintAnimator {
 
         private long getCurrentTime() {
             GUI gui = owner.getGUI();
-            return (gui != null) ? gui.getTimeMillis() : 0;
+            return (gui != null) ? gui.getCurrentTime() : 0;
         }
     }
 

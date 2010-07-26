@@ -33,7 +33,6 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import java.util.ArrayList;
-import org.lwjgl.Sys;
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 
@@ -212,7 +211,13 @@ public final class GUI extends Widget {
     public Timer createTimer() {
         return new Timer(this);
     }
-
+    
+    /**
+     * Returns the current UI time in milliseconds.
+     * This time is updated via {@link #updateTime() }
+     *
+     * @return the current UI time in milliseconds.
+     */
     public long getCurrentTime() {
         return curTime;
     }
@@ -342,7 +347,7 @@ public final class GUI extends Widget {
      * This allows the UI timer to be suspended.
      */
     public void resyncTimerAfterPause() {
-        this.curTime = getTimeMillis();
+        this.curTime = renderer.getTimeMillis();
         this.deltaTime = 0;
     }
 
@@ -354,18 +359,9 @@ public final class GUI extends Widget {
      * @see #getTimeMillis()
      */
     public void updateTime() {
-        long newTime = getTimeMillis();
+        long newTime = renderer.getTimeMillis();
         deltaTime = Math.max(0, (int)(newTime - curTime));
         curTime = newTime;
-    }
-
-    public long getTimeMillis() {
-        long res = Sys.getTimerResolution();
-        long time = Sys.getTime();
-        if(res != 1000) {
-            time = (time * 1000) / res;
-        }
-        return time;
     }
 
     /**
