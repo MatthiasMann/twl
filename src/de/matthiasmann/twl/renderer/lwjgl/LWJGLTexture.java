@@ -129,8 +129,8 @@ public class LWJGLTexture implements Texture, Resource {
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, filter.glValue);
         GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, filter.glValue);
 
-        this.texWidth = OGLUtil.roundUpPOT(width);
-        this.texHeight = OGLUtil.roundUpPOT(height);
+        this.texWidth = roundUpPOT(width);
+        this.texHeight = roundUpPOT(height);
 
         if(texWidth != width || texHeight != height) {
             GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0,
@@ -243,5 +243,9 @@ public class LWJGLTexture implements Texture, Resource {
     public void themeLoadingDone() {
         // don't clear this to enable theme switching
         // this.texData = null;
+    }
+
+    static int roundUpPOT(int value) {
+        return 1 << (32 - Integer.numberOfLeadingZeros(value-1));
     }
 }
