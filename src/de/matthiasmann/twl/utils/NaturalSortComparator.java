@@ -45,7 +45,7 @@ public class NaturalSortComparator {
     };
     public static final Comparator<String> stringPathComparator = new Comparator<String>() {
         public int compare(String n1, String n2) {
-            return naturalCompareWithPathes(n1, n2);
+            return naturalCompareWithPaths(n1, n2);
         }
     };
     
@@ -78,7 +78,7 @@ public class NaturalSortComparator {
         return i;
     }
 
-    public static int naturalCompareWithPathes(String n1, String n2) {
+    public static int naturalCompareWithPaths(String n1, String n2) {
         int diffOffset = findDiff(n1, 0, n2, 0);
         int idx0 = n1.indexOf('/', diffOffset);
         int idx1 = n2.indexOf('/', diffOffset);
