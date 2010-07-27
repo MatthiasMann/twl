@@ -35,7 +35,7 @@ import java.lang.reflect.Modifier;
 /**
  * A immutable color class. Colors are represented as bytes.
  *
- * @author MannMat
+ * @author Matthias Mann
  */
 public final class Color {
 

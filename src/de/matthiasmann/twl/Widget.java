@@ -42,7 +42,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.lwjgl.input.Keyboard;
 
 /**
  * Root of the TWL class hierarchy.
@@ -56,7 +55,7 @@ public class Widget {
     public static final String STATE_HAS_FOCUSED_CHILD = "hasFocusedChild";
     public static final String STATE_DISABLED = "disabled";
     
-    private static final int FOCUS_KEY = Keyboard.KEY_TAB;
+    private static final int FOCUS_KEY = Event.KEY_TAB;
     
     private Widget parent;
     private int posX;
@@ -2357,7 +2356,7 @@ public class Widget {
         return type == Event.Type.MOUSE_BTNDOWN ||
                 type == Event.Type.MOUSE_BTNUP ||
                 type == Event.Type.MOUSE_CLICKED ||
-                type == Event.Type.MOUSE_DRAGED;
+                type == Event.Type.MOUSE_DRAGGED;
     }
 
     void routePopupEvent(Event evt) {

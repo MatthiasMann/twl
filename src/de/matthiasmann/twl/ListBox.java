@@ -32,7 +32,6 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.ListModel.ChangeListener;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A list box. Supports single and multiple columns.
@@ -330,7 +329,7 @@ public class ListBox<T> extends Widget {
     }
     
     protected boolean isSearchChar(char ch) {
-        return (ch != Keyboard.CHAR_NONE) && Character.isLetterOrDigit(ch);
+        return (ch != Event.CHAR_NONE) && Character.isLetterOrDigit(ch);
     }
 
     @Override
@@ -358,37 +357,37 @@ public class ListBox<T> extends Widget {
             return true;
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_UP:
+            case Event.KEY_UP:
                 goKeyboard(-numCols);
                 break;
-            case Keyboard.KEY_DOWN:
+            case Event.KEY_DOWN:
                 goKeyboard(numCols);
                 break;
-            case Keyboard.KEY_LEFT:
+            case Event.KEY_LEFT:
                 goKeyboard(-1);
                 break;
-            case Keyboard.KEY_RIGHT:
+            case Event.KEY_RIGHT:
                 goKeyboard(1);
                 break;
-            case Keyboard.KEY_PRIOR:
+            case Event.KEY_PRIOR:
                 if(numEntries > 0) {
                     setSelected(Math.max(0, selected-labels.length),
                         true, CallbackReason.KEYBOARD);
                 }
                 break;
-            case Keyboard.KEY_NEXT:
+            case Event.KEY_NEXT:
                 setSelected(Math.min(numEntries-1, selected+labels.length),
                         true, CallbackReason.KEYBOARD);
                 break;
-            case Keyboard.KEY_HOME:
+            case Event.KEY_HOME:
                 if(numEntries > 0) {
                     setSelected(0, true, CallbackReason.KEYBOARD);
                 }
                 break;
-            case Keyboard.KEY_END:
+            case Event.KEY_END:
                 setSelected(numEntries-1, true, CallbackReason.KEYBOARD);
                 break;
-            case Keyboard.KEY_RETURN:
+            case Event.KEY_RETURN:
                 setSelected(selected, false, CallbackReason.KEYBOARD_RETURN);
                 break;
             default:

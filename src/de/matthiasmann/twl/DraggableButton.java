@@ -120,7 +120,7 @@ public class DraggableButton extends Button {
     @Override
     public boolean handleEvent(Event evt) {
         if(evt.isMouseEvent() && dragging) {
-            if(evt.getType() == Event.Type.MOUSE_DRAGED) {
+            if(evt.getType() == Event.Type.MOUSE_DRAGGED) {
                 if(listener != null) {
                     listener.dragged(evt.getMouseX()-dragStartX, evt.getMouseY()-dragStartY);
                 }
@@ -136,7 +136,7 @@ public class DraggableButton extends Button {
             dragStartX = evt.getMouseX();
             dragStartY = evt.getMouseY();
             break;
-        case MOUSE_DRAGED:
+        case MOUSE_DRAGGED:
             assert !dragging;
             dragging = true;
             getModel().setArmed(false);

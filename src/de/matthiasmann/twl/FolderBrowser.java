@@ -39,7 +39,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A folder browser with plugable file system.
@@ -195,7 +194,7 @@ public class FolderBrowser extends Widget {
     public boolean handleEvent(Event evt) {
         if(evt.getType() == Event.Type.KEY_PRESSED) {
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_BACK:
+            case Event.KEY_BACK:
                 goToParentFolder();
                 return true;
             }

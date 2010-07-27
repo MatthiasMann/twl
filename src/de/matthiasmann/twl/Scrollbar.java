@@ -30,7 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.utils.CallbackSupport;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A scroll bar
@@ -335,25 +334,25 @@ public class Scrollbar extends Widget {
         switch(evt.getType()) {
         case KEY_PRESSED:
             switch(evt.getKeyCode()) {
-            case Keyboard.KEY_LEFT:
+            case Event.KEY_LEFT:
                 if(orientation == Orientation.HORIZONTAL) {
                     setValue(value - step);
                     return true;
                 }
                 break;
-            case Keyboard.KEY_RIGHT:
+            case Event.KEY_RIGHT:
                 if(orientation == Orientation.HORIZONTAL) {
                     setValue(value + step);
                     return true;
                 }
                 break;
-            case Keyboard.KEY_UP:
+            case Event.KEY_UP:
                 if(orientation == Orientation.VERTICAL) {
                     setValue(value - step);
                     return true;
                 }
                 break;
-            case Keyboard.KEY_DOWN:
+            case Event.KEY_DOWN:
                 if(orientation == Orientation.VERTICAL) {
                     setValue(value + step);
                     return true;

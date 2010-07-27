@@ -29,12 +29,14 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.input.Input;
+import de.matthiasmann.twl.input.lwjgl.LWJGLInput;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import java.util.ArrayList;
-import org.lwjgl.input.Keyboard;
-import org.lwjgl.input.Mouse;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Root of a UI tree. Handles timing, mouse and keyboard events, popups, tooltips etc.
@@ -59,6 +61,7 @@ public final class GUI extends Widget {
     private static final int TOOLTIP_DELAY = 1000;  // 1 sec in ms
     
     private final Renderer renderer;
+    private final Input input;
     
     long curTime;
     private int deltaTime;
@@ -119,12 +122,24 @@ public final class GUI extends Widget {
     }
 
     /**
-     * Constructs a new GUI manager with the given renderer and root pane
+     * Constructs a new GUI manager with the given renderer, root pane and a LWJGLInput input source
      * 
      * @param rootPane the root pane
      * @param renderer the renderer
+     * @see LWJGLInput
      */
     public GUI(Widget rootPane, Renderer renderer) {
+        this(rootPane, renderer, new LWJGLInput());
+    }
+
+    /**
+     * Constructs a new GUI manager with the given renderer, input source and root pane
+     *
+     * @param rootPane the root pane
+     * @param renderer the renderer
+     * @param input the input source, can be null.
+     */
+    public GUI(Widget rootPane, Renderer renderer, Input input) {
         if(rootPane == null) {
             throw new NullPointerException("rootPane");
         }
@@ -133,6 +148,7 @@ public final class GUI extends Widget {
         }
         
         this.renderer = renderer;
+        this.input = input;
         this.event = new Event();
         this.rootPane = rootPane;
         this.rootPane.setFocusKeyEnabled(false);
@@ -193,6 +209,10 @@ public final class GUI extends Widget {
     public Renderer getRenderer() {
         return renderer;
     }
+
+    public Input getInput() {
+        return input;
+    }
     
     public MouseSensitiveRectangle createMouseSenitiveRectangle() {
         return new MouseSensitiveRectangle() {
@@ -220,6 +240,16 @@ public final class GUI extends Widget {
      */
     public long getCurrentTime() {
         return curTime;
+    }
+
+    /**
+     * Returns the delta time to the previous frame in milliseconds.
+     * This time is updated via {@link #updateTime() }
+     * 
+     * @return the delta time
+     */
+    public int getCurrentDeltaTime() {
+        return deltaTime;
     }
 
     /**
@@ -274,27 +304,42 @@ public final class GUI extends Widget {
         }
         this.mouseIdleTime = mouseIdleTime;
     }
-    
+
+    /**
+     * Throws UnsupportedOperationException
+     */
     @Override
     public boolean setPosition(int x, int y) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Throws UnsupportedOperationException
+     */
     @Override
     public void insertChild(Widget child, int index) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Throws UnsupportedOperationException
+     */
     @Override
     public void removeAllChildren() {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Throws UnsupportedOperationException
+     */
     @Override
     public Widget removeChild(int index) {
         throw new UnsupportedOperationException();
     }
 
+    /**
+     * Does nothing
+     */
     @Override
     public void adjustSize() {
     }
@@ -325,15 +370,27 @@ public final class GUI extends Widget {
     }
     
     /**
-     * Handles keyboard, mouse, timers and executes draw()
+     * Polls inputs, updates layout and renders the GUI by calls the following method:<ol>
+     * <li> {@link #setSize() }
+     * <li> {@link #updateTime() }
+     * <li> {@link #handleInput() }
+     * <li> {@link #handleKeyRepeat() }
+     * <li> {@link #handleTooltips() }
+     * <li> {@link #updateTimers() }
+     * <li> {@link #invokeRunables() }
+     * <li> {@link #validateLayout() }
+     * <li> {@link #draw() }
+     * <li> {@link #setCursor() }
+     * </ol>
      * 
      * This is the easiest method to use this GUI
      */
     public void update() {
         setSize();
         updateTime();
-        handleKeyboardInputLWJGL();
-        handleMouseInputLWJGL();
+        handleInput();
+        handleKeyRepeat();
+        handleTooltips();
         updateTimers();
         invokeRunables();
         validateLayout();
@@ -342,7 +399,7 @@ public final class GUI extends Widget {
     }
 
     /**
-     * when calls to updateTime where stoped then this method should be called
+     * When calls to updateTime where stopped then this method should be called
      * before calling updateTime again to prevent a large delta jump.
      * This allows the UI timer to be suspended.
      */
@@ -353,7 +410,7 @@ public final class GUI extends Widget {
 
     /**
      * Updates the current time returned by {@code getCurrentTime} by calling
-     * {@code getTimeMillis} and computes the delta time since the last update.
+     * {@link Renderer#getTimeMillis() } and computes the delta time since the last update.
      *
      * @see #getCurrentTime()
      * @see #getTimeMillis()
@@ -365,7 +422,8 @@ public final class GUI extends Widget {
     }
 
     /**
-     * Updates all active timers with the delta time computed by {@code updateTime}
+     * Updates all active timers with the delta time computed by {@code updateTime}.
+     * This method must be called exactly once after a call to {@code updateTime}.
      * @see #updateTime() 
      */
     public void updateTimers() {
@@ -376,7 +434,6 @@ public final class GUI extends Widget {
                 i++;
             }
         }
-        deltaTime = 0;
     }
 
     /**
@@ -397,8 +454,8 @@ public final class GUI extends Widget {
             for(Runnable r : runnables) {
                 try {
                     r.run();
-                } catch (Exception ex) {
-                    ex.printStackTrace();
+                } catch (Throwable ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in runable", ex);
                 }
             }
         }
@@ -436,53 +493,16 @@ public final class GUI extends Widget {
     }
 
     /**
-     * Retrives all keyboard events from LWJGL's Keyboard class.
-     *
-     * Calls {@code handleKey} for every event.
-     * Calls {@code handleKeyRepeat} after all events have been processed.
-     *
-     * @see #handleKey(int, char, boolean)
-     * @see #handleKeyRepeat() 
+     * Polls input by calling {@link Input#pollInput(de.matthiasmann.twl.GUI) } if an input source was specified.
+     * If {@code pollInput} returned false then {@link #clearKeyboardState() } and {@link #clearMouseState() } are called.
      */
-    public void handleKeyboardInputLWJGL() {
-        if(Keyboard.isCreated()) {
-            while(Keyboard.next()) {
-                handleKey(
-                        Keyboard.getEventKey(),
-                        Keyboard.getEventCharacter(),
-                        Keyboard.getEventKeyState());
-            }
-            
-            handleKeyRepeat();
+    public void handleInput() {
+        if(input != null && !input.pollInput(this)) {
+            clearKeyboardState();
+            clearMouseState();
         }
     }
 
-    /**
-     * Retrives all mouse events from LWJGL's Mouse class.
-     *
-     * Calls {@code handleMouse} and if needed {@code handleMouseWheel} for every event.
-     * Calls {@code handleTooltips} after all events have been processed.
-     *
-     * @see #handleMouse(int, int, int, boolean)
-     * @see #handleMouseWheel(int)
-     * @see #handleTooltips() 
-     */
-    public void handleMouseInputLWJGL() {
-        if(Mouse.isCreated()) {
-            while(Mouse.next()) {
-                handleMouse(Mouse.getEventX(), getHeight() - Mouse.getEventY(),
-                        Mouse.getEventButton(), Mouse.getEventButtonState());
-
-                int wheelDelta = Mouse.getEventDWheel();
-                if(wheelDelta != 0) {
-                    handleMouseWheel(wheelDelta / 120);
-                }
-            }
-            
-            handleTooltips();
-        }
-    }
-    
     /**
      * Mouse has moved / button was pressed or released.
      * 
@@ -556,7 +576,7 @@ public final class GUI extends Widget {
             if(dragActive) {
                 // send MOUSE_DRAGGED only to the widget which received the MOUSE_BTNDOWN
                 if(lastMouseDownWidget != null) {
-                    sendMouseEvent(Event.Type.MOUSE_DRAGED, lastMouseDownWidget);
+                    sendMouseEvent(Event.Type.MOUSE_DRAGGED, lastMouseDownWidget);
                 }
             } else if(prevButtonState == 0) {
                 if(sendMouseEvent(Event.Type.MOUSE_MOVED, null) != null) {
@@ -680,8 +700,8 @@ public final class GUI extends Widget {
         event.keyRepeated = false;
 
         keyEventTime = curTime;
-        if(event.keyCode != Keyboard.KEY_NONE || event.keyChar != Keyboard.CHAR_NONE) {
-            setModifiers(event.keyCode, pressed);
+        if(event.keyCode != Event.KEY_NONE || event.keyChar != Event.CHAR_NONE) {
+            event.setModifiers(pressed);
 
             if(pressed) {
                 keyRepeatDelay = KEYREPEAT_INITIAL_DELAY;
@@ -705,6 +725,7 @@ public final class GUI extends Widget {
      */
     public final void clearKeyboardState() {
         event.modifier &= ~(Event.MODIFIER_ALT | Event.MODIFIER_CTRL | Event.MODIFIER_SHIFT | Event.MODIFIER_META);
+        keyRepeatDelay = NO_REPEAT;
     }
     
     /**
@@ -1059,35 +1080,6 @@ public final class GUI extends Widget {
             renderer.setClipRect(null);
         } else {
             renderer.setClipRect(clipRects[numClipRects-1]);
-        }
-    }
-
-    private void setModifiers(int keyCode, boolean pressed) {
-        switch(keyCode) {
-            case Keyboard.KEY_LSHIFT:
-                event.setModifier(Event.MODIFIER_LSHIFT, pressed);
-                break;
-            case Keyboard.KEY_LMETA:
-                event.setModifier(Event.MODIFIER_LMETA, pressed);
-                break;
-            case Keyboard.KEY_LCONTROL:
-                event.setModifier(Event.MODIFIER_LCTRL, pressed);
-                break;
-            case Keyboard.KEY_LMENU:
-                event.setModifier(Event.MODIFIER_LALT, pressed);
-                break;
-            case Keyboard.KEY_RSHIFT:
-                event.setModifier(Event.MODIFIER_RSHIFT, pressed);
-                break;
-            case Keyboard.KEY_RMETA:
-                event.setModifier(Event.MODIFIER_RMETA, pressed);
-                break;
-            case Keyboard.KEY_RCONTROL:
-                event.setModifier(Event.MODIFIER_RCTRL, pressed);
-                break;
-            case Keyboard.KEY_RMENU:
-                event.setModifier(Event.MODIFIER_RALT, pressed);
-                break;
         }
     }
     

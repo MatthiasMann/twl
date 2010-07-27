@@ -38,7 +38,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.lwjgl.input.Keyboard;
 
 /**
  *
@@ -258,28 +257,28 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
             if(captureKeys) {
                 if(evt.getType() == Event.Type.KEY_PRESSED) {
                     switch (evt.getKeyCode()) {
-                        case Keyboard.KEY_RETURN:
+                        case Event.KEY_RETURN:
                             return acceptAutoCompletion();
 
-                        case Keyboard.KEY_ESCAPE:
+                        case Event.KEY_ESCAPE:
                             stopAutoCompletion();
                             break;
 
-                        case Keyboard.KEY_UP:
-                        case Keyboard.KEY_DOWN:
-                        case Keyboard.KEY_PRIOR:
-                        case Keyboard.KEY_NEXT:
-                        case Keyboard.KEY_HOME:
-                        case Keyboard.KEY_END:
+                        case Event.KEY_UP:
+                        case Event.KEY_DOWN:
+                        case Event.KEY_PRIOR:
+                        case Event.KEY_NEXT:
+                        case Event.KEY_HOME:
+                        case Event.KEY_END:
                             listBox.handleEvent(evt);
                             break;
 
-                        case Keyboard.KEY_LEFT:
-                        case Keyboard.KEY_RIGHT:
+                        case Event.KEY_LEFT:
+                        case Event.KEY_RIGHT:
                             return false;
 
                         default:
-                            if(evt.hasKeyChar() || evt.getKeyCode() == Keyboard.KEY_BACK) {
+                            if(evt.hasKeyChar() || evt.getKeyCode() == Event.KEY_BACK) {
                                 if(!acceptAutoCompletion()) {
                                     stopAutoCompletion();
                                 }
@@ -291,15 +290,15 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                 return true;
             } else {
                 switch (evt.getKeyCode()) {
-                    case Keyboard.KEY_UP:
-                    case Keyboard.KEY_DOWN:
+                    case Event.KEY_UP:
+                    case Event.KEY_DOWN:
                         listBox.handleEvent(evt);
                         startCapture();
                         return captureKeys;
-                    case Keyboard.KEY_ESCAPE:
+                    case Event.KEY_ESCAPE:
                         stopAutoCompletion();
                         return false;
-                    case Keyboard.KEY_SPACE:
+                    case Event.KEY_SPACE:
                         if((evt.getModifiers() & Event.MODIFIER_CTRL) != 0) {
                             updateAutoCompletion();
                             return true;

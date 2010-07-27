@@ -41,7 +41,6 @@ import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.TypeMapping;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A property sheet class
@@ -356,7 +355,7 @@ public class PropertySheet extends TreeTable {
         public void setSelected(boolean selected) {
         }
         public void callback(int key) {
-            if(key == Keyboard.KEY_ESCAPE) {
+            if(key == Event.KEY_ESCAPE) {
                 resetValue();
             } else if(!property.isReadOnly()) {
                 try {

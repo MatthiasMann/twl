@@ -30,7 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.utils.TextUtil;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A class to represent a key stroke and it's associated action.
@@ -88,8 +87,8 @@ public final class KeyStroke {
         } else if((modifier & META) == META) {
             sb.append("meta ");
         }
-        if(keyCode != Keyboard.KEY_NONE) {
-            sb.append(Keyboard.getKeyName(keyCode));
+        if(keyCode != Event.KEY_NONE) {
+            sb.append(Event.getKeyNameForCode(keyCode));
         } else {
             sb.append("typed ").append(keyChar);
         }
@@ -158,8 +157,8 @@ public final class KeyStroke {
 
         int idx = TextUtil.skipSpaces(stroke, 0);
         int modifers = 0;
-        char keyChar = Keyboard.CHAR_NONE;
-        int keyCode = Keyboard.KEY_NONE;
+        char keyChar = Event.CHAR_NONE;
+        int keyCode = Event.KEY_NONE;
         boolean typed = false;
         boolean end = false;
 
@@ -176,7 +175,7 @@ public final class KeyStroke {
                     throw new IllegalArgumentException("Expected single character after 'typed'");
                 }
                 keyChar = part.charAt(0);
-                if(keyChar == Keyboard.CHAR_NONE) {
+                if(keyChar == Event.CHAR_NONE) {
                     throw new IllegalArgumentException("Unknown character: " + part);
                 }
                 end = true;
@@ -193,8 +192,8 @@ public final class KeyStroke {
             } else if("typed".equalsIgnoreCase(part)) {
                 typed = true;
             } else {
-                keyCode = Keyboard.getKeyIndex(part.toUpperCase());
-                if(keyCode == Keyboard.KEY_NONE) {
+                keyCode = Event.getKeyCodeForName(part.toUpperCase());
+                if(keyCode == Event.KEY_NONE) {
                     throw new IllegalArgumentException("Unknown key: " + part);
                 }
                 end = true;
@@ -229,17 +228,17 @@ public final class KeyStroke {
             throw new IllegalArgumentException("Event is not a Type.KEY_PRESSED");
         }
         int modifiers = convertModifier(event);
-        return new KeyStroke(modifiers, event.getKeyCode(), (char)Keyboard.CHAR_NONE, action);
+        return new KeyStroke(modifiers, event.getKeyCode(), Event.CHAR_NONE, action);
     }
 
     boolean match(Event e, int mappedEventModifiers) {
         if(mappedEventModifiers != modifier) {
             return false;
         }
-        if(keyCode != Keyboard.KEY_NONE && keyCode != e.getKeyCode()) {
+        if(keyCode != Event.KEY_NONE && keyCode != e.getKeyCode()) {
             return false;
         }
-        if(keyChar != Keyboard.CHAR_NONE && (!e.hasKeyChar() || keyChar != e.getKeyChar())) {
+        if(keyChar != Event.CHAR_NONE && (!e.hasKeyChar() || keyChar != e.getKeyChar())) {
             return false;
         }
         return true;

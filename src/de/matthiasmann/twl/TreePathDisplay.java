@@ -32,7 +32,6 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.Label.CallbackReason;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
-import org.lwjgl.input.Keyboard;
 
 /**
  * Display widget for a TreeTableNode with navigation and editing support
@@ -257,12 +256,12 @@ public class TreePathDisplay extends Widget {
             super.doCallback(key);
 
             switch(key) {
-            case Keyboard.KEY_RETURN:
+            case Event.KEY_RETURN:
                 if(fireResolvePath(getEditField().getText())) {
                     endEdit();
                 }
                 break;
-            case Keyboard.KEY_ESCAPE:
+            case Event.KEY_ESCAPE:
                 endEdit();
                 break;
             }

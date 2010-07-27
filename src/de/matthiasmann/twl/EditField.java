@@ -36,7 +36,6 @@ import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import java.util.concurrent.ExecutorService;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A simple one line edit field
@@ -517,7 +516,7 @@ public class EditField extends Widget {
         }
 
         if(evt.isMouseDragEvent()) {
-            if(evt.getType() == Event.Type.MOUSE_DRAGED &&
+            if(evt.getType() == Event.Type.MOUSE_DRAGGED &&
                     (evt.getModifiers() & Event.MODIFIER_LBUTTON) != 0) {
                 int newPos = textRenderer.getCursorPosFromMouse(evt.getMouseX());
                 setCursorPos(newPos, true);
@@ -538,26 +537,26 @@ public class EditField extends Widget {
         switch (evt.getType()) {
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_BACK:
+            case Event.KEY_BACK:
                 deletePrev();
                 return true;
-            case Keyboard.KEY_DELETE:
+            case Event.KEY_DELETE:
                 deleteNext();
                 return true;
-            case Keyboard.KEY_RETURN:
-            case Keyboard.KEY_ESCAPE:
+            case Event.KEY_RETURN:
+            case Event.KEY_ESCAPE:
                 doCallback(evt.getKeyCode());
                 return true;
-            case Keyboard.KEY_HOME:
+            case Event.KEY_HOME:
                 setCursorPos(0, selectPressed);
                 return true;
-            case Keyboard.KEY_END:
+            case Event.KEY_END:
                 setCursorPos(editBuffer.length(), selectPressed);
                 return true;
-            case Keyboard.KEY_LEFT:
+            case Event.KEY_LEFT:
                 moveCursor(-1, selectPressed);
                 return true;
-            case Keyboard.KEY_RIGHT:
+            case Event.KEY_RIGHT:
                 moveCursor(+1, selectPressed);
                 return true;
             default:
@@ -573,14 +572,14 @@ public class EditField extends Widget {
 
         case KEY_RELEASED:
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_BACK:
-            case Keyboard.KEY_DELETE:
-            case Keyboard.KEY_RETURN:
-            case Keyboard.KEY_ESCAPE:
-            case Keyboard.KEY_HOME:
-            case Keyboard.KEY_END:
-            case Keyboard.KEY_LEFT:
-            case Keyboard.KEY_RIGHT:
+            case Event.KEY_BACK:
+            case Event.KEY_DELETE:
+            case Event.KEY_RETURN:
+            case Event.KEY_ESCAPE:
+            case Event.KEY_HOME:
+            case Event.KEY_END:
+            case Event.KEY_LEFT:
+            case Event.KEY_RIGHT:
                 return true;
             default:
                 return evt.hasKeyCharNoModifiers() || forwardUnhandledKeysToCallback;
@@ -678,7 +677,7 @@ public class EditField extends Widget {
         textRenderer.setCharSequence(passwordMasking != null ? passwordMasking : editBuffer);
         checkTextWidth();
         scrollToCursor(false);
-        doCallback(Keyboard.KEY_NONE);
+        doCallback(Event.KEY_NONE);
         if(autoCompletionWindow != null && autoCompletionWindow.isOpen() || updateAutoCompletion) {
             updateAutoCompletion();
         }

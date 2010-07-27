@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -27,61 +27,27 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl;
+package de.matthiasmann.twl.input;
+
+import de.matthiasmann.twl.GUI;
 
 /**
- *
+ * Abstracted input polling.
+ * Allows to use {@link GUI#update() } with generic polled input devices.
+ * 
  * @author Matthias Mann
  */
-public class Border {
+public interface Input {
 
-    public static final Border ZERO = new Border(0);
-    
-    private final int top;
-    private final int left;
-    private final int bottom;
-    private final int right;
-
-    public Border(int all) {
-        this.top = all;
-        this.left = all;
-        this.bottom = all;
-        this.right = all;
-    }
-    
-    public Border(int horz, int vert) {
-        this.top = vert;
-        this.left = horz;
-        this.bottom = vert;
-        this.right = horz;
-    }
-    
-    public Border(int top, int left, int bottom, int right) {
-        this.top = top;
-        this.left = left;
-        this.bottom = bottom;
-        this.right = right;
-    }
-    
-    public int getBorderBottom() {
-        return bottom;
-    }
-
-    public int getBorderLeft() {
-        return left;
-    }
-
-    public int getBorderRight() {
-        return right;
-    }
-
-    public int getBorderTop() {
-        return top;
-    }
-
-    @Override
-    public String toString() {
-        return "[Border top="+top+" left="+left+" bottom="+bottom+" right="+right+"]";
-    }
-
+    /**
+     * Poll input events.
+     *
+     * @param gui the GUI object which should receive the input
+     * @return true if input events have been processed, false if the input system is currently inactive.
+     *
+     * @see GUI#handleKey(int, char, boolean)
+     * @see GUI#handleMouse(int, int, int, boolean)
+     * @see GUI#handleMouseWheel(int) 
+     */
+    public boolean pollInput(GUI gui);
 }

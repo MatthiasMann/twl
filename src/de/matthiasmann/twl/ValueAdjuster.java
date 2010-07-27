@@ -29,8 +29,6 @@
  */
 package de.matthiasmann.twl;
 
-import org.lwjgl.input.Keyboard;
-
 /**
  * Base class for value adjuster widgets.
  * It has a value display/edit widget and 2 buttons.
@@ -296,7 +294,7 @@ public abstract class ValueAdjuster extends Widget {
     @Override
     protected boolean handleEvent(Event evt) {
         if(evt.isKeyEvent()) {
-            if(evt.getType() == Event.Type.KEY_PRESSED && evt.getKeyCode() == Keyboard.KEY_ESCAPE && listeners.dragActive) {
+            if(evt.getType() == Event.Type.KEY_PRESSED && evt.getKeyCode() == Event.KEY_ESCAPE && listeners.dragActive) {
                 listeners.dragActive = false;
                 onDragCancelled();
                 return true;
@@ -305,13 +303,13 @@ public abstract class ValueAdjuster extends Widget {
                 switch(evt.getType()) {
                 case KEY_PRESSED:
                     switch(evt.getKeyCode()) {
-                    case Keyboard.KEY_RIGHT:
+                    case Event.KEY_RIGHT:
                         doIncrement();
                         return true;
-                    case Keyboard.KEY_LEFT:
+                    case Event.KEY_LEFT:
                         doDecrement();
                         return true;
-                    case Keyboard.KEY_RETURN:
+                    case Event.KEY_RETURN:
                         startEdit();
                         return true;
                     }
@@ -343,14 +341,14 @@ public abstract class ValueAdjuster extends Widget {
     
     void handleEditCallback(int key) {
         switch(key) {
-        case Keyboard.KEY_RETURN:
+        case Event.KEY_RETURN:
             if(onEditEnd(editField.getText())) {
                 label.setVisible(true);
                 editField.setVisible(false);
             }
             break;
 
-        case Keyboard.KEY_ESCAPE:
+        case Event.KEY_ESCAPE:
             cancelEdit();
             break;
             

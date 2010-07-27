@@ -31,7 +31,6 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.model.BooleanModel;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A simple animated window - it changes size
@@ -137,7 +136,7 @@ public class AnimatedWindow extends Widget {
             }
             if(evt.getType() == Event.Type.KEY_PRESSED) {
                 switch (evt.getKeyCode()) {
-                case Keyboard.KEY_ESCAPE:
+                case Event.KEY_ESCAPE:
                     setState(false);
                     return true;
                 default:

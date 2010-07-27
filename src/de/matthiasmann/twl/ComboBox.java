@@ -33,7 +33,6 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.Label.CallbackReason;
 import de.matthiasmann.twl.model.ListModel;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A drop down combobox. It creates a popup containing a Listbox.
@@ -207,15 +206,15 @@ public class ComboBox<T> extends ComboBoxBase {
         }
         if(evt.getType() == Event.Type.KEY_PRESSED) {
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_UP:
-            case Keyboard.KEY_DOWN:
-            case Keyboard.KEY_HOME:
-            case Keyboard.KEY_END:
+            case Event.KEY_UP:
+            case Event.KEY_DOWN:
+            case Event.KEY_HOME:
+            case Event.KEY_END:
                 // let the listbox handle this :)
                 listbox.handleEvent(evt);
                 return true;
-            case Keyboard.KEY_SPACE:
-            case Keyboard.KEY_RETURN:
+            case Event.KEY_SPACE:
+            case Event.KEY_RETURN:
                 openPopup();
                 return true;
             }

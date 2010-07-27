@@ -446,7 +446,7 @@ public class ResizableFrame extends Widget {
         if(dragMode != DragMode.NONE) {
             if(evt.isMouseDragEnd()) {
                 dragMode = DragMode.NONE;
-            } else if(evt.getType() == Event.Type.MOUSE_DRAGED) {
+            } else if(evt.getType() == Event.Type.MOUSE_DRAGGED) {
                 handleMouseDrag(evt);
             }
             return true;

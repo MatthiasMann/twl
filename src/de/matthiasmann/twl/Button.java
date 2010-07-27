@@ -32,7 +32,6 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.model.ButtonModel;
 import de.matthiasmann.twl.model.SimpleButtonModel;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A generic button. Behavior is defined by a ButtonModel.
@@ -272,8 +271,8 @@ public class Button extends TextWidget {
             break;
         case KEY_PRESSED:
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_RETURN:
-            case Keyboard.KEY_SPACE:
+            case Event.KEY_RETURN:
+            case Event.KEY_SPACE:
                 if(!evt.isKeyRepeated()) {
                     model.setPressed(true);
                     model.setArmed(true);
@@ -283,8 +282,8 @@ public class Button extends TextWidget {
             break;
         case KEY_RELEASED:
             switch (evt.getKeyCode()) {
-            case Keyboard.KEY_RETURN:
-            case Keyboard.KEY_SPACE:
+            case Event.KEY_RETURN:
+            case Event.KEY_SPACE:
                 model.setPressed(false);
                 model.setArmed(false);
                 return true;

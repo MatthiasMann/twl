@@ -31,7 +31,6 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.TableModel;
 import de.matthiasmann.twl.model.TableSelectionModel;
-import org.lwjgl.input.Keyboard;
 
 /**
  * Provides search as you type functionality to a Table.
@@ -112,15 +111,15 @@ public class TableSearchWindow extends InfoWindow implements TableBase.KeyboardS
         
         if(evt.getType() == Event.Type.KEY_PRESSED) {
             switch (evt.getKeyCode()) {
-                case Keyboard.KEY_ESCAPE:
+                case Event.KEY_ESCAPE:
                     if(isOpen()) {
                         cancelSearch();
                         return true;
                     }
                     break;
-                case Keyboard.KEY_RETURN:
+                case Event.KEY_RETURN:
                     return false;
-                case Keyboard.KEY_BACK: {
+                case Event.KEY_BACK: {
                     if(isOpen()) {
                         int length = searchTextBuffer.length();
                         if(length > 0) {
@@ -132,14 +131,14 @@ public class TableSearchWindow extends InfoWindow implements TableBase.KeyboardS
                     }
                     break;
                 }
-                case Keyboard.KEY_UP:
+                case Event.KEY_UP:
                     if(isOpen()) {
                         searchDir(-1);
                         restartTimer();
                         return true;
                     }
                     break;
-                case Keyboard.KEY_DOWN:
+                case Event.KEY_DOWN:
                     if(isOpen()) {
                         searchDir(+1);
                         restartTimer();

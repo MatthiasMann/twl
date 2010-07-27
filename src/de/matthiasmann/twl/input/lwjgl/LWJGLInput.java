@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -27,61 +27,47 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl;
+package de.matthiasmann.twl.input.lwjgl;
+
+import de.matthiasmann.twl.GUI;
+import de.matthiasmann.twl.input.Input;
+import org.lwjgl.input.Keyboard;
+import org.lwjgl.input.Mouse;
+import org.lwjgl.opengl.Display;
 
 /**
+ * Input handling based on LWJGL's Mouse & Keyboard classes.
  *
  * @author Matthias Mann
  */
-public class Border {
+public class LWJGLInput implements Input {
 
-    public static final Border ZERO = new Border(0);
-    
-    private final int top;
-    private final int left;
-    private final int bottom;
-    private final int right;
+    public boolean pollInput(GUI gui) {
+        if(!Display.isActive()) {
+            return false;
+        }
+        
+        if(Keyboard.isCreated()) {
+            while(Keyboard.next()) {
+                gui.handleKey(
+                        Keyboard.getEventKey(),
+                        Keyboard.getEventCharacter(),
+                        Keyboard.getEventKeyState());
+            }
+        }
+        if(Mouse.isCreated()) {
+            while(Mouse.next()) {
+                gui.handleMouse(
+                        Mouse.getEventX(), gui.getHeight() - Mouse.getEventY() - 1,
+                        Mouse.getEventButton(), Mouse.getEventButtonState());
 
-    public Border(int all) {
-        this.top = all;
-        this.left = all;
-        this.bottom = all;
-        this.right = all;
-    }
-    
-    public Border(int horz, int vert) {
-        this.top = vert;
-        this.left = horz;
-        this.bottom = vert;
-        this.right = horz;
-    }
-    
-    public Border(int top, int left, int bottom, int right) {
-        this.top = top;
-        this.left = left;
-        this.bottom = bottom;
-        this.right = right;
-    }
-    
-    public int getBorderBottom() {
-        return bottom;
-    }
-
-    public int getBorderLeft() {
-        return left;
-    }
-
-    public int getBorderRight() {
-        return right;
-    }
-
-    public int getBorderTop() {
-        return top;
-    }
-
-    @Override
-    public String toString() {
-        return "[Border top="+top+" left="+left+" bottom="+bottom+" right="+right+"]";
+                int wheelDelta = Mouse.getEventDWheel();
+                if(wheelDelta != 0) {
+                    gui.handleMouseWheel(wheelDelta / 120);
+                }
+            }
+        }
+        return true;
     }
 
 }

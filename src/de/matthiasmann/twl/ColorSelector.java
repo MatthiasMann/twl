@@ -39,7 +39,6 @@ import de.matthiasmann.twl.utils.TintAnimator;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.IntBuffer;
-import org.lwjgl.input.Keyboard;
 
 /**
  * A color selector widget
@@ -521,7 +520,7 @@ public class ColorSelector extends DialogLayout {
         hexColorEditField.setColumns(8);
         hexColorEditField.addCallback(new EditField.Callback() {
             public void callback(int key) {
-                if(key == Keyboard.KEY_ESCAPE) {
+                if(key == Event.KEY_ESCAPE) {
                     updateHexEditField();
                     return;
                 }
@@ -532,7 +531,7 @@ public class ColorSelector extends DialogLayout {
                 } catch(Exception ex) {
                     hexColorEditField.setErrorMessage("Invalid color format");
                 }
-                if(key == Keyboard.KEY_RETURN && color != null) {
+                if(key == Event.KEY_RETURN && color != null) {
                     setColor(color);
                 }
             }
@@ -647,7 +646,7 @@ public class ColorSelector extends DialogLayout {
         protected boolean handleEvent(Event evt) {
             switch (evt.getType()) {
                 case MOUSE_BTNDOWN:
-                case MOUSE_DRAGED:
+                case MOUSE_DRAGGED:
                     handleMouse(evt.getMouseX() - getInnerX(), evt.getMouseY() - getInnerY());
                     return true;
                 case MOUSE_WHEEL:

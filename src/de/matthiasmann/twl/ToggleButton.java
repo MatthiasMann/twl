@@ -34,7 +34,7 @@ import de.matthiasmann.twl.model.ToggleButtonModel;
 
 /**
  *
- * @author MannMat
+ * @author Matthias Mann
  */
 public class ToggleButton extends Button {
 

@@ -29,8 +29,6 @@
  */
 package de.matthiasmann.twl;
 
-import org.lwjgl.input.Keyboard;
-
 /**
  * A generic popup window.
  * Must not be added as a child to another Widget.
@@ -212,7 +210,7 @@ public class PopupWindow extends Widget {
         }
         if(closeOnEscape &&
                 evt.getType() == Event.Type.KEY_PRESSED &&
-                evt.getKeyCode() == Keyboard.KEY_ESCAPE) {
+                evt.getKeyCode() == Event.KEY_ESCAPE) {
             requestPopupClose();
             return true;
         }

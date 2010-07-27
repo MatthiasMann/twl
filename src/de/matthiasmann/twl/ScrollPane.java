@@ -29,8 +29,6 @@
  */
 package de.matthiasmann.twl;
 
-import org.lwjgl.input.Keyboard;
-
 /**
  *
  * @author Matthias Mann
@@ -449,12 +447,12 @@ public class ScrollPane extends Widget {
         switch(evt.getType()) {
         case KEY_PRESSED:
         case KEY_RELEASED:
-            if(evt.getKeyCode() == Keyboard.KEY_LEFT ||
-                    evt.getKeyCode() == Keyboard.KEY_RIGHT) {
+            if(evt.getKeyCode() == Event.KEY_LEFT ||
+                    evt.getKeyCode() == Event.KEY_RIGHT) {
                 return scrollbarH.handleEvent(evt);
             }
-            if(evt.getKeyCode() == Keyboard.KEY_UP ||
-                    evt.getKeyCode() == Keyboard.KEY_DOWN) {
+            if(evt.getKeyCode() == Event.KEY_UP ||
+                    evt.getKeyCode() == Event.KEY_DOWN) {
                 return scrollbarV.handleEvent(evt);
             }
             break;

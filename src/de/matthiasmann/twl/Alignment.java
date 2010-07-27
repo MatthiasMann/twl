@@ -31,7 +31,7 @@ package de.matthiasmann.twl;
 
 /**
  *
- * @author MannMat
+ * @author Matthias Mann
  */
 public enum Alignment {
 
