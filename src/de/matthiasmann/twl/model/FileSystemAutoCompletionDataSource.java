@@ -87,7 +87,7 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
         return result;
     }
     
-    private int computePrefixLength(String text) {
+    int computePrefixLength(String text) {
         String separator = fsm.getSeparator();
         int prefixLength = text.lastIndexOf(separator) + separator.length();
         if(prefixLength < 0) {
@@ -97,8 +97,8 @@ public class FileSystemAutoCompletionDataSource implements AutoCompletionDataSou
     }
 
     class Result extends AutoCompletionResult implements FileSystemModel.FileFilter {
-        private final Object parent;
-        private final String nameFilter;
+        final Object parent;
+        final String nameFilter;
 
         final ArrayList<String> results1 = new ArrayList<String>();
         final ArrayList<String> results2 = new ArrayList<String>();

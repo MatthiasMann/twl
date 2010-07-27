@@ -34,7 +34,7 @@ import java.util.Comparator;
 import java.util.Date;
 
 /**
- * A tree model which displays hthe folders of a FileSystemModel
+ * A tree model which displays the folders of a FileSystemModel
  *
  * @author Matthias Mann
  */
@@ -129,7 +129,7 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
     public static class FolderNode implements TreeTableNode {
         private final TreeTableNode parent;
         private final FileSystemModel fsm;
-        private final Object folder;
+        final Object folder;
         FolderNode[] children;
 
         protected FolderNode(TreeTableNode parent, FileSystemModel fsm, Object folder) {
