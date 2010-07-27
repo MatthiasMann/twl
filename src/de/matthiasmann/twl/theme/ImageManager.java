@@ -36,6 +36,7 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
 import java.net.URL;
@@ -223,14 +224,6 @@ class ImageManager {
     private Image parseImageDelegate(XMLParser xmlp, String tagName, ImageParams params) throws XmlPullParserException, IOException {
         if("area".equals(tagName)) {
             return parseArea(xmlp, params);
-        } else if("texture".equals(tagName)) {
-            return parseTexture(xmlp, params);
-        } else if("hvsplit".equals(tagName)) {
-            return parseHVSplit(xmlp, params);
-        } else if("hsplit".equals(tagName)) {
-            return parseHSplit(xmlp, params);
-        } else if("vsplit".equals(tagName)) {
-            return parseVSplit(xmlp, params);
         } else if("alias".equals(tagName)) {
             return parseAlias(xmlp);
         } else if("composed".equals(tagName)) {
@@ -299,19 +292,6 @@ class ImageManager {
         return image;
     }
 
-    private Image parseTexture(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
-        parseRectFromAttribute(xmlp, params);
-        boolean tiled = xmlp.parseBoolFromAttribute("tiled", false);
-        Image image = createImage(xmlp, params.x, params.y, params.w, params.h, params.tintColor, tiled);
-        params.tintColor = null;
-        if(tiled) {
-            params.repeatX = false;
-            params.repeatY = false;
-        }
-        xmlp.nextTag();
-        return image;
-    }
-
     private Image parseArea(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
         parseRectFromAttribute(xmlp, params);
         boolean tiled = xmlp.parseBoolFromAttribute("tiled", false);
@@ -370,30 +350,6 @@ class ImageManager {
         Image image = getReferencedImage(xmlp);
         xmlp.nextTag();
         return image;
-    }
-
-    private static int[] parseSplit(XMLParser xmlp, String attribName, int width) throws XmlPullParserException {
-        try {
-            int[] off = new int[4];
-            ParserUtil.parseIntArray(xmlp.getAttributeNotNull(attribName), off, 1, 2);
-            off[3] = width;
-            return off;
-        } catch(NumberFormatException ex) {
-            throw xmlp.error("Unable to parse", ex);
-        }
-    }
-
-    private static int[] parseSplit(XMLParser xmlp, String attribName, int left, int right, int width) {
-        int[] off = new int[4];
-        String splitStr = xmlp.getAttributeValue(null, attribName);
-        if(splitStr != null) {
-            ParserUtil.parseIntArray(splitStr, off, 1, 2);
-        } else {
-            off[1] = left;
-            off[2] = width - right;
-        }
-        off[3] = width;
-        return off;
     }
 
     private static int[] parseSplit2(XMLParser xmlp, String attribName, int size) throws XmlPullParserException {
@@ -475,82 +431,6 @@ class ImageManager {
     private static final int[] SPLIT_WEIGHTS_3 = {0,1,0};
     private static final int[] SPLIT_WEIGHTS_1 = {1};
     
-    private Image parseHSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
-        Image[] textures = new Image[3];
-        parseRectFromAttribute(xmlp, params);
-        int[] xoff;
-        if(params.border != null) {
-            xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(),
-                    params.border.getBorderRight(), Math.abs(params.w));
-        } else {
-            xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
-        }
-        for(int h=0 ; h<3 ; h++) {
-            int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
-            textures[h] = createImage(xmlp,
-                    params.x+xoff[h], params.y, imgW, params.h,
-                    params.tintColor, false);
-        }
-        params.tintColor = null;
-        xmlp.nextTag();
-        Image image = new GridImage(textures, SPLIT_WEIGHTS_3, SPLIT_WEIGHTS_1, params.border);
-        return image;
-    }
-
-    private Image parseVSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
-        Image[] textures = new Image[3];
-        parseRectFromAttribute(xmlp, params);
-        int[] yoff;
-        if(params.border != null) {
-            yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(),
-                    params.border.getBorderBottom(), Math.abs(params.h));
-        } else {
-            yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
-        }
-        for(int v=0 ; v<3 ; v++) {
-            int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
-            textures[v] = createImage(xmlp,
-                    params.x, params.y+yoff[v], params.w, imgH,
-                    params.tintColor, false);
-        }
-        params.tintColor = null;
-        xmlp.nextTag();
-        Image image = new GridImage(textures, SPLIT_WEIGHTS_1, SPLIT_WEIGHTS_3, params.border);
-        return image;
-    }
-
-
-    private Image parseHVSplit(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
-        Image[] textures = new Image[9];
-        parseRectFromAttribute(xmlp, params);
-        boolean noCenter = xmlp.parseBoolFromAttribute("nocenter", false);
-        int[] xoff, yoff;
-        if(params.border != null) {
-            xoff = parseSplit(xmlp, "splitx", params.border.getBorderLeft(), params.border.getBorderRight(), Math.abs(params.w));
-            yoff = parseSplit(xmlp, "splity", params.border.getBorderTop(), params.border.getBorderBottom(), Math.abs(params.h));
-        } else {
-            xoff = parseSplit(xmlp, "splitx", Math.abs(params.w));
-            yoff = parseSplit(xmlp, "splity", Math.abs(params.h));
-        }
-        for(int v=0 ; v<3 ; v++) {
-            for(int h=0 ; h<3 ; h++) {
-                int imgW = (xoff[h+1] - xoff[h]) * Integer.signum(params.w);
-                int imgH = (yoff[v+1] - yoff[v]) * Integer.signum(params.h);
-                if(noCenter && h == 1 && v == 1) {
-                    textures[v*3+h] = new EmptyImage(imgW, imgH);
-                } else {
-                    textures[v*3+h] = createImage(xmlp,
-                            params.x+xoff[h], params.y+yoff[v], imgW, imgH,
-                            params.tintColor, false);
-                }
-            }
-        }
-        params.tintColor = null;
-        xmlp.nextTag();
-        Image image = new GridImage(textures, SPLIT_WEIGHTS_3, SPLIT_WEIGHTS_3, params.border);
-        return image;
-    }
-
     private void parseAnimElements(XMLParser xmlp, String tagName, ArrayList<AnimatedImage.Element> frames) throws XmlPullParserException, IOException {
         if("repeat".equals(tagName)) {
             frames.add(parseAnimRepeat(xmlp));
@@ -717,30 +597,23 @@ class ImageManager {
         if(currentTexture == null) {
             throw xmlp.error("can't create area outside of <imagefile> object");
         }
-        String xywh = xmlp.getAttributeValue(null, "xywh");
-        if(xywh != null) {
-            if("*".equals(xywh)) {
-                params.x = 0;
-                params.y = 0;
-                params.w = currentTexture.getWidth();
-                params.h = currentTexture.getHeight();
-            } else try {
-                int[] coords = ParserUtil.parseIntArray(xywh);
-                if(coords.length != 4) {
-                    throw xmlp.error("xywh requires 4 integer arguments");
-                }
-                params.x = coords[0];
-                params.y = coords[1];
-                params.w = coords[2];
-                params.h = coords[3];
-            } catch(IllegalArgumentException ex) {
-                throw xmlp.error("can't parse xywh argument", ex);
+        String xywh = xmlp.getAttributeNotNull("xywh");
+        if("*".equals(xywh)) {
+            params.x = 0;
+            params.y = 0;
+            params.w = currentTexture.getWidth();
+            params.h = currentTexture.getHeight();
+        } else try {
+            int[] coords = TextUtil.parseIntArray(xywh);
+            if(coords.length != 4) {
+                throw xmlp.error("xywh requires 4 integer arguments");
             }
-        } else {
-            params.x = xmlp.parseIntFromAttribute("x");
-            params.y = xmlp.parseIntFromAttribute("y");
-            params.w = xmlp.parseIntFromAttribute("width");
-            params.h = xmlp.parseIntFromAttribute("height");
+            params.x = coords[0];
+            params.y = coords[1];
+            params.w = coords[2];
+            params.h = coords[3];
+        } catch(IllegalArgumentException ex) {
+            throw xmlp.error("can't parse xywh argument", ex);
         }
     }
 
@@ -771,6 +644,7 @@ class ImageManager {
         boolean center;
         StateExpression condition;
     }
+    
     static class AnimParams {
         Color tintColor;
         float zoomX;

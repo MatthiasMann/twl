@@ -78,11 +78,8 @@ final class ParserUtil {
 
     static Border parseBorder(XMLParser xmlp, String value) throws XmlPullParserException {
         try {
-            int elements = countElements(value);
-            int values[] = new int[elements];
-            parseIntArray(value, values, 0, elements);
-            
-            switch(elements) {
+            int values[] = TextUtil.parseIntArray(value);
+            switch(values.length) {
             case 1:
                 return new Border(values[0]);
             case 2:
@@ -128,37 +125,10 @@ final class ParserUtil {
     static int[] parseIntArrayFromAttribute(XMLParser xmlp, String attribute) throws XmlPullParserException {
         try {
             String value = xmlp.getAttributeNotNull(attribute);
-            return parseIntArray(value);
+            return TextUtil.parseIntArray(value);
         } catch(NumberFormatException ex) {
             throw xmlp.error("Unable to parse", ex);
         }
-    }
-
-    static int[] parseIntArray(String str) {
-        int[] result = new int[countElements(str)];
-        parseIntArray(str, result, 0, result.length);
-        return result;
-    }
-
-    static void parseIntArray(String str, int[] result, int offset, int elements) {
-        int pos = 0;
-        for(int resultIdx=0 ; resultIdx<elements ; resultIdx++) {
-            int comma = TextUtil.indexOf(str, ',', pos);
-            result[resultIdx+offset] = Integer.parseInt(str.substring(pos, comma));
-            pos = comma + 1;
-        }
-        if(pos < str.length()) {
-            throw new NumberFormatException("to many data");
-        }
-    }
-
-    static int countElements(String str) {
-        int count = 0;
-        for(int pos=0 ; pos<str.length() ;) {
-            count++;
-            pos = TextUtil.indexOf(str, ',', pos) + 1;
-        }
-        return count;
     }
 
     static<V> SortedMap<String,V> find(SortedMap<String,V> map, String baseName) {

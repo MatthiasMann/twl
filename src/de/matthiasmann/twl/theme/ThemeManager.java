@@ -101,8 +101,6 @@ public class ThemeManager {
         this.emptyMap = new ParameterMapImpl(this, null);
         this.emptyList = new ParameterListImpl(this, null);
         this.mathInterpreter = new MathInterpreter();
-
-        insertDefaultConstants();
     }
 
     /**
@@ -184,6 +182,7 @@ public class ThemeManager {
         try {
             renderer.setActiveCacheContext(cacheContext);
             ThemeManager tm = new ThemeManager(renderer, cacheContext);
+            tm.insertDefaultConstants();
             tm.parseThemeFile(url);
             if(tm.defaultFont == null) {
                 tm.defaultFont = tm.firstFont;

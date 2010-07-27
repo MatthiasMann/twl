@@ -137,6 +137,37 @@ public final class TextUtil {
         return new String(buf);
     }
 
+    /**
+     * Parse a list of comma seprated integers. No space is allowed between comma and numbers
+     * @param str the string to parse
+     * @return the parsed integer array. Contains at least 1 element.
+     * @throws NumberFormatException if the string could not be parsed
+     */
+    public static int[] parseIntArray(String str) throws NumberFormatException {
+        int count = countElements(str);
+        int[] result = new int[count];
+        for(int idx=0,pos=0 ; idx<count ; idx++) {
+            int comma = indexOf(str, ',', pos);
+            result[idx] = Integer.parseInt(str.substring(pos, comma));
+            pos = comma + 1;
+        }
+        return result;
+    }
+
+    /**
+     * Counts the comma separated elements.
+     * @param str the string to ananlyze
+     * @return the number of comma separated parts. Always &gt;= 1.
+     */
+    public static int countElements(String str) {
+        int count = 0;
+        for(int pos=0 ; pos<str.length() ;) {
+            count++;
+            pos = indexOf(str, ',', pos) + 1;
+        }
+        return count;
+    }
+
     private static final String ROMAN_NUMBERS = "ↂMↂↁMↁMCMDCDCXCLXLXIXVIVI";
     private static final String ROMAN_VALUES = "\u2710\u2328\u1388\u0FA0\u03E8\u0384\u01F4\u0190\144\132\62\50\12\11\5\4\1";
 
