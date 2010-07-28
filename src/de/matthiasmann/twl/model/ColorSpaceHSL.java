@@ -63,16 +63,16 @@ public class ColorSpaceHSL extends AbstractColorSpace {
         float max = Math.max(Math.max(r, g), b);
         float min = Math.min(Math.min(r, g), b);
 
-        float summa = max + min;
+        float summe = max + min;
         float saturation = max - min;
 
         if (saturation > 0.0f) {
-            saturation /= (summa > 1.0f) ? 2.0f - summa : summa;
+            saturation /= (summe > 1.0f) ? 2.0f - summe : summe;
         }
         return new float[]{
                     360f * getHue(r, g, b, max, min),
                     100f * saturation,
-                     50f * summa};
+                     50f * summe};
     }
 
     public int toRGB(float[] color) {
