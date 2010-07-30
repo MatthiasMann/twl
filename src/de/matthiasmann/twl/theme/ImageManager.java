@@ -148,7 +148,9 @@ class ImageManager {
             }
         } finally {
             currentTexture = null;
-            texture.themeLoadingDone();
+            if(texture != null) {
+                texture.themeLoadingDone();
+            }
         }
     }
 
