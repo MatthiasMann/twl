@@ -57,7 +57,8 @@ public class TabbedPane extends Widget {
     
     private final ArrayList<Tab> tabs;
     private final BoxLayout tabBox;
-    final Container container;
+    private final Container container;
+    final Container innerContainer;
 
     TabPosition tabPosition;
     Tab activeTab;
@@ -66,9 +67,14 @@ public class TabbedPane extends Widget {
         this.tabs = new ArrayList<Tab>();
         this.tabBox = new BoxLayout();
         this.container = new Container();
+        this.innerContainer = new Container();
         this.tabPosition = TabPosition.TOP;
 
         tabBox.setTheme("tabbox");
+        innerContainer.setTheme("");
+        innerContainer.setClip(true);
+
+        container.add(innerContainer);
         
         super.insertChild(container, 0);
         super.insertChild(tabBox, 1);
@@ -145,7 +151,7 @@ public class TabbedPane extends Widget {
     }
 
     public void removeAllTabs() {
-        container.removeAllChildren();
+        innerContainer.removeAllChildren();
         tabBox.removeAllChildren();
         tabs.clear();
         activeTab = null;
@@ -293,12 +299,12 @@ public class TabbedPane extends Widget {
         public void setPane(Widget pane) {
             if(this.pane != pane) {
                 if(this.pane != null) {
-                    container.removeChild(this.pane);
+                    innerContainer.removeChild(this.pane);
                 }
                 this.pane = pane;
                 if(pane != null) {
                     pane.setVisible(getValue());
-                    container.add(pane);
+                    innerContainer.add(pane);
                 }
             }
         }
@@ -323,10 +329,6 @@ public class TabbedPane extends Widget {
     }
 
     private static class Container extends Widget {
-        public Container() {
-            setClip(true);
-        }
-
         @Override
         public int getMinWidth() {
             int minWidth = 0;
