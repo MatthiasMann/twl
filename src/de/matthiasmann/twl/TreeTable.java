@@ -53,14 +53,25 @@ public class TreeTable extends TableBase {
     TreeTableModel model;
     private NodeState rootNodeState;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     public TreeTable() {
         modelChangeListener = new ModelChangeListener();
         nodeStateTable = new NodeState[64];
         leafRenderer = new TreeLeafCellRenderer();
         nodeRenderer = new TreeNodeCellRenderer();
         hasCellWidgetCreators = true;
+
+        ActionMap am = getActionMap();
+        if(am == null) {
+            am = new ActionMap();
+            setActionMap(am);
+        }
+
+        am.addMapping("expandLeadRow", this, "setLeadRowExpanded", new Object[] { Boolean.TRUE }, ActionMap.FLAG_ON_PRESSED);
+        am.addMapping("collapseLeadRow", this, "setLeadRowExpanded", new Object[] { Boolean.FALSE }, ActionMap.FLAG_ON_PRESSED);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public TreeTable(TreeTableModel model) {
         this();
         setModel(model);
@@ -195,7 +206,17 @@ public class TreeTable extends TableBase {
         NodeState state = getOrCreateNodeState(node);
         state.setValue(expanded);
     }
-    
+
+    public void setLeadRowExpanded(boolean expanded) {
+        TableSelectionManager sm = getSelectionManager();
+        if(sm != null) {
+            int row = sm.getLeadRow();
+            if(row >= 0 && row < numRows) {
+                setRowExpanded(row, expanded);
+            }
+        }
+    }
+
     protected NodeState getOrCreateNodeState(TreeTableNode node) {
         NodeState ns = HashEntry.get(nodeStateTable, node);
         if(ns == null) {
