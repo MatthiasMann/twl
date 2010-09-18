@@ -56,9 +56,9 @@ public final class GUI extends Widget {
     private static final int KEYREPEAT_INTERVAL_DELAY = 1000/30;    // ms
     private static final int NO_REPEAT = 0;
     
-    private static final int TOOLTIP_OFFSET_X = 0;
-    private static final int TOOLTIP_OFFSET_Y = 0;
-    private static final int TOOLTIP_DELAY = 1000;  // 1 sec in ms
+    private int tooltipOffsetX = 0;
+    private int tooltipOffsetY = 0;
+    private int tooltipDelay = 1000;  // 1 sec in ms
     
     private final Renderer renderer;
     private final Input input;
@@ -303,6 +303,39 @@ public final class GUI extends Widget {
             throw new IllegalArgumentException("mouseIdleTime < 1");
         }
         this.mouseIdleTime = mouseIdleTime;
+    }
+
+    public int getTooltipDelay() {
+        return tooltipDelay;
+    }
+
+    /**
+     * Sets the delay in MS before the tooltip is shown
+     * @param tooltipDelay the delay in MS, must be &gt;= 1.
+     */
+    public void setTooltipDelay(int tooltipDelay) {
+        if(tooltipDelay < 1) {
+            throw new IllegalArgumentException("tooltipDelay");
+        }
+        this.tooltipDelay = tooltipDelay;
+    }
+
+    public int getTooltipOffsetX() {
+        return tooltipOffsetX;
+    }
+
+    public int getTooltipOffsetY() {
+        return tooltipOffsetY;
+    }
+
+    /**
+     * Sets the offset from the mouse position to display the tooltip
+     * @param tooltipOffsetX the X offset
+     * @param tooltipOffsetY the Y offset
+     */
+    public void setTooltipOffset(int tooltipOffsetX, int tooltipOffsetY) {
+        this.tooltipOffsetX = tooltipOffsetX;
+        this.tooltipOffsetY = tooltipOffsetY;
     }
 
     /**
@@ -760,10 +793,10 @@ public final class GUI extends Widget {
     public final void handleTooltips() {
         Widget widgetUnderMouse = getWidgetUnderMouse();
         if(widgetUnderMouse != tooltipOwner) {
-            if(widgetUnderMouse != null && (curTime-mouseEventTime) > TOOLTIP_DELAY) {
+            if(widgetUnderMouse != null && (curTime-mouseEventTime) > tooltipDelay) {
                 setTooltip(
-                        event.mouseX + TOOLTIP_OFFSET_X,
-                        event.mouseY + TOOLTIP_OFFSET_Y,
+                        event.mouseX + tooltipOffsetX,
+                        event.mouseY + tooltipOffsetY,
                         widgetUnderMouse,
                         widgetUnderMouse.getTooltipContentAt(event.mouseX, event.mouseY),
                         Alignment.BOTTOMLEFT);
