@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -128,10 +129,24 @@ public class SimpleDialog {
 
         if(msg instanceof Widget) {
             msgWidget = (Widget)msg;
+
+            // remove message widget from previous owner if it's in a closed dialog
+            if(msgWidget.getParent() instanceof DialogLayout) {
+                if(msgWidget.getParent().getParent() instanceof PopupWindow) {
+                    PopupWindow prevPopup = (PopupWindow)msgWidget.getParent().getParent();
+                    if(!prevPopup.isOpen()) {
+                        msgWidget.getParent().removeChild(msgWidget);
+                    }
+                }
+            }
+
+            if(msgWidget.getParent() != null) {
+                throw new IllegalArgumentException("message widget alreay in use");
+            }
         } else if(msg instanceof String) {
             msgWidget = new Label((String)msg);
         } else if(msg != null) {
-            Logger.getLogger(SimpleDialog.class.getName()).warning("Unsupported message type: " + msg.getClass());
+            Logger.getLogger(SimpleDialog.class.getName()).log(Level.WARNING, "Unsupported message type: {0}", msg.getClass());
         }
 
         PopupWindow popupWindow = new PopupWindow(owner);
