@@ -552,6 +552,12 @@ public class PNGDecoder {
             }
             bytesPerPixel = 1;
             break;
+        case COLOR_GREYALPHA:
+            if(bitdepth != 8) {
+                throw new IOException("Unsupported bit depth: " + bitdepth);
+            }
+            bytesPerPixel = 2;
+            break;
         case COLOR_TRUECOLOR:
             if(bitdepth != 8) {
                 throw new IOException("Unsupported bit depth: " + bitdepth);
@@ -577,7 +583,7 @@ public class PNGDecoder {
             }
             break;
         default:
-            throw new IOException("unsupported color format");  
+            throw new IOException("unsupported color format: " + colorType);
         }
         
         if(buffer[10] != 0) {
