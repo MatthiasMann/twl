@@ -98,6 +98,8 @@ public class LWJGLCacheContext implements CacheContext {
             LWJGLTexture texture = new LWJGLTexture(renderer, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
             allTextures.add(texture);
             return texture;
+        } catch (IOException ex) {
+            throw (IOException)(new IOException("Unable to load PNG file: " + textureUrl).initCause(ex));
         } finally {
             try {
                 is.close();
