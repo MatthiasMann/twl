@@ -843,6 +843,7 @@ public class EditField extends Widget {
         if(autoCompletionWindow == null || !autoCompletionWindow.isOpen()) {
             if(errorInfoWindow == null) {
                 errorInfoLabel = new Label();
+                errorInfoLabel.setClip(true);
                 errorInfoWindow = new InfoWindow(this);
                 errorInfoWindow.setTheme("editfield-errorinfowindow");
                 errorInfoWindow.add(errorInfoLabel);
