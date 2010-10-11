@@ -623,7 +623,7 @@ public class ListBox<T> extends Widget {
                 }
                 return true;
             case MOUSE_CLICKED:
-                if(selected && evt.getMouseClickCount() > 1) {
+                if(selected && evt.getMouseClickCount() == 2) {
                     doListBoxCallback(CallbackReason.MOUSE_DOUBLE_CLICK);
                 }
                 return true;

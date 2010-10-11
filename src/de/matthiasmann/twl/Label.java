@@ -176,7 +176,14 @@ public class Label extends TextWidget {
         handleMouseHover(evt);
         if(evt.isMouseEvent()) {
             if(evt.getType() == Event.Type.MOUSE_CLICKED) {
-                handleClick(evt.getMouseClickCount() > 1);
+                switch(evt.getMouseClickCount()) {
+                    case 1:
+                        handleClick(false);
+                        break;
+                    case 2:
+                        handleClick(true);
+                        break;
+                }
             }
             return evt.getType() != Event.Type.MOUSE_WHEEL;
         }

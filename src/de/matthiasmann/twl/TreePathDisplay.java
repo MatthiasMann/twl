@@ -234,7 +234,7 @@ public class TreePathDisplay extends Widget {
         @Override
         protected boolean handleEvent(Event evt) {
             if(evt.isMouseEvent()) {
-                if(evt.getType() == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
+                if(evt.getType() == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() == 2) {
                     editPath(getCurrentNode());
                     return true;
                 }

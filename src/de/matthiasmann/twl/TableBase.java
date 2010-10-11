@@ -1090,7 +1090,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 selectionManager.handleMouseEvent(row, column, evt);
             }
             
-            if(evtType == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() > 1) {
+            if(evtType == Event.Type.MOUSE_CLICKED && evt.getMouseClickCount() == 2) {
                 if(callbacks != null) {
                     for(Callback cb : callbacks) {
                         cb.mouseDoubleClicked(row, column);
