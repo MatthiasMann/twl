@@ -143,6 +143,11 @@ public class AnimatedImage implements Image, HasBorder {
         }
 
         void render(int time, Img next, int x, int y, int width, int height, AnimatedImage ai, AnimationState as) {
+            if(singleDuration == 0) {
+                // animation data is invalid - don't crash
+                return;
+            }
+            
             int iteration = 0;
             if(repeatCount == 0) {
                 time %= singleDuration;
