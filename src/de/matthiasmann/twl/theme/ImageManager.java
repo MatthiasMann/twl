@@ -118,6 +118,8 @@ class ImageManager {
         if(fileName != null) {
             String fmt = xmlp.getAttributeValue(null, "format");
             String filter = xmlp.getAttributeValue(null, "filter");
+            // ignore the comment so that it does not cause a warning
+            xmlp.getAttributeValue(null, "comment");
 
             try {
                 texture = renderer.loadTexture(new URL(baseUrl, fileName), fmt, filter);

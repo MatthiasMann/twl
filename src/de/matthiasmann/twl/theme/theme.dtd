@@ -10,7 +10,8 @@
 <!ATTLIST images
     file    CDATA #IMPLIED
     format  CDATA #IMPLIED
-    filter  CDATA #IMPLIED>
+    filter  CDATA #IMPLIED
+    comment CDATA #IMPLIED>
 
 <!ELEMENT area EMPTY>
 <!ATTLIST area
