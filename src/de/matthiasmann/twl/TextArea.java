@@ -50,9 +50,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * A text area dor rendering complex text. Supports embedded images,
- * bullet point lists, hyper links, multiple fonts, block text,
- * embedded widgets and floating elements.
+ * Formatted text rendering (HTML/CSS subset). Supports embedded images, bullet point lists,
+ * hyper links, multiple fonts, block text, embedded widgets and floating elements.
  *
  * It uses a simplified HTML/CSS model.
  * 
