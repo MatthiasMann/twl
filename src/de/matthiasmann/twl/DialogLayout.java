@@ -149,7 +149,7 @@ public class DialogLayout extends Widget {
     }
 
     /**
-     * The horizontal group control the position and size of all child
+     * The horizontal group controls the position and size of all child
      * widgets along the X axis.
      *
      * Every widget must be part of both horizontal and vertical group.
@@ -181,7 +181,7 @@ public class DialogLayout extends Widget {
     }
 
     /**
-     * The vertical group control the position and size of all child
+     * The vertical group controls the position and size of all child
      * widgets along the Y axis.
      *
      * Every widget must be part of both horizontal and vertical group.
@@ -276,7 +276,7 @@ public class DialogLayout extends Widget {
     }
 
     /**
-     * Control whether invisible widgets should be included in the layout or
+     * Controls whether invisible widgets should be included in the layout or
      * not. If they are not included then the layout is recomputed when the
      * visibility of a child widget changes.
      *
