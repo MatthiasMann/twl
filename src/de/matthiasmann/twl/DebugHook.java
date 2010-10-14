@@ -82,7 +82,7 @@ public class DebugHook {
         System.err.println("Missing child theme \"" + theme + "\" for \"" + parent.getThemePath() + "\"");
     }
 
-    public void missingParameter(ParameterMap map, String paramName, String parentDescription) {
+    public void missingParameter(ParameterMap map, String paramName, String parentDescription, Class<?> dataType) {
         if(map instanceof ThemeInfo) {
             System.err.println("Parameter \"" + paramName + "\" not set for \"" + ((ThemeInfo)map).getThemePath() + "\"");
         } else {

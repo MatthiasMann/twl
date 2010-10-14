@@ -141,7 +141,7 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
     public Object getParameterValue(String name, boolean warnIfNotPresent) {
         Object value = params.get(name);
         if(value == null && warnIfNotPresent) {
-            missingParameter(name);
+            missingParameter(name, null);
         }
         return value;
     }
@@ -151,7 +151,10 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
     }
 
     public <T> T getParameterValue(String name, boolean warnIfNotPresent, Class<T> clazz, T defaultValue) {
-        Object value = getParameterValue(name, warnIfNotPresent);
+        Object value = params.get(name);
+        if(value == null && warnIfNotPresent) {
+            missingParameter(name, clazz);
+        }
         if(!clazz.isInstance(value)) {
             if(value != null) {
                 wrongParameterType(name, clazz, value.getClass());
@@ -166,8 +169,8 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
         DebugHook.getDebugHook().wrongParameterType(this, paramName, expectedType, foundType, getParentDescription());
     }
 
-    protected void missingParameter(String paramName) {
-        DebugHook.getDebugHook().missingParameter(this, paramName, getParentDescription());
+    protected void missingParameter(String paramName, Class<?> dataType) {
+        DebugHook.getDebugHook().missingParameter(this, paramName, getParentDescription(), dataType);
     }
     
     protected void replacingWithDifferentType(String paramName, Class<?> oldType, Class<?> newType) {
