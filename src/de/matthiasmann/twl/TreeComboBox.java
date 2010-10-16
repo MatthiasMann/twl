@@ -75,6 +75,8 @@ public class TreeComboBox extends ComboBoxBase {
     private PathResolver pathResolver;
     private boolean suppressCallback;
 
+    boolean suppressTreeSelectionUpdating;
+    
     public TreeComboBox() {
         selectionModel = new TableSingleSelectionModel();
         display = new TreePathDisplay();
@@ -82,11 +84,12 @@ public class TreeComboBox extends ComboBoxBase {
         table = new TreeTable();
         table.setSelectionManager(new TableRowSelectionManager(selectionModel) {
             @Override
-            protected void handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
-                super.handleMouseClick(row, column, isShift, isCtrl);
+            protected boolean handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
                 if(!isShift && !isCtrl && row >= 0 && row < getNumRows()) {
                     popup.closePopup();
+                    return true;
                 }
+                return super.handleMouseClick(row, column, isShift, isCtrl);
             }
         });
 
@@ -104,7 +107,12 @@ public class TreeComboBox extends ComboBoxBase {
             public void run() {
                 int row = selectionModel.getFirstSelected();
                 if(row >= 0) {
-                    nodeChanged(table.getNodeFromRow(row));
+                    suppressTreeSelectionUpdating = true;
+                    try {
+                        nodeChanged(table.getNodeFromRow(row));
+                    } finally {
+                        suppressTreeSelectionUpdating = false;
+                    }
                 }
             }
         });
@@ -234,15 +242,17 @@ public class TreeComboBox extends ComboBoxBase {
     }
 
     private void tableSelectToCurrentNode() {
-        table.collapseAll();
-        int idx = table.getRowFromNodeExpand(display.getCurrentNode());
-        suppressCallback = true;
-        try {
-            selectionModel.setSelection(idx, idx);
-        } finally {
-            suppressCallback = false;
+        if(!suppressTreeSelectionUpdating) {
+            table.collapseAll();
+            int idx = table.getRowFromNodeExpand(display.getCurrentNode());
+            suppressCallback = true;
+            try {
+                selectionModel.setSelection(idx, idx);
+            } finally {
+                suppressCallback = false;
+            }
+            table.scrollToRow(Math.max(0, idx));
         }
-        table.scrollToRow(Math.max(0, idx));
     }
 
     @Override

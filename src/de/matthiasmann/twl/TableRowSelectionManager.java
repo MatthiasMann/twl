@@ -43,6 +43,7 @@ public class TableRowSelectionManager implements TableSelectionManager {
 
     protected TableBase tableBase;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     public TableRowSelectionManager(TableSelectionModel selectionModel) {
         if(selectionModel == null) {
             throw new NullPointerException("selectionModel");
@@ -76,11 +77,14 @@ public class TableRowSelectionManager implements TableSelectionManager {
     }
 
     public boolean handleMouseEvent(int row, int column, Event event) {
+        boolean isShift = (event.getModifiers() & Event.MODIFIER_SHIFT) != 0;
+        boolean isCtrl = (event.getModifiers() & Event.MODIFIER_CTRL) != 0;
         if(event.getType() == Event.Type.MOUSE_BTNDOWN && event.getMouseButton() == Event.MOUSE_LBUTTON) {
-            boolean isShift = (event.getModifiers() & Event.MODIFIER_SHIFT) != 0;
-            boolean isCtrl = (event.getModifiers() & Event.MODIFIER_CTRL) != 0;
-            handleMouseClick(row, column, isShift, isCtrl);
+            handleMouseDown(row, column, isShift, isCtrl);
             return true;
+        }
+        if(event.getType() == Event.Type.MOUSE_CLICKED) {
+            return handleMouseClick(row, column, isShift, isCtrl);
         }
         return false;
     }
@@ -287,7 +291,7 @@ public class TableRowSelectionManager implements TableSelectionManager {
         }
     }
 
-    protected void handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
+    protected void handleMouseDown(int row, int column, boolean isShift, boolean isCtrl) {
         if(row < 0 || row >= getNumRows()) {
             if(!isShift) {
                 selectionModel.clearSelection();
@@ -321,6 +325,10 @@ public class TableRowSelectionManager implements TableSelectionManager {
                 selectionModel.setSelection(row, row);
             }
         }
+    }
+
+    protected boolean handleMouseClick(int row, int column, boolean isShift, boolean isCtrl) {
+        return false;
     }
 
     protected int getNumRows() {
