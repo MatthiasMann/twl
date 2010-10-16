@@ -869,7 +869,7 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds several widgets to this group, inderting the specified gap in between.
+         * Adds several widgets to this group, inserting the specified gap in between.
          * Each widget also gets an animation state set depending on it's position.
          *
          * The state gapName+"NotFirst" is set to false for widgets[0] and true for all others
