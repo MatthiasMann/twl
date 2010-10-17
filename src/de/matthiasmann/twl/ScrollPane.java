@@ -173,6 +173,22 @@ public class ScrollPane extends Widget {
         return contentArea.getHeight();
     }
 
+    /**
+     * Returns the horizontal scrollbar widget, be very careful with changes to it.
+     * @return the horizontal scrollbar
+     */
+    public Scrollbar getHorizontalScrollbar() {
+        return scrollbarH;
+    }
+
+    /**
+     * Returns the vertical scrollbar widget, be very careful with changes to it.
+     * @return the vertical scrollbar
+     */
+    public Scrollbar getVerticalScrollbar() {
+        return scrollbarV;
+    }
+
     public static ScrollPane getContainingScrollPane(Widget widget) {
         Widget ca = widget.getParent();
         if(ca != null) {
@@ -446,16 +462,20 @@ public class ScrollPane extends Widget {
         }
         switch(evt.getType()) {
         case KEY_PRESSED:
-        case KEY_RELEASED:
-            if(evt.getKeyCode() == Event.KEY_LEFT ||
-                    evt.getKeyCode() == Event.KEY_RIGHT) {
+        case KEY_RELEASED: {
+            int keyCode = evt.getKeyCode();
+            if(keyCode == Event.KEY_LEFT ||
+                    keyCode == Event.KEY_RIGHT) {
                 return scrollbarH.handleEvent(evt);
             }
-            if(evt.getKeyCode() == Event.KEY_UP ||
-                    evt.getKeyCode() == Event.KEY_DOWN) {
+            if(keyCode == Event.KEY_UP ||
+                    keyCode == Event.KEY_DOWN ||
+                    keyCode == Event.KEY_PRIOR ||
+                    keyCode == Event.KEY_NEXT) {
                 return scrollbarV.handleEvent(evt);
             }
             break;
+        }
         case MOUSE_WHEEL:
             if(scrollbarV.isVisible()) {
                 return scrollbarV.handleEvent(evt);
