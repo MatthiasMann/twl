@@ -358,6 +358,18 @@ public class Scrollbar extends Widget {
                     return true;
                 }
                 break;
+            case Event.KEY_PRIOR:
+                if(orientation == Orientation.VERTICAL) {
+                    setValue(value - pageSize);
+                    return true;
+                }
+                break;
+            case Event.KEY_NEXT:
+                if(orientation == Orientation.VERTICAL) {
+                    setValue(value + pageSize);
+                    return true;
+                }
+                break;
             }
             break;
         case MOUSE_WHEEL:
