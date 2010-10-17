@@ -118,6 +118,8 @@ public class FileSelector extends DialogLayout {
     private Widget userWidgetBottom;
     private Widget userWidgetRight;
 
+    private Object fileToSelectOnSetCurrentNode;
+    
     /**
      * Create a FileSelector without persistent state
      */
@@ -376,9 +378,8 @@ public class FileSelector extends DialogLayout {
             currentFolder.setSeparator(fsm.getSeparator());
             autoCompletion.setDataSource(new FileSystemAutoCompletionDataSource(fsm,
                     FileSystemTreeModel.FolderFilter.instance));
-            setCurrentNode(model);
-            if(folderMRU.getNumEntries() > 0) {
-                gotoFolderFromMRU(0);
+            if(folderMRU.getNumEntries() == 0 || !gotoFolderFromMRU(0)) {
+                setCurrentNode(model);
             }
         }
     }
@@ -610,6 +611,10 @@ public class FileSelector extends DialogLayout {
                 }
             }
         }
+        if(fileToSelectOnSetCurrentNode != null) {
+            fileTable.setSelection(fileToSelectOnSetCurrentNode);
+            fileToSelectOnSetCurrentNode = null;
+        }
     }
 
     void refreshFileTable() {
@@ -620,7 +625,12 @@ public class FileSelector extends DialogLayout {
 
     TreeTableNode resolvePath(String path) throws IllegalArgumentException {
         Object obj = fsm.getFile(path);
+        fileToSelectOnSetCurrentNode = null;
         if(obj != null) {
+            if(fsm.isFile(obj)) {
+                fileToSelectOnSetCurrentNode = obj;
+                obj = fsm.getParent(obj);
+            }
             FileSystemTreeModel.FolderNode node = model.getNodeForFolder(obj);
             if(node != null) {
                 return node;
@@ -715,13 +725,15 @@ public class FileSelector extends DialogLayout {
         folderMRU.addEntry(fsm.getPath(getCurrentFolder()));
     }
 
-    void gotoFolderFromMRU(int idx) {
+    boolean gotoFolderFromMRU(int idx) {
         String path = folderMRU.getEntry(idx);
         try {
             TreeTableNode node = resolvePath(path);
             setCurrentNode(node);
+            return true;
         } catch(IllegalArgumentException ex) {
             folderMRU.removeEntry(idx);
+            return false;
         }
     }
 

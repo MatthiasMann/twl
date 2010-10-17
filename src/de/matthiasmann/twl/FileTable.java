@@ -141,6 +141,16 @@ public class FileTable extends Table {
         return fileTableModel.getEntries(fileTableSelectionModel.getSelection());
     }
 
+    public void setSelection(Object ... files) {
+        fileTableSelectionModel.clearSelection();
+        for(Object file : files) {
+            int idx = fileTableModel.findFile(file);
+            if(idx >= 0) {
+                fileTableSelectionModel.addSelection(idx, idx);
+            }
+        }
+    }
+
     public void setSortColumn(SortColumn column) {
         if(column == null) {
             throw new NullPointerException("column");
@@ -435,6 +445,16 @@ public class FileTable extends Table {
         int findEntry(Entry entry) {
             for(int i=0 ; i<entries.length ; i++) {
                 if(entries[i].equals(entry)) {
+                    return i;
+                }
+            }
+            return -1;
+        }
+
+        int findFile(Object file) {
+            for(int i=0 ; i<entries.length ; i++) {
+                Entry e = entries[i];
+                if(e.fsm.equals(e.obj, file)) {
                     return i;
                 }
             }
