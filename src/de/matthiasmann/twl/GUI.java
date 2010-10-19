@@ -73,7 +73,7 @@ public final class GUI extends Widget {
     private boolean wasInside;
     private boolean dragActive;
     private int mouseClickCount;
-    private int dragButton;
+    private int dragButton = -1;
     private int mouseDownX;
     private int mouseDownY;
     private int mouseLastX;
