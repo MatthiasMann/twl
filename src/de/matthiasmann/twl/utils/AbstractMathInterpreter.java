@@ -29,11 +29,10 @@
  */
 package de.matthiasmann.twl.utils;
 
-import java.beans.BeanInfo;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -61,7 +60,7 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
         registerFunction("max", new FunctionMax());
     }
 
-    public void registerFunction(String name, Function function) {
+    public final void registerFunction(String name, Function function) {
         if(function == null) {
             throw new NullPointerException("function");
         }
@@ -230,10 +229,12 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
                     return Array.getLength(obj);
                 }
             } else {
-                BeanInfo beanInfo = Introspector.getBeanInfo(obj.getClass());
-                for(PropertyDescriptor pd : beanInfo.getPropertyDescriptors()) {
-                    if(pd.getName().equals(field)) {
-                        return pd.getReadMethod().invoke(obj);
+                for(Method m : obj.getClass().getMethods()) {
+                    if((m.getModifiers() & Modifier.STATIC) == 0 &&
+                            m.getReturnType() != Void.TYPE &&
+                            m.getParameterTypes().length == 0 &&
+                            (cmpName(m, field, "get") || cmpName(m, field, "is"))) {
+                        return m.invoke(obj);
                     }
                 }
             }
@@ -245,6 +246,16 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
         }
     }
 
+    private static boolean cmpName(Method m, String fieldName, String prefix) {
+        String methodName = m.getName();
+        int prefixLength = prefix.length();
+        int fieldNameLength = fieldName.length();
+        return methodName.length() == prefixLength + fieldNameLength &&
+                methodName.startsWith(prefix) &&
+                methodName.charAt(prefixLength) == Character.toUpperCase(fieldName.charAt(0)) &&
+                methodName.regionMatches(prefixLength+1, fieldName, 1, fieldNameLength-1);
+    }
+    
     public void callFunction(String name, int args) {
         Object[] values = new Object[args];
         for(int i=args ; i-->0 ;) {
