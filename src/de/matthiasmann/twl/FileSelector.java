@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -296,6 +296,10 @@ public class FileSelector extends DialogLayout {
                 .addWidget(btnHome);
 
         Group hButtonGroup = createSequentialGroup()
+                .addWidget(btnRefresh)
+                .addGap(MEDIUM_GAP)
+                .addWidget(btnShowFolders)
+                .addWidget(btnShowHidden)
                 .addWidget(fileFilterBox)
                 .addGap("buttonBarLeft")
                 .addWidget(btnFilesMRU)
@@ -305,36 +309,21 @@ public class FileSelector extends DialogLayout {
                 .addWidget(btnCancel)
                 .addGap("buttonBarRight");
         Group vButtonGroup = createParallelGroup()
+                .addWidget(btnRefresh)
+                .addWidget(btnShowFolders)
+                .addWidget(btnShowHidden)
                 .addWidget(fileFilterBox)
                 .addWidget(btnFilesMRU)
                 .addWidget(btnOk)
                 .addWidget(btnCancel);
 
-        Group hShowBtns = createParallelGroup()
-                .addWidget(btnRefresh)
-                .addWidget(btnShowFolders)
-                .addWidget(btnShowHidden);
-        Group vShowBtns = createSequentialGroup()
-                .addWidget(btnRefresh)
-                .addGap(MEDIUM_GAP)
-                .addWidget(btnShowFolders)
-                .addWidget(btnShowHidden)
-                .addGap();
-
-        Group hMainGroup = createSequentialGroup()
-                .addGroup(hShowBtns)
-                .addWidget(fileTableSP);
-        Group vMainGroup = createParallelGroup()
-                .addGroup(vShowBtns)
-                .addWidget(fileTableSP);
-
         Group horz = createParallelGroup()
                 .addGroup(hCurrentFolder)
-                .addGroup(hMainGroup);
+                .addWidget(fileTableSP);
 
         Group vert = createSequentialGroup()
                 .addGroup(vCurrentFolder)
-                .addGroup(vMainGroup);
+                .addWidget(fileTableSP);
 
         if(userWidgetBottom != null) {
             horz.addWidget(userWidgetBottom);
