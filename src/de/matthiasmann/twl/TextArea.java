@@ -1587,10 +1587,6 @@ public class TextArea extends Widget {
                 }
             }
 
-            if(targetY > lastLineBottom) {
-                lineInfo.append((char)targetY).append((char)0);
-            }
-            
             processAnkors(targetY, lineHeight);
 
             minLineHeight = 0;
@@ -1672,6 +1668,9 @@ public class TextArea extends Widget {
             }
             if(lineStartIdx > lastLineEnd) {
                 lineInfo.append((char)0).append((char)(lineStartIdx - lastLineEnd));
+            }
+            if(y > lastLineBottom) {
+                lineInfo.append((char)y).append((char)0);
             }
             lastLineBottom = y + height;
             lineInfo.append((char)lastLineBottom).append((char)(layout.size() - lineStartIdx));
