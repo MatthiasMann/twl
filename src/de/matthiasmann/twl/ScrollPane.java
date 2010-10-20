@@ -61,6 +61,7 @@ public class ScrollPane extends Widget {
     private Dimension contentScrollbarSpacing = Dimension.ZERO;
     private boolean inLayout;
     private boolean expandContentSize;
+    private int scrollbarsToggleFlags;
 
     public ScrollPane() {
         this(null);
@@ -334,6 +335,12 @@ public class ScrollPane extends Widget {
     }
 
     @Override
+    protected void paintWidget(GUI gui) {
+        // clear flags - used to detect layout loops
+        scrollbarsToggleFlags = 0;
+    }
+
+    @Override
     protected void layout() {
         if(content != null) {
             int innerWidth = getInnerWidth();
@@ -369,14 +376,17 @@ public class ScrollPane extends Widget {
 
             //System.out.println("required="+requiredWidth+","+requiredHeight+" avail="+availWidth+","+availHeight);
 
+            int hScrollbarMax = 0;
+            int vScrollbarMax = 0;
+
             // don't add scrollbars if we have zero size
             if(availWidth > 0 && availHeight > 0) {
                 do{
                     repeat = false;
 
                     if(fixed != Fixed.HORIZONTAL) {
-                        scrollbarH.setMinMaxValue(0, Math.max(0, requiredWidth - availWidth));
-                        if(scrollbarH.getMaxValue() > 0) {
+                        hScrollbarMax = Math.max(0, requiredWidth - availWidth);
+                        if(hScrollbarMax > 0 || ((scrollbarsToggleFlags & 3) == 3)) {
                             repeat |= !visibleH;
                             visibleH = true;
                             int prefHeight = scrollbarH.getPreferredHeight();
@@ -384,13 +394,13 @@ public class ScrollPane extends Widget {
                             availHeight = Math.max(0, scrollbarHY - contentScrollbarSpacing.getY());
                         }
                     } else {
-                        scrollbarH.setMinMaxValue(0, 0);
+                        hScrollbarMax = 0;
                         requiredWidth = availWidth;
                     }
 
                     if(fixed != Fixed.VERTICAL) {
-                        scrollbarV.setMinMaxValue(0, Math.max(0, requiredHeight - availHeight));
-                        if(scrollbarV.getMaxValue() > 0) {
+                        vScrollbarMax = Math.max(0, requiredHeight - availHeight);
+                        if(vScrollbarMax > 0 || ((scrollbarsToggleFlags & 12) == 12)) {
                             repeat |= !visibleV;
                             visibleV = true;
                             int prefWidth = scrollbarV.getPreferredWidth();
@@ -398,23 +408,39 @@ public class ScrollPane extends Widget {
                             availWidth = Math.max(0, scrollbarVX - contentScrollbarSpacing.getX());
                         }
                     } else {
-                        scrollbarV.setMinMaxValue(0, 0);
+                        vScrollbarMax = 0;
                         requiredHeight = availHeight;
                     }
                 }while(repeat);
             }
 
+            // if a scrollbar visibility state has changed set it's flag to detect layout loops
+            if(visibleH && !scrollbarH.isVisible()) {
+                scrollbarsToggleFlags |= 1;
+            }
+            if(!visibleH && scrollbarH.isVisible()) {
+                scrollbarsToggleFlags |= 2;
+            }
+            if(visibleV && !scrollbarV.isVisible()) {
+                scrollbarsToggleFlags |= 4;
+            }
+            if(!visibleV && scrollbarV.isVisible()) {
+                scrollbarsToggleFlags |= 8;
+            }
+            
             if(visibleH != scrollbarH.isVisible() || visibleV != scrollbarV.isVisible()) {
                 invalidateLayout();
             }
 
             scrollbarH.setVisible(visibleH);
+            scrollbarH.setMinMaxValue(0, hScrollbarMax);
             scrollbarH.setSize(Math.max(0, scrollbarVX - scrollbarHX), Math.max(0, innerHeight - scrollbarHY));
             scrollbarH.setPosition(getInnerX() + scrollbarHX, getInnerY() + scrollbarHY);
             scrollbarH.setPageSize(Math.max(1, availWidth));
             scrollbarH.setStepSize(Math.max(1, availWidth / 10));
 
             scrollbarV.setVisible(visibleV);
+            scrollbarV.setMinMaxValue(0, vScrollbarMax);
             scrollbarV.setSize(Math.max(0, innerWidth - scrollbarVX), Math.max(0, scrollbarHY - scrollbarVY));
             scrollbarV.setPosition(getInnerX() + scrollbarVX, getInnerY() + scrollbarVY);
             scrollbarV.setPageSize(Math.max(1, availHeight));
