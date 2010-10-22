@@ -52,10 +52,11 @@ public class EditField extends Widget {
         /**
          * Gets called for any change in the edit field, or when ESCAPE or RETURN was pressed
          *
-         * @param key One of KEY_NONE, KEY_ESCAPE, KEY_RETURN
+         * @param key One of KEY_NONE, KEY_ESCAPE, KEY_RETURN, KEY_DELETE
          * @see Keyboard#KEY_NONE
          * @see Keyboard#KEY_ESCAPE
          * @see Keyboard#KEY_RETURN
+         * @see Keyboard#KEY_DELETE
          */
         public void callback(int key);
     }
@@ -183,7 +184,7 @@ public class EditField extends Widget {
             } else {
                 this.passwordMasking = null;
             }
-            updateText(false);
+            updateTextDisplay();
         }
     }
 
@@ -193,9 +194,9 @@ public class EditField extends Widget {
 
     public void setPasswordChar(char passwordChar) {
         this.passwordChar = passwordChar;
-        if(passwordMasking != null) {
+        if(passwordMasking != null && passwordMasking.maskingChar != passwordChar) {
             passwordMasking = new PasswordMasker(editBuffer, passwordChar);
-            updateText(false);
+            updateTextDisplay();
         }
     }
 
@@ -251,7 +252,7 @@ public class EditField extends Widget {
         cursorPos = editBuffer.length();
         selectionStart = 0;
         selectionEnd = 0;
-        updateText(autoCompletionOnSetText);
+        updateText(autoCompletionOnSetText, Event.KEY_NONE);
         scrollToCursor(true);
     }
 
@@ -302,7 +303,7 @@ public class EditField extends Widget {
                 update = true;
             }
             if(update) {
-                updateText(true);
+                updateText(true, Event.KEY_NONE);
             }
         }
     }
@@ -336,7 +337,7 @@ public class EditField extends Widget {
         text = getSelectedText();
         if(!readOnly) {
             deleteSelection();
-            updateText(true);
+            updateText(true, Event.KEY_DELETE);
         }
         if(isPasswordMasking()) {
             text = TextUtil.createString(passwordChar, text.length());
@@ -670,17 +671,21 @@ public class EditField extends Widget {
         return menu;
     }
 
-    private void updateText(boolean updateAutoCompletion) {
+    private void updateText(boolean updateAutoCompletion, int key) {
         if(model != null) {
             model.setValue(getText());
         }
-        textRenderer.setCharSequence(passwordMasking != null ? passwordMasking : editBuffer);
-        checkTextWidth();
-        scrollToCursor(false);
-        doCallback(Event.KEY_NONE);
+        updateTextDisplay();
+        doCallback(key);
         if(autoCompletionWindow != null && autoCompletionWindow.isOpen() || updateAutoCompletion) {
             updateAutoCompletion();
         }
+    }
+
+    private void updateTextDisplay() {
+        textRenderer.setCharSequence(passwordMasking != null ? passwordMasking : editBuffer);
+        checkTextWidth();
+        scrollToCursor(false);
     }
 
     private void checkTextWidth() {
@@ -783,7 +788,7 @@ public class EditField extends Widget {
                 update = true;
             }
             if(update) {
-                updateText(true);
+                updateText(true, Event.KEY_NONE);
             }
         }
     }
@@ -792,7 +797,7 @@ public class EditField extends Widget {
         if(!readOnly) {
             if(hasSelection()) {
                 deleteSelection();
-                updateText(true);
+                updateText(true, Event.KEY_DELETE);
             } else if(cursorPos > 0) {
                 --cursorPos;
                 deleteNext();
@@ -804,10 +809,10 @@ public class EditField extends Widget {
         if(!readOnly) {
             if(hasSelection()) {
                 deleteSelection();
-                updateText(true);
+                updateText(true, Event.KEY_DELETE);
             } else if(cursorPos < editBuffer.length()) {
                 editBuffer.deleteCharAt(cursorPos);
-                updateText(true);
+                updateText(true, Event.KEY_DELETE);
             }
         }
     }
@@ -942,8 +947,8 @@ public class EditField extends Widget {
     }
 
     static class PasswordMasker implements CharSequence {
-        private final CharSequence base;
-        private final char maskingChar;
+        final CharSequence base;
+        final char maskingChar;
 
         public PasswordMasker(CharSequence base, char maskingChar) {
             this.base = base;
