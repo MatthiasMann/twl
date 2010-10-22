@@ -69,7 +69,7 @@
 
     <target name="-pre-jar">
         <delete file="${build.classes.dir}/VERSION"/>
-        <exec os="Linux" command="bash" output="${build.classes.dir}/VERSION">
+        <exec os="Linux" executable="bash" output="${build.classes.dir}/VERSION">
             <arg value="-c"/>
             <arg value="hg tip | egrep '^changeset|^date'"/>
         </exec>
