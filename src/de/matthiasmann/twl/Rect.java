@@ -126,4 +126,10 @@ public class Rect {
     public boolean isEmpty() {
         return x1 <= x0 || y1 <= y0;
     }
+
+    @Override
+    public String toString() {
+        return "Rect[x0=" + x0 + ", y0=" + y0 + ", x1=" + x1 + ", y1=" + y1 + ']';
+    }
+
 }
