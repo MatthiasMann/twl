@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.DraggableButton.DragListener;
+import de.matthiasmann.twl.Event.Type;
 import de.matthiasmann.twl.textarea.TextAreaModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
@@ -91,6 +93,7 @@ public class TextArea extends Widget {
     private Callback[] callbacks;
     private MouseCursor mouseCursorNormal;
     private MouseCursor mouseCursorLink;
+    private DraggableButton.DragListener dragListener;
 
     final LClip layoutRoot;
     final ArrayList<LImage> allBGImages;
@@ -100,6 +103,9 @@ public class TextArea extends Widget {
     private int lastMouseX;
     private int lastMouseY;
     private boolean lastMouseInside;
+    private boolean dragging;
+    private int dragStartX;
+    private int dragStartY;
     LElement curLElementUnderMouse;
 
     public TextArea() {
@@ -223,6 +229,14 @@ public class TextArea extends Widget {
 
     public void removeCallback(Callback cb) {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, cb);
+    }
+
+    public DragListener getDragListener() {
+        return dragListener;
+    }
+
+    public void setDragListener(DragListener dragListener) {
+        this.dragListener = dragListener;
     }
 
     public StyleSheetResolver getStyleClassResolver() {
@@ -423,16 +437,45 @@ public class TextArea extends Widget {
         }
 
         if(evt.isMouseEvent()) {
-            lastMouseInside = isMouseInside(evt);
-            lastMouseX = evt.getMouseX();
-            lastMouseY = evt.getMouseY();
-            updateMouseHover();
+            final Type eventType = evt.getType();
 
-            if(evt.getType() == Event.Type.MOUSE_WHEEL) {
+            if(dragging) {
+                if(eventType == Event.Type.MOUSE_DRAGGED) {
+                    if(dragListener != null) {
+                        dragListener.dragged(evt.getMouseX()-dragStartX, evt.getMouseY()-dragStartY);
+                    }
+                }
+                if(evt.isMouseDragEnd()) {
+                    if(dragListener != null) {
+                        dragListener.dragStopped();
+                    }
+                    dragging = false;
+                    updateMouseHover(evt);
+                }
+                return true;
+            }
+
+            updateMouseHover(evt);
+
+            if(eventType == Event.Type.MOUSE_WHEEL) {
                 return false;
             }
 
-            if(evt.getType() == Event.Type.MOUSE_CLICKED) {
+            if(eventType == Event.Type.MOUSE_BTNDOWN) {
+                dragStartX = evt.getMouseX();
+                dragStartY = evt.getMouseY();
+            }
+
+            if(eventType == Event.Type.MOUSE_DRAGGED) {
+                assert !dragging;
+                dragging = true;
+                if(dragListener != null) {
+                    dragListener.dragStarted();
+                }
+                return true;
+            }
+            
+            if(eventType == Event.Type.MOUSE_CLICKED) {
                 if(curLElementUnderMouse != null && curLElementUnderMouse.href != null) {
                     String href = curLElementUnderMouse.href;
                     if(callbacks != null) {
@@ -459,6 +502,13 @@ public class TextArea extends Widget {
         return super.getTooltipContentAt(mouseX, mouseY);
     }
 
+    private void updateMouseHover(Event evt) {
+        lastMouseInside = isMouseInside(evt);
+        lastMouseX = evt.getMouseX();
+        lastMouseY = evt.getMouseY();
+        updateMouseHover();
+    }
+    
     private void updateMouseHover() {
         LElement le = null;
         if(lastMouseInside) {

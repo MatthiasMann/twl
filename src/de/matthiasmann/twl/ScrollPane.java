@@ -190,6 +190,27 @@ public class ScrollPane extends Widget {
         return scrollbarV;
     }
 
+    /**
+     * Creates a DragListener which can be used to drag the content of this ScrollPane around.
+     * @return a DragListener to scroll this this ScrollPane.
+     */
+    public DraggableButton.DragListener createDragListener() {
+        return new DraggableButton.DragListener() {
+            int startScrollX;
+            int startScrollY;
+            public void dragStarted() {
+                startScrollX = getScrollPositionX();
+                startScrollY = getScrollPositionY();
+            }
+            public void dragged(int deltaX, int deltaY) {
+                setScrollPositionX(startScrollX - deltaX);
+                setScrollPositionY(startScrollY - deltaY);
+            }
+            public void dragStopped() {
+            }
+        };
+    }
+
     public static ScrollPane getContainingScrollPane(Widget widget) {
         Widget ca = widget.getParent();
         if(ca != null) {
