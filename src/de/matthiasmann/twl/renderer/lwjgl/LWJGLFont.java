@@ -80,7 +80,7 @@ public class LWJGLFont implements Font {
         int underlineOffset = parseInt(params.get("underlineOffset"), 0);
         Color color = Color.parserColor(colorStr);
         if(color == null) {
-            throw new IllegalArgumentException("unknown color name");
+            throw new IllegalArgumentException("unknown color name: " + colorStr);
         }
         if(parseBoolean(params.get("underline"))) {
             style |= STYLE_UNDERLINE;
