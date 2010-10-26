@@ -30,6 +30,7 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.utils.TextUtil;
+import java.util.Locale;
 
 /**
  * A class to represent a key stroke and it's associated action.
@@ -192,7 +193,7 @@ public final class KeyStroke {
             } else if("typed".equalsIgnoreCase(part)) {
                 typed = true;
             } else {
-                keyCode = Event.getKeyCodeForName(part.toUpperCase());
+                keyCode = Event.getKeyCodeForName(part.toUpperCase(Locale.ENGLISH));
                 if(keyCode == Event.KEY_NONE) {
                     throw new IllegalArgumentException("Unknown key: " + part);
                 }

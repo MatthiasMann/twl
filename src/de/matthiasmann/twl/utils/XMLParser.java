@@ -38,6 +38,7 @@ import java.net.URLStreamHandler;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -333,7 +334,7 @@ public class XMLParser implements Closeable {
 
     protected <E extends Enum<E>> E parseEnum(Class<E> enumClazz, String value) throws XmlPullParserException {
         try {
-            return Enum.valueOf(enumClazz, value.toUpperCase());
+            return Enum.valueOf(enumClazz, value.toUpperCase(Locale.ENGLISH));
         } catch (IllegalArgumentException unused) {
         }
         try {

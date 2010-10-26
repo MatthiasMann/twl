@@ -46,6 +46,7 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -260,14 +261,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         LWJGLTexture.Filter filter = LWJGLTexture.Filter.LINEAR;
         if(formatStr != null) {
             try {
-                format = LWJGLTexture.Format.valueOf(formatStr.toUpperCase());
+                format = LWJGLTexture.Format.valueOf(formatStr.toUpperCase(Locale.ENGLISH));
             } catch(IllegalArgumentException ex) {
                 getLogger().log(Level.WARNING, "Unknown texture format: {0}", formatStr);
             }
         }
         if(filterStr != null) {
             try {
-                filter = LWJGLTexture.Filter.valueOf(filterStr.toUpperCase());
+                filter = LWJGLTexture.Filter.valueOf(filterStr.toUpperCase(Locale.ENGLISH));
             } catch(IllegalArgumentException ex) {
                 getLogger().log(Level.WARNING, "Unknown texture filter: {0}", filterStr);
             }

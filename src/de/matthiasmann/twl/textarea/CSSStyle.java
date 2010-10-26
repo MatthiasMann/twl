@@ -32,6 +32,7 @@ package de.matthiasmann.twl.textarea;
 import de.matthiasmann.twl.utils.ParameterStringParser;
 import de.matthiasmann.twl.utils.TextUtil;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -219,7 +220,7 @@ public class CSSStyle extends Style {
     }
 
     private<E extends Enum<E>> void parseEnum(StyleAttribute<E> attribute, String value) {
-        E obj = Enum.valueOf(attribute.getDataType(), value.toUpperCase());
+        E obj = Enum.valueOf(attribute.getDataType(), value.toUpperCase(Locale.ENGLISH));
         put(attribute, obj);
     }
 

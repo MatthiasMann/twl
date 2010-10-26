@@ -40,6 +40,7 @@ import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -125,7 +126,7 @@ public class Widget {
         // eg class Label => "label"
         Class<?> clazz = getClass();
         do {
-            theme = clazz.getSimpleName().toLowerCase();
+            theme = clazz.getSimpleName().toLowerCase(Locale.ENGLISH);
             clazz = clazz.getSuperclass();
         } while (theme.length() == 0 && clazz != null);
 
