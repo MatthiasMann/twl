@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Locale;
 
 /**
  * A immutable color class. Colors are represented as bytes.
@@ -146,7 +147,7 @@ public final class Color {
      * @return a Color or null if the name was not found
      */
     public static Color getColorByName(String name) {
-        name = name.toUpperCase();
+        name = name.toUpperCase(Locale.ENGLISH);
         try {
             Field f = Color.class.getField(name);
             if(Modifier.isStatic(f.getModifiers()) && f.getType() == Color.class) {
