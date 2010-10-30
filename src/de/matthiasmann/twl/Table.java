@@ -46,6 +46,7 @@ public class Table extends TableBase {
         this.modelChangeListener = new ModelChangeListener();
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public Table(TableModel model) {
         this();
         setModel(model);
@@ -86,13 +87,14 @@ public class Table extends TableBase {
     protected Object getTooltipContentFromRow(int row, int column) {
         return model.getTooltipContent(row, column);
     }
-
+    
     class ModelChangeListener implements TableModel.ChangeListener {
         public void rowsInserted(int idx, int count) {
             numRows = model.getNumRows();
             modelRowsInserted(idx, count);
         }
         public void rowsDeleted(int idx, int count) {
+            checkRowRange(idx, count);
             numRows = model.getNumRows();
             modelRowsDeleted(idx, count);
         }
@@ -100,6 +102,7 @@ public class Table extends TableBase {
             modelRowsChanged(idx, count);
         }
         public void columnDeleted(int idx, int count) {
+            checkColumnRange(idx, count);
             numColumns = model.getNumColumns();
             modelColumnsDeleted(count, count);
         }

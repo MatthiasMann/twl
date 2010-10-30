@@ -456,6 +456,18 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             throw new IndexOutOfBoundsException("column");
         }
     }
+
+    protected final void checkRowRange(int idx, int count) {
+        if(idx < 0 || count < 0 || count > numRows || idx > (numRows - count)) {
+            throw new IllegalArgumentException("row");
+        }
+    }
+
+    protected final void checkColumnRange(int idx, int count) {
+        if(idx < 0 || count < 0 || count > numColumns || idx > (numColumns - count)) {
+            throw new IllegalArgumentException("column");
+        }
+    }
     
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
@@ -1165,6 +1177,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelRowsChanged(int idx, int count) {
+        checkRowRange(idx, count);
         boolean rowHeightChanged = false;
         for(int i=0 ; i<count ; i++) {
             if(rowModel != null) {
@@ -1181,6 +1194,8 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelCellChanged(int row, int column) {
+        checkRowIndex(row);
+        checkColumnIndex(column);
         if(rowModel != null) {
             autoSizeRow(row);
         }
@@ -1189,6 +1204,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelRowsInserted(int row, int count) {
+        checkRowRange(row, count);
         if(rowModel != null) {
             rowModel.insert(row, count);
         }
@@ -1239,6 +1255,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelColumnsInserted(int column, int count) {
+        checkColumnRange(column, count);
         ColumnHeader[] newColumnHeaders = new ColumnHeader[numColumns];
         System.arraycopy(columnHeaders, 0, newColumnHeaders, 0, column);
         System.arraycopy(columnHeaders, column, newColumnHeaders, column+count,
@@ -1299,6 +1316,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     }
 
     protected void modelColumnHeaderChanged(int column) {
+        checkColumnIndex(column);
         updateColumnHeader(column);
     }
 
@@ -1371,6 +1389,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         private int columnWidth;
         int springWidth;
 
+        @SuppressWarnings("LeakingThisInConstructor")
         public ColumnHeader() {
             addCallback(this);
         }
