@@ -552,7 +552,20 @@ public class ResizableFrame extends Widget {
     private void handleMouseDrag(Event evt) {
         final int dx = evt.getMouseX() - dragStartX;
         final int dy = evt.getMouseY() - dragStartY;
-        
+
+        int minWidth = getMinWidth();
+        int minHeight = getMinHeight();
+        int maxWidth = getMaxWidth();
+        int maxHeight = getMaxHeight();
+
+        // make sure max size is not smaller then min size
+        if(maxWidth > 0 && maxWidth < minWidth) {
+            maxWidth = minWidth;
+        }
+        if(maxHeight > 0 && maxHeight < minHeight) {
+            maxHeight = minHeight;
+        }
+
         int left = dragInitialLeft;
         int top = dragInitialTop;
         int right = dragInitialRight;
@@ -562,12 +575,18 @@ public class ResizableFrame extends Widget {
         case CORNER_BL:
         case CORNER_TL:
         case EDGE_LEFT:
-            left = Math.min(left + dx, right - getMinWidth());
+            left = Math.min(left + dx, right - minWidth);
+            if(maxWidth > 0) {
+                left = Math.max(left, Math.min(dragInitialLeft, right - maxWidth));
+            }
             break;
         case CORNER_BR:
         case CORNER_TR:
         case EDGE_RIGHT:
-            right = Math.max(right + dx, left + getMinWidth());
+            right = Math.max(right + dx, left + minWidth);
+            if(maxWidth > 0) {
+                right = Math.min(right, Math.max(dragInitialRight, left + maxWidth));
+            }
             break;
         case POSITION:
             if(getParent() != null) {
@@ -587,12 +606,18 @@ public class ResizableFrame extends Widget {
         case CORNER_TL:
         case CORNER_TR:
         case EDGE_TOP:
-            top = Math.min(top + dy, bottom - getMinHeight());
+            top = Math.min(top + dy, bottom - minHeight);
+            if(maxHeight > 0) {
+                top = Math.max(top, Math.min(dragInitialTop, bottom - maxHeight));
+            }
             break;
         case CORNER_BL:
         case CORNER_BR:
         case EDGE_BOTTOM:
-            bottom = Math.max(bottom + dy, top + getMinHeight());
+            bottom = Math.max(bottom + dy, top + minHeight);
+            if(maxHeight > 0) {
+                bottom = Math.min(bottom, Math.max(dragInitialBottom, top + maxHeight));
+            }
             break;
         case POSITION:
             if(getParent() != null) {
