@@ -488,7 +488,7 @@ public final class GUI extends Widget {
                 try {
                     r.run();
                 } catch (Throwable ex) {
-                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in runable", ex);
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in runnable", ex);
                 }
             }
         }
