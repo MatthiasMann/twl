@@ -56,6 +56,7 @@ public abstract class ValueAdjuster extends Widget {
     private String displayPrefix;
     private String displayPrefixTheme = "";
     private boolean useMouseWheel = true;
+    private boolean acceptValueOnFocusLoss = true;
     private int width;
     
     public ValueAdjuster() {
@@ -123,6 +124,23 @@ public abstract class ValueAdjuster extends Widget {
     }
 
     /**
+     * Controls the behavior on focus loss when editing the value.
+     * If true then the value is accepted (like pressing RETURN).
+     * If false then it is discard (like pressing ESCAPE).
+     * 
+     * Default is true.
+     *
+     * @param acceptValueOnFocusLoss true if focus loss should accept the edited value.
+     */
+    public void setAcceptValueOnFocusLoss(boolean acceptValueOnFocusLoss) {
+        this.acceptValueOnFocusLoss = acceptValueOnFocusLoss;
+    }
+
+    public boolean isAcceptValueOnFocusLoss() {
+        return acceptValueOnFocusLoss;
+    }
+
+    /**
      * Controls if the ValueAdjuster should respond to the mouse wheel or not
      *
      * @param useMouseWheel true if the mouse wheel is used
@@ -153,6 +171,15 @@ public abstract class ValueAdjuster extends Widget {
             onEditCanceled();
             label.setVisible(true);
             editField.setVisible(false);
+        }
+    }
+
+    public void cancelOrAcceptEdit() {
+        if(editField.isVisible()) {
+            if(acceptValueOnFocusLoss) {
+                onEditEnd(editField.getText());
+            }
+            cancelEdit();
         }
     }
 
@@ -205,7 +232,7 @@ public abstract class ValueAdjuster extends Widget {
 
     @Override
     protected void keyboardFocusLost() {
-        cancelEdit();
+        cancelOrAcceptEdit();
         label.getAnimationState().setAnimationState(STATE_KEYBOARD_FOCUS, false);
     }
 
