@@ -54,6 +54,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<String> LIST_STYLE_IMAGE = new StyleAttribute<String>(true, String.class, "ul-bullet");
     public static final StyleAttribute<OrderedListType> LIST_STYLE_TYPE = new StyleAttribute<OrderedListType>(true, OrderedListType.class, OrderedListType.DECIMAL);
     public static final StyleAttribute<Boolean> PREFORMATTED = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
+    public static final StyleAttribute<Boolean> BREAKWORD = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
 
     // non cascading attribute
     public static final StyleAttribute<Clear> CLEAR = new StyleAttribute<Clear>(false, Clear.class, Clear.NONE);

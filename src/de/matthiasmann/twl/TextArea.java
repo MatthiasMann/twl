@@ -839,13 +839,18 @@ public class TextArea extends Widget {
             box.curX += font.getSpaceWidth();
         }
 
+        Boolean breakWord = null;    // lazy lookup
+
         idx = textStart;
         while(idx < textEnd) {
             assert !isSkip(text.charAt(idx));
 
             int end = idx;
+            int visibleEnd = idx;
             if(box.textAlignment != TextAreaModel.HAlignment.JUSTIFY) {
                 end = idx + font.computeVisibleGlpyhs(text, idx, textEnd, box.getRemaining());
+                visibleEnd = end;
+
                 if(end < textEnd) {
                     // if we are at a punctuation then walk backwards until we hit
                     // the word or a break. This ensures that the punctuation stays
@@ -879,14 +884,25 @@ public class TextArea extends Widget {
                 if(box.textAlignment != TextAreaModel.HAlignment.JUSTIFY && box.nextLine(false)) {
                     continue;
                 }
-                // or we already are at the start of a line
-                // just put the word there even if it doesn't fit
-                while(end < textEnd && !isBreak(text.charAt(end))) {
-                    end++;
+                if(breakWord == null) {
+                    breakWord = te.getStyle().get(StyleAttribute.BREAKWORD, styleClassResolver);
                 }
-                // some characters need to stay at the end of a word
-                while(end < textEnd && isPunctuation(text.charAt(end))) {
-                    end++;
+                if(breakWord) {
+                    if(visibleEnd == idx) {
+                        end = idx + 1;  // ensure progress
+                    } else {
+                        end = visibleEnd;
+                    }
+                } else {
+                    // or we already are at the start of a line
+                    // just put the word there even if it doesn't fit
+                    while(end < textEnd && !isBreak(text.charAt(end))) {
+                        end++;
+                    }
+                    // some characters need to stay at the end of a word
+                    while(end < textEnd && isPunctuation(text.charAt(end))) {
+                        end++;
+                    }
                 }
                 advancePastFloaters = true;
             }

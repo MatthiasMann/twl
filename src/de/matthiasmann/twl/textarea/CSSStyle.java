@@ -97,6 +97,10 @@ public class CSSStyle extends Style {
             parseEnum(StyleAttribute.PREFORMATTED, PRE, value);
             return;
         }
+        if("word-wrap".equals(key)) {
+            parseEnum(StyleAttribute.BREAKWORD, BREAKWORD, value);
+            return;
+        }
         if("list-style-image".equals(key)) {
             parseURL(StyleAttribute.LIST_STYLE_IMAGE, value);
             return;
@@ -236,6 +240,7 @@ public class CSSStyle extends Style {
     }
     
     static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
+    static final HashMap<String, Boolean> BREAKWORD = new HashMap<String, Boolean>();
     static final HashMap<String, OrderedListType> OLT = new HashMap<String, OrderedListType>();
 
     static OrderedListType createRoman(final boolean lowercase) {
@@ -255,6 +260,9 @@ public class CSSStyle extends Style {
     static {
         PRE.put("pre", Boolean.TRUE);
         PRE.put("normal", Boolean.FALSE);
+
+        BREAKWORD.put("normal", Boolean.FALSE);
+        BREAKWORD.put("break-word", Boolean.TRUE);
 
         OrderedListType upper_alpha = new OrderedListType("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
         OrderedListType lower_alpha = new OrderedListType("abcdefghijklmnopqrstuvwxyz");
