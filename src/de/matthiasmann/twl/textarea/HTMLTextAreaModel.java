@@ -539,6 +539,10 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             newStyle = new Style(parent, key);
         }
 
+        if(xpp != null && "pre".equals(xpp.getName())) {
+            newStyle.put(StyleAttribute.PREFORMATTED, Boolean.TRUE);
+        }
+
         styleStack.add(newStyle);
         return newStyle;
     }
