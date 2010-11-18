@@ -70,7 +70,7 @@ LineTerminator = \r|\n|\r\n
 WhiteSpace = {LineTerminator} | [ \t\f]
 Comment = "/*" [^*] ~"*/" | "/*" "*"+ "/"
 
-Identifier = [-]?[_a-z][_a-z0-9-]*
+Identifier = [-]?[_a-zA-Z][_a-zA-Z0-9-]*
 
 %state YYSTYLE, YYVALUE, YYSTRING1, YYSTRING2
 
