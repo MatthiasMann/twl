@@ -548,26 +548,32 @@ public class TextArea extends Widget {
 
         if(e instanceof TextAreaModel.TextElement) {
             layoutTextElement(box, (TextAreaModel.TextElement)e);
-        } else if(e instanceof TextAreaModel.ParagraphElement) {
-            layoutParagraphElement(box, (TextAreaModel.ParagraphElement)e);
-        } else if(e instanceof TextAreaModel.ImageElement) {
-            layoutImageElement(box, (TextAreaModel.ImageElement)e);
-        } else if(e instanceof TextAreaModel.WidgetElement) {
-            layoutWidgetElement(box, (TextAreaModel.WidgetElement)e);
-        } else if(e instanceof TextAreaModel.ListElement) {
-            layoutListElement(box, (TextAreaModel.ListElement)e);
-        } else if(e instanceof TextAreaModel.OrderedListElement) {
-            layoutOrderedListElement(box, (TextAreaModel.OrderedListElement)e);
-        } else if(e instanceof TextAreaModel.BlockElement) {
-            layoutBlockElement(box, (TextAreaModel.BlockElement)e);
-        } else if(e instanceof TextAreaModel.TableElement) {
-            layoutTableElement(box, (TextAreaModel.TableElement)e);
-        } else if(e instanceof TextAreaModel.LinkElement) {
-            layoutLinkElement(box, (TextAreaModel.LinkElement)e);
-        } else if(e instanceof TextAreaModel.ContainerElement) {
-            layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
         } else {
-            Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Unknown Element subclass: {0}", e.getClass());
+            if(box.wasPreformatted) {
+                box.nextLine(false);
+                box.wasPreformatted = false;
+            }
+            if(e instanceof TextAreaModel.ParagraphElement) {
+                layoutParagraphElement(box, (TextAreaModel.ParagraphElement)e);
+            } else if(e instanceof TextAreaModel.ImageElement) {
+                layoutImageElement(box, (TextAreaModel.ImageElement)e);
+            } else if(e instanceof TextAreaModel.WidgetElement) {
+                layoutWidgetElement(box, (TextAreaModel.WidgetElement)e);
+            } else if(e instanceof TextAreaModel.ListElement) {
+                layoutListElement(box, (TextAreaModel.ListElement)e);
+            } else if(e instanceof TextAreaModel.OrderedListElement) {
+                layoutOrderedListElement(box, (TextAreaModel.OrderedListElement)e);
+            } else if(e instanceof TextAreaModel.BlockElement) {
+                layoutBlockElement(box, (TextAreaModel.BlockElement)e);
+            } else if(e instanceof TextAreaModel.TableElement) {
+                layoutTableElement(box, (TextAreaModel.TableElement)e);
+            } else if(e instanceof TextAreaModel.LinkElement) {
+                layoutLinkElement(box, (TextAreaModel.LinkElement)e);
+            } else if(e instanceof TextAreaModel.ContainerElement) {
+                layoutContainerElement(box, (TextAreaModel.ContainerElement)e);
+            } else {
+                Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE, "Unknown Element subclass: {0}", e.getClass());
+            }
         }
     }
     
@@ -802,6 +808,10 @@ public class TextArea extends Widget {
 
         box.setupTextParams(style, font, false);
 
+        if(pre && !box.wasPreformatted) {
+            box.nextLine(false);
+        }
+        
         int idx = 0;
         while(idx < text.length()) {
             int end = TextUtil.indexOf(text, '\n', idx);
@@ -817,6 +827,8 @@ public class TextArea extends Widget {
             }
             idx = end;
         }
+
+        box.wasPreformatted = pre;
     }
 
     private void layoutText(Box box, TextAreaModel.TextElement te, Font font,
@@ -942,9 +954,7 @@ public class TextArea extends Widget {
     private void layoutTextPre(Box box, TextAreaModel.TextElement te, Font font,
             String text, int textStart, int textEnd) {
         int idx = textStart;
-        while(idx < textEnd) {
-            box.nextLine(false);
-
+        for(;;) {
             while(idx < textEnd) {
                 if(text.charAt(idx) == '\t') {
                     idx++;
@@ -978,8 +988,13 @@ public class TextArea extends Widget {
 
                 idx = end;
             }
+
+            if(idx >= textEnd) {
+                break;
+            }
+
+            box.nextLine(false);
         }
-        box.nextLine(false);
     }
 
     private void doMarginTop(Box box, Style style) {
@@ -1422,6 +1437,7 @@ public class TextArea extends Widget {
         int lastLineBottom;
         boolean inParagraph;
         boolean wasAutoBreak;
+        boolean wasPreformatted;
         TextAreaModel.HAlignment textAlignment;
         String href;
 
