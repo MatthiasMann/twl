@@ -174,19 +174,6 @@ class Parser {
     return j;
   }
 
-
-  /* error codes */
-  private static final int ZZ_UNKNOWN_ERROR = 0;
-  private static final int ZZ_NO_MATCH = 1;
-  private static final int ZZ_PUSHBACK_2BIG = 2;
-
-  /* error messages for the codes above */
-  private static final String ZZ_ERROR_MSG[] = {
-    "Unkown internal scanner error",
-    "Error: could not match input",
-    "Error: pushback value was too large"
-  };
-
   /**
    * ZZ_ATTRIBUTE[aState] contains the attributes of state <code>aState</code>
    */
@@ -293,16 +280,6 @@ class Parser {
     this.zzReader = in;
   }
 
-  /**
-   * Creates a new scanner.
-   * There is also java.io.Reader version of this constructor.
-   *
-   * @param   in  the java.io.Inputstream to read input from.
-   */
-  Parser(java.io.InputStream in) {
-    this(new java.io.InputStreamReader(in));
-  }
-
   /** 
    * Unpacks the compressed character translation table.
    *
@@ -375,46 +352,6 @@ class Parser {
     return true;
   }
 
-    
-  /**
-   * Closes the input stream.
-   */
-  public final void yyclose() throws java.io.IOException {
-    zzAtEOF = true;            /* indicate end of file */
-    zzEndRead = zzStartRead;  /* invalidate buffer    */
-
-    if (zzReader != null)
-      zzReader.close();
-  }
-
-
-  /**
-   * Resets the scanner to read from a new input stream.
-   * Does not close the old reader.
-   *
-   * All internal variables are reset, the old input stream 
-   * <b>cannot</b> be reused (internal buffer is discarded and lost).
-   * Lexical state is set to <tt>ZZ_INITIAL</tt>.
-   *
-   * @param reader   the new input stream 
-   */
-  public final void yyreset(java.io.Reader reader) {
-    zzReader = reader;
-    zzAtEOF  = false;
-    zzEndRead = zzStartRead = 0;
-    zzCurrentPos = zzMarkedPos = 0;
-    yyline = yycolumn = 0;
-    zzLexicalState = YYINITIAL;
-  }
-
-
-  /**
-   * Returns the current lexical state.
-   */
-  public final int yystate() {
-    return zzLexicalState;
-  }
-
 
   /**
    * Enters a new lexical state
@@ -435,30 +372,6 @@ class Parser {
 
 
   /**
-   * Returns the character at position <tt>pos</tt> from the 
-   * matched text. 
-   * 
-   * It is equivalent to yytext().charAt(pos), but faster
-   *
-   * @param pos the position of the character to fetch. 
-   *            A value from 0 to yylength()-1.
-   *
-   * @return the character at position pos
-   */
-  public final char yycharat(int pos) {
-    return zzBuffer[zzStartRead+pos];
-  }
-
-
-  /**
-   * Returns the length of the matched text region.
-   */
-  public final int yylength() {
-    return zzMarkedPos-zzStartRead;
-  }
-
-
-  /**
    * Reports an error that occured while scanning.
    *
    * In a wellformed scanner (no or only correct usage of 
@@ -470,34 +383,10 @@ class Parser {
    * Usual syntax/scanner level error handling should be done
    * in error fallback rules.
    *
-   * @param   errorCode  the code of the errormessage to display
+   * @param   message  the errormessage to display
    */
-  private void zzScanError(int errorCode) {
-    String message;
-    try {
-      message = ZZ_ERROR_MSG[errorCode];
-    }
-    catch (ArrayIndexOutOfBoundsException e) {
-      message = ZZ_ERROR_MSG[ZZ_UNKNOWN_ERROR];
-    }
-
+  private void zzScanError(String message) {
     throw new Error(message);
-  } 
-
-
-  /**
-   * Pushes the specified amount of characters back into the input stream.
-   *
-   * They will be read again by then next call of the scanning method
-   *
-   * @param number  the number of characters to be read again.
-   *                This number must not be greater than yylength()!
-   */
-  public void yypushback(int number)  {
-    if ( number > yylength() )
-      zzScanError(ZZ_PUSHBACK_2BIG);
-
-    zzMarkedPos -= number;
   }
 
 
@@ -714,7 +603,7 @@ class Parser {
               }
           } 
           else {
-            zzScanError(ZZ_NO_MATCH);
+            zzScanError("Error: could not match input");
           }
       }
     }
