@@ -45,7 +45,6 @@ import de.matthiasmann.twl.textarea.Value;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.TextUtil;
 import java.io.IOException;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.logging.Level;
@@ -257,7 +256,7 @@ public class TextArea extends Widget {
     public void setDefaultStyleSheet() {
         try {
             StyleSheet styleSheet = new StyleSheet();
-            styleSheet.parse(new StringReader("p,ul{margin-bottom:1em}"));
+            styleSheet.parse("p,ul{margin-bottom:1em}");
             setStyleClassResolver(styleSheet);
         } catch(IOException ex) {
             Logger.getLogger(TextArea.class.getName()).log(Level.SEVERE,
