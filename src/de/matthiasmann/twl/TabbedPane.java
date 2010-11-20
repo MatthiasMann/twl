@@ -34,7 +34,7 @@ import de.matthiasmann.twl.model.HasCallback;
 import java.util.ArrayList;
 
 /**
- * A simple tabbed pane
+ * A tabbed pane with support for scrolling the tabs
  * 
  * @author Matthias Mann
  */
@@ -57,27 +57,37 @@ public class TabbedPane extends Widget {
     
     private final ArrayList<Tab> tabs;
     private final BoxLayout tabBox;
+    private final Widget tabBoxClip;
     private final Container container;
     final Container innerContainer;
 
+    DialogLayout scrollControlls;
+    Button btnScrollLeft;
+    Button btnScrollRight;
+
+    boolean scrollTabs;
+    int tabScrollPosition;
     TabPosition tabPosition;
     Tab activeTab;
 
     public TabbedPane() {
         this.tabs = new ArrayList<Tab>();
         this.tabBox = new BoxLayout();
+        this.tabBoxClip = new Widget();
         this.container = new Container();
         this.innerContainer = new Container();
         this.tabPosition = TabPosition.TOP;
 
         tabBox.setTheme("tabbox");
+        tabBoxClip.setTheme("");
         innerContainer.setTheme("");
         innerContainer.setClip(true);
 
+        tabBoxClip.add(tabBox);
         container.add(innerContainer);
         
         super.insertChild(container, 0);
-        super.insertChild(tabBox, 1);
+        super.insertChild(tabBoxClip, 1);
 
         addActionMapping("nextTab", "cycleTabs", +1);
         addActionMapping("prevTab", "cycleTabs", -1);
@@ -96,6 +106,34 @@ public class TabbedPane extends Widget {
             tabBox.setDirection(tabPosition.horz
                     ? BoxLayout.Direction.HORIZONTAL
                     : BoxLayout.Direction.VERTICAL);
+            invalidateLayout();
+        }
+    }
+
+    public boolean isScrollTabs() {
+        return scrollTabs;
+    }
+
+    /**
+     * Allow the tabs to be scrolled if they don't fit into the available space.
+     *
+     * Default is false.
+     *
+     * If disabled the minimum size of the tabbed pane ensures that all tabs fit.
+     * If enabled additional scroll controlls are displayed.
+     *
+     * @param scrollTabs true if tabs should scroll
+     */
+    public void setScrollTabs(boolean scrollTabs) {
+        if(this.scrollTabs != scrollTabs) {
+            this.scrollTabs = scrollTabs;
+
+            if(scrollControlls == null && scrollTabs) {
+                createScrollControlls();
+            }
+
+            tabBoxClip.setClip(scrollTabs);
+            scrollControlls.setVisible(scrollTabs);
             invalidateLayout();
         }
     }
@@ -132,6 +170,27 @@ public class TabbedPane extends Widget {
             }
             if(tab != null) {
                 tab.doCallback();
+            }
+
+            if(scrollTabs) {
+                int pos, end, size;
+                if(tabPosition.horz) {
+                    pos  = tab.button.getX() - tabBox.getX();
+                    end  = tab.button.getWidth() + pos;
+                    size = tabBoxClip.getWidth();
+                } else {
+                    pos  = tab.button.getY() - tabBox.getY();
+                    end  = tab.button.getHeight() + pos;
+                    size = tabBoxClip.getHeight();
+                }
+                int border = (size + 19) / 20;
+                pos -= border;
+                end += border;
+                if(pos < tabScrollPosition) {
+                    setScrollPos(pos);
+                } else if(end > tabScrollPosition + size) {
+                    setScrollPos(end - size);
+                }
             }
         }
     }
@@ -176,7 +235,15 @@ public class TabbedPane extends Widget {
     public int getMinWidth() {
         int minWidth;
         if(tabPosition.horz) {
-            minWidth = Math.max(container.getMinWidth(), tabBox.getMinWidth());
+            int tabBoxWidth;
+            if(scrollTabs) {
+                tabBoxWidth = tabBox.getBorderHorizontal() +
+                        BoxLayout.computeMinWidthVertical(tabBox) +
+                        scrollControlls.getPreferredWidth();
+            } else {
+                tabBoxWidth = tabBox.getMinWidth();
+            }
+            minWidth = Math.max(container.getMinWidth(), tabBoxWidth);
         } else {
             minWidth = container.getMinWidth() + tabBox.getMinWidth();
         }
@@ -197,7 +264,15 @@ public class TabbedPane extends Widget {
     @Override
     public int getPreferredInnerWidth() {
         if(tabPosition.horz) {
-            return Math.max(container.getPreferredWidth(), tabBox.getPreferredWidth());
+            int tabBoxWidth;
+            if(scrollTabs) {
+                tabBoxWidth = tabBox.getBorderHorizontal() +
+                        BoxLayout.computePreferredWidthVertical(tabBox) +
+                        scrollControlls.getPreferredWidth();
+            } else {
+                tabBoxWidth = tabBox.getPreferredWidth();
+            }
+            return Math.max(container.getPreferredWidth(), tabBoxWidth);
         } else {
             return container.getPreferredWidth() + tabBox.getPreferredWidth();
         }
@@ -214,37 +289,128 @@ public class TabbedPane extends Widget {
 
     @Override
     protected void layout() {
-        tabBox.adjustSize();
+        int scrollCtrlsWidth = 0;
+        int scrollCtrlsHeight = 0;
+        int tabBoxWidth = tabBox.getPreferredWidth();
+        int tabBoxHeight = tabBox.getPreferredHeight();
+
+        if(scrollTabs) {
+            scrollCtrlsWidth = scrollControlls.getPreferredWidth();
+            scrollCtrlsHeight = scrollControlls.getPreferredHeight();
+        }
+
+        if(tabPosition.horz) {
+            tabBoxHeight = Math.max(scrollCtrlsHeight, tabBoxHeight);
+        } else {
+            tabBoxWidth = Math.max(scrollCtrlsWidth, tabBoxWidth);
+        }
+
+        tabBox.setSize(tabBoxWidth, tabBoxHeight);
         
         switch(tabPosition) {
             case TOP:
-                tabBox.setPosition(getInnerX(), getInnerY());
-                container.setSize(getInnerWidth(), getInnerHeight() - tabBox.getHeight());
-                container.setPosition(getInnerX(), tabBox.getBottom());
+                tabBoxClip.setPosition(getInnerX(), getInnerY());
+                tabBoxClip.setSize(getInnerWidth() - scrollCtrlsWidth, tabBoxHeight);
+                container.setSize(getInnerWidth(), getInnerHeight() - tabBoxHeight);
+                container.setPosition(getInnerX(), tabBoxClip.getBottom());
                 break;
 
             case LEFT:
-                tabBox.setPosition(getInnerX(), getInnerY());
-                container.setSize(getInnerWidth() - tabBox.getWidth(), getInnerHeight());
-                container.setPosition(tabBox.getRight(), getInnerY());
+                tabBoxClip.setPosition(getInnerX(), getInnerY());
+                tabBoxClip.setSize(tabBoxWidth, getInnerHeight() - scrollCtrlsHeight);
+                container.setSize(getInnerWidth() - tabBoxWidth, getInnerHeight());
+                container.setPosition(tabBoxClip.getRight(), getInnerY());
                 break;
 
             case RIGHT:
-                tabBox.setPosition(getInnerX() - tabBox.getWidth(), getInnerY());
-                container.setSize(getInnerWidth() - tabBox.getWidth(), getInnerHeight());
+                tabBoxClip.setPosition(getInnerX() - tabBoxWidth, getInnerY());
+                tabBoxClip.setSize(tabBoxWidth, getInnerHeight() - scrollCtrlsHeight);
+                container.setSize(getInnerWidth() - tabBoxWidth, getInnerHeight());
                 container.setPosition(getInnerX(), getInnerY());
                 break;
 
             case BOTTOM:
-                tabBox.setPosition(getInnerX(), getInnerY() - tabBox.getHeight());
-                container.setSize(getInnerWidth(), getInnerHeight() - tabBox.getHeight());
+                tabBoxClip.setPosition(getInnerX(), getInnerY() - tabBoxHeight);
+                tabBoxClip.setSize(getInnerWidth() - scrollCtrlsWidth, tabBoxHeight);
+                container.setSize(getInnerWidth(), getInnerHeight() - tabBoxHeight);
                 container.setPosition(getInnerX(), getInnerY());
                 break;
+        }
+
+        if(scrollControlls != null) {
+            if(tabPosition.horz) {
+                scrollControlls.setPosition(tabBoxClip.getRight(), tabBoxClip.getY());
+                scrollControlls.setSize(scrollCtrlsWidth, tabBoxHeight);
+            } else {
+                scrollControlls.setPosition(tabBoxClip.getX(), tabBoxClip.getBottom());
+                scrollControlls.setSize(tabBoxWidth, scrollCtrlsHeight);
+            }
+            setScrollPos(tabScrollPosition);
+        }
+    }
+
+    private void createScrollControlls() {
+        scrollControlls = new DialogLayout();
+        scrollControlls.setTheme("scrollControls");
+
+        btnScrollLeft = new Button();
+        btnScrollLeft.setTheme("scrollLeft");
+        btnScrollLeft.addCallback(new Runnable() {
+            public void run() {
+                scrollTabs(-1);
+            }
+        });
+
+        btnScrollRight = new Button();
+        btnScrollRight.setTheme("scrollRight");
+        btnScrollRight.addCallback(new Runnable() {
+            public void run() {
+                scrollTabs(+1);
+            }
+        });
+
+        DialogLayout.Group horz = scrollControlls.createSequentialGroup()
+                .addWidget(btnScrollLeft)
+                .addGap("scrollButtons")
+                .addWidget(btnScrollRight);
+
+        DialogLayout.Group vert = scrollControlls.createParallelGroup()
+                .addWidget(btnScrollLeft)
+                .addWidget(btnScrollRight);
+
+        scrollControlls.setHorizontalGroup(horz);
+        scrollControlls.setVerticalGroup(vert);
+
+        super.insertChild(scrollControlls, 2);
+    }
+
+    void scrollTabs(int dir) {
+        dir *= Math.max(1, tabBoxClip.getWidth() / 10);
+        setScrollPos(tabScrollPosition + dir);
+    }
+    
+    private void setScrollPos(int pos) {
+        int maxPos;
+        if(tabPosition.horz) {
+            maxPos = tabBox.getWidth() - tabBoxClip.getWidth();
+        } else {
+            maxPos = tabBox.getHeight() - tabBoxClip.getHeight();
+        }
+        pos = Math.max(0, Math.min(pos, maxPos));
+        tabScrollPosition = pos;
+        if(tabPosition.horz) {
+            tabBox.setPosition(tabBoxClip.getX()-pos, tabBoxClip.getY());
+        } else {
+            tabBox.setPosition(tabBoxClip.getX(), tabBoxClip.getY()-pos);
+        }
+        if(scrollControlls != null) {
+            btnScrollLeft.setEnabled(pos > 0);
+            btnScrollRight.setEnabled(pos < maxPos);
         }
     }
 
     @Override
-    public void insertChild(Widget child, int index) throws IndexOutOfBoundsException {
+    public void insertChild(Widget child, int index) {
         throw new UnsupportedOperationException("use addTab/removeTab");
     }
 
@@ -254,7 +420,7 @@ public class TabbedPane extends Widget {
     }
 
     @Override
-    public Widget removeChild(int index) throws IndexOutOfBoundsException {
+    public Widget removeChild(int index) {
         throw new UnsupportedOperationException("use addTab/removeTab");
     }
 
@@ -331,38 +497,24 @@ public class TabbedPane extends Widget {
     private static class Container extends Widget {
         @Override
         public int getMinWidth() {
-            int minWidth = 0;
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                minWidth = Math.max(minWidth, getChild(i).getMinWidth());
-            }
-            return Math.max(super.getMinWidth(), minWidth + getBorderHorizontal());
+            return Math.max(super.getMinWidth(), getBorderHorizontal() +
+                    BoxLayout.computeMinWidthVertical(this));
         }
 
         @Override
         public int getMinHeight() {
-            int minHeight = 0;
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                minHeight = Math.max(minHeight, getChild(i).getMinHeight());
-            }
-            return Math.max(super.getMinHeight(), minHeight + getBorderVertical());
+            return Math.max(super.getMinHeight(), getBorderVertical() +
+                    BoxLayout.computeMinHeightHorizontal(this));
         }
 
         @Override
         public int getPreferredInnerWidth() {
-            int prefWidth = 0;
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                prefWidth = Math.max(prefWidth, getChild(i).getPreferredWidth());
-            }
-            return prefWidth;
+            return BoxLayout.computePreferredWidthVertical(this);
         }
 
         @Override
         public int getPreferredInnerHeight() {
-            int prefHeight = 0;
-            for(int i=0,n=getNumChildren() ; i<n ; i++) {
-                prefHeight = Math.max(prefHeight, getChild(i).getPreferredHeight());
-            }
-            return prefHeight;
+            return BoxLayout.computePreferredHeightHorizontal(this);
         }
 
         @Override
