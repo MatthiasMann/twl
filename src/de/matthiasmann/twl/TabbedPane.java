@@ -355,19 +355,11 @@ public class TabbedPane extends Widget {
 
         btnScrollLeft = new Button();
         btnScrollLeft.setTheme("scrollLeft");
-        btnScrollLeft.addCallback(new Runnable() {
-            public void run() {
-                scrollTabs(-1);
-            }
-        });
+        btnScrollLeft.addCallback(new CB(-1));
 
         btnScrollRight = new Button();
         btnScrollRight.setTheme("scrollRight");
-        btnScrollRight.addCallback(new Runnable() {
-            public void run() {
-                scrollTabs(+1);
-            }
-        });
+        btnScrollRight.addCallback(new CB(+1));
 
         DialogLayout.Group horz = scrollControlls.createSequentialGroup()
                 .addWidget(btnScrollLeft)
@@ -520,6 +512,18 @@ public class TabbedPane extends Widget {
         @Override
         protected void layout() {
             layoutChildrenFullInnerArea();
+        }
+    }
+
+    private class CB implements Runnable {
+        final int dir;
+
+        public CB(int dir) {
+            this.dir = dir;
+        }
+
+        public void run() {
+            scrollTabs(dir);
         }
     }
 }
