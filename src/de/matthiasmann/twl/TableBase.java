@@ -49,6 +49,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     public interface Callback {
         public void mouseDoubleClicked(int row, int column);
+        public void mouseRightClick(int row, int column, Event evt);
         public void columnHeaderClicked(int column);
     }
     
@@ -1106,6 +1107,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 if(callbacks != null) {
                     for(Callback cb : callbacks) {
                         cb.mouseDoubleClicked(row, column);
+                    }
+                }
+            }
+
+            if(evtType == Event.Type.MOUSE_BTNUP && evt.getMouseButton() == Event.MOUSE_RBUTTON) {
+                if(callbacks != null) {
+                    for(Callback cb : callbacks) {
+                        cb.mouseRightClick(row, column, evt);
                     }
                 }
             }

@@ -222,6 +222,8 @@ public class FileSelector extends DialogLayout {
             public void mouseDoubleClicked(int row, int column) {
                 acceptSelection();
             }
+            public void mouseRightClick(int row, int column, Event evt) {
+            }
             public void columnHeaderClicked(int column) {
             }
         });
