@@ -139,14 +139,47 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         public void updateInfoWindowPosition();
     }
 
+    public interface DragListener {
+        /**
+         * Signals the start of the drag operation
+         *
+         * @param row the row where the drag started
+         * @param col the column where the drag started
+         * @param evt the mouse event which started the drag
+         * @return true if the drag should start, false if it should be canceled
+         */
+        public boolean dragStarted(int row, int col, Event evt);
+
+        /**
+         * Mouse dragging in progress
+         * @param evt the MOUSE_DRAGGED event
+         * @return the mouse cursor to display
+         */
+        public MouseCursor dragged(Event evt);
+
+        /**
+         * Mouse dragging stopped
+         * @param evt the event which stopped the mouse drag
+         */
+        public void dragStopped(Event evt);
+
+        /**
+         * Called when the mouse drag is canceled (eg by pressign ESCAPE)
+         */
+        public void dragCanceled();
+    }
+
     public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
     public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
     public static final String STATE_ROW_SELECTED = "rowSelected";
     public static final String STATE_ROW_HOVER = "rowHover";
+    public static final String STATE_ROW_DROPTARGET = "rowDropTarget";
     public static final String STATE_LEAD_ROW = "leadRow";
     public static final String STATE_SELECTED = "selected";
     public static final String STATE_SORT_ASCENDING  = "sortAscending";
     public static final String STATE_SORT_DESCENDING = "sortDescending";
+    public static final String STATE_AUTO_SCROLL_UP = "autoScrollUp";
+    public static final String STATE_AUTO_SCROLL_DOWN = "autoScrollDown";
 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
@@ -162,16 +195,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected ColumnHeader[] columnHeaders;
     protected TableSelectionManager selectionManager;
     protected KeyboardSearchHandler keyboardSearchHandler;
+    protected DragListener dragListener;
     protected Callback[] callbacks;
 
     protected Image imageColumnDivider;
     protected Image imageRowBackground;
     protected Image imageRowOverlay;
+    protected Image imageRowDropMarker;
     protected ThemeInfo tableBaseThemeInfo;
     protected int columnHeaderHeight;
     protected int columnDividerDragableDistance;
     protected MouseCursor columnResizeCursor;
     protected MouseCursor normalCursor;
+    protected MouseCursor dragNotPossibleCursor;
 
     protected int numRows;
     protected int numColumns;
@@ -191,6 +227,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected boolean firstRowPartialVisible;
     protected boolean lastRowPartialVisible;
 
+    protected int dropMarkerRow = -1;
+    protected boolean dropMarkerBeforeRow;
+    
     protected static final int LAST_MOUSE_Y_OUTSIDE = Integer.MIN_VALUE;
     
     protected int lastMouseY = LAST_MOUSE_Y_OUTSIDE;
@@ -236,6 +275,63 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     public void setKeyboardSearchHandler(KeyboardSearchHandler keyboardSearchHandler) {
         this.keyboardSearchHandler = keyboardSearchHandler;
+    }
+
+    public DragListener getDragListener() {
+        return dragListener;
+    }
+
+    public void setDragListener(DragListener dragListener) {
+        cancelDragging();
+        this.dragListener = dragListener;
+    }
+
+    public boolean isDropMarkerBeforeRow() {
+        return dropMarkerBeforeRow;
+    }
+
+    public int getDropMarkerRow() {
+        return dropMarkerRow;
+    }
+    
+    public void setDropMarker(int row, boolean beforeRow) {
+        if(row < 0 || row > numRows) {
+            throw new IllegalArgumentException("row");
+        }
+        if(row == numRows && !beforeRow) {
+            throw new IllegalArgumentException("row");
+        }
+        dropMarkerRow = row;
+        dropMarkerBeforeRow = beforeRow;
+    }
+
+    public boolean setDropMarker(Event evt) {
+        int mouseY = evt.getMouseY();
+        if(isMouseInside(evt) && !isMouseInColumnHeader(mouseY)) {
+            mouseY -= getOffsetY();
+            int row = getRowFromPosition(mouseY);
+            if(row >= 0 && row < numRows) {
+                int rowStart = getRowStartPosition(row);
+                int rowEnd = getRowEndPosition(row);
+                int margin = (rowEnd - rowStart + 4) / 5;
+                if((mouseY - rowStart) < margin) {
+                    setDropMarker(row, true);
+                } else if((rowEnd - mouseY) < margin) {
+                    setDropMarker(row+1, true);
+                } else {
+                    setDropMarker(row, false);
+                }
+                return true;
+            } else if(row == numRows) {
+                setDropMarker(row, true);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void clearDropMarker() {
+        dropMarkerRow = -1;
     }
 
     public void addCallback(Callback callback) {
@@ -391,7 +487,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
 
     @Override
     public int getPreferredInnerHeight() {
-        return columnHeaderHeight + 
+        return columnHeaderHeight + 1 + // +1 for drop marker
                 ((numRows > 0) ? getRowEndPosition(numRows-1) : 0);
     }
 
@@ -482,6 +578,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         this.imageColumnDivider = themeInfo.getImage("columnDivider");
         this.imageRowBackground = themeInfo.getImage("row.background");
         this.imageRowOverlay = themeInfo.getImage("row.overlay");
+        this.imageRowDropMarker = themeInfo.getImage("row.dropmarker");
         this.rowHeight = themeInfo.getParameter("rowHeight", 32);
         this.defaultColumnWidth = themeInfo.getParameter("columnHeaderWidth", 256);
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
@@ -498,6 +595,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     protected void applyThemeMouseCursor(ThemeInfo themeInfo) {
         this.columnResizeCursor = themeInfo.getMouseCursor("columnResizeCursor");
         this.normalCursor = themeInfo.getMouseCursor("mouseCursor");
+        this.dragNotPossibleCursor = themeInfo.getMouseCursor("dragNotPossibleCursor");
     }
     
     protected void applyCellRendererTheme(CellRenderer cellRenderer) {
@@ -724,6 +822,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             if(imageRowOverlay != null) {
                 paintRowImage(imageRowOverlay, leadRow);
             }
+
+            if(dropMarkerRow >= 0 && dropMarkerBeforeRow && imageRowDropMarker != null) {
+                int y = (rowModel != null) ? rowModel.getPosition(dropMarkerRow) : (dropMarkerRow * rowHeight);
+                imageRowDropMarker.draw(animState, getOffsetX(), getOffsetY() + y, columnModel.getEndPosition(), 1);
+            }
         } finally {
             gui.clipLeave();
         }
@@ -742,8 +845,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             final int curY = offsetY + rowStartPos;
 
             animState.setAnimationState(STATE_ROW_SELECTED, isRowSelected(row));
-            animState.setAnimationState(STATE_ROW_HOVER, lastMouseY >= curY && lastMouseY < (curY + curRowHeight));
+            animState.setAnimationState(STATE_ROW_HOVER, dragActive == DRAG_INACTIVE &&
+                    lastMouseY >= curY && lastMouseY < (curY + curRowHeight));
             animState.setAnimationState(STATE_LEAD_ROW, row == leadRow);
+            animState.setAnimationState(STATE_ROW_DROPTARGET, !dropMarkerBeforeRow && row == dropMarkerRow);
             img.draw(animState, x, curY, width, curRowHeight);
 
             rowStartPos = rowEndPos;
@@ -1023,10 +1128,24 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
         return true;
     }
 
-    protected boolean dragActive;
+    protected static final int DRAG_INACTIVE      = 0;
+    protected static final int DRAG_COLUMN_HEADER = 1;
+    protected static final int DRAG_USER          = 2;
+    protected static final int DRAG_IGNORE        = 3;
+
+    protected int dragActive;
     protected int dragColumn;
     protected int dragStartX;
     protected int dragStartSumWidth;
+
+    protected void cancelDragging() {
+        if(dragActive == DRAG_USER) {
+            if(dragListener != null) {
+                dragListener.dragCanceled();
+            }
+            dragActive = DRAG_IGNORE;
+        }
+    }
 
     protected boolean handleMouseEvent(Event evt) {
         final Event.Type evtType = evt.getType();
@@ -1039,23 +1158,40 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
             lastMouseY = evt.getMouseY();
         }
 
-        if(dragActive) {
-            final int innerWidth = getInnerWidth();
-            if(dragColumn >= 0 && innerWidth > 0) {
-                int newWidth = clampColumnWidth(evt.getMouseX() - dragStartX);
-                if(isFixedWidthMode()) {
-                    assert dragColumn+1 < numColumns;
-                    newWidth = Math.min(newWidth, dragStartSumWidth - 2*columnDividerDragableDistance);
-                    columnHeaders[dragColumn  ].setColumnWidth(newWidth);
-                    columnHeaders[dragColumn+1].setColumnWidth(dragStartSumWidth - newWidth);
-                    updateAllColumnWidth = true;
-                    invalidateLayout();
-                } else {
-                    setColumnWidth(dragColumn, newWidth);
+        if(dragActive != DRAG_INACTIVE) {
+            switch(dragActive) {
+                case DRAG_COLUMN_HEADER: {
+                    final int innerWidth = getInnerWidth();
+                    if(dragColumn >= 0 && innerWidth > 0) {
+                        int newWidth = clampColumnWidth(evt.getMouseX() - dragStartX);
+                        if(isFixedWidthMode()) {
+                            assert dragColumn+1 < numColumns;
+                            newWidth = Math.min(newWidth, dragStartSumWidth - 2*columnDividerDragableDistance);
+                            columnHeaders[dragColumn  ].setColumnWidth(newWidth);
+                            columnHeaders[dragColumn+1].setColumnWidth(dragStartSumWidth - newWidth);
+                            updateAllColumnWidth = true;
+                            invalidateLayout();
+                        } else {
+                            setColumnWidth(dragColumn, newWidth);
+                        }
+                    }
+                    break;
                 }
+                case DRAG_USER: {
+                    setMouseCursor(dragListener.dragged(evt));
+                    if(evt.isMouseDragEnd()) {
+                        dragListener.dragStopped(evt);
+                    }
+                    break;
+                }
+                case DRAG_IGNORE:
+                    break;
+                default:
+                    throw new AssertionError();
             }
             if(evt.isMouseDragEnd()) {
-                dragActive = false;
+                dragActive = DRAG_INACTIVE;
+                setMouseCursor(normalCursor);
             }
             return true;
         }
@@ -1086,7 +1222,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                     }
                 }
 
-                dragActive = evt.isMouseDragEvent();
+                if(evt.isMouseDragEvent()) {
+                    dragActive = DRAG_COLUMN_HEADER;
+                }
                 return true;
             }
         } else {
@@ -1097,6 +1235,17 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 lastMouseRow = row;
                 lastMouseColumn = column;
                 updateTooltip();
+            }
+
+            if(evt.isMouseDragEvent()) {
+                if(dragListener != null && dragListener.dragStarted(row, row, evt)) {
+                    setMouseCursor(dragListener.dragged(evt));
+                    dragActive = DRAG_USER;
+                } else {
+                    dragActive = DRAG_IGNORE;
+                    setMouseCursor(dragNotPossibleCursor);
+                }
+                return true;
             }
 
             if(selectionManager != null) {
