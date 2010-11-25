@@ -1324,6 +1324,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             removeColumnHeaders(0, columnHeaders.length);
         }
 
+        dropMarkerRow = -1;
         columnHeaders = new ColumnHeader[numColumns];
         for(int i=0 ; i<numColumns ; i++) {
             columnHeaders[i] = createColumnHeader(i);
@@ -1382,6 +1383,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         if(rowModel != null) {
             rowModel.insert(row, count);
         }
+        if(dropMarkerRow > row || (dropMarkerRow == row && dropMarkerBeforeRow)) {
+            dropMarkerRow += count;
+        }
         if(!widgetGrid.isEmpty() || hasCellWidgetCreators) {
             removeAllCellWidgets();
             widgetGrid.insertRows(row, count);
@@ -1417,6 +1421,13 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         }
         if(rowModel != null) {
             rowModel.remove(row, count);
+        }
+        if(dropMarkerRow >= row) {
+            if(dropMarkerRow < (row + count)) {
+                dropMarkerRow = -1;
+            } else {
+                dropMarkerRow -= count;
+            }
         }
         if(!widgetGrid.isEmpty()) {
             widgetGrid.iterate(row, 0, row+count-1, numColumns, removeCellWidgetsFunction);
