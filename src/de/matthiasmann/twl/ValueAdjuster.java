@@ -171,6 +171,8 @@ public abstract class ValueAdjuster extends Widget {
             onEditCanceled();
             label.setVisible(true);
             editField.setVisible(false);
+            label.getAnimationState().setAnimationState(Label.STATE_HOVER,
+                    editField.getAnimationState().getAnimationState(Label.STATE_HOVER));
         }
     }
 
