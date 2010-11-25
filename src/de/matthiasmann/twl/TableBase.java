@@ -311,7 +311,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             if(row >= 0 && row < numRows) {
                 int rowStart = getRowStartPosition(row);
                 int rowEnd = getRowEndPosition(row);
-                int margin = (rowEnd - rowStart + 4) / 5;
+                int margin = (rowEnd - rowStart + 2) / 4;
                 if((mouseY - rowStart) < margin) {
                     setDropMarker(row, true);
                 } else if((rowEnd - mouseY) < margin) {
