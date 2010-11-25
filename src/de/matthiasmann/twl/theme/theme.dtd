@@ -174,6 +174,8 @@
 <!ELEMENT image (#PCDATA)>
 <!ELEMENT list (color|enum|string|font|int|float|bool|dimension|gap|size|constant|image|cursor|list|map)*>
 <!ELEMENT map (param)*>
+<!ATTLIST map
+    ref             CDATA #IMPLIED>
 
 <!ELEMENT constantDef (color|enum|string|font|int|float|bool|dimension|constant|list|map)>
 <!ATTLIST constantDef
@@ -184,6 +186,11 @@
     name            CDATA #IMPLIED
     default         (true|false) #IMPLIED
     filename        CDATA #IMPLIED
+    offsetX         CDATA #IMPLIED
+    offsetY         CDATA #IMPLIED
+    underlineOffset CDATA #IMPLIED
+    underline       (true|false) #IMPLIED
+    linethrough     (true|false) #IMPLIED
     color           CDATA #IMPLIED>
 
 <!ELEMENT inputMapDef (action)*>
@@ -198,4 +205,10 @@
 <!ELEMENT fontParam EMPTY>
 <!ATTLIST fontParam
     if              CDATA #IMPLIED
-    unless          CDATA #IMPLIED>
+    unless          CDATA #IMPLIED
+    offsetX         CDATA #IMPLIED
+    offsetY         CDATA #IMPLIED
+    underlineOffset CDATA #IMPLIED
+    underline       (true|false) #IMPLIED
+    linethrough     (true|false) #IMPLIED
+    color           CDATA #IMPLIED>
