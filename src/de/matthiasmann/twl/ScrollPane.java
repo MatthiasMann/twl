@@ -39,6 +39,8 @@ public class ScrollPane extends Widget {
     public static final String STATE_RIGHTARROW_ARMED = "rightArrowArmed";
     public static final String STATE_HORIZONTAL_SCROLLBAR_VISIBLE = "horizontalScrollbarVisible";
     public static final String STATE_VERTICAL_SCROLLBAR_VISIBLE = "verticalScrollbarVisible";
+    public static final String STATE_AUTO_SCROLL_UP = "autoScrollUp";
+    public static final String STATE_AUTO_SCROLL_DOWN = "autoScrollDown";
 
     public enum Fixed {
         NONE,
@@ -49,7 +51,12 @@ public class ScrollPane extends Widget {
     public interface Scrollable {
         public void setScrollPosition(int scrollPosX, int scrollPosY);
     }
-    
+    public interface AutoScrollable {
+        public int getAutoScrollDirection(Event evt, int autoScrollArea);
+    }
+
+    private static final int AUTO_SCROLL_DELAY = 50;
+
     final Scrollbar scrollbarH;
     final Scrollbar scrollbarV;
     private final Widget contentArea;
@@ -62,11 +69,16 @@ public class ScrollPane extends Widget {
     private boolean inLayout;
     private boolean expandContentSize;
     private int scrollbarsToggleFlags;
+    private int autoScrollArea;
+    private int autoScrollSpeed;
+    private Timer autoScrollTimer;
+    private int autoScrollDirection;
 
     public ScrollPane() {
         this(null);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public ScrollPane(Widget content) {
         this.scrollbarH = new Scrollbar(Scrollbar.Orientation.HORIZONTAL);
         this.scrollbarV = new Scrollbar(Scrollbar.Orientation.VERTICAL);
@@ -211,6 +223,48 @@ public class ScrollPane extends Widget {
         };
     }
 
+    public boolean checkAutoScroll(Event evt) {
+        GUI gui = getGUI();
+        if(gui == null) {
+            stopAutoScroll();
+            return false;
+        }
+
+       autoScrollDirection = getAutoScrollDirection(evt);
+       if(autoScrollDirection == 0) {
+           stopAutoScroll();
+           return false;
+       }
+
+        AnimationState animationState = getAnimationState();
+        animationState.setAnimationState(STATE_AUTO_SCROLL_UP,   autoScrollDirection < 0);
+        animationState.setAnimationState(STATE_AUTO_SCROLL_DOWN, autoScrollDirection > 0);
+
+        if(autoScrollTimer == null) {
+            autoScrollTimer = gui.createTimer();
+            autoScrollTimer.setContinuous(true);
+            autoScrollTimer.setDelay(AUTO_SCROLL_DELAY);
+            autoScrollTimer.setCallback(new Runnable() {
+                public void run() {
+                    doAutoScroll();
+                }
+            });
+            doAutoScroll();
+        }
+        autoScrollTimer.start();
+        return true;
+    }
+
+    public void stopAutoScroll() {
+        if(autoScrollTimer != null) {
+            autoScrollTimer.stop();
+        }
+        autoScrollDirection = 0;
+        AnimationState animationState = getAnimationState();
+        animationState.setAnimationState(STATE_AUTO_SCROLL_UP, false);
+        animationState.setAnimationState(STATE_AUTO_SCROLL_DOWN, false);
+    }
+
     public static ScrollPane getContainingScrollPane(Widget widget) {
         Widget ca = widget.getParent();
         if(ca != null) {
@@ -310,6 +364,8 @@ public class ScrollPane extends Widget {
     }
 
     protected void applyThemeScrollPane(ThemeInfo themeInfo) {
+        autoScrollArea = themeInfo.getParameter("autoScrollArea", 5);
+        autoScrollSpeed = themeInfo.getParameter("autoScrollSpeed", autoScrollArea * 2);
         hscrollbarOffset = themeInfo.getParameterValue("hscrollbarOffset", false, Dimension.class, Dimension.ZERO);
         vscrollbarOffset = themeInfo.getParameterValue("vscrollbarOffset", false, Dimension.class, Dimension.ZERO);
         contentScrollbarSpacing = themeInfo.getParameterValue("contentScrollbarSpacing", false, Dimension.class, Dimension.ZERO);
@@ -338,6 +394,26 @@ public class ScrollPane extends Widget {
             super.removeChild(3);
             dragButton = null;
         }
+    }
+
+    protected int getAutoScrollDirection(Event evt) {
+        if(content instanceof AutoScrollable) {
+            return ((AutoScrollable)content).getAutoScrollDirection(evt, autoScrollArea);
+        }
+        if(contentArea.isMouseInside(evt)) {
+            int mouseY = evt.getMouseY();
+            int areaY = contentArea.getY();
+            if((mouseY - areaY) <= autoScrollArea ||
+                    (contentArea.getBottom() - mouseY) <= autoScrollArea) {
+                // use a 2nd check to decide direction in case the autoScrollAreas overlap
+                if(mouseY < (areaY + contentArea.getHeight()/2)) {
+                    return -1;
+                } else {
+                    return +1;
+                }
+            }
+        }
+        return 0;
     }
 
     @Override
@@ -551,5 +627,9 @@ public class ScrollPane extends Widget {
                     contentArea.getX()-scrollbarH.getValue(),
                     contentArea.getY()-scrollbarV.getValue());
        }
+    }
+
+    void doAutoScroll() {
+        scrollbarV.setValue(scrollbarV.getValue() + autoScrollDirection * autoScrollSpeed);
     }
 }

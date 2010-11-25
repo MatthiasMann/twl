@@ -45,7 +45,7 @@ import de.matthiasmann.twl.utils.TypeMapping;
  * 
  * @author Matthias Mann
  */
-public abstract class TableBase extends Widget implements ScrollPane.Scrollable {
+public abstract class TableBase extends Widget implements ScrollPane.Scrollable, ScrollPane.AutoScrollable {
 
     public interface Callback {
         public void mouseDoubleClicked(int row, int column);
@@ -178,8 +178,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
     public static final String STATE_SELECTED = "selected";
     public static final String STATE_SORT_ASCENDING  = "sortAscending";
     public static final String STATE_SORT_DESCENDING = "sortDescending";
-    public static final String STATE_AUTO_SCROLL_UP = "autoScrollUp";
-    public static final String STATE_AUTO_SCROLL_DOWN = "autoScrollDown";
 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
@@ -530,6 +528,24 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable 
                 scrollPane.setScrollPositionY(pos);
             }
         }
+    }
+
+    public int getAutoScrollDirection(Event evt, int autoScrollArea) {
+        int areaY = getInnerY() + columnHeaderHeight;
+        int areaHeight = getInnerHeight() - columnHeaderHeight;
+        int mouseY = evt.getMouseY();
+        if(mouseY >= areaY && mouseY < (areaY + areaHeight)) {
+            mouseY -= areaY;
+            if((mouseY <= autoScrollArea) || (areaHeight - mouseY) <= autoScrollArea) {
+                // do a 2nd check in case the auto scroll areas overlap
+                if(mouseY < areaHeight/2) {
+                    return -1;
+                } else {
+                    return +1;
+                }
+            }
+        }
+        return 0;
     }
 
     public boolean isFixedWidthMode() {
