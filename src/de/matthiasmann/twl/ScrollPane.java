@@ -230,15 +230,13 @@ public class ScrollPane extends Widget {
             return false;
         }
 
-       autoScrollDirection = getAutoScrollDirection(evt);
-       if(autoScrollDirection == 0) {
-           stopAutoScroll();
-           return false;
-       }
+        autoScrollDirection = getAutoScrollDirection(evt);
+        if(autoScrollDirection == 0) {
+            stopAutoScroll();
+            return false;
+        }
 
-        AnimationState animationState = getAnimationState();
-        animationState.setAnimationState(STATE_AUTO_SCROLL_UP,   autoScrollDirection < 0);
-        animationState.setAnimationState(STATE_AUTO_SCROLL_DOWN, autoScrollDirection > 0);
+        setAutoScrollMarker();
 
         if(autoScrollTimer == null) {
             autoScrollTimer = gui.createTimer();
@@ -260,9 +258,7 @@ public class ScrollPane extends Widget {
             autoScrollTimer.stop();
         }
         autoScrollDirection = 0;
-        AnimationState animationState = getAnimationState();
-        animationState.setAnimationState(STATE_AUTO_SCROLL_UP, false);
-        animationState.setAnimationState(STATE_AUTO_SCROLL_DOWN, false);
+        setAutoScrollMarker();
     }
 
     public static ScrollPane getContainingScrollPane(Widget widget) {
@@ -629,7 +625,15 @@ public class ScrollPane extends Widget {
        }
     }
 
+    void setAutoScrollMarker() {
+        int scrollPos = scrollbarV.getValue();
+        AnimationState animationState = getAnimationState();
+        animationState.setAnimationState(STATE_AUTO_SCROLL_UP,   autoScrollDirection < 0 && scrollPos > 0);
+        animationState.setAnimationState(STATE_AUTO_SCROLL_DOWN, autoScrollDirection > 0 && scrollPos < scrollbarV.getMaxValue());
+    }
+
     void doAutoScroll() {
         scrollbarV.setValue(scrollbarV.getValue() + autoScrollDirection * autoScrollSpeed);
+        setAutoScrollMarker();
     }
 }
