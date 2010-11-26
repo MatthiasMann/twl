@@ -352,6 +352,14 @@ public final class Event {
     }
 
     /**
+     * Returns true for the KEY_PRESSED event type.
+     * @return true if this is key pressed event.
+     */
+    public final boolean isKeyPressedEvent() {
+        return type == Type.KEY_PRESSED;
+    }
+
+    /**
      * Returns true if this event is part of a drag operation
      * @return true if this event is part of a drag operation
      */

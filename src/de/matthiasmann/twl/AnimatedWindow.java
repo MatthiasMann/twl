@@ -134,7 +134,7 @@ public class AnimatedWindow extends Widget {
             if(super.handleEvent(evt)) {
                 return true;
             }
-            if(evt.getType() == Event.Type.KEY_PRESSED) {
+            if(evt.isKeyPressedEvent()) {
                 switch (evt.getKeyCode()) {
                 case Event.KEY_ESCAPE:
                     setState(false);

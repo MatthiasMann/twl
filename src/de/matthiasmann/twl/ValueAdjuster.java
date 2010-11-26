@@ -323,7 +323,7 @@ public abstract class ValueAdjuster extends Widget {
     @Override
     protected boolean handleEvent(Event evt) {
         if(evt.isKeyEvent()) {
-            if(evt.getType() == Event.Type.KEY_PRESSED && evt.getKeyCode() == Event.KEY_ESCAPE && listeners.dragActive) {
+            if(evt.isKeyPressedEvent() && evt.getKeyCode() == Event.KEY_ESCAPE && listeners.dragActive) {
                 listeners.dragActive = false;
                 onDragCancelled();
                 return true;

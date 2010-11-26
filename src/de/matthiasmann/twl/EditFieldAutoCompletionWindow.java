@@ -255,7 +255,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
     protected boolean handleEvent(Event evt) {
         if(evt.isKeyEvent()) {
             if(captureKeys) {
-                if(evt.getType() == Event.Type.KEY_PRESSED) {
+                if(evt.isKeyPressedEvent()) {
                     switch (evt.getKeyCode()) {
                         case Event.KEY_RETURN:
                             return acceptAutoCompletion();

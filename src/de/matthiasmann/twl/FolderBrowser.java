@@ -192,7 +192,7 @@ public class FolderBrowser extends Widget {
     
     @Override
     public boolean handleEvent(Event evt) {
-        if(evt.getType() == Event.Type.KEY_PRESSED) {
+        if(evt.isKeyPressedEvent()) {
             switch (evt.getKeyCode()) {
             case Event.KEY_BACK:
                 goToParentFolder();

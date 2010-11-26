@@ -204,7 +204,7 @@ public class ComboBox<T> extends ComboBoxBase {
         if(super.handleEvent(evt)) {
             return true;
         }
-        if(evt.getType() == Event.Type.KEY_PRESSED) {
+        if(evt.isKeyPressedEvent()) {
             switch (evt.getKeyCode()) {
             case Event.KEY_UP:
             case Event.KEY_DOWN:

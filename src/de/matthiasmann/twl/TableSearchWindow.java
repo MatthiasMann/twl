@@ -109,7 +109,7 @@ public class TableSearchWindow extends InfoWindow implements TableBase.KeyboardS
             return false;
         }
         
-        if(evt.getType() == Event.Type.KEY_PRESSED) {
+        if(evt.isKeyPressedEvent()) {
             switch (evt.getKeyCode()) {
                 case Event.KEY_ESCAPE:
                     if(isOpen()) {

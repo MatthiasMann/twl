@@ -2401,7 +2401,7 @@ public class Widget {
     }
 
     private void handleFocusKeyEvent(Event evt) {
-        if(evt.getType() == Event.Type.KEY_PRESSED) {
+        if(evt.isKeyPressedEvent()) {
             if((evt.getModifiers() & Event.MODIFIER_SHIFT) != 0) {
                 focusPrevChild();
             } else {

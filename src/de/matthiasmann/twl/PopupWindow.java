@@ -209,7 +209,7 @@ public class PopupWindow extends Widget {
             return true;
         }
         if(closeOnEscape &&
-                evt.getType() == Event.Type.KEY_PRESSED &&
+                evt.isKeyPressedEvent() &&
                 evt.getKeyCode() == Event.KEY_ESCAPE) {
             requestPopupClose();
             return true;
