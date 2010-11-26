@@ -1105,6 +1105,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
 
     @Override
     protected boolean handleEvent(Event evt) {
+        if(dragActive != DRAG_INACTIVE) {
+            return handleDragEvent(evt);
+        }
+
         if(evt.isKeyEvent() &&
                 keyboardSearchHandler != null &&
                 keyboardSearchHandler.isActive() &&
@@ -1152,6 +1156,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     protected int dragActive;
     protected int dragColumn;
     protected int dragStartX;
+    protected int dragStartColWidth;
     protected int dragStartSumWidth;
 
     protected void cancelDragging() {
@@ -1161,6 +1166,27 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             }
             dragActive = DRAG_IGNORE;
         }
+    }
+
+    protected boolean handleDragEvent(Event evt) {
+        if(evt.isMouseEvent()) {
+            return handleMouseEvent(evt);
+        }
+
+        if(evt.isKeyPressedEvent() && evt.getKeyCode() == Event.KEY_ESCAPE) {
+            switch(dragActive) {
+                case DRAG_USER:
+                    cancelDragging();
+                    break;
+                case DRAG_COLUMN_HEADER:
+                    columnHeaderDragged(dragStartColWidth);
+                    dragActive = DRAG_IGNORE;
+                    break;
+            }
+            setMouseCursor(normalCursor);
+        }
+
+        return true;
     }
 
     protected boolean handleMouseEvent(Event evt) {
@@ -1180,16 +1206,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                     final int innerWidth = getInnerWidth();
                     if(dragColumn >= 0 && innerWidth > 0) {
                         int newWidth = clampColumnWidth(evt.getMouseX() - dragStartX);
-                        if(isFixedWidthMode()) {
-                            assert dragColumn+1 < numColumns;
-                            newWidth = Math.min(newWidth, dragStartSumWidth - 2*columnDividerDragableDistance);
-                            columnHeaders[dragColumn  ].setColumnWidth(newWidth);
-                            columnHeaders[dragColumn+1].setColumnWidth(dragStartSumWidth - newWidth);
-                            updateAllColumnWidth = true;
-                            invalidateLayout();
-                        } else {
-                            setColumnWidth(dragColumn, newWidth);
-                        }
+                        columnHeaderDragged(newWidth);
                     }
                     break;
                 }
@@ -1227,14 +1244,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 setMouseCursor(columnResizeCursor);
 
                 if(evtType == Event.Type.MOUSE_BTNDOWN) {
-                    int columnWidth = getColumnWidth(column);
+                    dragStartColWidth = getColumnWidth(column);
                     dragColumn = column;
-                    dragStartX = evt.getMouseX() - columnWidth;
+                    dragStartX = evt.getMouseX() - dragStartColWidth;
                     if(fixedWidthMode) {
                         for(int i=0 ; i<numColumns ; ++i) {
                             columnHeaders[i].setColumnWidth(getColumnWidth(i));
                         }
-                        dragStartSumWidth = columnWidth + getColumnWidth(column+1);
+                        dragStartSumWidth = dragStartColWidth + getColumnWidth(column+1);
                     }
                 }
 
@@ -1289,6 +1306,19 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
 
         // let ScrollPane handle mouse wheel
         return evtType != Event.Type.MOUSE_WHEEL;
+    }
+
+    private void columnHeaderDragged(int newWidth) {
+        if(isFixedWidthMode()) {
+            assert dragColumn+1 < numColumns;
+            newWidth = Math.min(newWidth, dragStartSumWidth - 2*columnDividerDragableDistance);
+            columnHeaders[dragColumn  ].setColumnWidth(newWidth);
+            columnHeaders[dragColumn+1].setColumnWidth(dragStartSumWidth - newWidth);
+            updateAllColumnWidth = true;
+            invalidateLayout();
+        } else {
+            setColumnWidth(dragColumn, newWidth);
+        }
     }
 
     protected void columnHeaderClicked(int column) {
