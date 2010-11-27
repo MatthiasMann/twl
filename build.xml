@@ -75,6 +75,25 @@
         </exec>
     </target>
 
+    <target name="make-android-jar" depends="init,compile">
+        <property name="build.classes-beans.dir" value="${build.dir}/classes-beans"/>
+        <property name="src.src-beans.dir" value="src-beans"/>
+
+        <mkdir dir="${build.classes-beans.dir}"/>
+        <javac encoding="${source.encoding}" debug="false"
+            classpath="${build.classes.dir}"
+            srcdir="${src.src-beans.dir}"
+            destdir="${build.classes-beans.dir}"/>
+
+        <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${libs.JarJar.classpath}"/>
+        <jarjar jarfile="${dist.dir}/TWL-android.jar" manifest="${manifest.file}">
+            <fileset dir="${build.classes.dir}"/>
+            <fileset dir="${build.classes-beans.dir}"/>
+            <rule pattern="java.beans.**" result="de.matthiasmann.twlbeans.@1"/>
+            <zap pattern="de.matthiasmann.twl.**.lwjgl.**"/>
+        </jarjar>
+    </target>
+
     <target name="build-src-zip">
         <mkdir dir="${dist.dir}"/>
         <zip zipfile="${dist.dir}/twl-src.zip" basedir="src"/>
