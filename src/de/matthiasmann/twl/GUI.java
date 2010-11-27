@@ -603,6 +603,11 @@ public final class GUI extends Widget {
                     Math.abs(mouseY - mouseDownY) > DRAG_DIST) {
                     dragActive = true;
                     mouseClickCount = 0;
+                    // close the tooltip - it may interface with dragging
+                    hideTooltip();
+                    // grab the tooltip to prevent it from poping up while dragging
+                    // the widget can still request a tooltip update
+                    tooltipOwner = lastMouseDownWidget;
                 }
             }
             
