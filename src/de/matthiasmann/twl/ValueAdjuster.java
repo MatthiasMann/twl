@@ -164,6 +164,7 @@ public abstract class ValueAdjuster extends Widget {
             editField.setVisible(true);
             editField.requestKeyboardFocus();
             editField.selectAll();
+            editField.getAnimationState().setAnimationState(EditField.STATE_HOVER, label.getModel().isHover());
             label.setVisible(false);
             getAnimationState().setAnimationState(STATE_EDIT_ACTIVE, true);
         }
