@@ -57,16 +57,19 @@ public class Widget {
     public static final String STATE_DISABLED = "disabled";
     
     private static final int FOCUS_KEY = Event.KEY_TAB;
+
+    private static final int LAYOUT_INVALID_LOCAL  = 1;
+    private static final int LAYOUT_INVALID_GLOBAL = 3;
     
     private Widget parent;
     private int posX;
     private int posY;
     private int width;
     private int height;
+    private int layoutInvalid;
     private boolean clip;
     private boolean visible = true;
     private boolean hasOpenPopup;
-    private boolean layoutInvalid;
     private boolean enabled = true;
     private boolean locallyEnabled = true;
     private String theme;
@@ -875,9 +878,10 @@ public class Widget {
      * @see #borderChanged()
      */
     public void invalidateLayout() {
-        if(!layoutInvalid) {
+        if(layoutInvalid < LAYOUT_INVALID_GLOBAL) {
             invalidateLayoutLocally();
             if(parent != null) {
+                layoutInvalid = LAYOUT_INVALID_GLOBAL;
                 parent.childInvalidateLayout(this);
             }
         }
@@ -889,11 +893,11 @@ public class Widget {
      * @see #layout()
      */
     public void validateLayout() {
-        if(layoutInvalid) {
+        if(layoutInvalid != 0) {
             /* Reset the flag first so that widgets like TextArea can invalidate
              * their layout from inside layout()
              */
-            layoutInvalid = false;
+            layoutInvalid = 0;
             layout();
         }
         if(children != null) {
@@ -1873,8 +1877,8 @@ public class Widget {
      * @see #sizeChanged()
      */
     protected final void invalidateLayoutLocally() {
-        if(!layoutInvalid) {
-            layoutInvalid = true;
+        if(layoutInvalid < LAYOUT_INVALID_LOCAL) {
+            layoutInvalid = LAYOUT_INVALID_LOCAL;
             GUI gui = getGUI();
             if(gui != null) {
                 gui.hasInvalidLayouts = true;
@@ -2061,7 +2065,7 @@ public class Widget {
     }
 
     private void recursivelyAddToGUI(GUI gui) {
-        if(layoutInvalid) {
+        if(layoutInvalid != 0) {
             gui.hasInvalidLayouts = true;
         }
         if(!sharedAnimState) {
@@ -2428,7 +2432,7 @@ public class Widget {
     }
 
     void collectLayoutLoop(ArrayList<Widget> result) {
-        if(layoutInvalid) {
+        if(layoutInvalid != 0) {
             result.add(this);
         }
         if(children != null) {
