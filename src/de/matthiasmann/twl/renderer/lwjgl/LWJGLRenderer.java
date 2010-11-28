@@ -386,6 +386,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         tintStack = tintStack.pop();
     }
 
+    /**
+     * Calls GL11.glColor4f() with the specified color multiplied by the current global tint color.
+     *
+     * @param color the color to set
+     */
+    public void setColor(Color color) {
+        tintStack.setColor(color);
+    }
+
     public void drawLine(float[] pts, int numPts, float width, Color color, boolean drawAsLoop) {
         if(numPts*2 > pts.length) {
             throw new ArrayIndexOutOfBoundsException(numPts*2);
