@@ -42,6 +42,8 @@ package de.matthiasmann.twl;
  */
 public abstract class ValueAdjuster extends Widget {
 
+    public static final String STATE_EDIT_ACTIVE = "editActive";
+
     private static final int INITIAL_DELAY = 300;
     private static final int REPEAT_DELAY = 75;
     
@@ -163,6 +165,7 @@ public abstract class ValueAdjuster extends Widget {
             editField.requestKeyboardFocus();
             editField.selectAll();
             label.setVisible(false);
+            getAnimationState().setAnimationState(STATE_EDIT_ACTIVE, true);
         }
     }
     
@@ -171,8 +174,8 @@ public abstract class ValueAdjuster extends Widget {
             onEditCanceled();
             label.setVisible(true);
             editField.setVisible(false);
-            label.getAnimationState().setAnimationState(Label.STATE_HOVER,
-                    editField.getAnimationState().getAnimationState(Label.STATE_HOVER));
+            label.getModel().setHover(editField.getAnimationState().getAnimationState(Label.STATE_HOVER));
+            getAnimationState().setAnimationState(STATE_EDIT_ACTIVE, false);
         }
     }
 
