@@ -1378,7 +1378,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         for(int col=0 ; col<numColumns ; col++) {
             updateCellWidget(row, col);
         }
-        invalidateLayout();
+        invalidateLayoutLocally();
     }
 
     protected void modelRowsChanged(int idx, int count) {
@@ -1392,7 +1392,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 updateCellWidget(idx+i, col);
             }
         }
-        invalidateLayout();
+        invalidateLayoutLocally();
         if(rowHeightChanged) {
             invalidateLayout();
         }
@@ -1426,6 +1426,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 }
             }
         }
+        // invalidateLayout() before sp.setScrollPositionY() as this may cause a
+        // call to invalidateLayoutLocally() which is redundant.
+        invalidateLayout();
         if(row < getRowFromPosition(scrollPosY)) {
             ScrollPane sp = ScrollPane.getContainingScrollPane(this);
             if(sp != null) {
@@ -1437,7 +1440,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         if(selectionManager != null) {
             selectionManager.rowsInserted(row, count);
         }
-        invalidateLayout();
     }
 
     protected void modelRowsDeleted(int row, int count) {
@@ -1724,6 +1726,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
 
         public int getColumnSpan() {
             return 1;
+        }
+
+        @Override
+        protected void sizeChanged() {
         }
 
         public Widget getCellRenderWidget(int x, int y, int width, int height, boolean isSelected) {
