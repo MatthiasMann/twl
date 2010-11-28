@@ -1194,13 +1194,17 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         return true;
     }
 
+    void mouseLeftTableArea() {
+        lastMouseY = LAST_MOUSE_Y_OUTSIDE;
+        lastMouseRow = -1;
+        lastMouseColumn = -1;
+    }
+
     protected boolean handleMouseEvent(Event evt) {
         final Event.Type evtType = evt.getType();
 
         if(evtType == Event.Type.MOUSE_EXITED) {
-            lastMouseY = LAST_MOUSE_Y_OUTSIDE;
-            lastMouseRow = -1;
-            lastMouseColumn = -1;
+            mouseLeftTableArea();
         } else {
             lastMouseY = evt.getMouseY();
         }
@@ -1670,6 +1674,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         @Override
         public void adjustSize() {
             // don't do anything
+        }
+
+        @Override
+        protected boolean handleEvent(Event evt) {
+            if(evt.isMouseEventNoWheel()) {
+                mouseLeftTableArea();
+            }
+            return super.handleEvent(evt);
         }
 
         public void run() {
