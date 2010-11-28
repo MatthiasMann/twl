@@ -87,10 +87,13 @@
 
         <taskdef name="jarjar" classname="com.tonicsystems.jarjar.JarJarTask" classpath="${libs.JarJar.classpath}"/>
         <jarjar jarfile="${dist.dir}/TWL-android.jar" manifest="${manifest.file}">
-            <fileset dir="${build.classes.dir}"/>
+            <fileset dir="${build.classes.dir}">
+                <exclude name="de/matthiasmann/twl/input/lwjgl/**"/>
+            </fileset>
             <fileset dir="${build.classes-beans.dir}"/>
             <rule pattern="java.beans.**" result="de.matthiasmann.twlbeans.@1"/>
-            <zap pattern="de.matthiasmann.twl.**.lwjgl.**"/>
+            <rule pattern="de.matthiasmann.twl.input.lwjgl.LWJGLInput" result="de.matthiasmann.twl.input.NullInput"/>
+            <zap pattern="de.matthiasmann.twl.renderer.lwjgl.**"/>
         </jarjar>
     </target>
 
