@@ -869,12 +869,11 @@ public class Widget {
     /**
      * Called when something has changed which affected the layout of this widget.
      *
-     * The default implementation calls invalidateLayoutLocally() followed by invalidateParentLayout()
+     * The default implementation calls invalidateLayoutLocally() followed by childInvalidateLayout()
      *
-     * Called by the default implementation of sizeChanged, borderChanged.
+     * Called by the default implementation of borderChanged.
      *
      * @see #invalidateLayoutLocally()
-     * @see #sizeChanged()
      * @see #borderChanged()
      */
     public void invalidateLayout() {

@@ -52,7 +52,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         public void mouseRightClick(int row, int column, Event evt);
         public void columnHeaderClicked(int column);
     }
-    
+
+    /**
+     * IMPORTANT: Widgets implementing CellRenderer should not call
+     * {@link Widget#invalidateLayout()} or {@link Widget#invalidateLayoutLocally()}
+     * . This means they need to override {@link Widget#sizeChanged()}.
+     */
     public interface CellRenderer {
         /**
          * Called when the CellRenderer is registered and a theme is applied.
@@ -1730,6 +1735,11 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
 
         @Override
         protected void sizeChanged() {
+            // this method is overriden to prevent Widget.sizeChanged() from
+            // calling invalidateLayout().
+            // StringCellRenderer is used as a stamp and does not participate
+            // in layouts - so invalidating the layout would lead to many
+            // or even constant relayouts and bad performance
         }
 
         public Widget getCellRenderWidget(int x, int y, int width, int height, boolean isSelected) {
