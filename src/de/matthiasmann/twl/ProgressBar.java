@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2010, Matthias Mann
  *
  * All rights reserved.
  *
@@ -39,28 +39,45 @@ import de.matthiasmann.twl.renderer.Image;
 public class ProgressBar extends TextWidget {
 
     public static final String STATE_VALUE_CHANGED = "valueChanged";
+    public static final String STATE_INDETERMINATE = "indeterminate";
     
+    public static final float VALUE_INDETERMINATE = -1;
+
     private Image progressImage;
     private float value;
-    private boolean autoSize = true;
 
     public ProgressBar() {
         getAnimationState().resetAnimationTime(STATE_VALUE_CHANGED);
     }
 
+    /**
+     * Returns the current value or VALUE_INDETERMINATE
+     * @return the current value or VALUE_INDETERMINATE
+     */
     public float getValue() {
         return value;
     }
 
+    public void setIndeterminate() {
+        if(value >= 0) {
+            value = VALUE_INDETERMINATE;
+            AnimationState animationState = getAnimationState();
+            animationState.setAnimationState(STATE_INDETERMINATE, true);
+            animationState.resetAnimationTime(STATE_VALUE_CHANGED);
+        }
+    }
+    
     public void setValue(float value) {
-        if(value < 0) {
+        if(!(value > 0)) {  // protect against NaN
             value = 0;
         } else if(value > 1) {
             value = 1;
         }
         if(this.value != value) {
             this.value = value;
-            getAnimationState().resetAnimationTime(STATE_VALUE_CHANGED);
+            AnimationState animationState = getAnimationState();
+            animationState.setAnimationState(STATE_INDETERMINATE, false);
+            animationState.resetAnimationTime(STATE_VALUE_CHANGED);
         }
     }
 
@@ -80,14 +97,6 @@ public class ProgressBar extends TextWidget {
         this.progressImage = progressImage;
     }
 
-    public boolean isAutoSize() {
-        return autoSize;
-    }
-
-    public void setAutoSize(boolean autoSize) {
-        this.autoSize = autoSize;
-    }
-
     protected void applyThemeProgressBar(ThemeInfo themeInfo) {
         setProgressImage(themeInfo.getImage("progressImage"));
     }
@@ -102,7 +111,7 @@ public class ProgressBar extends TextWidget {
     protected void paintWidget(GUI gui) {
         int width = getInnerWidth();
         int height = getInnerHeight();
-        if(progressImage != null) {
+        if(progressImage != null && value >= 0) {
             int imageWidth = progressImage.getWidth();
             int progressWidth = width - imageWidth;
             int scaledWidth = (int)(progressWidth * value);
@@ -121,7 +130,7 @@ public class ProgressBar extends TextWidget {
         int minWidth = super.getMinWidth();
         Image bg = getBackground();
         if(bg != null) {
-            minWidth = Math.max(minWidth, bg.getWidth());
+            minWidth = Math.max(minWidth, bg.getWidth() + getBorderHorizontal());
         }
         return minWidth;
     }
@@ -131,7 +140,7 @@ public class ProgressBar extends TextWidget {
         int minHeight = super.getMinHeight();
         Image bg = getBackground();
         if(bg != null) {
-            minHeight = Math.max(minHeight, bg.getHeight());
+            minHeight = Math.max(minHeight, bg.getHeight() + getBorderVertical());
         }
         return minHeight;
     }
