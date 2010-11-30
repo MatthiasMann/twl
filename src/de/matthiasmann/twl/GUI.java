@@ -35,6 +35,9 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -49,7 +52,29 @@ public final class GUI extends Widget {
         public void mouseEnterIdle();
         public void mouseExitIdle();
     }
-    
+
+    /**
+     * A completion listener for async jobs. It is invoked via
+     * {@link #invokeLater(java.lang.Runnable) }
+     *
+     * @param <V> the result type of the async job
+     */
+    public interface AsyncCompletionListener<V> {
+        /**
+         * The job has completed normally
+         *
+         * @param result the result of the async job or {@code null} if it was a {@code Runnable}
+         */
+        public void completed(V result);
+
+        /**
+         * The job has failed with an exception
+         *
+         * @param ex the exception thrown by the async job
+         */
+        public void failed(Throwable ex);
+    }
+
     private static final int DRAG_DIST = 3;
     private static final int DBLCLICK_TIME = 500;   // ms
     private static final int KEYREPEAT_INITIAL_DELAY = 250; // ms
@@ -104,7 +129,8 @@ public final class GUI extends Widget {
     
     final ArrayList<Timer> activeTimers;
     private final ArrayList<Runnable> invokeLaterQueue;
-
+    private final ExecutorService executorService;
+    
     /**
      * Constructs a new GUI manager with the given renderer and a default root
      * pane.
@@ -163,6 +189,7 @@ public final class GUI extends Widget {
         
         this.activeTimers = new ArrayList<Timer>();
         this.invokeLaterQueue = new ArrayList<Runnable>();
+        this.executorService =  Executors.newSingleThreadExecutor();    // thread creatation is lazy
         
         setTheme("");
         setFocusKeyEnabled(false);
@@ -265,6 +292,48 @@ public final class GUI extends Widget {
         synchronized(invokeLaterQueue) {
             invokeLaterQueue.add(r);
         }
+    }
+
+    /**
+     * Performs a job async in the background. After the job has completed (normally
+     * or by throwing an exception) the completion listener is executed via
+     * {@link #invokeLater(java.lang.Runnable) }
+     *
+     * This method is thread safe.
+     *
+     * @param <V> the result type of the job
+     * @param job the job to execute
+     * @param listener the listener which will be called once the job is finished
+     */
+    public<V> void invokeAsync(Callable<V> job, AsyncCompletionListener<V> listener) {
+        if(job == null) {
+            throw new NullPointerException("job");
+        }
+        if(listener == null) {
+            throw new NullPointerException("listener");
+        }
+        executorService.submit((Callable<V>)new AC<V>(job, null, listener));
+    }
+
+    /**
+     * Performs a job async in the background. After the job has completed (normally
+     * or by throwing an exception) the completion listener is executed via
+     * {@link #invokeLater(java.lang.Runnable) }
+     *
+     * This method is thread safe.
+     *
+     * @param <V> the result type of the listener. The job always returns null.
+     * @param job the job to execute
+     * @param listener the listener which will be called once the job is finished
+     */
+    public<V> void invokeAsync(Runnable job, AsyncCompletionListener<V> listener) {
+        if(job == null) {
+            throw new NullPointerException("job");
+        }
+        if(listener == null) {
+            throw new NullPointerException("listener");
+        }
+        executorService.submit((Callable<V>)new AC<V>(null, job, listener));
     }
     
     public boolean requestToolTip(Widget widget, int x, int y,
@@ -1186,6 +1255,42 @@ public final class GUI extends Widget {
         @Override
         protected void layout() {
             layoutChildrenFullInnerArea();
+        }
+    }
+
+    class AC<V> implements Callable<V>, Runnable {
+        private final Callable<V> jobC;
+        private final Runnable jobR;
+        private final AsyncCompletionListener<V> listener;
+        private V result;
+        private Throwable exception;
+
+        public AC(Callable<V> jobC, Runnable jobR, AsyncCompletionListener<V> listener) {
+            this.jobC = jobC;
+            this.jobR = jobR;
+            this.listener = listener;
+        }
+
+        public V call() throws Exception {
+            try {
+                if(jobC != null) {
+                    result = jobC.call();
+                } else {
+                    jobR.run();
+                }
+            } catch(Throwable ex) {
+                exception = ex;
+            }
+            invokeLater(this);
+            return result;
+        }
+
+        public void run() {
+            if(exception != null) {
+                listener.failed(exception);
+            } else {
+                listener.completed(result);
+            }
         }
     }
 }
