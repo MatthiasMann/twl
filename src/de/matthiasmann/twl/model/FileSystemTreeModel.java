@@ -147,17 +147,18 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
                 case 0:
                     return fsm.getName(folder);
                 case 1:
-                    return new Date(fsm.getLastModified(folder));
+                    return getlastModified();
                 default:
                     return null;
             }
         }
 
         public Object getTooltipContent(int column) {
-            StringBuilder sb = new StringBuilder();
-            sb.append(fsm.getPath(folder))
-                    .append("\nLast modified: ")
-                    .append(new Date(fsm.getLastModified(folder)));
+            StringBuilder sb = new StringBuilder(fsm.getPath(folder));
+            Date lastModified = getlastModified();
+            if(lastModified != null) {
+                sb.append("\nLast modified: ").append(lastModified);
+            }
             return sb.toString();
         }
 
@@ -216,6 +217,15 @@ public class FileSystemTreeModel extends AbstractTreeTableModel {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        }
+
+        private Date getlastModified() {
+            if(parent instanceof FileSystemTreeModel) {
+                // don't call getLastModified on roots - causes bad performance
+                // on windows when a DVD/CD/Floppy has no media inside
+                return null;
+            }
+            return new Date(fsm.getLastModified(folder));
         }
     }
 

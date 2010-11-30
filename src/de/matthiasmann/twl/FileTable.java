@@ -200,8 +200,12 @@ public class FileTable extends Table {
         return fsm;
     }
 
-    public Object getCurrentFolder() {
+    public final Object getCurrentFolder() {
         return currentFolder;
+    }
+
+    public final boolean isRoot() {
+        return currentFolder == null;
     }
 
     public void setCurrentFolder(FileSystemModel fsm, Object folder) {
@@ -216,8 +220,9 @@ public class FileTable extends Table {
             int lastFileIdx = objs.length;
             Entry[] entries = new Entry[lastFileIdx];
             int numFolders = 0;
+            boolean isRoot = isRoot();
             for(int i=0 ; i<objs.length ; i++) {
-                Entry e = new Entry(fsm, objs[i]);
+                Entry e = new Entry(fsm, objs[i], isRoot);
                 if(e.isFolder) {
                     entries[numFolders++] = e;
                 } else {
@@ -256,7 +261,7 @@ public class FileTable extends Table {
         if(fsm == null) {
             return null;
         }
-        if(currentFolder == null) {
+        if(isRoot()) {
             return fsm.listRoots();
         }
         FileFilter filter = fileFilter;
@@ -329,14 +334,22 @@ public class FileTable extends Table {
         public final String name;
         public final boolean isFolder;
         public final long size;
+        /** last modified date - can be null */
         public final Date lastModified;
 
-        public Entry(FileSystemModel fsm, Object obj) {
+        public Entry(FileSystemModel fsm, Object obj, boolean isRoot) {
             this.fsm = fsm;
             this.obj = obj;
             this.name = fsm.getName(obj);
-            this.isFolder = fsm.isFolder(obj);
-            this.lastModified = new Date(fsm.getLastModified(obj));
+            if(isRoot) {
+                // don't call getLastModified on roots - causes bad performance
+                // on windows when a DVD/CD/Floppy has no media inside
+                this.isFolder = true;
+                this.lastModified = null;
+            } else {
+                this.isFolder = fsm.isFolder(obj);
+                this.lastModified = new Date(fsm.getLastModified(obj));
+            }
             if(isFolder) {
                 this.size = 0;
             } else {
@@ -402,7 +415,7 @@ public class FileTable extends Table {
                 case 0: return "["+e.name+"]";
                 case 1: return "Folder";
                 case 2: return "";
-                case 3: return dateFormat.format(e.lastModified);
+                case 3: return formatDate(e.lastModified);
                 default: return "??";
                 }
             } else {
@@ -413,7 +426,7 @@ public class FileTable extends Table {
                     return (ext.length() == 0) ? "File" : ext+"-file";
                 }
                 case 2: return formatFileSize(e.size);
-                case 3: return dateFormat.format(e.lastModified);
+                case 3: return formatDate(e.lastModified);
                 default: return "??";
                 }
             }
@@ -426,7 +439,9 @@ public class FileTable extends Table {
             if(!e.isFolder) {
                 sb.append("\nSize: ").append(formatFileSize(e.size));
             }
-            sb.append("\nLast modified: ").append(dateFormat.format(e.lastModified));
+            if(e.lastModified != null) {
+                sb.append("\nLast modified: ").append(formatDate(e.lastModified));
+            }
             return sb.toString();
         }
 
@@ -490,6 +505,13 @@ public class FileTable extends Table {
                 }
             }
         }
+
+        private String formatDate(Date date) {
+            if(date == null) {
+                return "";
+            }
+            return dateFormat.format(date);
+        }
     }
 
     static class StateSnapshot {
@@ -528,7 +550,18 @@ public class FileTable extends Table {
     static class LastModifiedComparator implements Comparator<Entry> {
         static final LastModifiedComparator instance = new LastModifiedComparator();
         public int compare(Entry o1, Entry o2) {
-            return o1.lastModified.compareTo(o2.lastModified);
+            Date lm1 = o1.lastModified;
+            Date lm2 = o2.lastModified;
+            if(lm1 != null && lm2 != null) {
+                return lm1.compareTo(lm2);
+            }
+            if(lm1 != null) {
+                return 1;
+            }
+            if(lm2 != null) {
+                return -1;
+            }
+            return 0;
         }
     }
 

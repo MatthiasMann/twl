@@ -685,7 +685,7 @@ public class FileSelector extends DialogLayout {
                         if(obj != null) {
                             popup.closePopup();
                             fireAcceptCallback(new FileTable.Entry[] {
-                                new FileTable.Entry(fsm, obj)
+                                new FileTable.Entry(fsm, obj, fsm.getParent(obj) == null)
                             });
                         } else {
                             filesMRU.removeEntry(idx);
