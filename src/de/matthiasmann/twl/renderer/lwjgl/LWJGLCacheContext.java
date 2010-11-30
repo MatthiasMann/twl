@@ -77,6 +77,13 @@ public class LWJGLCacheContext implements CacheContext {
         try {
             PNGDecoder dec = new PNGDecoder(is);
             fmt = dec.decideTextureFormat(fmt);
+            int width = dec.getWidth();
+            int height = dec.getHeight();
+            int maxTextureSize = renderer.maxTextureSize;
+
+            if(width > maxTextureSize || height > maxTextureSize) {
+                throw new IOException("Texture size too large. Maximum supported texture by this system is " + maxTextureSize);
+            }
 
             if(GLContext.getCapabilities().GL_EXT_abgr) {
                 if(fmt == LWJGLTexture.Format.RGBA) {
@@ -86,16 +93,16 @@ public class LWJGLCacheContext implements CacheContext {
                 fmt = LWJGLTexture.Format.RGBA;
             }
 
-            int stride = dec.getWidth() * fmt.getPixelSize();
-            ByteBuffer buf = BufferUtils.createByteBuffer(stride * dec.getHeight());
+            int stride = width * fmt.getPixelSize();
+            ByteBuffer buf = BufferUtils.createByteBuffer(stride * height);
             dec.decode(buf, stride, fmt);
             buf.flip();
 
             if(tpp != null) {
-                tpp.process(buf, stride, dec.getWidth(), dec.getHeight(), fmt);
+                tpp.process(buf, stride, width, height, fmt);
             }
 
-            LWJGLTexture texture = new LWJGLTexture(renderer, dec.getWidth(), dec.getHeight(), buf, fmt, filter);
+            LWJGLTexture texture = new LWJGLTexture(renderer, width, height, buf, fmt, filter);
             allTextures.add(texture);
             return texture;
         } catch (IOException ex) {

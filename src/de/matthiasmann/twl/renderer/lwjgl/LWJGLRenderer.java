@@ -68,7 +68,7 @@ import org.lwjgl.opengl.GLContext;
 public class LWJGLRenderer implements Renderer, LineRenderer {
 
     private final IntBuffer ib16;
-    private final int maxTextureSize;
+    final int maxTextureSize;
 
     private int viewportX;
     private int viewportY;
