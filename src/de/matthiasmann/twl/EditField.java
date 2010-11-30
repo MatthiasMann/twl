@@ -544,6 +544,9 @@ public class EditField extends Widget {
             case Event.KEY_DELETE:
                 deleteNext();
                 return true;
+            case Event.KEY_NUMPADENTER:
+                doCallback(Event.KEY_RETURN);
+                return true;
             case Event.KEY_RETURN:
             case Event.KEY_ESCAPE:
                 doCallback(evt.getKeyCode());
@@ -575,6 +578,7 @@ public class EditField extends Widget {
             switch (evt.getKeyCode()) {
             case Event.KEY_BACK:
             case Event.KEY_DELETE:
+            case Event.KEY_NUMPADENTER:
             case Event.KEY_RETURN:
             case Event.KEY_ESCAPE:
             case Event.KEY_HOME:
