@@ -151,6 +151,17 @@ public class FileTable extends Table {
         }
     }
 
+    public boolean setSelection(Object file) {
+        fileTableSelectionModel.clearSelection();
+        int idx = fileTableModel.findFile(file);
+        if(idx >= 0) {
+            fileTableSelectionModel.addSelection(idx, idx);
+            scrollToRow(idx);
+            return true;
+        }
+        return false;
+    }
+
     public void setSortColumn(SortColumn column) {
         if(column == null) {
             throw new NullPointerException("column");

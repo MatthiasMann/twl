@@ -444,6 +444,17 @@ public class FileSelector extends DialogLayout {
         return false;
     }
 
+    public boolean selectFile(Object file) {
+        if(fsm == null) {
+            return false;
+        }
+        Object parent = fsm.getParent(file);
+        if(setCurrentFolder(parent)) {
+            return fileTable.setSelection(file);
+        }
+        return false;
+    }
+
     public void addFileFilter(NamedFileFilter filter) {
         if(filter == null) {
             throw new NullPointerException("filter");
