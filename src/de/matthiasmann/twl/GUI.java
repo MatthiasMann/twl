@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -299,20 +300,23 @@ public final class GUI extends Widget {
      * or by throwing an exception) the completion listener is executed via
      * {@link #invokeLater(java.lang.Runnable) }
      *
+     * If the job is canceled before it is started then the listener is not executed.
+     *
      * This method is thread safe.
      *
      * @param <V> the result type of the job
      * @param job the job to execute
      * @param listener the listener which will be called once the job is finished
+     * @return a Future representing pending completion of the job
      */
-    public<V> void invokeAsync(Callable<V> job, AsyncCompletionListener<V> listener) {
+    public<V> Future<V> invokeAsync(Callable<V> job, AsyncCompletionListener<V> listener) {
         if(job == null) {
             throw new NullPointerException("job");
         }
         if(listener == null) {
             throw new NullPointerException("listener");
         }
-        executorService.submit((Callable<V>)new AC<V>(job, null, listener));
+        return executorService.submit((Callable<V>)new AC<V>(job, null, listener));
     }
 
     /**
@@ -320,20 +324,23 @@ public final class GUI extends Widget {
      * or by throwing an exception) the completion listener is executed via
      * {@link #invokeLater(java.lang.Runnable) }
      *
+     * If the job is canceled before it is started then the listener is not executed.
+     *
      * This method is thread safe.
      *
      * @param <V> the result type of the listener. The job always returns null.
      * @param job the job to execute
      * @param listener the listener which will be called once the job is finished
+     * @return a Future representing pending completion of the job
      */
-    public<V> void invokeAsync(Runnable job, AsyncCompletionListener<V> listener) {
+    public<V> Future<V> invokeAsync(Runnable job, AsyncCompletionListener<V> listener) {
         if(job == null) {
             throw new NullPointerException("job");
         }
         if(listener == null) {
             throw new NullPointerException("listener");
         }
-        executorService.submit((Callable<V>)new AC<V>(null, job, listener));
+        return executorService.submit((Callable<V>)new AC<V>(null, job, listener));
     }
     
     public boolean requestToolTip(Widget widget, int x, int y,
