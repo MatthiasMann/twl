@@ -130,7 +130,7 @@ public final class GUI extends Widget {
     
     final ArrayList<Timer> activeTimers;
     private final ArrayList<Runnable> invokeLaterQueue;
-    private final ExecutorService executorService;
+    final ExecutorService executorService;
     
     /**
      * Constructs a new GUI manager with the given renderer and a default root

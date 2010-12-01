@@ -49,6 +49,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
     private final ListBox<String> listBox;
 
     private boolean captureKeys;
+    private boolean useInvokeAsync;
     private AutoCompletionDataSource dataSource;
     private ExecutorService executorService;
     private Future<AutoCompletionResult> future;
@@ -124,8 +125,18 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
     }
 
     /**
+     * Returns true if {@link GUI#invokeAsync} is used
+     * @return true if {@code GUI.invokeAsync} is used
+     */
+    public boolean isUseInvokeAsync() {
+        return useInvokeAsync;
+    }
+
+    /**
      * Sets the ExecutorService which is used to perform async queries on the
      * AutoCompletionDataSource.
+     *
+     * This will disable the use of {@link GUI#invokeAsync}
      *
      * If it is null then all queries are done synchronously from the EditField
      * callback. This is good as long as data source is very fast (eg small in
@@ -136,9 +147,33 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
      * thread. This requires the data source and results to be thread save.
      *
      * @param executorService the ExecutorService or null
+     * @see #setUseInvokeAsync(boolean)
      */
     public void setExecutorService(ExecutorService executorService) {
         this.executorService = executorService;
+        this.useInvokeAsync = false;
+        cancelFuture();
+    }
+
+    /**
+     * Perform async queries on the AutoCompletionDataSource using {@link GUI#invokeAsync}
+     *
+     * This will set executorService to null.
+     *
+     * If it is false then all queries are done synchronously from the EditField
+     * callback. This is good as long as data source is very fast (eg small in
+     * memory tables).
+     *
+     * When the data source quries take too long they will impact the UI
+     * responsiveness. To prevent that the queries can be executed in another
+     * thread. This requires the data source and results to be thread save.
+     *
+     * @param useInvokeAsync true if invokeAsync should be used
+     * @see #setExecutorService(java.util.concurrent.ExecutorService)
+     */
+    public void setUseInvokeAsync(boolean useInvokeAsync) {
+        this.executorService = null;
+        this.useInvokeAsync = useInvokeAsync;
         cancelFuture();
     }
 
@@ -184,9 +219,9 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                     result = listModel.result.refine(text, cursorPos);
                 }
                 if(result == null) {
-                    if(executorService != null && gui != null) {
-                        future = executorService.submit((Callable<AutoCompletionResult>)
-                                new AsyncQuery(gui, dataSource, text, cursorPos, listModel.result));
+                    if(gui != null && (useInvokeAsync || executorService != null)) {
+                        future = (useInvokeAsync ? gui.executorService : executorService).submit(
+                                (Callable<AutoCompletionResult>)new AsyncQuery(gui, dataSource, text, cursorPos, listModel.result));
                     } else {
                         try {
                             result = dataSource.collectSuggestions(text, cursorPos, listModel.result);
@@ -258,6 +293,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                 if(evt.isKeyPressedEvent()) {
                     switch (evt.getKeyCode()) {
                         case Event.KEY_RETURN:
+                        case Event.KEY_NUMPADENTER:
                             return acceptAutoCompletion();
 
                         case Event.KEY_ESCAPE:
