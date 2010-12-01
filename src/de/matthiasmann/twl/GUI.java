@@ -73,7 +73,7 @@ public final class GUI extends Widget {
          *
          * @param ex the exception thrown by the async job
          */
-        public void failed(Throwable ex);
+        public void failed(Exception ex);
     }
 
     private static final int DRAG_DIST = 3;
@@ -1270,7 +1270,7 @@ public final class GUI extends Widget {
         private final Runnable jobR;
         private final AsyncCompletionListener<V> listener;
         private V result;
-        private Throwable exception;
+        private Exception exception;
 
         public AC(Callable<V> jobC, Runnable jobR, AsyncCompletionListener<V> listener) {
             this.jobC = jobC;
@@ -1285,11 +1285,13 @@ public final class GUI extends Widget {
                 } else {
                     jobR.run();
                 }
-            } catch(Throwable ex) {
+                invokeLater(this);
+                return result;
+            } catch(Exception ex) {
                 exception = ex;
+                invokeLater(this);
+                throw ex;
             }
-            invokeLater(this);
-            return result;
         }
 
         public void run() {
