@@ -37,6 +37,7 @@ import de.matthiasmann.twl.utils.TintAnimator;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.security.AccessControlException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -2372,7 +2373,15 @@ public class Widget {
         }
     }
 
-    private static final boolean WARN_ON_UNHANDLED_ACTION = Boolean.getBoolean("warnOnUnhandledAction");
+    static boolean getSafeBooleanProperty(String name) {
+        try {
+            return Boolean.getBoolean(name);
+        } catch (AccessControlException ex) {
+            return false;
+        }
+    }
+    
+    private static final boolean WARN_ON_UNHANDLED_ACTION = getSafeBooleanProperty("warnOnUnhandledAction");
 
     private boolean handleKeyEvent(Event evt) {
         if(children != null) {

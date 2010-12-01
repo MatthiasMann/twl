@@ -107,7 +107,7 @@ public class DialogLayout extends Widget {
      */
     public static final int DEFAULT_GAP = -4;
 
-    private static final boolean DEBUG_LAYOUT_GROUPS = Boolean.getBoolean("debugLayoutGroups");
+    private static final boolean DEBUG_LAYOUT_GROUPS = Widget.getSafeBooleanProperty("debugLayoutGroups");
     
     protected Dimension smallGap;
     protected Dimension mediumGap;
