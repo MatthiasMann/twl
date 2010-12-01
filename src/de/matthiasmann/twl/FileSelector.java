@@ -49,7 +49,6 @@ import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.NaturalSortComparator;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.concurrent.Executors;
 import java.util.prefs.Preferences;
 
 /**
@@ -214,7 +213,7 @@ public class FileSelector extends DialogLayout {
         });
 
         autoCompletion = new EditFieldAutoCompletionWindow(currentFolder.getEditField());
-        autoCompletion.setExecutorService(Executors.newSingleThreadExecutor());
+        autoCompletion.setUseInvokeAsync(true);
         currentFolder.getEditField().setAutoCompletionWindow(autoCompletion);
 
         fileTable.setAllowMultiSelection(true);
