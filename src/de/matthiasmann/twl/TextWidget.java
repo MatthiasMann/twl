@@ -216,19 +216,41 @@ public class TextWidget extends Widget {
     }
 
     protected void paintWithSelection(AnimationState animState, int start, int end) {
+        paintWithSelection(animState, start, end, 0, text.length(), computeTextY());
+    }
+    
+    protected void paintWithSelection(AnimationState animState, int start, int end, int lineStart, int lineEnd, int y) {
         if(cacheDirty) {
             updateCache();
         }
         if(hasText() && font != null) {
             int x = computeTextX();
-            int y = computeTextY();
 
-            x += font.drawText(animState, x, y, text, 0, start);
-            animState.setAnimationState(STATE_TEXT_SELECTION, true);
-            x += font.drawText(animState, x, y, text, start, end);
-            animState.setAnimationState(STATE_TEXT_SELECTION, false);
-            font.drawText(animState, x, y, text, end, text.length());
+            start = limit(start, lineStart, lineEnd);
+            end = limit(end, lineStart, lineEnd);
+            
+            if(start > lineStart) {
+                x += font.drawText(animState, x, y, text, lineStart, start);
+            }
+            if(end > start) {
+                animState.setAnimationState(STATE_TEXT_SELECTION, true);
+                x += font.drawText(animState, x, y, text, start, end);
+                animState.setAnimationState(STATE_TEXT_SELECTION, false);
+            }
+            if(end < lineEnd) {
+                font.drawText(animState, x, y, text, end, lineEnd);
+            }
         }
+    }
+
+    private static int limit(int value, int min, int max) {
+        if(value < min) {
+            return min;
+        }
+        if(value > max) {
+            return max;
+        }
+        return value;
     }
 
     @Override
@@ -250,8 +272,12 @@ public class TextWidget extends Widget {
     }
 
     public int computeRelativeCursorPositionX(int charIndex) {
-        if(font != null) {
-            return font.computeTextWidth(text, 0, charIndex);
+        return computeRelativeCursorPositionX(0, charIndex);
+    }
+
+    public int computeRelativeCursorPositionX(int startIndex, int charIndex) {
+        if(font != null && charIndex > startIndex) {
+            return font.computeTextWidth(text, startIndex, charIndex);
         }
         return 0;
     }
