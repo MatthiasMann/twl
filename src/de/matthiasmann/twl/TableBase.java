@@ -45,7 +45,7 @@ import de.matthiasmann.twl.utils.TypeMapping;
  * 
  * @author Matthias Mann
  */
-public abstract class TableBase extends Widget implements ScrollPane.Scrollable, ScrollPane.AutoScrollable {
+public abstract class TableBase extends Widget implements ScrollPane.Scrollable, ScrollPane.AutoScrollable, ScrollPane.CustomPageSize {
 
     public interface Callback {
         public void mouseDoubleClicked(int row, int column);
@@ -458,15 +458,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         if(scrollPane != null && numRows > 0) {
             scrollPane.validateLayout();
             int rowStart = getRowStartPosition(row);
-            if(rowStart < scrollPosY) {
-                scrollPane.setScrollPositionY(rowStart);
-            } else {
-                int rowEnd = getRowEndPosition(row);
-                int innerHeight = Math.max(0, getInnerHeight() - columnHeaderHeight);
-                if(rowEnd > scrollPosY + innerHeight) {
-                    scrollPane.setScrollPositionY(rowEnd - innerHeight);
-                }
-            }
+            int rowEnd = getRowEndPosition(row);
+            int height = rowEnd - rowStart;
+            scrollPane.scrollToAreaY(rowStart, height, height/2);
         }
     }
 
@@ -551,6 +545,14 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             }
         }
         return 0;
+    }
+
+    public int getPageSizeX(int availableWidth) {
+        return availableWidth;
+    }
+
+    public int getPageSizeY(int availableHeight) {
+        return availableHeight - columnHeaderHeight;
     }
 
     public boolean isFixedWidthMode() {
