@@ -182,6 +182,43 @@ public class Scrollbar extends Widget {
         }
     }
 
+    /**
+     * Tries to make the specified area completly visible. If it is larger
+     * then the page size then it scrolls to the start of the area.
+     * 
+     * @param start the position of the area
+     * @param size size of the area
+     * @param extra the extra space which should be visible around the area
+     */
+    public void scrollToArea(int start, int size, int extra) {
+        if(size <= 0) {
+            return;
+        }
+        if(extra < 0) {
+            extra = 0;
+        }
+        
+        int end = start + size;
+        start = range(start);
+        int pos = value;
+
+        int startWithExtra = range(start - extra);
+        if(startWithExtra < pos) {
+            pos = startWithExtra;
+        }
+        int pageEnd = pos + pageSize;
+        int endWithExtra = end + extra;
+        if(endWithExtra > pageEnd) {
+            pos = range(endWithExtra - pageSize);
+            if(pos > startWithExtra) {
+                size = end - start;
+                pos = start - Math.max(0, pageSize - size) / 2;
+            }
+        }
+        
+        setValue(pos);
+    }
+
     public int getMinValue() {
         return minValue;
     }
