@@ -54,6 +54,10 @@ public class ScrollPane extends Widget {
     public interface AutoScrollable {
         public int getAutoScrollDirection(Event evt, int autoScrollArea);
     }
+    public interface CustomPageSize {
+        public int getPageSizeX(int availableWidth);
+        public int getPageSizeY(int availableHeight);
+    }
 
     private static final int AUTO_SCROLL_DELAY = 50;
 
@@ -166,6 +170,10 @@ public class ScrollPane extends Widget {
         scrollbarH.setValue(pos);
     }
 
+    public void scrollToAreaX(int start, int size, int extra) {
+        scrollbarH.scrollToArea(start, size, extra);
+    }
+
     public int getScrollPositionY() {
         return scrollbarV.getValue();
     }
@@ -176,6 +184,10 @@ public class ScrollPane extends Widget {
 
     public void setScrollPositionY(int pos) {
         scrollbarV.setValue(pos);
+    }
+
+    public void scrollToAreaY(int start, int size, int extra) {
+        scrollbarV.scrollToArea(start, size, extra);
     }
 
     public int getContentAreaWidth() {
@@ -525,19 +537,29 @@ public class ScrollPane extends Widget {
                 invalidateLayout();
             }
 
+            int pageSizeX, pageSizeY;
+            if(content instanceof CustomPageSize) {
+                CustomPageSize customPageSize = (CustomPageSize)content;
+                pageSizeX = customPageSize.getPageSizeX(availWidth);
+                pageSizeY = customPageSize.getPageSizeY(availHeight);
+            } else {
+                pageSizeX = availWidth;
+                pageSizeY = availHeight;
+            }
+
             scrollbarH.setVisible(visibleH);
             scrollbarH.setMinMaxValue(0, hScrollbarMax);
             scrollbarH.setSize(Math.max(0, scrollbarVX - scrollbarHX), Math.max(0, innerHeight - scrollbarHY));
             scrollbarH.setPosition(getInnerX() + scrollbarHX, getInnerY() + scrollbarHY);
-            scrollbarH.setPageSize(Math.max(1, availWidth));
-            scrollbarH.setStepSize(Math.max(1, availWidth / 10));
+            scrollbarH.setPageSize(Math.max(1, pageSizeX));
+            scrollbarH.setStepSize(Math.max(1, pageSizeX / 10));
 
             scrollbarV.setVisible(visibleV);
             scrollbarV.setMinMaxValue(0, vScrollbarMax);
             scrollbarV.setSize(Math.max(0, innerWidth - scrollbarVX), Math.max(0, scrollbarHY - scrollbarVY));
             scrollbarV.setPosition(getInnerX() + scrollbarVX, getInnerY() + scrollbarVY);
-            scrollbarV.setPageSize(Math.max(1, availHeight));
-            scrollbarV.setStepSize(Math.max(1, availHeight / 10));
+            scrollbarV.setPageSize(Math.max(1, pageSizeY));
+            scrollbarV.setStepSize(Math.max(1, pageSizeY / 10));
 
             if(dragButton != null) {
                 dragButton.setVisible(visibleH && visibleV);
