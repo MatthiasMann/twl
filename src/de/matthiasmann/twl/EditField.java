@@ -848,21 +848,10 @@ public class EditField extends Widget {
         if(multiLine) {
             ScrollPane sp = ScrollPane.getContainingScrollPane(this);
             if(sp != null) {
-                int scrollPosY = sp.getScrollPositionY();
-                int visibleHeight = sp.getContentAreaHeight();
-
                 int lineHeight = getLineHeight();
                 int lineY = computeLineNumber(cursorPos) * lineHeight;
-                int ystart = lineY - lineHeight/2;
-                int yend = ystart + 2*lineHeight;
-                if(ystart < scrollPosY) {
-                    scrollPosY = ystart;
-                }
-                int scrollEndY = scrollPosY + visibleHeight;
-                if(yend > scrollEndY) {
-                    scrollPosY = Math.min(lineY, yend - visibleHeight);
-                }
-                sp.setScrollPositionY(scrollPosY);
+                sp.validateLayout();
+                sp.scrollToAreaY(lineY, lineHeight, lineHeight/2);
             }
         }
     }
