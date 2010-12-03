@@ -53,10 +53,10 @@ public class EditField extends Widget {
          * Gets called for any change in the edit field, or when ESCAPE or RETURN was pressed
          *
          * @param key One of KEY_NONE, KEY_ESCAPE, KEY_RETURN, KEY_DELETE
-         * @see Keyboard#KEY_NONE
-         * @see Keyboard#KEY_ESCAPE
-         * @see Keyboard#KEY_RETURN
-         * @see Keyboard#KEY_DELETE
+         * @see Event#KEY_NONE
+         * @see Event#KEY_ESCAPE
+         * @see Event#KEY_RETURN
+         * @see Event#KEY_DELETE
          */
         public void callback(int key);
     }
@@ -334,7 +334,9 @@ public class EditField extends Widget {
     public void pasteFromClipboard() {
         String cbText = Clipboard.getClipboard();
         if(cbText != null) {
-            cbText = TextUtil.stripNewLines(cbText);
+            if(!multiLine) {
+                cbText = TextUtil.stripNewLines(cbText);
+            }
             insertText(cbText);
         }
     }
