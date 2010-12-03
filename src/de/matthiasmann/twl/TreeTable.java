@@ -266,6 +266,17 @@ public class TreeTable extends TableBase {
             modelRowsDeleted(row+1, count);
         }
         modelRowsChanged(row, 1);
+
+        if(ns.expanded) {
+            ScrollPane scrollPane = ScrollPane.getContainingScrollPane(this);
+            if(scrollPane != null) {
+                scrollPane.validateLayout();
+                int rowStart = getRowStartPosition(row);
+                int rowEnd = getRowEndPosition(row + count);
+                int height = rowEnd - rowStart;
+                scrollPane.scrollToAreaY(rowStart, height, rowHeight/2);
+            }
+        }
     }
 
     protected int computeNumRows() {
