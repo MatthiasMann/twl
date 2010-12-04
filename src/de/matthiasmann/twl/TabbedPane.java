@@ -133,7 +133,9 @@ public class TabbedPane extends Widget {
             }
 
             tabBoxClip.setClip(scrollTabs);
-            scrollControlls.setVisible(scrollTabs);
+            if(scrollControlls != null) {
+                scrollControlls.setVisible(scrollTabs);
+            }
             invalidateLayout();
         }
     }
