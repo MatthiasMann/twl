@@ -83,11 +83,17 @@ public class DebugHook {
     }
 
     public void missingParameter(ParameterMap map, String paramName, String parentDescription, Class<?> dataType) {
-        if(map instanceof ThemeInfo) {
-            System.err.println("Parameter \"" + paramName + "\" not set for \"" + ((ThemeInfo)map).getThemePath() + "\"");
-        } else {
-            System.err.println("Parameter \"" + paramName + "\" not set" + parentDescription);
+        StringBuilder sb = new StringBuilder("Parameter \"").append(paramName).append("\" ");
+        if(dataType != null) {
+            sb.append("of type ").append(dataType.getSimpleName());
         }
+        sb.append(" not set");
+        if(map instanceof ThemeInfo) {
+            sb.append(" for \"").append(((ThemeInfo)map).getThemePath()).append("\"");
+        } else {
+            sb.append(parentDescription);
+        }
+        System.err.println(sb.toString());
     }
 
     public void wrongParameterType(ParameterMap map, String paramName, Class<?> expectedType, Class<?> foundType, String parentDescription) {
