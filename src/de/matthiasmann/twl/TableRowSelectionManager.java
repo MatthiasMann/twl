@@ -33,7 +33,10 @@ import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.TableSelectionModel;
 
 /**
+ * A row selection model manages table selection on a per row base.
+ * Cells are never selected by this model.
  *
+ * @see #isCellSelected(int, int)
  * @author Matthias Mann
  */
 public class TableRowSelectionManager implements TableSelectionManager {
@@ -54,6 +57,11 @@ public class TableRowSelectionManager implements TableSelectionManager {
         actionMap.addMapping(this);
     }
 
+    /**
+     * Creates a row selection model with a multi selection model.
+     *
+     * @see DefaultTableSelectionModel
+     */
     public TableRowSelectionManager() {
         this(new DefaultTableSelectionModel());
     }
@@ -93,6 +101,14 @@ public class TableRowSelectionManager implements TableSelectionManager {
         return selectionModel.isSelected(row);
     }
 
+    /**
+     * In a row selection model no cell can be selected. So this method always
+     * returns false
+     *
+     * @param row ignored
+     * @param column ignored
+     * @return always false
+     */
     public boolean isCellSelected(int row, int column) {
         return false;
     }

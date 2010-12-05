@@ -33,7 +33,14 @@ import de.matthiasmann.twl.model.TableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 
 /**
+ * A table widget.
  *
+ * It does not have a {@link TableSelectionManager} by default. To make the
+ * table entries selectable you need to install a selection manager:
+ * {@link #setSelectionManager(de.matthiasmann.twl.TableSelectionManager) } or
+ * {@link #setDefaultSelectionManager() }
+ * 
+ * @see TableBase
  * @author Matthias Mann
  */
 public class Table extends TableBase {

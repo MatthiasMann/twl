@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.SortOrder;
 import de.matthiasmann.twl.model.TableColumnHeaderModel;
 import de.matthiasmann.twl.model.TreeTableNode;
@@ -41,8 +42,15 @@ import de.matthiasmann.twl.utils.SparseGrid.Entry;
 import de.matthiasmann.twl.utils.TypeMapping;
 
 /**
- * Base class for Table and TreeTable
- * 
+ * Base class for Table and TreeTable.
+ *
+ * It does not have a {@link TableSelectionManager} by default. To make the
+ * table entries selectable you need to install a selection manager:
+ * {@link #setSelectionManager(de.matthiasmann.twl.TableSelectionManager) } or
+ * {@link #setDefaultSelectionManager() }
+ *
+ * @see Table
+ * @see TreeTable
  * @author Matthias Mann
  */
 public abstract class TableBase extends Widget implements ScrollPane.Scrollable, ScrollPane.AutoScrollable, ScrollPane.CustomPageSize {
@@ -268,6 +276,12 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         }
     }
 
+    /**
+     * Installs a multi row selection manager.
+     *
+     * @see TableRowSelectionManager
+     * @see DefaultTableSelectionModel
+     */
     public void setDefaultSelectionManager() {
         setSelectionManager(new TableRowSelectionManager());
     }
