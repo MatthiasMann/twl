@@ -33,6 +33,7 @@ import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.logging.Level;
@@ -99,6 +100,23 @@ public final class InputMap {
     }
 
     /**
+     * Creates a new InputMap containing both the current and the new KeyStrokes from another InputMap.
+     * If the new key strokes contain already mapped key strokes then the new mappings will replace the old mappings.
+     *
+     * @param map the other InputMap containing the new key strokes.
+     * @return the InputMap containing the resulting mapping
+     */
+    public InputMap addKeyStrokes(InputMap map) {
+        if(map == this || map.keyStrokes.length == 0) {
+            return this;
+        }
+        if(keyStrokes.length == 0) {
+            return map;
+        }
+        return addKeyStrokes(new LinkedHashSet<KeyStroke>(Arrays.asList(map.keyStrokes)));
+    }
+
+    /**
      *
      * Creates a new InputMap containing both the current and the new KeyStroke.
      * If the specified key stroke is already mapped then the new mapping will replace the old mapping.
@@ -154,6 +172,7 @@ public final class InputMap {
      * Parses a stand alone &lt;inputMapDef&gt; XML file
      *
      * @param url the URL ton the XML file
+     * @return the parsed key strokes
      * @throws IOException if an IO related error occured
      */
     public static InputMap parse(URL url) throws IOException {

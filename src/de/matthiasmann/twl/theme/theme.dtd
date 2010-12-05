@@ -196,7 +196,8 @@
 <!ELEMENT inputMapDef (action)*>
 <!ATTLIST inputMapDef
     name            CDATA #IMPLIED
-    ref             CDATA #IMPLIED>
+    ref             CDATA #IMPLIED
+    merge           (true|false) #IMPLIED>
 
 <!ELEMENT action (#PCDATA)>
 <!ATTLIST action

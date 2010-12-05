@@ -293,7 +293,7 @@ public class ThemeManager {
                     if(inputMaps.containsKey(name)) {
                         throw xmlp.error("inputMap \"" + name + "\" already defined");
                     }
-                    inputMaps.put(name, parseInputMap(xmlp));
+                    inputMaps.put(name, parseInputMap(xmlp, name, null));
                 } else if("fontDef".equals(tagName)) {
                     if(fonts.containsKey(name)) {
                         throw xmlp.error("font \"" + name + "\" already defined");
@@ -334,14 +334,22 @@ public class ThemeManager {
         return im;
     }
 
-    private InputMap parseInputMap(XMLParser xmlp) throws XmlPullParserException, IOException {
-        InputMap base = null;
+    private InputMap parseInputMap(XMLParser xmlp, String name, ThemeInfoImpl parent) throws XmlPullParserException, IOException {
+        InputMap base = InputMap.empty();
+        if(xmlp.parseBoolFromAttribute("merge", false)) {
+            if(parent == null) {
+                throw xmlp.error("Can't merge on top level");
+            }
+            Object o = parent.params.get(name);
+            if(o instanceof InputMap) {
+                base = (InputMap)o;
+            } else if(o != null) {
+                throw xmlp.error("Can only merge with inputMap - found a " + o.getClass().getSimpleName());
+            }
+        }
         String baseName = xmlp.getAttributeValue(null, "ref");
         if(baseName != null) {
-            base = getInputMap(xmlp, baseName);
-        }
-        if(base == null) {
-            base = InputMap.empty();
+            base = base.addKeyStrokes(getInputMap(xmlp, baseName));
         }
 
         xmlp.nextTag();
@@ -519,7 +527,7 @@ public class ThemeManager {
                 return parseMap(xmlp, baseUrl, parent);
             }
             if("inputMapDef".equals(tagName)) {
-                return parseInputMap(xmlp);
+                return parseInputMap(xmlp, wildcardName, parent);
             }
             if("fontDef".equals(tagName)) {
                 return parseFont(xmlp, baseUrl);
