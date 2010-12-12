@@ -39,6 +39,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -190,7 +192,7 @@ public final class GUI extends Widget {
         
         this.activeTimers = new ArrayList<Timer>();
         this.invokeLaterQueue = new ArrayList<Runnable>();
-        this.executorService =  Executors.newSingleThreadExecutor();    // thread creatation is lazy
+        this.executorService =  Executors.newSingleThreadExecutor(new TF());    // thread creatation is lazy
         
         setTheme("");
         setFocusKeyEnabled(false);
@@ -1300,6 +1302,23 @@ public final class GUI extends Widget {
             } else {
                 listener.completed(result);
             }
+        }
+    }
+
+    static class TF implements ThreadFactory {
+        static final AtomicInteger poolNumber = new AtomicInteger(1);
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        final String prefix;
+
+        public TF() {
+            this.prefix = "GUI-" + poolNumber.getAndIncrement() + "-invokeAsync-";
+        }
+
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, prefix + threadNumber.getAndIncrement());
+            t.setDaemon(true);
+            t.setPriority(Thread.NORM_PRIORITY);
+            return t;
         }
     }
 }
