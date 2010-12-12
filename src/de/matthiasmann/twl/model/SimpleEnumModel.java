@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008, Matthias Mann
- * 
+ * Copyright (c) 2008-2010, Matthias Mann
+ *
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- * 
+ *
  *     * Redistributions of source code must retain the above copyright notice,
  *       this list of conditions and the following disclaimer.
  *     * Redistributions in binary form must reproduce the above copyright
@@ -14,7 +14,7 @@
  *     * Neither the name of Matthias Mann nor the names of its contributors may
  *       be used to endorse or promote products derived from this software
  *       without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -30,24 +30,37 @@
 package de.matthiasmann.twl.model;
 
 /**
- * Abstract base class to simplify implementing EnumModels.
+ * A simple enum model
  * 
- * @param <T> The enum type
+ * @param <T> the enum class
  * @author Matthias Mann
  */
-public abstract class AbstractEnumModel<T extends Enum<T>> extends HasCallback implements EnumModel<T> {
+public class SimpleEnumModel<T extends Enum<T>> extends AbstractEnumModel<T> {
 
-    private final Class<T> enumClass;
+    private T value;
 
-    protected AbstractEnumModel(Class<T> clazz) {
-        if(clazz == null) {
-            throw new NullPointerException("clazz");
+    public SimpleEnumModel(Class<T> clazz, T value) {
+        super(clazz);
+        if(value == null) {
+            throw new NullPointerException("value");
         }
-        this.enumClass = clazz;
+        if(!clazz.isInstance(value)) {
+            throw new IllegalArgumentException("value");
+        }
+        this.value = value;
     }
 
-    public Class<T> getEnumClass() {
-        return enumClass;
+    public T getValue() {
+        return value;
     }
-    
+
+    public void setValue(T value) {
+        if(!getEnumClass().isInstance(value)) {
+            throw new IllegalArgumentException("value");
+        }
+        if(this.value != value) {
+            this.value = value;
+            doCallback();
+        }
+    }
 }
