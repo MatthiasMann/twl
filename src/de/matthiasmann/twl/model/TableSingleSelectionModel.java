@@ -42,22 +42,32 @@ public class TableSingleSelectionModel extends AbstractTableSelectionModel {
 
     @Override
     public void rowsInserted(int index, int count) {
+        boolean changed = false;
         if(selection >= index) {
             selection += count;
+            changed = true;
         }
         super.rowsInserted(index, count);
+        if(changed) {
+            fireSelectionChange();
+        }
     }
 
     @Override
     public void rowsDeleted(int index, int count) {
+        boolean changed = false;
         if(selection >= index) {
             if(selection < index + count) {
                 selection = NO_SELECTION;
             } else {
                 selection -= count;
             }
+            changed = true;
         }
         super.rowsDeleted(index, count);
+        if(changed) {
+            fireSelectionChange();
+        }
     }
 
     public void clearSelection() {
