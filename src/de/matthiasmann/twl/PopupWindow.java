@@ -140,14 +140,32 @@ public class PopupWindow extends Widget {
      * Opens the popup window, calls {@code adjustSize} and centers the popup on
      * the screen.
      *
-     * @see #adjustSize() 
+     * @see #adjustSize()
+     * @see #centerPopup()
      */
     public void openPopupCentered() {
         if(openPopup()) {
             adjustSize();
-            setPosition(
-                    getParent().getInnerX() + (getParent().getInnerWidth() - getWidth())/2,
-                    getParent().getInnerY() + (getParent().getInnerHeight() - getHeight())/2);
+            centerPopup();
+        }
+    }
+
+    /**
+     * Opens the popup window with the specified size and centers the popup on
+     * the screen.
+     *
+     * If the specified size is larger then the available space then it is
+     * reduced to the available space.
+     * 
+     * @param width the desired width
+     * @param height the desired height
+     * @see #centerPopup()
+     */
+    public void openPopupCentered(int width, int height) {
+        if(openPopup()) {
+            setSize(Math.min(getParent().getInnerWidth(), width),
+                    Math.min(getParent().getInnerHeight(), height));
+            centerPopup();
         }
     }
 
@@ -169,6 +187,21 @@ public class PopupWindow extends Widget {
      */
     public boolean isOpen() {
         return getParent() != null;
+    }
+
+    /**
+     * Centers the popup on the screen.
+     * If the popup is not open then this method does nothing.
+     *
+     * @see #isOpen()
+     */
+    public void centerPopup() {
+        Widget parent = getParent();
+        if(parent != null) {
+            setPosition(
+                    parent.getInnerX() + (parent.getInnerWidth() - getWidth())/2,
+                    parent.getInnerY() + (parent.getInnerHeight() - getHeight())/2);
+        }
     }
 
     @Override
