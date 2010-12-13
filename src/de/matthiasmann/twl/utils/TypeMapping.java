@@ -29,7 +29,9 @@
  */
 package de.matthiasmann.twl.utils;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -75,6 +77,19 @@ public class TypeMapping<V> {
             while(e != null) {
                 if(!e.isCache) {
                     result.add(e.value);
+                }
+                e = e.next();
+            }
+        }
+        return result;
+    }
+
+    public Map<Class<?>, V> getEntries() {
+        HashMap<Class<?>, V> result = new HashMap<Class<?>, V>();
+        for(Entry<V> e : table) {
+            while(e != null) {
+                if(!e.isCache) {
+                    result.put(e.key, e.value);
                 }
                 e = e.next();
             }
