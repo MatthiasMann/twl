@@ -378,6 +378,13 @@ public class FileSelector extends DialogLayout {
         return fileTable.getAllowMultiSelection();
     }
 
+    /**
+     * Controls if multi selection is allowed.
+     *
+     * Default is true.
+     *
+     * @param allowMultiSelection true if multiple files can be selected.
+     */
     public void setAllowMultiSelection(boolean allowMultiSelection) {
         fileTable.setAllowMultiSelection(allowMultiSelection);
     }
@@ -386,6 +393,14 @@ public class FileSelector extends DialogLayout {
         return allowFolderSelection;
     }
 
+    /**
+     * Controls if folders can be selected. If false then the "Ok" button
+     * is disabled when a folder is selected.
+     *
+     * Default is false.
+     *
+     * @param allowFolderSelection true if folders can be selected
+     */
     public void setAllowFolderSelection(boolean allowFolderSelection) {
         this.allowFolderSelection = allowFolderSelection;
         selectionChanged();
@@ -454,6 +469,15 @@ public class FileSelector extends DialogLayout {
         return false;
     }
 
+    /**
+     * Adds a named file filter to the FileSelector.
+     *
+     * The first added file filter is selected as default.
+     *
+     * @param filter the file filter.
+     * @throws NullPointerException if filter is null
+     * @see #AllFilesFilter
+     */
     public void addFileFilter(NamedFileFilter filter) {
         if(filter == null) {
             throw new NullPointerException("filter");
