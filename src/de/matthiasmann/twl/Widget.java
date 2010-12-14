@@ -101,10 +101,19 @@ public class Widget {
     private Widget lastChildMouseOver;
     private Widget focusChild;
     private MouseCursor mouseCursor;
-
+    private FocusGainedCause focusGainedCause;
+    
     private boolean focusKeyEnabled = true;
     private boolean canAcceptKeyboardFocus;
     private boolean depthFocusTraversal = true;
+
+    /**
+     * Stores the state of the current focus transfer:
+     * null                     no focus transfer active
+     * Widget[]{ null }         transfer is active, but no previous focused widget
+     * Widget[]{ prevWidget }   transfer is active, prevWidget was focused
+     */
+    private static final ThreadLocal<Widget[]> focusTransferInfo = new ThreadLocal<Widget[]>();
     
     public Widget() {
         this(null, false);
@@ -1240,7 +1249,13 @@ public class Widget {
             if(parent.focusChild == this) {
                 return true;
             }
-            return parent.requestKeyboardFocus(this);
+
+            boolean clear = focusTransferStart();
+            try {
+                return parent.requestKeyboardFocus(this);
+            } finally {
+                focusTransferClear(clear);
+            }
         }
         return false;
     }
@@ -1632,17 +1647,45 @@ public class Widget {
             throw new IllegalArgumentException("not a direct child");
         }
         if(focusChild != child) {
-            if(child != null && !requestKeyboardFocus()) {
-                return false;
-            }
-            recursivelyChildFocusLost(focusChild);
-            focusChild = child;
-            keyboardFocusChildChanged(focusChild);
-            if(focusChild != null) {
-                if(!focusChild.sharedAnimState) {
-                    focusChild.animState.setAnimationState(STATE_KEYBOARD_FOCUS, true);
+            if(child == null) {
+                recursivelyChildFocusLost(focusChild);
+                focusChild = null;
+                keyboardFocusChildChanged(null);
+            } else {
+                boolean clear = focusTransferStart();
+                try {
+                    // first request focus for ourself
+                    {
+                        FocusGainedCause savedCause = focusGainedCause;
+                        if(savedCause == null) {
+                            focusGainedCause = FocusGainedCause.CHILD_FOCUSED;
+                        }
+                        try {
+                            if(!requestKeyboardFocus()) {
+                                return false;
+                            }
+                        } finally {
+                            focusGainedCause = savedCause;
+                        }
+                    }
+
+                    // second change focused child
+                    recursivelyChildFocusLost(focusChild);
+                    focusChild = child;
+                    keyboardFocusChildChanged(child);
+                    if(!child.sharedAnimState) {
+                        child.animState.setAnimationState(STATE_KEYBOARD_FOCUS, true);
+                    }
+
+                    // last inform the child widget why it gained keyboard focus
+                    FocusGainedCause cause = child.focusGainedCause;
+                    Widget[] fti = focusTransferInfo.get();
+                    child.keyboardFocusGained(
+                            (cause != null) ? cause : FocusGainedCause.MANUAL,
+                            (fti != null) ? fti[0] : null);
+                } finally {
+                    focusTransferClear(clear);
                 }
-                focusChild.keyboardFocusGained();
             }
         }
         if(!sharedAnimState) {
@@ -1774,10 +1817,32 @@ public class Widget {
     protected void keyboardFocusChildChanged(Widget child) {
     }
 
+    /**
+     * Called when this widget has lost the keyboard focus.
+     * The default implementation does nothing.
+     */
     protected void keyboardFocusLost() {
     }
 
+    /**
+     * Called when this widget has gained the keyboard focus.
+     * The default implementation does nothing.
+     *
+     * @see #keyboardFocusGained(de.matthiasmann.twl.FocusGainedCause, de.matthiasmann.twl.Widget) 
+     */
     protected void keyboardFocusGained() {
+    }
+
+    /**
+     * Called when this widget has gained the keyboard focus.
+     * The default implementation calls {@link #keyboardFocusGained() }
+     *
+     * @param cause the cause for the this focus transfer
+     * @param previousWidget the widget which previously had the keyboard focus - can be null.
+     */
+    protected void keyboardFocusGained(FocusGainedCause cause, Widget previousWidget) {
+        System.out.println(this + " " + cause + " " + previousWidget);
+        keyboardFocusGained();
     }
 
     /**
@@ -1954,9 +2019,37 @@ public class Widget {
             curIndex = 0;
         }
         Widget widget = focusList.get(curIndex);
-        widget.requestKeyboardFocus();
-        widget.requestKeyboardFocus(null);
+        try {
+            widget.focusGainedCause = FocusGainedCause.FOCUS_KEY;
+            widget.requestKeyboardFocus();
+            widget.requestKeyboardFocus(null);
+        } finally {
+            widget.focusGainedCause = null;
+        }
         return true;
+    }
+
+    private boolean focusTransferStart() {
+        Widget[] fti = focusTransferInfo.get();
+        if(fti == null) {
+            Widget root = getRootWidget();
+            Widget w = root;
+            while(w.focusChild != null) {
+                w = w.focusChild;
+            }
+            if(w == root) {
+                w = null;
+            }
+            focusTransferInfo.set(new Widget[]{ w });
+            return true;
+        }
+        return false;
+    }
+
+    private void focusTransferClear(boolean clear) {
+        if(clear) {
+            focusTransferInfo.set(null);
+        }
     }
 
     /**
@@ -2320,11 +2413,13 @@ public class Widget {
                                 evt.getType() == Event.Type.MOUSE_EXITED) {
                             return child;
                         }
+                        /* seems to be redundant ...
                         if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
                                 child.isEnabled() &&
                                 child.canAcceptKeyboardFocus()) {
                             requestKeyboardFocus(child);
                         }
+                         */
                         Widget result = child.routeMouseEvent(evt);
                         if(result != null) {
                             return result;
@@ -2337,10 +2432,15 @@ public class Widget {
             }
         }
         if(evt.getType() == Event.Type.MOUSE_BTNDOWN && isEnabled() && canAcceptKeyboardFocus()) {
-            if(focusChild == null) {
-                requestKeyboardFocus();
-            } else {
-                requestKeyboardFocus(null);
+            try {
+                focusGainedCause = FocusGainedCause.MOUSE_BTNDOWN;
+                if(focusChild == null) {
+                    requestKeyboardFocus();
+                } else {
+                    requestKeyboardFocus(null);
+                }
+            } finally {
+                focusGainedCause = null;
             }
         }
         if(evt.getType() != Event.Type.MOUSE_WHEEL) {
