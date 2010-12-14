@@ -59,12 +59,19 @@ public abstract class ValueAdjuster extends Widget {
     private String displayPrefixTheme = "";
     private boolean useMouseWheel = true;
     private boolean acceptValueOnFocusLoss = true;
+    private boolean wasInEditOnFocusLost;
     private int width;
     
     public ValueAdjuster() {
         this.label = new DraggableButton(getAnimationState(), true);
         // EditField always inherits from the passed animation state
-        this.editField = new EditField(getAnimationState());
+        this.editField = new EditField(getAnimationState()) {
+            @Override
+            protected void keyboardFocusGained(FocusGainedCause cause, Widget previousWidget) {
+                super.keyboardFocusGained(cause, previousWidget);
+                checkStartEditOnFocusGained(cause, previousWidget);
+            }
+        };
         this.decButton = new Button(getAnimationState(), true);
         this.incButton = new Button(getAnimationState(), true);
         
@@ -238,13 +245,21 @@ public abstract class ValueAdjuster extends Widget {
 
     @Override
     protected void keyboardFocusLost() {
+        wasInEditOnFocusLost = editField.isVisible();
         cancelOrAcceptEdit();
         label.getAnimationState().setAnimationState(STATE_KEYBOARD_FOCUS, false);
     }
 
     @Override
     protected void keyboardFocusGained() {
+        // keep in this method to not change subclassing behavior
         label.getAnimationState().setAnimationState(STATE_KEYBOARD_FOCUS, true);
+    }
+
+    @Override
+    protected void keyboardFocusGained(FocusGainedCause cause, Widget previousWidget) {
+        keyboardFocusGained();
+        checkStartEditOnFocusGained(cause, previousWidget);
     }
 
     @Override
@@ -282,6 +297,19 @@ public abstract class ValueAdjuster extends Widget {
     }
 
     protected abstract String formatText();
+
+    void checkStartEditOnFocusGained(FocusGainedCause cause, Widget previousWidget) {
+        if(cause == FocusGainedCause.FOCUS_KEY) {
+            if(previousWidget != null && !(previousWidget instanceof ValueAdjuster)) {
+                previousWidget = previousWidget.getParent();
+            }
+            if(previousWidget != this && (previousWidget instanceof ValueAdjuster)) {
+                if(((ValueAdjuster)previousWidget).wasInEditOnFocusLost) {
+                    startEdit();
+                }
+            }
+        }
+    }
 
     void onTimer(int nextDelay) {
         timer.setDelay(nextDelay);
