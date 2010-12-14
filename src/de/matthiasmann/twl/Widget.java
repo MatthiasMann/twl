@@ -1841,7 +1841,7 @@ public class Widget {
      * @param previousWidget the widget which previously had the keyboard focus - can be null.
      */
     protected void keyboardFocusGained(FocusGainedCause cause, Widget previousWidget) {
-        System.out.println(this + " " + cause + " " + previousWidget);
+        // System.out.println(this + " " + cause + " " + previousWidget);
         keyboardFocusGained();
     }
 
