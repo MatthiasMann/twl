@@ -2021,8 +2021,8 @@ public class Widget {
         Widget widget = focusList.get(curIndex);
         try {
             widget.focusGainedCause = FocusGainedCause.FOCUS_KEY;
-            widget.requestKeyboardFocus();
             widget.requestKeyboardFocus(null);
+            widget.requestKeyboardFocus();
         } finally {
             widget.focusGainedCause = null;
         }
