@@ -65,13 +65,7 @@ public abstract class ValueAdjuster extends Widget {
     public ValueAdjuster() {
         this.label = new DraggableButton(getAnimationState(), true);
         // EditField always inherits from the passed animation state
-        this.editField = new EditField(getAnimationState()) {
-            @Override
-            protected void keyboardFocusGained(FocusGainedCause cause, Widget previousWidget) {
-                super.keyboardFocusGained(cause, previousWidget);
-                checkStartEditOnFocusGained(cause, previousWidget);
-            }
-        };
+        this.editField = new EditField(getAnimationState());
         this.decButton = new Button(getAnimationState(), true);
         this.incButton = new Button(getAnimationState(), true);
         
