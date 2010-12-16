@@ -179,7 +179,8 @@
 
 <!ELEMENT constantDef (color|enum|string|font|int|float|bool|dimension|constant|list|map)>
 <!ATTLIST constantDef
-    name            CDATA #REQUIRED>
+    name            CDATA #REQUIRED
+    merge           (true|false) #IMPLIED>
 
 <!ELEMENT fontDef (fontParam)*>
 <!ATTLIST fontDef

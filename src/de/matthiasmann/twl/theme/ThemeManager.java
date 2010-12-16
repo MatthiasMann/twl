@@ -488,9 +488,21 @@ public class ThemeManager {
         return result;
     }
     
-    private ParameterMapImpl parseMap(XMLParser xmlp, URL baseUrl, ThemeInfoImpl parent) throws XmlPullParserException, IOException, NumberFormatException {
-        String ref = xmlp.getAttributeValue(null, "ref");
+    private ParameterMapImpl parseMap(XMLParser xmlp, URL baseUrl, String name, ThemeInfoImpl parent) throws XmlPullParserException, IOException, NumberFormatException {
         ParameterMapImpl result = new ParameterMapImpl(this, parent);
+        if(xmlp.parseBoolFromAttribute("merge", false)) {
+            if(parent == null) {
+                throw xmlp.error("Can't merge on top level");
+            }
+            Object obj = parent.params.get(name);
+            if(obj instanceof ParameterMapImpl) {
+                ParameterMapImpl base = (ParameterMapImpl)obj;
+                result.params.putAll(base.params);
+            } else if(obj != null) {
+                throw xmlp.error("Can only merge with map - found a " + obj.getClass().getSimpleName());
+            }
+        }
+        String ref = xmlp.getAttributeValue(null, "ref");
         if(ref != null) {
             Object obj = parent.params.get(ref);
             if(obj == null) {
@@ -524,7 +536,7 @@ public class ThemeManager {
                 return parseList(xmlp, baseUrl, parent);
             }
             if("map".equals(tagName)) {
-                return parseMap(xmlp, baseUrl, parent);
+                return parseMap(xmlp, baseUrl, wildcardName, parent);
             }
             if("inputMapDef".equals(tagName)) {
                 return parseInputMap(xmlp, wildcardName, parent);
