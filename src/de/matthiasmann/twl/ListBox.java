@@ -36,10 +36,16 @@ import de.matthiasmann.twl.model.ListModel.ChangeListener;
 /**
  * A list box. Supports single and multiple columns.
  *
+ * @param <T> the data type of the list entries
  * @author Matthias Mann
  */
 public class ListBox<T> extends Widget {
 
+    /**
+     * The value returned by {@link #getSelected() } to indicate that no entry is selected.
+     * @see #setSelected(int)
+     * @see #setSelected(int, boolean)
+     */
     public static final int NO_SELECTION = -1;
     public static final int DEFAULT_CELL_HEIGHT = 20;
     public static final int SINGLE_COLUMN = -1;
@@ -96,6 +102,7 @@ public class ListBox<T> extends Widget {
         setDepthFocusTraversal(false);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public ListBox(ListModel<T> model) {
         this();
         setModel(model);
@@ -196,11 +203,25 @@ public class ListBox<T> extends Widget {
     public int getSelected() {
         return selected;
     }
-    
+
+    /**
+     * Selects the specified entry and scrolls to make it visible
+     *
+     * @param selected the index or {@link #NO_SELECTION}
+     * @throws IllegalArgumentException if index is invalid
+     * @see #setSelected(int, boolean)
+     */
     public void setSelected(int selected) {
         setSelected(selected, true, CallbackReason.SET_SELECTED);
     }
-    
+
+    /**
+     * Selects the specified entry and optionally scrolls to that entry
+     *
+     * @param selected the index or {@link #NO_SELECTION}
+     * @param scroll treu if it should scroll to make the entry visible
+     * @throws IllegalArgumentException if index is invalid
+     */
     public void setSelected(int selected, boolean scroll) {
         setSelected(selected, scroll, CallbackReason.SET_SELECTED);
     }
