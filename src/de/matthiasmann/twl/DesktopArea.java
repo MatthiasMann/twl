@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 /**
  * A widget which reorders it's child when they receive focus
+ * 
  * @author Matthias Mann
  */
 public class DesktopArea extends Widget {
@@ -56,12 +57,6 @@ public class DesktopArea extends Widget {
     protected void layout() {
         // make sure that all children are still inside
         restrictChildrenToInnerArea();
-    }
-
-    @Override
-    protected void applyTheme(ThemeInfo themeInfo) {
-        super.applyTheme(themeInfo);
-        invalidateLayout();
     }
 
     protected void restrictChildrenToInnerArea() {
