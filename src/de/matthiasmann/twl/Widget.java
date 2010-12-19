@@ -2413,15 +2413,22 @@ public class Widget {
                                 evt.getType() == Event.Type.MOUSE_EXITED) {
                             return child;
                         }
-                        /* seems to be redundant ...
-                        if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
-                                child.isEnabled() &&
-                                child.canAcceptKeyboardFocus()) {
-                            requestKeyboardFocus(child);
-                        }
-                         */
                         Widget result = child.routeMouseEvent(evt);
                         if(result != null) {
+                            // need to check if the focus was transfered to this child or it's descendants
+                            // if not we need to transfer focus on mouse click here
+                            // this can happen if we click on a widget which doesn't want the keyboard focus itself
+                            if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
+                                    focusChild != child &&
+                                    child.isEnabled() &&
+                                    child.canAcceptKeyboardFocus()) {
+                                try {
+                                    child.focusGainedCause = FocusGainedCause.MOUSE_BTNDOWN;
+                                    requestKeyboardFocus(child);
+                                } finally {
+                                    child.focusGainedCause = null;
+                                }
+                            }
                             return result;
                         }
                         // widget no longer wants mouse events
@@ -2431,6 +2438,9 @@ public class Widget {
                 }
             }
         }
+
+        // the following code is only executed for the widget which received
+        // the click event. That's why we can call {@code requestKeyboardFocus(null)}
         if(evt.getType() == Event.Type.MOUSE_BTNDOWN && isEnabled() && canAcceptKeyboardFocus()) {
             try {
                 focusGainedCause = FocusGainedCause.MOUSE_BTNDOWN;
