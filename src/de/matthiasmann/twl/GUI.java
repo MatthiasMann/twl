@@ -115,6 +115,8 @@ public final class GUI extends Widget {
     private boolean popupEventOccured;
     private Widget lastMouseDownWidget;
     private Widget lastMouseClickWidget;
+    private PopupWindow boundDragPopup;
+    private Runnable boundDragCallback;
     
     private int mouseIdleTime = 60;
     private boolean mouseIdleState;
@@ -690,8 +692,12 @@ public final class GUI extends Widget {
             }
             
             if(dragActive) {
-                // send MOUSE_DRAGGED only to the widget which received the MOUSE_BTNDOWN
-                if(lastMouseDownWidget != null) {
+                if(boundDragPopup != null) {
+                    // a bound drag is converted to a mouse move
+                    assert getTopPane() == boundDragPopup;
+                    sendMouseEvent(Event.Type.MOUSE_MOVED, null);
+                } else if(lastMouseDownWidget != null) {
+                    // send MOUSE_DRAGGED only to the widget which received the MOUSE_BTNDOWN
                     sendMouseEvent(Event.Type.MOUSE_DRAGGED, lastMouseDownWidget);
                 }
             } else if(prevButtonState == 0) {
@@ -715,8 +721,12 @@ public final class GUI extends Widget {
                     sendMouseEvent(Event.Type.MOUSE_BTNDOWN, lastMouseDownWidget);
                 }
             } else if(dragButton >= 0) {
-                // send MOUSE_BTNUP only to the widget which received the MOUSE_BTNDOWN
+                if(boundDragPopup != null) {
+                    // for bound drag the MOUSE_BTNUP is first send to the current widget under the mouse
+                    sendMouseEvent(Event.Type.MOUSE_BTNUP, getWidgetUnderMouse());
+                }
                 if(lastMouseDownWidget != null) {
+                    // send MOUSE_BTNUP only to the widget which received the MOUSE_BTNDOWN
                     sendMouseEvent(Event.Type.MOUSE_BTNUP, lastMouseDownWidget);
                 }
             }
@@ -759,6 +769,17 @@ public final class GUI extends Widget {
                 sendMouseEvent(Event.Type.MOUSE_MOVED, null);
             }
             dragButton = -1;
+            if(boundDragCallback != null) {
+                try {
+                    boundDragCallback.run();
+                } catch (Exception ex) {
+                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE,
+                            "Exception in bound drag callback", ex);
+                } finally {
+                    boundDragCallback = null;
+                    boundDragPopup = null;
+                }
+            }
         }
 
         return handled;
@@ -777,6 +798,8 @@ public final class GUI extends Widget {
         lastMouseClickWidget = null;
         mouseClickCount = 0;
         mouseClickedTime = curTime;
+        boundDragPopup = null;
+        boundDragCallback = null;
         if(dragActive) {
             dragActive = false;
             sendMouseEvent(Event.Type.MOUSE_MOVED, null);
@@ -909,7 +932,7 @@ public final class GUI extends Widget {
         assert type.isMouseEvent;
         popupEventOccured = false;
         event.type = type;
-        event.dragEvent = dragActive;
+        event.dragEvent = dragActive && (boundDragPopup == null);
 
         renderer.setMousePosition(event.mouseX, event.mouseY);
         
@@ -919,7 +942,7 @@ public final class GUI extends Widget {
             }
             return target;
         } else {
-            assert !dragActive;
+            assert !dragActive || boundDragPopup != null;
             Widget widget = null;
             if(activeInfoWindow != null) {
                 if(activeInfoWindow.isMouseInside(event) && setMouseOverChild(activeInfoWindow, event)) {
@@ -970,6 +993,9 @@ public final class GUI extends Widget {
     }
     
     void closePopup(PopupWindow popup) {
+        if(boundDragPopup == popup) {
+            boundDragPopup = null;
+        }
         int idx = getChildIndex(popup);
         if(idx > 0) {
             super.removeChild(idx);
@@ -1011,6 +1037,17 @@ public final class GUI extends Widget {
         if(widget instanceof PopupWindow) {
             closePopup((PopupWindow)widget);
         }
+    }
+
+    boolean bindDragEvent(PopupWindow popup, Runnable cb) {
+        if(boundDragPopup == null && getTopPane() == popup && dragButton >= 0 && !isOwner(lastMouseDownWidget, popup)) {
+            dragActive = true;
+            boundDragPopup = popup;
+            boundDragCallback = cb;
+            sendMouseEvent(Event.Type.MOUSE_MOVED, null);
+            return true;
+        }
+        return false;
     }
 
     void widgetHidden(Widget widget) {

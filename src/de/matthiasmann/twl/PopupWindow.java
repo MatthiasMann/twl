@@ -204,6 +204,22 @@ public class PopupWindow extends Widget {
         }
     }
 
+    /**
+     * Binds the current drag event (even if it's not yet started) to this popup.
+     * The mouse drag events will be send as normal mouse move events.
+     * The optional callback will be called when the drag event is finished.
+     *
+     * @param cb the optional callback which should be called at the end of the bound drag.
+     * @return true if the binding was sucessful, false if not.
+     */
+    public boolean bindMouseDrag(Runnable cb) {
+        GUI gui = getGUI();
+        if(gui != null) {
+            return gui.bindDragEvent(this, cb);
+        }
+        return false;
+    }
+
     @Override
     public int getPreferredInnerWidth() {
         return BoxLayout.computePreferredWidthVertical(this);
