@@ -714,16 +714,20 @@ public final class GUI extends Widget {
                     mouseDownY = mouseY;
                     dragButton = button;
                     lastMouseDownWidget = sendMouseEvent(Event.Type.MOUSE_BTNDOWN, null);
-                } else if(lastMouseDownWidget != null) {
+                } else if(lastMouseDownWidget != null && boundDragPopup == null) {
                     // if another button is pressed while one button is already
                     // pressed then route the second button to the widget which
                     // received the first press
+                    // but only when no bound drag is active
                     sendMouseEvent(Event.Type.MOUSE_BTNDOWN, lastMouseDownWidget);
                 }
-            } else if(dragButton >= 0) {
+            } else if(dragButton >= 0 && (boundDragPopup == null || event.isMouseDragEnd())) {
+                // only send the last MOUSE_BTNUP event when a bound drag is active
                 if(boundDragPopup != null) {
-                    // for bound drag the MOUSE_BTNUP is first send to the current widget under the mouse
-                    sendMouseEvent(Event.Type.MOUSE_BTNUP, getWidgetUnderMouse());
+                    if(button == dragButton) {
+                        // for bound drag the MOUSE_BTNUP is first send to the current widget under the mouse
+                        sendMouseEvent(Event.Type.MOUSE_BTNUP, getWidgetUnderMouse());
+                    }
                 }
                 if(lastMouseDownWidget != null) {
                     // send MOUSE_BTNUP only to the widget which received the MOUSE_BTNDOWN
