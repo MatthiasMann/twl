@@ -365,8 +365,15 @@ public abstract class ValueAdjuster extends Widget {
                         doDecrement();
                         return true;
                     case Event.KEY_RETURN:
+                    case Event.KEY_SPACE:
                         startEdit();
                         return true;
+                    default:
+                        if(evt.hasKeyCharNoModifiers() && shouldStartEdit(evt.getKeyChar())) {
+                            startEdit();
+                            editField.handleEvent(evt);
+                            return true;
+                        }
                     }
                 }
                 return true;
@@ -386,6 +393,7 @@ public abstract class ValueAdjuster extends Widget {
     protected abstract boolean onEditEnd(String text);
     protected abstract String validateEdit(String text);
     protected abstract void onEditCanceled();
+    protected abstract boolean shouldStartEdit(char ch);
     
     protected abstract void onDragStart();
     protected abstract void onDragUpdate(int dragDelta);

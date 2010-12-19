@@ -50,6 +50,7 @@ public class ValueAdjusterInt extends ValueAdjuster {
         setDisplayText();
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public ValueAdjusterInt(IntegerModel model) {
         setTheme("valueadjuster");
         setModel(model);
@@ -137,6 +138,11 @@ public class ValueAdjusterInt extends ValueAdjuster {
 
     @Override
     protected void onEditCanceled() {
+    }
+
+    @Override
+    protected boolean shouldStartEdit(char ch) {
+        return (ch >= '0' && ch <= '9') || (ch == '-');
     }
 
     @Override
