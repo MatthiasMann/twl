@@ -48,6 +48,7 @@ public class Button extends TextWidget {
     private ButtonModel model;
     private String themeText;
     private String text;
+    private int mouseButton;
 
     public Button() {
         this(null, false, null);
@@ -76,6 +77,7 @@ public class Button extends TextWidget {
         this(animState, inherit, null);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public Button(String text) {
         this(null, false, null);
         setText(text);
@@ -98,8 +100,10 @@ public class Button extends TextWidget {
      * @param inherit true if the animation state should be inherited false for sharing
      * @param model the button behavior model, if null a SimpleButtonModel is created
      */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public Button(AnimationState animState, boolean inherit, ButtonModel model) {
         super(animState, inherit);
+        this.mouseButton = Event.MOUSE_LBUTTON;
         this.stateChangedCB = new Runnable() {
             public void run() {
                 modelStateChanged();
@@ -169,6 +173,22 @@ public class Button extends TextWidget {
     public void setText(String text) {
         this.text = text;
         updateText();
+    }
+
+    public int getMouseButton() {
+        return mouseButton;
+    }
+
+    /**
+     * Sets the mouse button to which this button should react.
+     * The default is {@link Event#MOUSE_LBUTTON}
+     * @param mouseButton the mouse button
+     */
+    public void setMouseButton(int mouseButton) {
+        if(mouseButton < Event.MOUSE_LBUTTON || mouseButton > Event.MOUSE_RBUTTON) {
+            throw new IllegalArgumentException("mouseButton");
+        }
+        this.mouseButton = mouseButton;
     }
 
     @Override
@@ -258,13 +278,13 @@ public class Button extends TextWidget {
         }
         switch (evt.getType()) {
         case MOUSE_BTNDOWN:
-            if(evt.getMouseButton() == Event.MOUSE_LBUTTON) {
+            if(evt.getMouseButton() == mouseButton) {
                 model.setPressed(true);
                 model.setArmed(true);
             }
             break;
         case MOUSE_BTNUP:
-            if(evt.getMouseButton() == Event.MOUSE_LBUTTON) {
+            if(evt.getMouseButton() == mouseButton) {
                 model.setPressed(false);
                 model.setArmed(false);
             }
