@@ -95,12 +95,13 @@ public class RadialPopupMenu extends PopupWindow {
         }
     }
 
-    public void addButton(String theme, Runnable cb) {
+    public Button addButton(String theme, Runnable cb) {
         RoundButton button = new RoundButton();
         button.setTheme(theme);
         button.addCallback(cb);
         button.setMouseButton(mouseButton);
         addButton(button);
+        return button;
     }
 
     public void removeButton(Button btn) {
