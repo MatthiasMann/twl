@@ -29,10 +29,22 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.utils.CallbackSupport;
 
 /**
- * A scroll bar
+ * A scroll bar.<br/>
+ * <br/>
+ * The Scrollbar supports two optional image parameters which can be used
+ * to color the track on up/left and right/bottom side of the thumb differently:
+ * <ul>
+ * <li>trackImageUp (vertical only)</li>
+ * <li>trackImageLeft (horizontal only)</li>
+ * <li>trackImageRight (horizontal only)</li>
+ * <li>trackImageBottom (vertical only)</li>
+ * </ul>
+ * These image are drawn in the inner widget area up the the edge of the thumb.
+ * use inset to exclude/include more area.
  *
  * @author Matthias Mann
  */
@@ -56,6 +68,8 @@ public class Scrollbar extends Widget {
     private int trackClicked;
     private int trackClickLimit;
     private Runnable[] callbacks;
+    private Image trackImageUpLeft;
+    private Image trackImageDownRight;
 
     private int pageSize;
     private int stepSize;
@@ -314,6 +328,38 @@ public class Scrollbar extends Widget {
 
     protected void applyThemeScrollbar(ThemeInfo themeInfo) {
         setScaleThumb(themeInfo.getParameter("scaleThumb", false));
+        if(orientation == Orientation.HORIZONTAL) {
+            trackImageUpLeft    = themeInfo.getParameterValue("trackImageLeft",  false, Image.class);
+            trackImageDownRight = themeInfo.getParameterValue("trackImageRight", false, Image.class);
+        } else {
+            trackImageUpLeft    = themeInfo.getParameterValue("trackImageUp",   false, Image.class);
+            trackImageDownRight = themeInfo.getParameterValue("trackImageDown", false, Image.class);
+        }
+    }
+
+    @Override
+    protected void paintWidget(GUI gui) {
+        int x = getInnerX();
+        int y = getInnerY();
+        if(orientation == Orientation.HORIZONTAL) {
+            int h = getInnerHeight();
+            if(trackImageUpLeft != null) {
+                trackImageUpLeft.draw(getAnimationState(), x, y, thumb.getX() - x, h);
+            }
+            if(trackImageDownRight != null) {
+                int thumbRight = thumb.getRight();
+                trackImageDownRight.draw(getAnimationState(), thumbRight, y, getInnerRight() - thumbRight, h);
+            }
+        } else {
+            int w = getInnerWidth();
+            if(trackImageUpLeft != null) {
+                trackImageUpLeft.draw(getAnimationState(), x, y, w, thumb.getY() - y);
+            }
+            if(trackImageDownRight != null) {
+                int thumbBottom = thumb.getBottom();
+                trackImageDownRight.draw(getAnimationState(), x, thumbBottom, w, getInnerBottom() - thumbBottom);
+            }
+        }
     }
 
     @Override
