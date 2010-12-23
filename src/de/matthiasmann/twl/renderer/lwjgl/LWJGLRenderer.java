@@ -61,9 +61,13 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GLContext;
 
 /**
- * A renderer using only GL11 features
- * 
+ * A renderer using only GL11 features.
+ *
+ * <p>For correct rendering the OpenGL viewport size must be synchronized.</p>
+ *
  * @author Matthias Mann
+ * 
+ * @see #syncViewportSize()
  */
 public class LWJGLRenderer implements Renderer, LineRenderer {
 
@@ -89,6 +93,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintStack tintStack;
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
         this.textureAreas = new ArrayList<TextureArea>();
@@ -184,7 +189,20 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             textureAreas.clear();
         }
     }
-    
+
+    /**
+     * <p>Queries the current view port size & position and updates all related
+     * internal state.</p>
+     *
+     * <p>It is important that the internal state matches the OpenGL viewport or
+     * clipping won't work correctly.</p>
+     *
+     * <p>This method should only be called when the viewport size has changed.
+     * It can have negative impact on performance to call every frame.</p>
+     * 
+     * @see #getWidth()
+     * @see #getHeight()
+     */
     public void syncViewportSize() {
         ib16.clear();
         GL11.glGetInteger(GL11.GL_VIEWPORT, ib16);
@@ -353,7 +371,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
                 }
             }
         } catch(LWJGLException ex) {
-            ex.printStackTrace();
+            Logger.getLogger(LWJGLRenderer.class.getName()).log(Level.WARNING,
+                    "Could not set native cursor", ex);
         }
     }
 
