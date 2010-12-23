@@ -464,14 +464,20 @@ public final class GUI extends Widget {
 
     @Override
     public void validateLayout() {
-        int count = 1000;
-        while(hasInvalidLayouts && count > 0) {
-            hasInvalidLayouts = false;
-            super.validateLayout();
-            count--;
-        }
-        if(count == 0) {
-            debugLayoutLoop();
+        if(hasInvalidLayouts) {
+            final int MAX_ITERATIONS = 1000;
+            int iterations = 0;
+            while(hasInvalidLayouts && iterations < MAX_ITERATIONS) {
+                hasInvalidLayouts = false;
+                super.validateLayout();
+                iterations++;
+            }
+            ArrayList<Widget> widgetsInLoop = null;
+            if(hasInvalidLayouts) {
+                widgetsInLoop = new ArrayList<Widget>();
+                collectLayoutLoop(widgetsInLoop);
+            }
+            DebugHook.getDebugHook().guiLayoutValidated(iterations, widgetsInLoop);
         }
     }
 
@@ -1109,16 +1115,6 @@ public final class GUI extends Widget {
         }
         return super.requestKeyboardFocus(child);
     }
-
-    private void debugLayoutLoop() {
-        ArrayList<Widget> widgetsInLoop = new ArrayList<Widget>();
-        collectLayoutLoop(widgetsInLoop);
-        System.err.println("WARNING: layout loop detected - printing");
-        for(int i=0,n=widgetsInLoop.size() ; i<n ; i++) {
-            System.err.println(i+": "+widgetsInLoop.get(i));
-        }
-    }
-
     private void hideTooltip() {
         tooltipWindow.setVisible(false);
         tooltipOwner = null;

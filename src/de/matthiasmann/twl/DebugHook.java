@@ -29,8 +29,10 @@
  */
 package de.matthiasmann.twl;
 
+import java.util.Collection;
+
 /**
- * The debug hook class can be used to retieve more detailed information
+ * The debug hook class can be used to retrieve more detailed information
  * about missing themes or parameters.
  *
  * @author Matthias Mann
@@ -115,5 +117,21 @@ public class DebugHook {
 
     public void missingImage(String name) {
         System.err.println("Could not find image: " + name);
+    }
+
+    /**
+     * Called when GUI has validated the layout tree
+     * @param iterations the number of iterations required to solve layout
+     * @param loop the widgets involved in a layout loop if the layout could not be solved - is null layout was solved
+     */
+    public void guiLayoutValidated(int iterations, Collection<Widget> loop) {
+        if(loop != null) {
+            System.err.println("WARNING: layout loop detected - printing");
+            int index = 1;
+            for(Widget w : loop) {
+                System.err.println(index+": "+w);
+                index++;
+            }
+        }
     }
 }
