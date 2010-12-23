@@ -118,6 +118,7 @@ public class DialogLayout extends Widget {
     protected boolean addDefaultGaps = true;
     protected boolean includeInvisibleWidgets = true;
     protected boolean redoDefaultGaps;
+    protected boolean isPrepared;
     protected boolean blockInvalidateLayoutTree;
     protected boolean warnOnIncomplete;
 
@@ -404,11 +405,15 @@ public class DialogLayout extends Widget {
                 }
             }
             redoDefaultGaps = false;
+            isPrepared = false;
         }
-        for(WidgetSpring s : widgetSprings.values()) {
-            if(includeInvisibleWidgets || s.w.isVisible()) {
-                s.prepare();
+        if(!isPrepared) {
+            for(WidgetSpring s : widgetSprings.values()) {
+                if(includeInvisibleWidgets || s.w.isVisible()) {
+                    s.prepare();
+                }
             }
+            isPrepared = true;
         }
     }
 
@@ -427,6 +432,30 @@ public class DialogLayout extends Widget {
             }
             throw ex;
         }
+    }
+
+    @Override
+    public void invalidateLayout() {
+        isPrepared = false;
+        super.invalidateLayout();
+    }
+
+    @Override
+    protected void paintWidget(GUI gui) {
+        isPrepared = false;
+        // super.paintWidget() is empty
+    }
+
+    @Override
+    protected void sizeChanged() {
+        isPrepared = false;
+        super.sizeChanged();
+    }
+
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        isPrepared = false;
+        super.afterAddToGUI(gui);
     }
 
     /**
@@ -540,7 +569,7 @@ public class DialogLayout extends Widget {
     @Override
     protected void childVisibilityChanged(Widget child) {
         if(!includeInvisibleWidgets) {
-            redoDefaultGaps = true;
+            redoDefaultGaps = true; // this will also clear isPrepared
             maybeInvalidateLayoutTree();
         }
     }
@@ -602,6 +631,10 @@ public class DialogLayout extends Widget {
         int y;
         int width;
         int height;
+        int minWidth;
+        int minHeight;
+        int maxWidth;
+        int maxHeight;
         int prefWidth;
         int prefHeight;
         int flags;
@@ -615,16 +648,20 @@ public class DialogLayout extends Widget {
             this.y = w.getY();
             this.width = w.getWidth();
             this.height = w.getHeight();
-            this.prefWidth = computeSize(w.getMinWidth(), w.getPreferredWidth(), w.getMaxWidth());
-            this.prefHeight = computeSize(w.getMinHeight(), w.getPreferredHeight(), w.getMaxHeight());
+            this.minWidth = w.getMinWidth();
+            this.minHeight = w.getMinHeight();
+            this.maxWidth = w.getMaxWidth();
+            this.maxHeight = w.getMaxHeight();
+            this.prefWidth = computeSize(minWidth, w.getPreferredWidth(), maxWidth);
+            this.prefHeight = computeSize(minHeight, w.getPreferredHeight(), maxHeight);
             this.flags = 0;
         }
 
         @Override
         int getMinSize(int axis) {
             switch(axis) {
-            case AXIS_X: return w.getMinWidth();
-            case AXIS_Y: return w.getMinHeight();
+            case AXIS_X: return minWidth;
+            case AXIS_Y: return minHeight;
             default: throw new IllegalArgumentException("axis");
             }
         }
@@ -641,8 +678,8 @@ public class DialogLayout extends Widget {
         @Override
         int getMaxSize(int axis) {
             switch(axis) {
-            case AXIS_X: return w.getMaxWidth();
-            case AXIS_Y: return w.getMaxHeight();
+            case AXIS_X: return maxWidth;
+            case AXIS_Y: return maxHeight;
             default: throw new IllegalArgumentException("axis");
             }
         }
