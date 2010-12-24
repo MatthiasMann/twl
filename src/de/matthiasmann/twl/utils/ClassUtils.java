@@ -40,7 +40,7 @@ public class ClassUtils {
     private ClassUtils() {
     }
 
-    private static HashMap<Class<?>, Class<?>> primitiveTypeMap = new HashMap<Class<?>, Class<?>>();
+    private static final HashMap<Class<?>, Class<?>> primitiveTypeMap = new HashMap<Class<?>, Class<?>>();
     static {
         primitiveTypeMap.put(Boolean.TYPE, Boolean.class);
         primitiveTypeMap.put(Byte.TYPE, Byte.class);
