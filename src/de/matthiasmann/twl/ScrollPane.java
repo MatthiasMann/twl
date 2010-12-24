@@ -30,6 +30,17 @@
 package de.matthiasmann.twl;
 
 /**
+ * <p>A scroll pane to scroll another widget if it requires more space then
+ * available.</p>
+ *
+ * <p>It requires the following child themes:</p><table>
+ * <tr><th>Theme</th><th>Description</th></tr>
+ * <tr><td>hscrollbar</td><td>The horizontal scrollbar</td></tr>
+ * <tr><td>vscrollbar</td><td>The vertical scrollbar</td></tr>
+ * <tr><td>dragButton</td><td>The drag button in the bottom right corner.
+ *     Only needed when hasDragButton is true.</td></tr>
+ * </table><br/>
+ * For the remaining theme parameters look at {@link #applyThemeScrollPane(de.matthiasmann.twl.ThemeInfo) }
  *
  * @author Matthias Mann
  */
@@ -42,20 +53,82 @@ public class ScrollPane extends Widget {
     public static final String STATE_AUTO_SCROLL_UP = "autoScrollUp";
     public static final String STATE_AUTO_SCROLL_DOWN = "autoScrollDown";
 
+    /**
+     * Controls which axis of the scroll pane should be fixed
+     */
     public enum Fixed {
+        /**
+         * No axis is fixed - the scroll pane may show 2 scroll bars
+         */
         NONE,
+        /**
+         * The horizontal axis is fixed - only a vertical scroll bar may be shown
+         */
         HORIZONTAL,
+        /**
+         * The vertical axis is fixed - only a horizontal scroll bar may be shown
+         */
         VERTICAL
     }
 
+    /**
+     * Indicates that the content handles scrolling itself.
+     *
+     * This interfaces also allows for a larger scrollable size then
+     * the Widget size limitations.
+     *
+     * The {@code ScrollPane} will set the size of content to the available
+     * content area.
+     */
     public interface Scrollable {
+        /**
+         * Called when the content is scrolled either by a call to
+         * {@link ScrollPane#setScrollPositionX(int) },
+         * {@link ScrollPane#setScrollPositionY(int) } or
+         * through one of the scrollbars.
+         *
+         * @param scrollPosX the new horizontal scroll position. Always &gt;= 0.
+         * @param scrollPosY the new vertical scroll position. Always &gt;= 0.
+         */
         public void setScrollPosition(int scrollPosX, int scrollPosY);
     }
+
+    /**
+     * Custom auto scroll area checking. This is needed when the content
+     * has column headers.
+     */
     public interface AutoScrollable {
+        /**
+         * Returns the auto scroll direction for the specified mouse event.
+         *
+         * @param evt the mouse event which could trigger an auto scroll
+         * @param autoScrollArea the size of the auto scroll area.
+         *     This is a theme parameter of the {@link ScrollPane}
+         * @return the auto scroll direction.
+         *     -1 for upwards
+         *      0 for no auto scrolling
+         *     +1 for downwards
+         * @see ScrollPane#checkAutoScroll(de.matthiasmann.twl.Event)
+         */
         public int getAutoScrollDirection(Event evt, int autoScrollArea);
     }
+
+    /**
+     * Custom page sizes for page scrolling and scroll bar thumb sizing.
+     * This is needed when the content has column or row headers.
+     */
     public interface CustomPageSize {
+        /**
+         * Computes the horizontal page size based on the available width.
+         * @param availableWidth the available width (the visible area)
+         * @return the page size. Must be &gt; 0 and &lt;= availableWidth
+         */
         public int getPageSizeX(int availableWidth);
+        /**
+         * Computes the vertical page size based on the available height.
+         * @param availableHeight the available height (the visible area)
+         * @return the page size. Must be &gt; 0 and &lt;= availableHeight
+         */
         public int getPageSizeY(int availableHeight);
     }
 
@@ -112,7 +185,17 @@ public class ScrollPane extends Widget {
         return fixed;
     }
 
+    /**
+     * Controls if this scroll pane has a fixed axis which will not show a scrollbar.
+     * 
+     * Default is {@link Fixed#NONE}
+     *
+     * @param fixed the fixed axis.
+     */
     public void setFixed(Fixed fixed) {
+        if(fixed == null) {
+            throw new NullPointerException("fixed");
+        }
         if(this.fixed != fixed) {
             this.fixed = fixed;
             invalidateLayout();
@@ -123,6 +206,17 @@ public class ScrollPane extends Widget {
         return content;
     }
 
+    /**
+     * Sets the widget which should be scrolled.
+     *
+     * <p>The following interfaces change the behavior of the scroll pane when
+     * they are implemented by the content:</p><ul>
+     * <li>{@link Scrollable}</li>
+     * <li>{@link AutoScrollable}</li>
+     * <li>{@link CustomPageSize}</li>
+     * </ul>
+     * @param content the new scroll pane content
+     */
     public void setContent(Widget content) {
         if(this.content != null) {
             contentArea.removeAllChildren();
@@ -141,7 +235,7 @@ public class ScrollPane extends Widget {
     /**
      * Control if the content size.
      *
-     * If set to true then the content size will be the larger of it's perferred
+     * If set to true then the content size will be the larger of it's preferred
      * size and the size of the content area.
      * If set to false then the content size will be it's preferred area.
      *
@@ -153,6 +247,16 @@ public class ScrollPane extends Widget {
         this.expandContentSize = expandContentSize;
     }
 
+    /**
+     * Forces a layout of the scroll pane content to update the ranges of the
+     * scroll bars.
+     * 
+     * This method should be called after changes to the content which might
+     * affect it's size and before computing a new scroll position.
+     *
+     * @see #scrollToAreaX(int, int, int)
+     * @see #scrollToAreaY(int, int, int)
+     */
     public void updateScrollbarSizes() {
         invalidateLayout();
         validateLayout();
@@ -170,6 +274,15 @@ public class ScrollPane extends Widget {
         scrollbarH.setValue(pos);
     }
 
+    /**
+     * Tries to make the specified horizontal area completely visible. If it is
+     * larger then the horizontal page size then it scrolls to the start of the area.
+     *
+     * @param start the position of the area
+     * @param size size of the area
+     * @param extra the extra space which should be visible around the area
+     * @see Scrollbar#scrollToArea(int, int, int)
+     */
     public void scrollToAreaX(int start, int size, int extra) {
         scrollbarH.scrollToArea(start, size, extra);
     }
@@ -186,6 +299,15 @@ public class ScrollPane extends Widget {
         scrollbarV.setValue(pos);
     }
 
+    /**
+     * Tries to make the specified vertical area completely visible. If it is
+     * larger then the vertical page size then it scrolls to the start of the area.
+     *
+     * @param start the position of the area
+     * @param size size of the area
+     * @param extra the extra space which should be visible around the area
+     * @see Scrollbar#scrollToArea(int, int, int)
+     */
     public void scrollToAreaY(int start, int size, int extra) {
         scrollbarV.scrollToArea(start, size, extra);
     }
@@ -235,6 +357,14 @@ public class ScrollPane extends Widget {
         };
     }
 
+    /**
+     * Checks for an auto scroll event. This should be called when a drag & drop
+     * operation is in progress and the drop target is inside a scroll pane.
+     *
+     * @param evt the mouse event which should be checked.
+     * @return true if auto scrolling is started/active.
+     * @see #stopAutoScroll()
+     */
     public boolean checkAutoScroll(Event evt) {
         GUI gui = getGUI();
         if(gui == null) {
@@ -265,6 +395,12 @@ public class ScrollPane extends Widget {
         return true;
     }
 
+    /**
+     * Stops an activate auto scroll. This must be called when the drag & drop
+     * operation is finished.
+     *
+     * @see #checkAutoScroll(de.matthiasmann.twl.Event)
+     */
     public void stopAutoScroll() {
         if(autoScrollTimer != null) {
             autoScrollTimer.stop();
@@ -273,6 +409,13 @@ public class ScrollPane extends Widget {
         setAutoScrollMarker();
     }
 
+    /**
+     * Returns the ScrollPane instance which has the specified widget as content.
+     *
+     * @param widget the widget to retrieve the containing ScrollPane for.
+     * @return the ScrollPane or null if that widget is not directly in a ScrollPane.
+     * @see #setContent(de.matthiasmann.twl.Widget)
+     */
     public static ScrollPane getContainingScrollPane(Widget widget) {
         Widget ca = widget.getParent();
         if(ca != null) {
@@ -371,6 +514,28 @@ public class ScrollPane extends Widget {
         applyThemeScrollPane(themeInfo);
     }
 
+    /**
+     * The following theme parameters are required by the scroll pane:<table>
+     * <tr><th>Parameter name</th><th>Type</th><th>Description</th></tr>
+     * <tr><td>autoScrollArea</td><td>integer</td><td>The size of the auto scroll area</td></tr>
+     * <tr><td>autoScrollSpeed</td><td>integer</td><td>The speed in pixels to scroll every 50 ms</td></tr>
+     * <tr><td>hasDragButton</td><td>boolean</td><td>If the dragButton should be shown or not</td></tr>
+     * </table>
+     * <br/>
+     * The following optional parameters can be used to change the appearance of
+     * the scroll pane:<table>
+     * <tr><th>Parameter name</th><th>Type</th><th>Description</th></tr>
+     * <tr><td>hscrollbarOffset</td><td>Dimension</td><td>Moves the horizontal scrollbar but does not
+     *      change the available area for the scroll content.</td></tr>
+     * <tr><td>vscrollbarOffset</td><td>Dimension</td><td>Moves the vertical scrollbar but does not
+     *      change the available area for the scroll content.</td></tr>
+     * <tr><td>contentScrollbarSpacing</td><td>Dimension</td><td>An optional spacing between
+     *      the scrollbar and the content area. This is only applied when the corresponding
+     *      scrollbar is visible. It should be &gt;= 0.</td></tr>
+     * </table>
+     *
+     * @param themeInfo the theme info
+     */
     protected void applyThemeScrollPane(ThemeInfo themeInfo) {
         autoScrollArea = themeInfo.getParameter("autoScrollArea", 5);
         autoScrollSpeed = themeInfo.getParameter("autoScrollSpeed", autoScrollArea * 2);
