@@ -255,7 +255,15 @@ public class Widget {
      * Once a widget is added (indirectly) to a GUI object it will be part of
      * that GUI tree.<p>
      *
-     * This method is thread safe.
+     * This method is thread safe.<p>
+     *
+     * Repeated calls may not return the same result. Use it like this:
+     * <pre>
+     * GUI gui = getGUI();
+     * if(gui != null) {
+     *     gui.invokeLater(....);
+     * }
+     * </pre>
      *
      * @return the GUI root or null if the root is not a GUI instance.
      * @see #afterAddToGUI(de.matthiasmann.twl.GUI)
