@@ -47,6 +47,24 @@ import java.util.logging.Logger;
 
 /**
  * Root of the TWL class hierarchy.
+ *
+ * <p>The following methods are events and can be overridden when needed:</p><ul>
+ * <li>{@link #afterAddToGUI(de.matthiasmann.twl.GUI) }</li>
+ * <li>{@link #allChildrenRemoved() }</li>
+ * <li>{@link #beforeRemoveFromGUI(de.matthiasmann.twl.GUI) }</li>
+ * <li>{@link #borderChanged() }</li>
+ * <li>{@link #childAdded(de.matthiasmann.twl.Widget) }</li>
+ * <li>{@link #childHidden(de.matthiasmann.twl.Widget) }</li>
+ * <li>{@link #childRemoved(de.matthiasmann.twl.Widget) }</li>
+ * <li>{@link #childVisibilityChanged(de.matthiasmann.twl.Widget) }</li>
+ * <li>{@link #keyboardFocusChildChanged(de.matthiasmann.twl.Widget) }</li>
+ * <li>{@link #keyboardFocusGained() }</li>
+ * <li>{@link #keyboardFocusGained(de.matthiasmann.twl.FocusGainedCause, de.matthiasmann.twl.Widget) }</li>
+ * <li>{@link #keyboardFocusLost() }</li>
+ * <li>{@link #positionChanged() }</li>
+ * <li>{@link #sizeChanged() }</li>
+ * <li>{@link #widgetDisabled() }</li>
+ * </ul>
  * 
  * @author Matthias Mann
  */
@@ -1846,7 +1864,10 @@ public class Widget {
     }
 
     /**
-     * This method is called when this widget has been disabled, either directly or one of it's parents.
+     * This method is called when this widget has been disabled,
+     * either directly or one of it's parents.
+     *
+     * The default implementation does nothing.
      */
     protected void widgetDisabled() {
     }
