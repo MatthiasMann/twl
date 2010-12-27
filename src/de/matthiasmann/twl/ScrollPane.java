@@ -145,6 +145,7 @@ public class ScrollPane extends Widget {
     private Dimension contentScrollbarSpacing = Dimension.ZERO;
     private boolean inLayout;
     private boolean expandContentSize;
+    private boolean scrollbarsAlwaysVisible;
     private int scrollbarsToggleFlags;
     private int autoScrollArea;
     private int autoScrollSpeed;
@@ -244,7 +245,29 @@ public class ScrollPane extends Widget {
      * @param expandContentSize true if the content should always cover the content area
      */
     public void setExpandContentSize(boolean expandContentSize) {
-        this.expandContentSize = expandContentSize;
+        if(this.expandContentSize != expandContentSize) {
+            this.expandContentSize = expandContentSize;
+            invalidateLayoutLocally();
+        }
+    }
+
+    public boolean isScrollbarsAlwaysVisible() {
+        return scrollbarsAlwaysVisible;
+    }
+
+    /**
+     * Controls if the scrollbars are always drawn independent of the content size.<p>
+     * Default is false.<p>
+     *
+     * If one of the axis is fixed then this axis will not show a scrollbar.
+     *
+     * @param scrollbarsAlwaysVisible true if the scrollbars are always drawn.
+     */
+    public void setScrollbarsAlwaysVisible(boolean scrollbarsAlwaysVisible) {
+        if(this.scrollbarsAlwaysVisible != scrollbarsAlwaysVisible) {
+            this.scrollbarsAlwaysVisible = scrollbarsAlwaysVisible;
+            invalidateLayoutLocally();
+        }
     }
 
     /**
@@ -666,7 +689,7 @@ public class ScrollPane extends Widget {
 
                     if(fixed != Fixed.HORIZONTAL) {
                         hScrollbarMax = Math.max(0, requiredWidth - availWidth);
-                        if(hScrollbarMax > 0 || ((scrollbarsToggleFlags & 3) == 3)) {
+                        if(hScrollbarMax > 0 || scrollbarsAlwaysVisible || ((scrollbarsToggleFlags & 3) == 3)) {
                             repeat |= !visibleH;
                             visibleH = true;
                             int prefHeight = scrollbarH.getPreferredHeight();
@@ -680,7 +703,7 @@ public class ScrollPane extends Widget {
 
                     if(fixed != Fixed.VERTICAL) {
                         vScrollbarMax = Math.max(0, requiredHeight - availHeight);
-                        if(vScrollbarMax > 0 || ((scrollbarsToggleFlags & 12) == 12)) {
+                        if(vScrollbarMax > 0 || scrollbarsAlwaysVisible || ((scrollbarsToggleFlags & 12) == 12)) {
                             repeat |= !visibleV;
                             visibleV = true;
                             int prefWidth = scrollbarV.getPreferredWidth();
@@ -709,7 +732,7 @@ public class ScrollPane extends Widget {
             }
             
             if(visibleH != scrollbarH.isVisible() || visibleV != scrollbarV.isVisible()) {
-                invalidateLayout();
+                invalidateLayoutLocally();
             }
 
             int pageSizeX, pageSizeY;
