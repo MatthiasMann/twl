@@ -103,8 +103,18 @@ public class ValueAdjusterFloat extends ValueAdjuster {
         return stepSize;
     }
 
+    /**
+     * Sets the step size for the value adjuster.
+     * It must be &gt; 0.
+     *
+     * Default is 1.0f.
+     *
+     * @param stepSize the new step size
+     * @throws IllegalArgumentException if stepSize is NaN or &lt;= 0.
+     */
     public void setStepSize(float stepSize) {
-        if(stepSize <= 0) {
+        // NaN always compares as false
+        if(!(stepSize > 0)) {
             throw new IllegalArgumentException("stepSize");
         }
         this.stepSize = stepSize;
