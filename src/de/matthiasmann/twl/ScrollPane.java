@@ -251,25 +251,6 @@ public class ScrollPane extends Widget {
         }
     }
 
-    public boolean isScrollbarsAlwaysVisible() {
-        return scrollbarsAlwaysVisible;
-    }
-
-    /**
-     * Controls if the scrollbars are always drawn independent of the content size.<p>
-     * Default is false.<p>
-     *
-     * If one of the axis is fixed then this axis will not show a scrollbar.
-     *
-     * @param scrollbarsAlwaysVisible true if the scrollbars are always drawn.
-     */
-    public void setScrollbarsAlwaysVisible(boolean scrollbarsAlwaysVisible) {
-        if(this.scrollbarsAlwaysVisible != scrollbarsAlwaysVisible) {
-            this.scrollbarsAlwaysVisible = scrollbarsAlwaysVisible;
-            invalidateLayoutLocally();
-        }
-    }
-
     /**
      * Forces a layout of the scroll pane content to update the ranges of the
      * scroll bars.
@@ -543,6 +524,7 @@ public class ScrollPane extends Widget {
      * <tr><td>autoScrollArea</td><td>integer</td><td>The size of the auto scroll area</td></tr>
      * <tr><td>autoScrollSpeed</td><td>integer</td><td>The speed in pixels to scroll every 50 ms</td></tr>
      * <tr><td>hasDragButton</td><td>boolean</td><td>If the dragButton should be shown or not</td></tr>
+     * <tr><td>scrollbarsAlwaysVisible</td><td>boolean</td><td>Show scrollbars always (true) or only when needed (false)</td></tr>
      * </table>
      * <br/>
      * The following optional parameters can be used to change the appearance of
@@ -565,6 +547,7 @@ public class ScrollPane extends Widget {
         hscrollbarOffset = themeInfo.getParameterValue("hscrollbarOffset", false, Dimension.class, Dimension.ZERO);
         vscrollbarOffset = themeInfo.getParameterValue("vscrollbarOffset", false, Dimension.class, Dimension.ZERO);
         contentScrollbarSpacing = themeInfo.getParameterValue("contentScrollbarSpacing", false, Dimension.class, Dimension.ZERO);
+        scrollbarsAlwaysVisible = themeInfo.getParameter("scrollbarsAlwaysVisible", false);
 
         boolean hasDragButton = themeInfo.getParameter("hasDragButton", false);
         if(hasDragButton && dragButton == null) {
