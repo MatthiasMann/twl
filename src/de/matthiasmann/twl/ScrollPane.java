@@ -258,7 +258,7 @@ public class ScrollPane extends Widget {
      * @see #scrollToAreaY(int, int, int)
      */
     public void updateScrollbarSizes() {
-        invalidateLayout();
+        invalidateLayoutLocally();
         validateLayout();
     }
 
@@ -601,6 +601,16 @@ public class ScrollPane extends Widget {
             } finally {
                 inLayout = false;
             }
+        }
+    }
+
+    @Override
+    protected void childInvalidateLayout(Widget child) {
+        if(child == contentArea) {
+            // stop invalidate layout chain here when it comes from contentArea
+            invalidateLayoutLocally();
+        } else {
+            super.childInvalidateLayout(child);
         }
     }
 
