@@ -170,6 +170,7 @@ public final class GUI extends Widget {
      * @param renderer the renderer
      * @param input the input source, can be null.
      */
+    @SuppressWarnings("LeakingThisInConstructor")
     public GUI(Widget rootPane, Renderer renderer, Input input) {
         if(rootPane == null) {
             throw new NullPointerException("rootPane");
@@ -177,7 +178,8 @@ public final class GUI extends Widget {
         if(renderer == null) {
             throw new NullPointerException("renderer");
         }
-        
+
+        this.guiInstance = this;
         this.renderer = renderer;
         this.input = input;
         this.event = new Event();
@@ -289,6 +291,7 @@ public final class GUI extends Widget {
      * This method is thread safe.
      * 
      * @param r the Runnable to execute
+     * @see Widget#getGUI()
      */
     public void invokeLater(Runnable r) {
         if(r == null) {
@@ -312,6 +315,7 @@ public final class GUI extends Widget {
      * @param job the job to execute
      * @param listener the listener which will be called once the job is finished
      * @return a Future representing pending completion of the job
+     * @see Widget#getGUI() 
      */
     public<V> Future<V> invokeAsync(Callable<V> job, AsyncCompletionListener<V> listener) {
         if(job == null) {
@@ -336,6 +340,7 @@ public final class GUI extends Widget {
      * @param job the job to execute
      * @param listener the listener which will be called once the job is finished
      * @return a Future representing pending completion of the job
+     * @see Widget#getGUI() 
      */
     public<V> Future<V> invokeAsync(Runnable job, AsyncCompletionListener<V> listener) {
         if(job == null) {
@@ -980,7 +985,11 @@ public final class GUI extends Widget {
         popupEventOccured = false;
         event.type = type;
         event.dragEvent = false;
-        getTopPane().routePopupEvent(event);
+        try {
+            getTopPane().routePopupEvent(event);
+        } catch(Exception ex) {
+            Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in sendPopupEvent()", ex);
+        }
     }
 
     void resendLastMouseMove() {
@@ -1096,7 +1105,11 @@ public final class GUI extends Widget {
             super.removeChild(idx);
             super.insertChild(infoWindowPlaceholder, idx);
             activeInfoWindow = null;
-            info.infoWindowClosed();
+            try {
+                info.infoWindowClosed();
+            } catch(Exception ex) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in infoWindowClosed()", ex);
+            }
         }
     }
 

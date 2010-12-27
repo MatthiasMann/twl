@@ -101,6 +101,7 @@ public class Widget {
     private ActionMap actionMap;
     private TintAnimator tintAnimator;
     private PropertyChangeSupport propertyChangeSupport;
+    volatile GUI guiInstance;
 
     private final AnimationState animState;
     private final boolean sharedAnimState;
@@ -254,18 +255,14 @@ public class Widget {
      * Once a widget is added (indirectly) to a GUI object it will be part of
      * that GUI tree.<p>
      *
-     * This method is NOT thread safe.
+     * This method is thread safe.
      *
      * @return the GUI root or null if the root is not a GUI instance.
      * @see #afterAddToGUI(de.matthiasmann.twl.GUI)
      * @see #beforeRemoveFromGUI(de.matthiasmann.twl.GUI)
      */
     public final GUI getGUI() {
-        Widget root = getRootWidget();
-        if(root instanceof GUI) {
-            return (GUI)root;
-        }
-        return null;
+        return guiInstance;
     }
     
     /**
@@ -1131,16 +1128,23 @@ public class Widget {
         }
         children.add(index, child);
         child.parent = this;
+        GUI gui = getGUI();
+        if(gui != null) {
+            child.recursivelySetGUI(gui);
+        }
         adjustChildPosition(child, posX + borderLeft, posY + borderTop);
         child.recursivelyEnabledChanged(null, enabled);
-        GUI gui = getGUI();
         if(gui != null) {
             child.recursivelyAddToGUI(gui);
         }
         if(themeManager != null) {
             child.applyTheme(themeManager);
         }
-        childAdded(child);
+        try {
+            childAdded(child);
+        } catch(Exception ex) {
+            getLogger().log(Level.SEVERE, "Exception in childAdded()", ex);
+        }
         // A newly added child can't have open popups
         // because it needs a GUI for this - and it had no parent up to now
     }
@@ -2172,20 +2176,40 @@ public class Widget {
         if(gui != null) {
             child.recursivelyRemoveFromGUI(gui);
         }
+        child.recursivelyClearGUI(gui);
         child.parent = null;
-        child.destroy();
+        try {
+            child.destroy();
+        } catch(Exception ex) {
+            getLogger().log(Level.SEVERE, "Exception in destroy()", ex);
+        }
         adjustChildPosition(child, -posX, -posY);
         child.recursivelyEnabledChanged(null, child.locallyEnabled);
     }
 
+    private void recursivelySetGUI(GUI gui) {
+        assert guiInstance == null : "guiInstance must be null";
+        guiInstance = gui;
+        if(children != null) {
+            for(int i=children.size() ; i-->0 ;) {
+                children.get(i).recursivelySetGUI(gui);
+            }
+        }
+    }
+
     private void recursivelyAddToGUI(GUI gui) {
+        assert guiInstance == gui : "guiInstance must be equal to gui";
         if(layoutInvalid != 0) {
             gui.hasInvalidLayouts = true;
         }
         if(!sharedAnimState) {
             animState.setGUI(gui);
         }
-        afterAddToGUI(gui);
+        try {
+            afterAddToGUI(gui);
+        } catch(Exception ex) {
+            getLogger().log(Level.SEVERE, "Exception in afterAddToGUI()", ex);
+        }
         if(children != null) {
             for(int i=children.size() ; i-->0 ;) {
                 children.get(i).recursivelyAddToGUI(gui);
@@ -2193,7 +2217,18 @@ public class Widget {
         }
     }
 
+    private void recursivelyClearGUI(GUI gui) {
+        assert guiInstance == gui : "guiInstance must be null";
+        guiInstance = null;
+        if(children != null) {
+            for(int i=children.size() ; i-->0 ;) {
+                children.get(i).recursivelyClearGUI(gui);
+            }
+        }
+    }
+
     private void recursivelyRemoveFromGUI(GUI gui) {
+        assert guiInstance == gui : "guiInstance must be equal to gui";
         if(children != null) {
             for(int i=children.size() ; i-->0 ;) {
                 children.get(i).recursivelyRemoveFromGUI(gui);
@@ -2203,7 +2238,11 @@ public class Widget {
         if(!sharedAnimState) {
             animState.setGUI(null);
         }
-        beforeRemoveFromGUI(gui);
+        try {
+            beforeRemoveFromGUI(gui);
+        } catch(Exception ex) {
+            getLogger().log(Level.SEVERE, "Exception in beforeRemoveFromGUI()", ex);
+        }
     }
 
     private void recursivelyChildFocusLost(Widget w) {
@@ -2212,7 +2251,11 @@ public class Widget {
             if(!w.sharedAnimState) {
                 w.animState.setAnimationState(STATE_KEYBOARD_FOCUS, false);
             }
-            w.keyboardFocusLost();
+            try {
+                w.keyboardFocusLost();
+            } catch(Exception ex) {
+                getLogger().log(Level.SEVERE, "Exception in keyboardFocusLost()", ex);
+            }
             w.focusChild = null;
             w = next;
         }
@@ -2229,10 +2272,22 @@ public class Widget {
                 if(gui != null) {
                     gui.widgetDisabled(this);
                 }
-                widgetDisabled();
-                giveupKeyboardFocus();
+                try {
+                    widgetDisabled();
+                } catch(Exception ex) {
+                    getLogger().log(Level.SEVERE, "Exception in widgetDisabled()", ex);
+                }
+                try {
+                    giveupKeyboardFocus();
+                } catch(Exception ex) {
+                    getLogger().log(Level.SEVERE, "Exception in giveupKeyboardFocus()", ex);
+                }
             }
-            firePropertyChange("enabled", !enabled, enabled);
+            try {
+                firePropertyChange("enabled", !enabled, enabled);
+            } catch(Exception ex) {
+                getLogger().log(Level.SEVERE, "Exception in firePropertyChange(\"enabled\")", ex);
+            }
             if(children != null) {
                 for(int i=children.size() ; i-->0 ;) {
                     Widget child = children.get(i);
@@ -2355,7 +2410,11 @@ public class Widget {
         try {
             themeInfo = themeManager.findThemeInfo(themePath);
             if(themeInfo != null && theme.length() > 0) {
-                applyTheme(themeInfo);
+                try {
+                    applyTheme(themeInfo);
+                } catch(Exception ex) {
+                    getLogger().log(Level.SEVERE, "Exception in applyTheme()", ex);
+                }
             }
         } finally {
             hook.afterApplyTheme(this);
@@ -2386,7 +2445,11 @@ public class Widget {
                     themeInfo = themeInfo.getChildTheme(theme);
                 }
                 if(themeInfo != null) {
-                    applyTheme(themeInfo);
+                    try {
+                        applyTheme(themeInfo);
+                    } catch(Exception ex) {
+                        getLogger().log(Level.SEVERE, "Exception in applyTheme()", ex);
+                    }
                 }
             } finally {
                 hook.afterApplyTheme(this);
@@ -2586,5 +2649,9 @@ public class Widget {
             propertyChangeSupport = new PropertyChangeSupport(this);
         }
         return propertyChangeSupport;
+    }
+
+    private Logger getLogger() {
+        return Logger.getLogger(Widget.class.getName());
     }
 }
