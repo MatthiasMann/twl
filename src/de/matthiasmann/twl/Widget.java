@@ -33,6 +33,7 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
+import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.TintAnimator;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -275,7 +276,7 @@ public class Widget {
     
     /**
      * Returns the current visibility flag of this widget.
-     * This does not check if the widget is cliped or buired behind another widget.
+     * This does not check if the widget is clipped or buried behind another widget.
      * @return the current visibility flag of this widget
      */
     public final boolean isVisible() {
@@ -951,12 +952,17 @@ public class Widget {
     /**
      * Changes the theme name of this widget - DOES NOT call reapplyTheme()
      *
-     * If the theme name is empty then this widget won't receive theme data
+     * <p>If the theme name is empty then this widget won't receive theme data
      * and is not included in the theme path, but it's children are still
-     * themed.
+     * themed.</p>
+     *
+     * <p>A theme name must not contain spaces or '*'.
+     * A '/' is only allowed as first character to indicate an absolute theme path.
+     * A '.' is only allowed for absolute theme paths.</p>
      * 
      * @param theme The new theme path element
      * @throws java.lang.NullPointerException if theme is null
+     * @throws java.lang.IllegalArgumentException if the theme name is invalid
      * @see GUI#applyTheme(ThemeManager)
      * @see #reapplyTheme()
      * @see #getThemePath()
@@ -966,14 +972,33 @@ public class Widget {
         if(theme == null) {
             throw new NullPointerException("theme");
         }
+        if(theme.length() > 0) {
+            int slashIdx = theme.lastIndexOf('/');
+            if(slashIdx > 0) {
+                throw new IllegalArgumentException("'/' is only allowed as first character in theme name");
+            }
+            if(slashIdx < 0) {
+                if(theme.indexOf('.') >= 0) {
+                    throw new IllegalArgumentException("'.' is only allowed for absolute theme paths");
+                }
+            } else if(theme.length() == 1) {
+                throw new IllegalArgumentException("'/' requires a theme path");
+            }
+            for(int i=0,n=theme.length() ; i<n ; i++) {
+                char ch = theme.charAt(i);
+                if(Character.isISOControl(ch) || ch == '*') {
+                    throw new IllegalArgumentException("invalid character '" + TextUtil.toPrintableString(ch) + "' in theme name");
+                }
+            }
+        }
         this.theme = theme;
     }
     
     /**
-     * Returns this widget's theme path by concatinating the theme names
+     * Returns this widget's theme path by concatenating the theme names
      * from all parents separated by '.'.
      *
-     * If a parent theme is empty then it will be ommited from the theme path.
+     * If a parent theme is empty then it will be omitted from the theme path.
      *
      * The theme path will start with the first absolute theme starting from
      * this widget up to the GUI.

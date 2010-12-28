@@ -168,6 +168,22 @@ public final class TextUtil {
         return count;
     }
 
+    /**
+     * Converts the specified character to a string.
+     *
+     * If the character is an {@link Character#isISOControl(char) } then it's
+     * unicode value returned as octal escape code: "\xxx"
+     * @param ch the character
+     * @return the string
+     */
+    public static String toPrintableString(char ch) {
+        if(Character.isISOControl(ch)) {
+            return '\\' + Integer.toOctalString(ch);
+        } else {
+            return Character.toString(ch);
+        }
+    }
+
     private static final String ROMAN_NUMBERS = "ↂMↂↁMↁMCMDCDCXCLXLXIXVIVI";
     private static final String ROMAN_VALUES = "\u2710\u2328\u1388\u0FA0\u03E8\u0384\u01F4\u0190\144\132\62\50\12\11\5\4\1";
 
