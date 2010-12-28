@@ -87,7 +87,11 @@ public class DebugHook {
     public void missingParameter(ParameterMap map, String paramName, String parentDescription, Class<?> dataType) {
         StringBuilder sb = new StringBuilder("Parameter \"").append(paramName).append("\" ");
         if(dataType != null) {
-            sb.append("of type ").append(dataType.getSimpleName());
+            sb.append("of type ");
+            if(dataType.isEnum()) {
+                sb.append("enum ");
+            }
+            sb.append('"').append(dataType.getSimpleName()).append('"');
         }
         sb.append(" not set");
         if(map instanceof ThemeInfo) {
