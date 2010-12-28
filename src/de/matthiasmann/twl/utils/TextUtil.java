@@ -39,7 +39,7 @@ public final class TextUtil {
     }
     
     /**
-     * Counts the number of lines in the text. Lines are splitted with '\n'
+     * Counts the number of lines in the text. Lines are split with '\n'
      * @param str the text to count lines in
      * @return the number of lines - 0 for an empty string
      */
@@ -138,7 +138,7 @@ public final class TextUtil {
     }
 
     /**
-     * Parse a list of comma seprated integers. No space is allowed between comma and numbers
+     * Parse a list of comma separated integers. No space is allowed between comma and numbers
      * @param str the string to parse
      * @return the parsed integer array. Contains at least 1 element.
      * @throws NumberFormatException if the string could not be parsed
@@ -156,7 +156,7 @@ public final class TextUtil {
 
     /**
      * Counts the comma separated elements.
-     * @param str the string to ananlyze
+     * @param str the string to analyze
      * @return the number of comma separated parts. Always &gt;= 1.
      */
     public static int countElements(String str) {
@@ -172,18 +172,18 @@ public final class TextUtil {
     private static final String ROMAN_VALUES = "\u2710\u2328\u1388\u0FA0\u03E8\u0384\u01F4\u0190\144\132\62\50\12\11\5\4\1";
 
     /**
-     * The largest number which can be converted into a roman number.
+     * The largest number which can be converted into a Roman number.
      * @see #toRomanNumberString(int)
      */
     public static final int MAX_ROMAN_INTEGER = 39999;
     
     /**
-     * Creates an upper case roman number string for the given value.
+     * Creates an upper case Roman number string for the given value.
      *
      * Values above 3999 need characters from unicode block "Number Forms" to be displayed correctly.
      *
      * @param value the value. Must be &gt;= 1 and &lt;= {@link #MAX_ROMAN_INTEGER}
-     * @return the roman number string in upper case
+     * @return the Roman number string in upper case
      * @throws IllegalArgumentException if the value is out of range
      */
     public static String toRomanNumberString(int value) throws IllegalArgumentException {
@@ -209,7 +209,8 @@ public final class TextUtil {
      * Create a string which represents the specified value using the specified list of characters.
      * @param value the value. Must be &gt;= 1.
      * @param list the character list to use. Must contain at least 4 characters.
-     * @return IllegalArgumentException if the value is &lt; 1
+     * @return the formated number
+     * @throws IllegalArgumentException if the value is &lt; 1
      */
     public static String toCharListNumber(int value, String list) throws IllegalArgumentException {
         if(value < 1) {
