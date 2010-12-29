@@ -852,7 +852,7 @@ public class Widget {
      * A value of 0 means no expansion, use {@link Short#MAX_VALUE} for unbounded expansion.
      *
      * @param width the maximum width
-     * @param height the maximum wheight
+     * @param height the maximum height
      * @see #getMaxWidth()
      * @see #getMaxHeight()
      * @throws IllegalArgumentException when width or height is negative
