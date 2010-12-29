@@ -38,6 +38,9 @@ import java.nio.channels.ReadableByteChannel;
  * widgets like FolderBrowser.
  * 
  * @author Matthias Mann
+ *
+ * @see de.matthiasmann.twl.FileSelector
+ * @see de.matthiasmann.twl.FolderBrowser
  */
 public interface FileSystemModel {
 
@@ -46,7 +49,12 @@ public interface FileSystemModel {
     public interface FileFilter {
         public boolean accept(FileSystemModel model, Object file);
     }
-    
+
+    /**
+     * The separator character used to separate folder names in a path.
+     * This should be a string with one character.
+     * @return the separator character
+     */
     public String getSeparator();
 
     /**
@@ -56,37 +64,130 @@ public interface FileSystemModel {
      * @return the object or null if the file was not found
      */
     public Object getFile(String path);
-    
+
+    /**
+     * Returns the parent folder of the specified file or folder
+     * @param file the file or folder - needs to be a valid file or folder
+     * @return the parent folder or null if the file parameter was invalid or was a root node
+     */
     public Object getParent(Object file);
-    
+
+    /**
+     * Returns true if the object is a valid folder in this file system
+     * @param file the object to check
+     * @return true if it is a folder
+     */
     public boolean isFolder(Object file);
-    
+
+    /**
+     * Returns true if the object is a valid file in this file system
+     * @param file the object to check
+     * @return true if it is a file
+     */
     public boolean isFile(Object file);
 
+    /**
+     * Checks if the specified object is a hidden file or folder.
+     *
+     * @param file the object to check
+     * @return true if it is a valid file or folder and is hidden
+     */
     public boolean isHidden(Object file);
-    
+
+    /**
+     * Returns the name of the specified object
+     * @param file the object to query
+     * @return the name or null if it was not a valid file or folder
+     */
     public String getName(Object file);
-    
+
+    /**
+     * Returns the path of the specified object
+     *
+     * @param file the object to query
+     * @return the path or null if it was not a valid file or folder
+     * @see #getSeparator()
+     */
     public String getPath(Object file);
-    
+
+    /**
+     * Computes a relative path from {@code from} to {@code to}
+     * @param from staring point for the relative path - must be a folder
+     * @param to the destination for the relative path
+     * @return the relative path or null if it could not be computed
+     */
     public String getRelativePath(Object from, Object to);
-    
+
+    /**
+     * Returns the size of the file
+     * @param file the object to query
+     * @return the size of the file or -1 if it's not a valid file
+     */
     public long getSize(Object file);
-    
+
+    /**
+     * Returns the last modified date/time of the file or folder
+     * @param file the object to query
+     * @return the last modified date/time or 0
+     * @see System#currentTimeMillis()
+     */
     public long getLastModified(Object file);
-    
+
+    /**
+     * Checks if the two objects specify the same file or folder
+     * @param file1 the first object
+     * @param file2 the second object
+     * @return true if they are equal
+     */
     public boolean equals(Object file1, Object file2);
-    
+
+    /**
+     * Finds the index of a file or folder in a list of objects. This is
+     * potentially faster then looping over the list and calling
+     * {@link #equals(java.lang.Object, java.lang.Object) }
+     *
+     * @param list the list of objects
+     * @param file the object to search
+     * @return the index or -1 if it was not found
+     */
     public int find(Object[] list, Object file);
-    
+
+    /**
+     * Lists all file system roots
+     * @return the file system roots
+     */
     public Object[] listRoots();
-    
+
+    /**
+     * Lists all files or folders in the specified folder.
+     * @param file the folder to list
+     * @param filter an optional filter - can be null
+     * @return the (filtered) content of the folder
+     */
     public Object[] listFolder(Object file, FileFilter filter);
 
+    /**
+     * Locates a special folder like {@link #SPECIAL_FOLDER_HOME}
+     * @param key the special folder key
+     * @return the object for this folder or null if it couldn't be located
+     */
     public Object getSpecialFolder(String key);
-    
+
+    /**
+     * Opens an InputStream for the specified file
+     * @param file the file object to read
+     * @return an InputStream or null if the file object is not valid
+     * @throws IOException if the file can't be read
+     */
     public InputStream openStream(Object file) throws IOException;
-    
+
+    /**
+     * Opens a ReadableByteChannel for the specified file
+     * @param file the file object to read
+     * @return an ReadableByteChannel or null if the file object is not valid
+     *      or a ReadableByteChannel can't be created
+     * @throws IOException if the file can't be read
+     */
     public ReadableByteChannel openChannel(Object file) throws IOException;
  
 }
