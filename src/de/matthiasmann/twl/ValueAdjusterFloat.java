@@ -225,7 +225,7 @@ public class ValueAdjusterFloat extends ValueAdjuster {
         return String.format(locale, format, value);
     }
 
-    private float parseText(String value) throws ParseException {
+    protected float parseText(String value) throws ParseException {
         return NumberFormat.getNumberInstance(locale).parse(value).floatValue();
     }
 
