@@ -30,6 +30,7 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.BooleanModel;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -40,7 +41,7 @@ import java.util.Iterator;
  */
 public class Menu extends MenuElement implements Iterable<MenuElement> {
 
-    public static final String STATE_HAS_OPEN_MENUS = "hasOpenMenus";
+    public static final StateKey STATE_HAS_OPEN_MENUS = StateKey.get("hasOpenMenus");
     
     private final ArrayList<MenuElement> elements = new ArrayList<MenuElement>();
     private String popupTheme;

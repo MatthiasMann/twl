@@ -33,6 +33,7 @@ import de.matthiasmann.twl.AnimationState;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.GUI;
 import de.matthiasmann.twl.Widget;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.Renderer;
 
 /**
@@ -251,9 +252,13 @@ public class TintAnimator {
      */
     public static class AnimationStateTimeSource implements TimeSource {
         private final AnimationState animState;
-        private final String animStateKey;
+        private final StateKey animStateKey;
 
-        public AnimationStateTimeSource(AnimationState animState, String animStateKey) {
+        public AnimationStateTimeSource(AnimationState animState, String animStateName) {
+            this(animState, StateKey.get(animStateName));
+        }
+        
+        public AnimationStateTimeSource(AnimationState animState, StateKey animStateKey) {
             if(animState == null) {
                 throw new NullPointerException("animState");
             }

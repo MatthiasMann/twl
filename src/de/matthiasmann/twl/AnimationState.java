@@ -29,8 +29,6 @@
  */
 package de.matthiasmann.twl;
 
-import de.matthiasmann.twl.utils.HashEntry;
-
 /**
  *
  * @author Matthias Mann
@@ -40,7 +38,6 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
     private final AnimationState parent;
     
     private State[] stateTable;
-    private int stateTableSize;
     private GUI gui;
 
     /**
@@ -70,8 +67,8 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         this.gui = gui;
         
         long curTime = getCurrentTime();
-        for(State s1 : stateTable) {
-            for(State s=s1 ; s!=null ; s=s.next()) {
+        for(State s : stateTable) {
+            if(s != null) {
                 s.lastChangedTime = curTime;
             }
         }
@@ -81,16 +78,16 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
      * Returns the time since the specified state has changed in ms.
      * If the specified state was never changed then a free running time is returned.
      *
-     * @param stateName the state name.
+     * @param stateKey the state key.
      * @return time since last state change is ms.
      */
-    public int getAnimationTime(String stateName) {
-        State state = HashEntry.get(stateTable, stateName);
+    public int getAnimationTime(StateKey stateKey) {
+        State state = getState(stateKey);
         if(state != null) {
             return (int)Math.min(Integer.MAX_VALUE, getCurrentTime() - state.lastChangedTime);
         }
         if(parent != null) {
-            return parent.getAnimationTime(stateName);
+            return parent.getAnimationTime(stateKey);
         }
         return (int)getCurrentTime() & ((1<<31)-1);
     }
@@ -98,16 +95,16 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
     /**
      * Checks if the given state is active.
      *
-     * @param stateName the state name.
+     * @param stateKey the state key.
      * @return true if the state is set
      */
-    public boolean getAnimationState(String stateName) {
-        State state = HashEntry.get(stateTable, stateName);
+    public boolean getAnimationState(StateKey stateKey) {
+        State state = getState(stateKey);
         if(state != null) {
             return state.active;
         }
         if(parent != null) {
-            return parent.getAnimationState(stateName);
+            return parent.getAnimationState(stateKey);
         }
         return false;
     }
@@ -117,22 +114,26 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
      * If this method returns false then the animation time should not be used
      * for single shot animations.
      *
-     * @param stateName the state name.
+     * @param stateKey the state key.
      * @return true if single shot animations should run or not.
      */
-    public boolean getShouldAnimateState(String stateName) {
-        State state = HashEntry.get(stateTable, stateName);
+    public boolean getShouldAnimateState(StateKey stateKey) {
+        State state = getState(stateKey);
         if(state != null) {
             return state.shouldAnimate;
         }
         if(parent != null) {
-            return parent.getShouldAnimateState(stateName);
+            return parent.getShouldAnimateState(stateKey);
         }
         return false;
     }
 
     public void setAnimationState(String stateName, boolean active) {
-        State state = getOrCreate(stateName);
+        setAnimationState(StateKey.get(stateName), active);
+    }
+    
+    public void setAnimationState(StateKey stateKey, boolean active) {
+        State state = getOrCreate(stateKey);
         if(state.active != active) {
             state.active = active;
             state.lastChangedTime = getCurrentTime();
@@ -141,32 +142,54 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
     }
 
     public void resetAnimationTime(String stateName) {
-        State state = getOrCreate(stateName);
+        resetAnimationTime(StateKey.get(stateName));
+    }
+
+    public void resetAnimationTime(StateKey stateKey) {
+        State state = getOrCreate(stateKey);
         state.lastChangedTime = getCurrentTime();
         state.shouldAnimate = true;
     }
 
     public void dontAnimate(String stateName) {
-        State state = HashEntry.get(stateTable, stateName);
+        dontAnimate(StateKey.get(stateName));
+    }
+
+    public void dontAnimate(StateKey stateKey) {
+        State state = getState(stateKey);
         if(state != null) {
             state.shouldAnimate = false;
         }
     }
 
-    private State getOrCreate(String stateName) {
-        State state = HashEntry.get(stateTable, stateName);
-        if(state == null) {
-            state = createState(stateName);
+    private State getState(StateKey stateKey) {
+        int id = stateKey.getID();
+        if(id < stateTable.length) {
+            return stateTable[id];
         }
-        return state;
+        return null;
     }
 
-    private State createState(String stateName) {
-        State state = new State(stateName);
+    private State getOrCreate(StateKey stateKey) {
+        int id = stateKey.getID();
+        if(id < stateTable.length) {
+            State state = stateTable[id];
+            if(state != null) {
+                return state;
+            }
+        }
+        return createState(id);
+    }
+
+    private State createState(int id) {
+        if(id >= stateTable.length) {
+            State[] newTable = new State[id+1];
+            System.arraycopy(stateTable, 0, newTable, 0, stateTable.length);
+            stateTable = newTable;
+        }
+        State state = new State();
         state.lastChangedTime = getCurrentTime();
-        stateTable = HashEntry.maybeResizeTable(stateTable, stateTableSize);
-        HashEntry.insertEntry(stateTable, state);
-        stateTableSize++;
+        stateTable[id] = state;
         return state;
     }
 
@@ -174,13 +197,9 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         return (gui != null) ? gui.curTime : 0;
     }
 
-    static class State extends HashEntry<String, State> {
+    static final class State {
         long lastChangedTime;
         boolean active;
         boolean shouldAnimate;
-
-        public State(String key) {
-            super(key);
-        }
     }
 }

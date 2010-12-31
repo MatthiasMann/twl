@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl.model;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+
 /**
  *
  * @author Matthias Mann
@@ -65,12 +67,12 @@ public interface TableColumnHeaderModel {
     public int getNumColumns();
 
     /**
-     * A array of state names for column headers. This array should not change.
+     * A array of state keys for column headers. This array should not change.
      *
-     * @return A string array specifying column header states.
+     * @return A StateKey array specifying column header states.
      * @see de.matthiasmann.twl.renderer.AnimationState
      */
-    public String[] getColumnHeaderStates();
+    public StateKey[] getColumnHeaderStates();
 
     /**
      * The text of the specified column header.

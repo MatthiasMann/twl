@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
@@ -71,10 +72,10 @@ import java.util.logging.Logger;
  */
 public class Widget {
 
-    public static final String STATE_KEYBOARD_FOCUS = "keyboardFocus";
-    public static final String STATE_HAS_OPEN_POPUPS = "hasOpenPopups";
-    public static final String STATE_HAS_FOCUSED_CHILD = "hasFocusedChild";
-    public static final String STATE_DISABLED = "disabled";
+    public static final StateKey STATE_KEYBOARD_FOCUS = StateKey.get("keyboardFocus");
+    public static final StateKey STATE_HAS_OPEN_POPUPS = StateKey.get("hasOpenPopups");
+    public static final StateKey STATE_HAS_FOCUSED_CHILD = StateKey.get("hasFocusedChild");
+    public static final StateKey STATE_DISABLED = StateKey.get("disabled");
     
     private static final int FOCUS_KEY = Event.KEY_TAB;
 
@@ -1317,7 +1318,7 @@ public class Widget {
 
     /**
      * If this widget currently has the keyboard focus, then the keyboard focus is removed.
-     * The focus wull be transferred to the parent widget.
+     * The focus will be transferred to the parent widget.
      */
     public void giveupKeyboardFocus() {
         if(parent != null && parent.focusChild == this) {
@@ -1368,7 +1369,7 @@ public class Widget {
      * the animation state itself. How a shared animation state is used
      * depends on the widgets.
      * 
-     * @return truen if it is shared
+     * @return true if it is shared
      * @see #Widget(de.matthiasmann.twl.AnimationState) 
      */
     public boolean hasSharedAnimationState() {

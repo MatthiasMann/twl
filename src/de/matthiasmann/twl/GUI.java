@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.input.Input;
 import de.matthiasmann.twl.input.lwjgl.LWJGLInput;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
@@ -1260,7 +1261,7 @@ public final class GUI extends Widget {
     }
 
     static class TooltipWindow extends Widget {
-        public static final String STATE_FADE = "fade";
+        public static final StateKey STATE_FADE = StateKey.get("fade");
         private int fadeInTime;
 
         @Override

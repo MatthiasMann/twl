@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+
 /**
  * Base class for value adjuster widgets.
  * It has a value display/edit widget and 2 buttons.
@@ -42,7 +44,7 @@ package de.matthiasmann.twl;
  */
 public abstract class ValueAdjuster extends Widget {
 
-    public static final String STATE_EDIT_ACTIVE = "editActive";
+    public static final StateKey STATE_EDIT_ACTIVE = StateKey.get("editActive");
 
     private static final int INITIAL_DELAY = 300;
     private static final int REPEAT_DELAY = 75;

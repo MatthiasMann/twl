@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.AutoCompletionDataSource;
 import de.matthiasmann.twl.model.StringModel;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.renderer.Font;
@@ -44,9 +45,9 @@ import java.util.concurrent.ExecutorService;
  */
 public class EditField extends Widget {
 
-    public static final String STATE_ERROR = "error";
-    public static final String STATE_READONLY = "readonly";
-    public static final String STATE_HOVER = "hover";
+    public static final StateKey STATE_ERROR = StateKey.get("error");
+    public static final StateKey STATE_READONLY = StateKey.get("readonly");
+    public static final StateKey STATE_HOVER = StateKey.get("hover");
     
     public interface Callback {
         /**

@@ -32,6 +32,7 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.ListModel.ChangeListener;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
 /**
  * A list box. Supports single and multiple columns.
@@ -585,8 +586,8 @@ public class ListBox<T> extends Widget {
     }
     
     protected static class ListBoxLabel extends TextWidget implements ListBoxDisplay {
-        public static final String STATE_SELECTED = "selected";
-        public static final String STATE_EMPTY = "empty";
+        public static final StateKey STATE_SELECTED = StateKey.get("selected");
+        public static final StateKey STATE_EMPTY = StateKey.get("empty");
 
         private boolean selected;
         private CallbackWithReason<?>[] callbacks;

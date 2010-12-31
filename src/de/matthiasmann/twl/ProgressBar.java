@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.Image;
 
 /**
@@ -38,8 +39,8 @@ import de.matthiasmann.twl.renderer.Image;
  */
 public class ProgressBar extends TextWidget {
 
-    public static final String STATE_VALUE_CHANGED = "valueChanged";
-    public static final String STATE_INDETERMINATE = "indeterminate";
+    public static final StateKey STATE_VALUE_CHANGED = StateKey.get("valueChanged");
+    public static final StateKey STATE_INDETERMINATE = StateKey.get("indeterminate");
     
     public static final float VALUE_INDETERMINATE = -1;
 

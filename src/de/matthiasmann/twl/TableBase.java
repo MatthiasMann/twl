@@ -33,6 +33,7 @@ import de.matthiasmann.twl.model.DefaultTableSelectionModel;
 import de.matthiasmann.twl.model.SortOrder;
 import de.matthiasmann.twl.model.TableColumnHeaderModel;
 import de.matthiasmann.twl.model.TreeTableNode;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.utils.CallbackSupport;
@@ -177,20 +178,20 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         public void dragStopped(Event evt);
 
         /**
-         * Called when the mouse drag is canceled (eg by pressign ESCAPE)
+         * Called when the mouse drag is canceled (eg by pressing ESCAPE)
          */
         public void dragCanceled();
     }
 
-    public static final String STATE_FIRST_COLUMNHEADER = "firstColumnHeader";
-    public static final String STATE_LAST_COLUMNHEADER = "lastColumnHeader";
-    public static final String STATE_ROW_SELECTED = "rowSelected";
-    public static final String STATE_ROW_HOVER = "rowHover";
-    public static final String STATE_ROW_DROPTARGET = "rowDropTarget";
-    public static final String STATE_LEAD_ROW = "leadRow";
-    public static final String STATE_SELECTED = "selected";
-    public static final String STATE_SORT_ASCENDING  = "sortAscending";
-    public static final String STATE_SORT_DESCENDING = "sortDescending";
+    public static final StateKey STATE_FIRST_COLUMNHEADER = StateKey.get("firstColumnHeader");
+    public static final StateKey STATE_LAST_COLUMNHEADER = StateKey.get("lastColumnHeader");
+    public static final StateKey STATE_ROW_SELECTED = StateKey.get("rowSelected");
+    public static final StateKey STATE_ROW_HOVER = StateKey.get("rowHover");
+    public static final StateKey STATE_ROW_DROPTARGET = StateKey.get("rowDropTarget");
+    public static final StateKey STATE_LEAD_ROW = StateKey.get("leadRow");
+    public static final StateKey STATE_SELECTED = StateKey.get("selected");
+    public static final StateKey STATE_SORT_ASCENDING  = StateKey.get("sortAscending");
+    public static final StateKey STATE_SORT_DESCENDING = StateKey.get("sortDescending");
 
     private final StringCellRenderer stringCellRenderer;
     private final RemoveCellWidgets removeCellWidgetsFunction;
@@ -1071,7 +1072,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     protected void updateColumnHeader(int column) {
         Button columnHeader = columnHeaders[column];
         columnHeader.setText(columnHeaderModel.getColumnHeaderText(column));
-        String[] states = columnHeaderModel.getColumnHeaderStates();
+        StateKey[] states = columnHeaderModel.getColumnHeaderStates();
         if(states.length > 0) {
             AnimationState animationState = columnHeader.getAnimationState();
             for(int i=0 ; i<states.length ; i++) {

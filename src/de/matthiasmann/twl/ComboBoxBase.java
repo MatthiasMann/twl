@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+
 /**
  * base class for drop down comboboxes.
  *
@@ -39,7 +41,7 @@ package de.matthiasmann.twl;
  */
 public abstract class ComboBoxBase extends Widget {
 
-    public static final String STATE_COMBOBOX_KEYBOARD_FOCUS = "comboboxKeyboardFocus";
+    public static final StateKey STATE_COMBOBOX_KEYBOARD_FOCUS = StateKey.get("comboboxKeyboardFocus");
     
     protected final Button button;
     protected final PopupWindow popup;
@@ -128,7 +130,7 @@ public abstract class ComboBoxBase extends Widget {
         }
     }
 
-    private void setRecursive(Widget w, String what, boolean state) {
+    private void setRecursive(Widget w, StateKey what, boolean state) {
         w.getAnimationState().setAnimationState(what, state);
         for(int i=0 ; i<w.getNumChildren() ; ++i) {
             Widget child = w.getChild(i);

@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl.renderer;
 
+import java.util.HashMap;
+
 /**
  * Time source for animations.
  * @author Matthias Mann
@@ -39,26 +41,102 @@ public interface AnimationState {
      * Returns the time since the specified state has changed in ms.
      * If the specified state was never changed then a free running time is returned.
      * 
-     * @param state the state name.
+     * @param state the state key.
      * @return time since last state change is ms.
      */
-    public int getAnimationTime(String state);
+    public int getAnimationTime(StateKey state);
 
     /**
      * Checks if the given state is active.
      * 
-     * @param state the state name.
+     * @param state the state key.
      * @return true if the state is set
      */
-    public boolean getAnimationState(String state);
+    public boolean getAnimationState(StateKey state);
 
     /**
      * Checks if this state was changed based on user interaction or not.
      * If this method returns false then the animation time should not be used
      * for single shot animations.
      *
-     * @param state the state name.
+     * @param state the state key.
      * @return true if single shot animations should run or not.
      */
-    public boolean getShouldAnimateState(String state);
+    public boolean getShouldAnimateState(StateKey state);
+
+    /**
+     * An animation state key which maps each animation state name to
+     * an unique ID. This allows to implement faster lookups based on
+     * the unique ID instead of performing a string lookup.
+     */
+    public static final class StateKey {
+        private final String name;
+        private final int id;
+
+        private static final HashMap<String, StateKey> keys =
+                new HashMap<String, AnimationState.StateKey>();
+
+        private StateKey(String name, int id) {
+            this.name = name;
+            this.id = id;
+        }
+
+        /**
+         * The name of this animation state key
+         *
+         * @return the name
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * The unique ID of this StateKey.
+         * The first StateKey has ID 0.
+         *
+         * @return the unique ID
+         */
+        public int getID() {
+            return id;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if(obj instanceof StateKey) {
+                final StateKey other = (StateKey)obj;
+                return this.id == other.id;
+            }
+            return false;
+        }
+
+        @Override
+        public int hashCode() {
+            return id;
+        }
+
+        /**
+         * Returns the StateKey for the specified name.
+         * The StateKey is created if it didn't exist.
+         *
+         * @param name the name to look up
+         * @return the StateKey - never null.
+         * @throws IllegalArgumentException if name is empty
+         * @throws NullPointerException if name is {@code null}
+         */
+        public synchronized static StateKey get(String name) {
+            if(name.length() == 0) {
+                throw new IllegalArgumentException("name");
+            }
+            StateKey key = keys.get(name);
+            if(key == null) {
+                key = new StateKey(name, keys.size());
+                keys.put(name, key);
+            }
+            return key;
+        }
+
+        public synchronized static int getNumStateKeys() {
+            return keys.size();
+        }
+    }
 }

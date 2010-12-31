@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
@@ -40,9 +41,9 @@ import de.matthiasmann.twl.renderer.FontCache;
  */
 public class TextWidget extends Widget {
 
-    public static final String STATE_HOVER = "hover";
-    public static final String STATE_TEXT_CHANGED = "textChanged";
-    public static final String STATE_TEXT_SELECTION = "textSelection";
+    public static final StateKey STATE_HOVER = StateKey.get("hover");
+    public static final StateKey STATE_TEXT_CHANGED = StateKey.get("textChanged");
+    public static final StateKey STATE_TEXT_SELECTION = StateKey.get("textSelection");
 
     private static final int NOT_CACHED = -1;
 

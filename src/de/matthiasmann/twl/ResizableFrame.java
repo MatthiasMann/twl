@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.utils.TintAnimator;
 
@@ -39,7 +40,7 @@ import de.matthiasmann.twl.utils.TintAnimator;
  */
 public class ResizableFrame extends Widget {
 
-    public static final String STATE_FADE = "fade";
+    public static final StateKey STATE_FADE = StateKey.get("fade");
 
     public enum ResizableAxis {
         NONE(false, false),

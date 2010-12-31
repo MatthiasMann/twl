@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.utils;
 
 import de.matthiasmann.twl.renderer.AnimationState;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import java.text.ParseException;
 import java.util.ArrayList;
 
@@ -213,9 +214,9 @@ public abstract class StateExpression {
     }
 
     static class Check extends StateExpression {
-        private final String state;
+        private final StateKey state;
         public Check(String state) {
-            this.state = state;
+            this.state = StateKey.get(state);
         }
 
         @Override

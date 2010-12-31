@@ -32,6 +32,7 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.model.ButtonModel;
 import de.matthiasmann.twl.model.SimpleButtonModel;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
 /**
  * A generic button. Behavior is defined by a ButtonModel.
@@ -40,9 +41,9 @@ import de.matthiasmann.twl.model.SimpleButtonModel;
  */
 public class Button extends TextWidget {
     
-    public static final String STATE_ARMED = "armed";
-    public static final String STATE_PRESSED = "pressed";
-    public static final String STATE_SELECTED = "selected";
+    public static final StateKey STATE_ARMED = StateKey.get("armed");
+    public static final StateKey STATE_PRESSED = StateKey.get("pressed");
+    public static final StateKey STATE_SELECTED = StateKey.get("selected");
 
     private final Runnable stateChangedCB;
     private ButtonModel model;

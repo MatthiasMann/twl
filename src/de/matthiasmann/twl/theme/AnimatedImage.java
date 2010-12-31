@@ -8,6 +8,7 @@ package de.matthiasmann.twl.theme;
 import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.renderer.AnimationState;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 
@@ -179,7 +180,7 @@ public class AnimatedImage implements Image, HasBorder {
 
     final Renderer renderer;
     final Element root;
-    final String timeSource;
+    final StateKey timeSource;
     final Border border;
     final float r;
     final float g;
@@ -192,7 +193,7 @@ public class AnimatedImage implements Image, HasBorder {
     AnimatedImage(Renderer renderer, Element root, String timeSource, Border border, Color tintColor,int frozenTime) {
         this.renderer = renderer;
         this.root = root;
-        this.timeSource = timeSource;
+        this.timeSource = StateKey.get(timeSource);
         this.border = border;
         this.r = tintColor.getRedFloat();
         this.g = tintColor.getGreenFloat();

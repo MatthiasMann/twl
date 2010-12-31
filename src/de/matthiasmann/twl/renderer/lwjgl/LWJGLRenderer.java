@@ -115,13 +115,13 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         }
 
         swCursorAnimState = new AnimationState() {
-            public int getAnimationTime(String state) {
+            public int getAnimationTime(StateKey state) {
                 return (int)Sys.getTime() & Integer.MAX_VALUE;
             }
-            public boolean getAnimationState(String state) {
+            public boolean getAnimationState(StateKey state) {
                 return false;
             }
-            public boolean getShouldAnimateState(String state) {
+            public boolean getShouldAnimateState(StateKey state) {
                 return true;
             }
         };

@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+
 /**
  * <p>A scroll pane to scroll another widget if it requires more space then
  * available.</p>
@@ -46,12 +48,12 @@ package de.matthiasmann.twl;
  */
 public class ScrollPane extends Widget {
 
-    public static final String STATE_DOWNARROW_ARMED = "downArrowArmed";
-    public static final String STATE_RIGHTARROW_ARMED = "rightArrowArmed";
-    public static final String STATE_HORIZONTAL_SCROLLBAR_VISIBLE = "horizontalScrollbarVisible";
-    public static final String STATE_VERTICAL_SCROLLBAR_VISIBLE = "verticalScrollbarVisible";
-    public static final String STATE_AUTO_SCROLL_UP = "autoScrollUp";
-    public static final String STATE_AUTO_SCROLL_DOWN = "autoScrollDown";
+    public static final StateKey STATE_DOWNARROW_ARMED = StateKey.get("downArrowArmed");
+    public static final StateKey STATE_RIGHTARROW_ARMED = StateKey.get("rightArrowArmed");
+    public static final StateKey STATE_HORIZONTAL_SCROLLBAR_VISIBLE = StateKey.get("horizontalScrollbarVisible");
+    public static final StateKey STATE_VERTICAL_SCROLLBAR_VISIBLE = StateKey.get("verticalScrollbarVisible");
+    public static final StateKey STATE_AUTO_SCROLL_UP = StateKey.get("autoScrollUp");
+    public static final StateKey STATE_AUTO_SCROLL_DOWN = StateKey.get("autoScrollDown");
 
     /**
      * Controls which axis of the scroll pane should be fixed

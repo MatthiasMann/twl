@@ -29,15 +29,17 @@
  */
 package de.matthiasmann.twl.model;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+
 /**
  *
  * @author Matthias Mann
  */
 public abstract class AbstractTableColumnHeaderModel implements TableColumnHeaderModel {
 
-    private static final String[] EMPTY_STATE_ARRAY = {};
+    private static final StateKey[] EMPTY_STATE_ARRAY = {};
 
-    public String[] getColumnHeaderStates() {
+    public StateKey[] getColumnHeaderStates() {
         return EMPTY_STATE_ARRAY;
     }
 

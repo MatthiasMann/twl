@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.model.HasCallback;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import java.util.ArrayList;
 
 /**
@@ -40,8 +41,8 @@ import java.util.ArrayList;
  */
 public class TabbedPane extends Widget {
 
-    public static final String STATE_FIRST_TAB = "firstTab";
-    public static final String STATE_LAST_TAB = "lastTab";
+    public static final StateKey STATE_FIRST_TAB = StateKey.get("firstTab");
+    public static final StateKey STATE_LAST_TAB = StateKey.get("lastTab");
     
     public enum TabPosition {
         TOP(true),

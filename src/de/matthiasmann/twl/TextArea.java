@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.DraggableButton.DragListener;
 import de.matthiasmann.twl.Event.Type;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.textarea.TextAreaModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
@@ -76,7 +77,7 @@ public class TextArea extends Widget {
         public void handleLinkClicked(String href);
     }
 
-    public static final String STATE_HOVER = "hover";
+    public static final StateKey STATE_HOVER = StateKey.get("hover");
     
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
