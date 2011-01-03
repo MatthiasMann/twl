@@ -414,8 +414,7 @@ public class Scrollbar extends Widget {
         boolean page = (evt.getModifiers() & Event.MODIFIER_CTRL) != 0;
         int step = page ? pageSize : stepSize;
 
-        switch(evt.getType()) {
-        case KEY_PRESSED:
+        if(evt.getType() == Event.Type.KEY_PRESSED) {
             switch(evt.getKeyCode()) {
             case Event.KEY_LEFT:
                 if(orientation == Orientation.HORIZONTAL) {
@@ -454,10 +453,10 @@ public class Scrollbar extends Widget {
                 }
                 break;
             }
-            break;
-        case MOUSE_WHEEL:
+        }
+        
+        if(evt.getType() == Event.Type.MOUSE_WHEEL) {
             setValue(value - step * evt.getMouseWheelDelta());
-            break;
         }
 
         // eat all mouse events
