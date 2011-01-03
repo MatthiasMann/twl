@@ -32,9 +32,15 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.HAlignment;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.renderer.FontCache;
+import de.matthiasmann.twl.utils.ParameterStringParser;
 import de.matthiasmann.twl.utils.XMLParser;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.net.URL;
+import java.util.HashMap;
 import org.lwjgl.opengl.GL11;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -148,13 +154,7 @@ public class BitmapFont {
             g.xoffset = Short.parseShort(xmlp.getAttributeNotNull("xoffset"));
             g.yoffset = Short.parseShort(xmlp.getAttributeNotNull("yoffset"));
             g.xadvance = Short.parseShort(xmlp.getAttributeNotNull("xadvance"));
-            if(idx <= Character.MAX_VALUE) {
-                Glyph[] page = glyphs[idx / PAGE_SIZE];
-                if(page == null) {
-                    glyphs[idx / PAGE_SIZE] = page = new Glyph[PAGE_SIZE];
-                }
-                page[idx & (PAGE_SIZE-1)] = g;
-            }
+            addGlyph(idx, g);
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, "char");
             xmlp.nextTag();
@@ -171,13 +171,7 @@ public class BitmapFont {
                 int first = xmlp.parseIntFromAttribute("first");
                 int second = xmlp.parseIntFromAttribute("second");
                 int amount = xmlp.parseIntFromAttribute("amount");
-                if(first >= 0 && first <= Character.MAX_VALUE &&
-                        second >= 0 && second <= Character.MAX_VALUE) {
-                    Glyph g = getGlyph((char)first);
-                    if(g != null) {
-                        g.setKerning(second, amount);
-                    }
-                }
+                addKerning(first, second, amount);
                 xmlp.nextTag();
                 xmlp.require(XmlPullParser.END_TAG, null, "kerning");
                 xmlp.nextTag();
@@ -194,18 +188,84 @@ public class BitmapFont {
         ex = (gx != null) ? gx.height : 1;
     }
 
+    public BitmapFont(LWJGLRenderer renderer, Reader reader, URL baseUrl) throws IOException {
+        BufferedReader br = new BufferedReader(reader);
+        HashMap<String, String> params = new HashMap<String, String>();
+        parseFntLine(br, "info");
+        parseFntLine(parseFntLine(br, "common"), params);
+        lineHeight = parseInt(params, "lineHeight");
+        baseLine = parseInt(params, "base");
+        if(parseInt(params, "pages", 1) != 1) {
+            throw new UnsupportedOperationException("multi page fonts not supported");
+        }
+        if(parseInt(params, "packed", 0) != 0) {
+            throw new UnsupportedOperationException("packed fonts not supported");
+        }
+        parseFntLine(parseFntLine(br, "page"), params);
+        if(parseInt(params, "id", 0) != 0) {
+            throw new UnsupportedOperationException("only page id 0 supported");
+        }
+        this.texture = renderer.load(new URL(baseUrl, getParam(params, "file")),
+                LWJGLTexture.Format.ALPHA, LWJGLTexture.Filter.NEAREST);
+        this.glyphs = new Glyph[PAGES][];
+        parseFntLine(parseFntLine(br, "chars"), params);
+        int charCount = parseInt(params, "count");
+        for(int charIdx=0 ; charIdx<charCount ; charIdx++) {
+            parseFntLine(parseFntLine(br, "char"), params);
+            int idx = parseInt(params, "id");
+            int x = parseInt(params, "x");
+            int y = parseInt(params, "y");
+            int w = parseInt(params, "width");
+            int h = parseInt(params, "height");
+            if(parseInt(params, "page", 0) != 0) {
+                throw new IOException("Multiple pages not supported");
+            }
+            Glyph g = new Glyph(x, y, w, h, texture.getTexWidth(), texture.getTexHeight());
+            g.xoffset = parseShort(params, "xoffset");
+            g.yoffset = parseShort(params, "yoffset");
+            g.xadvance = parseShort(params, "xadvance");
+            addGlyph(idx, g);
+        }
+        parseFntLine(parseFntLine(br, "kernings"), params);
+        int kerningCount = parseInt(params, "count");
+        for(int kerningIdx=0 ; kerningIdx<kerningCount ; kerningIdx++) {
+            parseFntLine(parseFntLine(br, "kerning"), params);
+            int first = parseInt(params, "first");
+            int second = parseInt(params, "second");
+            int amount = parseInt(params, "amount");
+            addKerning(first, second, amount);
+        }
+        
+        Glyph g = getGlyph(' ');
+        spaceWidth = (g != null) ? g.xadvance + g.width : 1;
+
+        Glyph gx = getGlyph('x');
+        ex = (gx != null) ? gx.height : 1;
+    }
+
     public static BitmapFont loadFont(LWJGLRenderer renderer, URL url) throws IOException {
+        boolean startTagSeen = false;
         try {
             XMLParser xmlp = new XMLParser(url);
             try {
                 xmlp.require(XmlPullParser.START_DOCUMENT, null, null);
                 xmlp.nextTag();
+                startTagSeen = true;
                 return new BitmapFont(renderer, xmlp, url);
             } finally {
                 xmlp.close();
             }
         } catch (XmlPullParserException ex) {
-            throw (IOException)(new IOException().initCause(ex));
+            if(startTagSeen) {
+                throw (IOException)(new IOException().initCause(ex));
+            }
+            InputStream is = url.openStream();
+            try {
+                InputStreamReader isr = new InputStreamReader(is, "UTF8");
+                return new BitmapFont(renderer, isr, url);
+            } finally {
+                is.close();
+            }
         }
     }
     
@@ -233,8 +293,28 @@ public class BitmapFont {
         texture.destroy();
     }
 
+    private void addGlyph(int idx, Glyph g) {
+        if(idx <= Character.MAX_VALUE) {
+            Glyph[] page = glyphs[idx >> LOG2_PAGE_SIZE];
+            if(page == null) {
+                glyphs[idx >> LOG2_PAGE_SIZE] = page = new Glyph[PAGE_SIZE];
+            }
+            page[idx & (PAGE_SIZE - 1)] = g;
+        }
+    }
+
+    private void addKerning(int first, int second, int amount) {
+        if(first >= 0 && first <= Character.MAX_VALUE &&
+                second >= 0 && second <= Character.MAX_VALUE) {
+            Glyph g = getGlyph((char)first);
+            if(g != null) {
+                g.setKerning(second, amount);
+            }
+        }
+    }
+
     private Glyph getGlyph(char ch) {
-        Glyph[] page = glyphs[ch / PAGE_SIZE];
+        Glyph[] page = glyphs[ch >> LOG2_PAGE_SIZE];
         if(page != null) {
             return page[ch & (PAGE_SIZE-1)];
         }
@@ -445,5 +525,63 @@ public class BitmapFont {
     protected void cleanup() {
         GL11.glEnd();
     }
+
+    private static String parseFntLine(BufferedReader br, String tag) throws IOException {
+        String line = br.readLine();
+        if(line == null || line.length() <= tag.length() ||
+                line.charAt(tag.length()) != ' ' || !line.startsWith(tag)) {
+            throw new IOException("'" + tag + "' line expected");
+        }
+        return line;
+    }
     
+    private static void parseFntLine(String line, HashMap<String, String> params) {
+        params.clear();
+        ParameterStringParser psp = new ParameterStringParser(line, ' ', '=');
+        while(psp.next()) {
+            params.put(psp.getKey(), psp.getValue());
+        }
+    }
+
+    private static String getParam(HashMap<String, String> params, String key) throws IOException {
+        String value = params.get(key);
+        if(value == null) {
+            throw new IOException("Required parameter '" + key + "' not found");
+        }
+        return value;
+    }
+
+    private static int parseInt(HashMap<String, String> params, String key) throws IOException {
+        String value = getParam(params, key);
+        try {
+            return Integer.parseInt(value);
+        } catch(IllegalArgumentException ex) {
+            throw canParseParam(key, value, ex);
+        }
+    }
+
+    private static int parseInt(HashMap<String, String> params, String key, int defaultValue) throws IOException {
+        String value = params.get(key);
+        if(value == null) {
+            return defaultValue;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch(IllegalArgumentException ex) {
+            throw canParseParam(key, value, ex);
+        }
+    }
+
+    private static short parseShort(HashMap<String, String> params, String key) throws IOException {
+        String value = getParam(params, key);
+        try {
+            return Short.parseShort(value);
+        } catch(IllegalArgumentException ex) {
+            throw canParseParam(key, value, ex);
+        }
+    }
+
+    private static IOException canParseParam(String key, String value, IllegalArgumentException ex) {
+        return (IOException)(new IOException("Can't parse parameter: " + key + '=' + value).initCause(ex));
+    }
 }
