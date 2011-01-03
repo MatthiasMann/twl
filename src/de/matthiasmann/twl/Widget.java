@@ -2135,7 +2135,7 @@ public class Widget {
     /**
      * Updates the tint animation when a fade is active.
      * 
-     * Can be overriden to do additional things like hiden the widget
+     * Can be overridden to do additional things like hide the widget
      * after the end of the animation.
      */
     protected void updateTintAnimation() {
@@ -2378,9 +2378,13 @@ public class Widget {
     final void drawWidget(GUI gui) {
         if(tintAnimator != null && tintAnimator.hasTint()) {
             drawWidgetTint(gui);
-        } else {
-            drawWidgetClip(gui);
+            return;
         }
+        if(clip) {
+            drawWidgetClip(gui);
+            return;
+        }
+        paint(gui);
     }
 
     private void drawWidgetTint(GUI gui) {
@@ -2390,22 +2394,22 @@ public class Widget {
         final Renderer renderer = gui.getRenderer();
         tintAnimator.paintWithTint(renderer);
         try {
-            drawWidgetClip(gui);
+            if(clip) {
+                drawWidgetClip(gui);
+            } else {
+                paint(gui);
+            }
         } finally {
             renderer.popGlobalTintColor();
         }
     }
 
     private void drawWidgetClip(GUI gui) {
-        if(clip) {
-            gui.clipEnter(posX, posY, width, height);
-            try {
-                paint(gui);
-            } finally {
-                gui.clipLeave();
-            }
-        } else {
+        gui.clipEnter(posX, posY, width, height);
+        try {
             paint(gui);
+        } finally {
+            gui.clipLeave();
         }
     }
     
