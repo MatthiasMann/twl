@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -153,7 +153,7 @@ public abstract class StateExpression {
 
         String describePosition() {
             if(pos >= str.length()) {
-                return "Unexpected end of expression";
+                return "end of expression";
             }
             return "'"+peek()+"' at " + (pos+1);
         }
