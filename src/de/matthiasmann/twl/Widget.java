@@ -2540,13 +2540,16 @@ public class Widget {
                             // need to check if the focus was transfered to this child or it's descendants
                             // if not we need to transfer focus on mouse click here
                             // this can happen if we click on a widget which doesn't want the keyboard focus itself
-                            if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
-                                    focusChild != child &&
-                                    child.isEnabled() &&
-                                    child.canAcceptKeyboardFocus()) {
+                            if(evt.getType() == Event.Type.MOUSE_BTNDOWN && focusChild != child) {
                                 try {
                                     child.focusGainedCause = FocusGainedCause.MOUSE_BTNDOWN;
-                                    requestKeyboardFocus(child);
+                                    if(child.isEnabled() && child.canAcceptKeyboardFocus()) {
+                                        requestKeyboardFocus(child);
+                                    } else {
+                                        // when the clicked child doesn't want the focus
+                                        // then steal the focus from the current focused child
+                                        requestKeyboardFocus(null);
+                                    }
                                 } finally {
                                     child.focusGainedCause = null;
                                 }
