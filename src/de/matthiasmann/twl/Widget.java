@@ -2537,7 +2537,7 @@ public class Widget {
                         }
                         Widget result = child.routeMouseEvent(evt);
                         if(result != null) {
-                            // need to check if the focus was transfered to this child or it's descendants
+                            // need to check if the focus was transfered to this child or its descendants
                             // if not we need to transfer focus on mouse click here
                             // this can happen if we click on a widget which doesn't want the keyboard focus itself
                             if(evt.getType() == Event.Type.MOUSE_BTNDOWN && focusChild != child) {
