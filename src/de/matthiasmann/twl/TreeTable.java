@@ -66,12 +66,7 @@ public class TreeTable extends TableBase {
         nodeRenderer = new TreeNodeCellRenderer();
         hasCellWidgetCreators = true;
 
-        ActionMap am = getActionMap();
-        if(am == null) {
-            am = new ActionMap();
-            setActionMap(am);
-        }
-
+        ActionMap am = getOrCreateActionMap();
         am.addMapping("expandLeadRow", this, "setLeadRowExpanded", new Object[] { Boolean.TRUE }, ActionMap.FLAG_ON_PRESSED);
         am.addMapping("collapseLeadRow", this, "setLeadRowExpanded", new Object[] { Boolean.FALSE }, ActionMap.FLAG_ON_PRESSED);
     }

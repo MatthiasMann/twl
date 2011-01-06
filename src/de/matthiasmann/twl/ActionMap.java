@@ -120,13 +120,16 @@ public class ActionMap {
      * @param params parameters passed to the method
      * @param flags flags to control on which events the method should be invoked
      * @throws IllegalArgumentException if no matching method was found
-     * qthrows NullPointerException if target is null
+     * @throws NullPointerException when {@code action}, {@code target} or {@code params} is null
      * @see ClassUtils#isParamsCompatible(java.lang.Class<?>[], java.lang.Object[])
      * @see #FLAG_ON_PRESSED
      * @see #FLAG_ON_RELEASE
      * @see #FLAG_ON_REPEAT
      */
     public void addMapping(String action, Object target, String methodName, Object[] params, int flags) throws IllegalArgumentException {
+        if(action == null) {
+            throw new NullPointerException("action");
+        }
         for(Method m : target.getClass().getMethods()) {
             if(m.getName().equals(methodName) && !Modifier.isStatic(m.getModifiers())) {
                 if(ClassUtils.isParamsCompatible(m.getParameterTypes(), params)) {
@@ -135,7 +138,7 @@ public class ActionMap {
                 }
             }
         }
-        throw new IllegalArgumentException("Can't find matching method");
+        throw new IllegalArgumentException("Can't find matching method: " + methodName);
     }
 
     /**
@@ -153,6 +156,7 @@ public class ActionMap {
      * @param methodName the method name
      * @param params parameters passed to the method
      * @param flags flags to control on which events the method should be invoked
+     * @throws NullPointerException when {@code action}, {@code targetClass} or {@code params} is null
      * @throws IllegalArgumentException if no matching method was found
      * @see ClassUtils#isParamsCompatible(java.lang.Class<?>[], java.lang.Object[])
      * @see #FLAG_ON_PRESSED
@@ -160,6 +164,9 @@ public class ActionMap {
      * @see #FLAG_ON_REPEAT
      */
     public void addMapping(String action, Class<?> targetClass, String methodName, Object[] params, int flags) throws IllegalArgumentException {
+        if(action == null) {
+            throw new NullPointerException("action");
+        }
         for(Method m : targetClass.getMethods()) {
             if(m.getName().equals(methodName) && Modifier.isStatic(m.getModifiers())) {
                 if(ClassUtils.isParamsCompatible(m.getParameterTypes(), params)) {
@@ -168,10 +175,35 @@ public class ActionMap {
                 }
             }
         }
-        throw new IllegalArgumentException("Can't find matching method");
+        throw new IllegalArgumentException("Can't find matching method: " + methodName);
     }
 
+    /**
+     * Add an action mapping for the specified action to the given method.
+     *
+     * Parameters can be passed to the method to differentiate between different
+     * actions using the same handler method.
+     *
+     * @param action the action name
+     * @param target the target object. Can be null when the method is static
+     * @param method the method to invoke
+     * @param params the parameters to pass to the method
+     * @param flags flags to control on which events the method should be invoked
+     * @throws NullPointerException when {@code action}, {@code method} or {@code params} is null
+     * @throws IllegalArgumentException <ul>
+     *   <li>when the method is not public</li>
+     *   <li>when the method does not belong to the target object</li>
+     *   <li>when the parameters do not match the arguments</li>
+     * </ul>
+     * @see ClassUtils#isParamsCompatible(java.lang.Class<?>[], java.lang.Object[])
+     * @see #FLAG_ON_PRESSED
+     * @see #FLAG_ON_RELEASE
+     * @see #FLAG_ON_REPEAT
+     */
     public void addMapping(String action, Object target, Method method, Object[] params, int flags) {
+        if(action == null) {
+            throw new NullPointerException("action");
+        }
         if(!Modifier.isPublic(method.getModifiers())) {
             throw new IllegalArgumentException("Method is not public");
         }
