@@ -88,6 +88,7 @@ public final class GUI extends Widget {
     private int tooltipOffsetX = 0;
     private int tooltipOffsetY = 0;
     private int tooltipDelay = 1000;  // 1 sec in ms
+    private int tooltipReappearDelay = 100;
     
     private final Renderer renderer;
     private final Input input;
@@ -132,6 +133,8 @@ public final class GUI extends Widget {
     private final TooltipWindow tooltipWindow;
     private final Label tooltipLabel;
     private Widget tooltipOwner;
+    private boolean hadOpenTooltip;
+    private long tooltipClosedTime;
     
     final ArrayList<Timer> activeTimers;
     private final ArrayList<Runnable> invokeLaterQueue;
@@ -404,6 +407,19 @@ public final class GUI extends Widget {
             throw new IllegalArgumentException("tooltipDelay");
         }
         this.tooltipDelay = tooltipDelay;
+    }
+
+    public int getTooltipReappearDelay() {
+        return tooltipReappearDelay;
+    }
+
+    /**
+     * Sets the time window in which a new tooltip is shown after the last
+     * tooltip was closed before waiting for the tooltip delay.
+     * @param tooltipReappearDelay the delay in MS - set to 0 to disable
+     */
+    public void setTooltipReappearDelay(int tooltipReappearDelay) {
+        this.tooltipReappearDelay = tooltipReappearDelay;
     }
 
     public int getTooltipOffsetX() {
@@ -697,6 +713,7 @@ public final class GUI extends Widget {
                     mouseClickCount = 0;
                     // close the tooltip - it may interface with dragging
                     hideTooltip();
+                    hadOpenTooltip = false;
                     // grab the tooltip to prevent it from poping up while dragging
                     // the widget can still request a tooltip update
                     tooltipOwner = lastMouseDownWidget;
@@ -915,7 +932,9 @@ public final class GUI extends Widget {
     public final void handleTooltips() {
         Widget widgetUnderMouse = getWidgetUnderMouse();
         if(widgetUnderMouse != tooltipOwner) {
-            if(widgetUnderMouse != null && (curTime-mouseEventTime) > tooltipDelay) {
+            if(widgetUnderMouse != null && (
+                    ((curTime-mouseEventTime) > tooltipDelay) ||
+                    (hadOpenTooltip && (curTime-tooltipClosedTime) < tooltipReappearDelay))) {
                 setTooltip(
                         event.mouseX + tooltipOffsetX,
                         event.mouseY + tooltipOffsetY,
@@ -1006,6 +1025,7 @@ public final class GUI extends Widget {
             throw new IllegalArgumentException("popup must not be added anywhere");
         }
         hideTooltip();
+        hadOpenTooltip = false;
         sendPopupEvent(Event.Type.POPUP_OPENED);
         super.insertChild(popup, getNumChildren()-2);
         popup.getOwner().setOpenPopup(this, true);
@@ -1075,6 +1095,7 @@ public final class GUI extends Widget {
         closePopupFromWidgets(widget);
         if(isOwner(tooltipOwner, widget)) {
             hideTooltip();
+            hadOpenTooltip = false;
         }
         closeInfoFromWidget(widget);
     }
@@ -1129,7 +1150,12 @@ public final class GUI extends Widget {
         }
         return super.requestKeyboardFocus(child);
     }
+
     private void hideTooltip() {
+        if(tooltipWindow.isVisible()) {
+            tooltipClosedTime = curTime;
+            hadOpenTooltip = true;
+        }
         tooltipWindow.setVisible(false);
         tooltipOwner = null;
 
