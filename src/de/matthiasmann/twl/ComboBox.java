@@ -37,6 +37,8 @@ import de.matthiasmann.twl.model.ListModel;
 /**
  * A drop down combobox. It creates a popup containing a Listbox.
  *
+ * @param <T> the data type of the combobox entries
+ * 
  * @author Matthias Mann
  */
 public class ComboBox<T> extends ComboBoxBase {
@@ -52,6 +54,7 @@ public class ComboBox<T> extends ComboBoxBase {
     boolean computeWidthFromModel;
     int modelWidth = INVALID_WIDTH;
     
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public ComboBox(ListModel<T> model) {
         this();
         setModel(model);
@@ -60,6 +63,12 @@ public class ComboBox<T> extends ComboBoxBase {
     public ComboBox() {
         this.label = new ComboboxLabel(getAnimationState());
         this.listbox = new ComboboxListbox<T>();
+
+        button.getModel().addStateCallback(new Runnable() {
+            public void run() {
+                updateHover();
+            }
+        });
         
         label.addCallback(new CallbackWithReason<Label.CallbackReason>() {
             public void callback(CallbackReason reason) {
@@ -258,7 +267,14 @@ public class ComboBox<T> extends ComboBoxBase {
         return width;
     }
 
+    void updateHover() {
+        getAnimationState().setAnimationState(Label.STATE_HOVER,
+                label.hover || button.getModel().isHover());
+    }
+
     class ComboboxLabel extends Label {
+        boolean hover;
+
         public ComboboxLabel(AnimationState animState) {
             super(animState);
             setAutoSize(false);
@@ -285,6 +301,17 @@ public class ComboBox<T> extends ComboBoxBase {
                 prefHeight = Math.max(prefHeight, getFont().getLineHeight());
             }
             return prefHeight;
+        }
+
+        @Override
+        protected void handleMouseHover(Event evt) {
+            if(evt.isMouseEvent()) {
+                boolean newHover = evt.getType() != Event.Type.MOUSE_EXITED;
+                if(newHover != hover) {
+                    hover = newHover;
+                    updateHover();
+                }
+            }
         }
     }
 
