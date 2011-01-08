@@ -172,7 +172,7 @@ public class Label extends TextWidget {
     }
 
     @Override
-    public boolean handleEvent(Event evt) {
+    protected boolean handleEvent(Event evt) {
         handleMouseHover(evt);
         if(evt.isMouseEvent()) {
             if(evt.getType() == Event.Type.MOUSE_CLICKED) {
