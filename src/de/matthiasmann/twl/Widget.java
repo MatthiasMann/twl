@@ -1616,7 +1616,9 @@ public class Widget {
     }
     
     /**
-     * Checks whether the mouse is inside the widget or not
+     * Checks whether the mouse is inside the widget or not.
+     * <p>Calls {@link #isInside(int, int)} with the mouse coordinates.</p>
+     *
      * @param evt the mouse event
      * @return true if the widgets wants to claim this mouse event
      */
@@ -1625,12 +1627,12 @@ public class Widget {
     }
     
     /**
-     * Called when an event occured that this widget could be interrested in.
+     * Called when an event occurred that this widget could be interested in.
      *
      * <p>The default implementation handles only keyboard events and delegates
      * them to the child widget which has keyboard focus.
      * If focusKey handling is enabled then this widget cycles the keyboard
-     * focus through it's childs.
+     * focus through it's children.
      * If the key was not consumed by a child or focusKey and an inputMap is
      * specified then the event is translated by the InputMap and
      * <code>handleKeyStrokeAction</code> is called when a mapping was found.</p>
