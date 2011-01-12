@@ -42,10 +42,15 @@ import org.lwjgl.opengl.Display;
  */
 public class LWJGLInput implements Input {
 
+    private boolean wasActive;
+
     public boolean pollInput(GUI gui) {
-        if(!Display.isActive()) {
+        boolean active = Display.isActive();
+        if(wasActive && !active) {
+            wasActive = false;
             return false;
         }
+        wasActive = active;
         
         if(Keyboard.isCreated()) {
             while(Keyboard.next()) {
