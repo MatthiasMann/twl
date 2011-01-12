@@ -172,9 +172,8 @@ public class DialogLayout extends Widget {
             g.checkGroup(this);
         }
         this.horz = g;
-        this.redoDefaultGaps = true;
         collectDebugStack();
-        maybeInvalidateLayoutTree();
+        layoutGroupsChanged();
     }
 
     public Group getVerticalGroup() {
@@ -196,9 +195,8 @@ public class DialogLayout extends Widget {
             g.checkGroup(this);
         }
         this.vert = g;
-        this.redoDefaultGaps = true;
         collectDebugStack();
-        maybeInvalidateLayoutTree();
+        layoutGroupsChanged();
     }
 
     public Dimension getSmallGap() {
@@ -289,8 +287,7 @@ public class DialogLayout extends Widget {
     public void setIncludeInvisibleWidgets(boolean includeInvisibleWidgets) {
         if(this.includeInvisibleWidgets != includeInvisibleWidgets) {
             this.includeInvisibleWidgets = includeInvisibleWidgets;
-            this.redoDefaultGaps = true;
-            maybeInvalidateLayoutTree();
+            layoutGroupsChanged();
         }
     }
 
@@ -541,8 +538,7 @@ public class DialogLayout extends Widget {
         if(vert != null) {
             vert.recheckWidgets();
         }
-        redoDefaultGaps = true;
-        maybeInvalidateLayoutTree();
+        layoutGroupsChanged();
     }
 
     @Override
@@ -555,11 +551,41 @@ public class DialogLayout extends Widget {
         if(vert != null) {
             vert.recheckWidgets();
         }
-        redoDefaultGaps = true;
-        maybeInvalidateLayoutTree();
+        layoutGroupsChanged();
         return widget;
     }
 
+    /**
+     * Sets the alignment of the specified widget.
+     * The widget must have already been added to this container for this method to work.
+     *
+     * <p>The default alignment of a widget is {@link Alignment#FILL}</p>
+     * 
+     * @param widget the widget for which the alignment should be set
+     * @param alignment the new alignment
+     * @return true if the widget's alignment was changed, false otherwise
+     */
+    public boolean setWidgetAlignment(Widget widget, Alignment alignment) {
+        if(widget == null) {
+            throw new NullPointerException("widget");
+        }
+        if(alignment == null) {
+            throw new NullPointerException("alignment");
+        }
+        WidgetSpring ws = widgetSprings.get(widget);
+        if(ws != null) {
+            assert widget.getParent() == this;
+            ws.alignment = alignment;
+            return true;
+        }
+        return false;
+    }
+
+    protected void layoutGroupsChanged() {
+        redoDefaultGaps = true;
+        maybeInvalidateLayoutTree();
+    }
+    
     protected void maybeInvalidateLayoutTree() {
         if(horz != null && vert != null && !blockInvalidateLayoutTree) {
             invalidateLayout();
@@ -569,8 +595,7 @@ public class DialogLayout extends Widget {
     @Override
     protected void childVisibilityChanged(Widget child) {
         if(!includeInvisibleWidgets) {
-            redoDefaultGaps = true; // this will also clear isPrepared
-            maybeInvalidateLayoutTree();
+            layoutGroupsChanged(); // this will also clear isPrepared
         }
     }
     
@@ -627,6 +652,7 @@ public class DialogLayout extends Widget {
 
     private static class WidgetSpring extends Spring {
         final Widget w;
+        Alignment alignment;
         int x;
         int y;
         int width;
@@ -641,6 +667,7 @@ public class DialogLayout extends Widget {
 
         WidgetSpring(Widget w) {
             this.w = w;
+            this.alignment = Alignment.FILL;
         }
 
         void prepare() {
@@ -705,8 +732,17 @@ public class DialogLayout extends Widget {
             if(flags != 3) {
                 invalidState();
             }
-            w.setPosition(x, y);
-            w.setSize(width, height);
+            if(alignment != Alignment.FILL) {
+                int newWidth = Math.min(width, prefWidth);
+                int newHeight = Math.min(height, prefHeight);
+                w.setPosition(
+                        x + alignment.computePositionX(width, newWidth),
+                        y + alignment.computePositionY(height, newHeight));
+                w.setSize(newWidth, newHeight);
+            } else {
+                w.setPosition(x, y);
+                w.setSize(width, height);
+            }
         }
 
         @Override
@@ -714,6 +750,7 @@ public class DialogLayout extends Widget {
             return w.isVisible();
         }
 
+        @SuppressWarnings("PointlessBitwiseExpression")
         void invalidState() {
             StringBuilder sb = new StringBuilder();
             sb.append("Widget ").append(w)
@@ -875,7 +912,7 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds a widget to this group. The widget is automaticly added as child widget.
+         * Adds a widget to this group. The widget is automatically added as child widget.
          *
          * @param w the child widget.
          * @return this Group
@@ -893,7 +930,21 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds several widgets to this group. The widget is automaticly added as child widget.
+         * Adds a widget to this group. The widget is automatically added as child widget.
+         *
+         * @param w the child widget.
+         * @param alignment the alignment of the child widget.
+         * @return this Group
+         * @see #setWidgetAlignment(de.matthiasmann.twl.Widget, de.matthiasmann.twl.Alignment)
+         */
+        public Group addWidget(Widget w, Alignment alignment) {
+            addWidget(w);
+            setWidgetAlignment(w, alignment);
+            return this;
+        }
+
+        /**
+         * Adds several widgets to this group. The widget is automatically added as child widget.
          * 
          * @param widgets The widgets which should be added.
          * @return this Group
@@ -1025,9 +1076,34 @@ public class DialogLayout extends Widget {
             }
         }
 
+        /**
+         * Removes the specified group from this group.
+         * 
+         * @param g the group to remove
+         * @return true if it was found and removed, false otherwise
+         */
+        public boolean removeGroup(Group g) {
+            for(int i=0 ; i<springs.size() ; i++) {
+                if(springs.get(i) == g) {
+                    springs.remove(i);
+                    getDialogLayout().layoutGroupsChanged();
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Removes all elements from this group
+         */
+        public void clear() {
+            springs.clear();
+            getDialogLayout().layoutGroupsChanged();
+        }
+
         void addSpring(Spring s) {
             springs.add(s);
-            getDialogLayout().redoDefaultGaps = true;
+            getDialogLayout().layoutGroupsChanged();
         }
 
         protected DialogLayout getDialogLayout() {
