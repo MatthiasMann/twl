@@ -532,12 +532,7 @@ public class DialogLayout extends Widget {
     public void removeAllChildren() {
         super.removeAllChildren();
         widgetSprings.clear();
-        if(horz != null) {
-            horz.recheckWidgets();
-        }
-        if(vert != null) {
-            vert.recheckWidgets();
-        }
+        recheckWidgets();
         layoutGroupsChanged();
     }
 
@@ -545,12 +540,7 @@ public class DialogLayout extends Widget {
     public Widget removeChild(int index) throws IndexOutOfBoundsException {
         final Widget widget = super.removeChild(index);
         widgetSprings.remove(widget);
-        if(horz != null) {
-            horz.recheckWidgets();
-        }
-        if(vert != null) {
-            vert.recheckWidgets();
-        }
+        recheckWidgets();
         layoutGroupsChanged();
         return widget;
     }
@@ -581,6 +571,15 @@ public class DialogLayout extends Widget {
         return false;
     }
 
+    protected void recheckWidgets() {
+        if(horz != null) {
+            horz.recheckWidgets();
+        }
+        if(vert != null) {
+            vert.recheckWidgets();
+        }
+    }
+    
     protected void layoutGroupsChanged() {
         redoDefaultGaps = true;
         maybeInvalidateLayoutTree();
@@ -598,7 +597,15 @@ public class DialogLayout extends Widget {
             layoutGroupsChanged(); // this will also clear isPrepared
         }
     }
-    
+
+    void removeChild(WidgetSpring widgetSpring) {
+        Widget widget = widgetSpring.w;
+        int idx = getChildIndex(widget);
+        assert idx >= 0;
+        super.removeChild(idx);
+        widgetSprings.remove(widget);
+    }
+
     public static class Gap {
         public final int min;
         public final int preferred;
@@ -873,7 +880,7 @@ public class DialogLayout extends Widget {
         boolean alreadyAdded;
 
         void checkGroup(DialogLayout owner) {
-            if(getDialogLayout() != owner) {
+            if(DialogLayout.this != owner) {
                 throw new IllegalArgumentException("Can't add group from different layout");
             }
             if(alreadyAdded) {
@@ -890,7 +897,7 @@ public class DialogLayout extends Widget {
          * @return this Group
          */
         public Group addGroup(Group g) {
-            g.checkGroup(getDialogLayout());
+            g.checkGroup(DialogLayout.this);
             g.alreadyAdded = true;
             addSpring(g);
             return this;
@@ -918,8 +925,8 @@ public class DialogLayout extends Widget {
          * @return this Group
          */
         public Group addWidget(Widget w) {
-            if(w.getParent() != getDialogLayout()) {
-                getDialogLayout().add(w);
+            if(w.getParent() != DialogLayout.this) {
+                DialogLayout.this.add(w);
             }
             WidgetSpring s = widgetSprings.get(w);
             if(s == null) {
@@ -1080,13 +1087,19 @@ public class DialogLayout extends Widget {
          * Removes the specified group from this group.
          * 
          * @param g the group to remove
+         * @param removeWidgets if true all widgets in the specified group
+         *      should be removed from the {@code DialogLayout}
          * @return true if it was found and removed, false otherwise
          */
-        public boolean removeGroup(Group g) {
+        public boolean removeGroup(Group g, boolean removeWidgets) {
             for(int i=0 ; i<springs.size() ; i++) {
                 if(springs.get(i) == g) {
                     springs.remove(i);
-                    getDialogLayout().layoutGroupsChanged();
+                    if(removeWidgets) {
+                        g.removeWidgets();
+                        DialogLayout.this.recheckWidgets();
+                    }
+                    DialogLayout.this.layoutGroupsChanged();
                     return true;
                 }
             }
@@ -1095,19 +1108,24 @@ public class DialogLayout extends Widget {
 
         /**
          * Removes all elements from this group
+         *
+         * @param removeWidgets if true all widgets in this group are removed
+         *      from the {@code DialogLayout}
          */
-        public void clear() {
+        public void clear(boolean removeWidgets) {
+            if(removeWidgets) {
+                removeWidgets();
+            }
             springs.clear();
-            getDialogLayout().layoutGroupsChanged();
+            if(removeWidgets) {
+                DialogLayout.this.recheckWidgets();
+            }
+            DialogLayout.this.layoutGroupsChanged();
         }
 
         void addSpring(Spring s) {
             springs.add(s);
-            getDialogLayout().layoutGroupsChanged();
-        }
-
-        protected DialogLayout getDialogLayout() {
-            return DialogLayout.this;
+            DialogLayout.this.layoutGroupsChanged();
         }
 
         void recheckWidgets() {
@@ -1119,6 +1137,17 @@ public class DialogLayout extends Widget {
                     }
                 } else if(s instanceof Group) {
                     ((Group)s).recheckWidgets();
+                }
+            }
+        }
+        
+        void removeWidgets() {
+            for(int i=springs.size() ; i-->0 ;) {
+                Spring s = springs.get(i);
+                if(s instanceof WidgetSpring) {
+                    removeChild((WidgetSpring)s);
+                } else if(s instanceof Group) {
+                    ((Group)s).removeWidgets();
                 }
             }
         }
