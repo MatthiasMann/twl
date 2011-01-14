@@ -804,7 +804,7 @@ public class ScrollPane extends Widget {
             if(scrollbarV.isVisible()) {
                 return scrollbarV.handleEvent(evt);
             }
-            break;
+            return false;
         }
         return evt.isMouseEvent() && contentArea.isMouseInside(evt);
     }
