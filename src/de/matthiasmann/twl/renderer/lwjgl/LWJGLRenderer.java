@@ -224,7 +224,11 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     /**
      * Setup GL to start rendering the GUI. It assumes default GL state.
      */
-    public void startRenderering() {
+    public boolean startRenderering() {
+        if(width <= 0 || height <= 0) {
+            return false;
+        }
+
         hasScissor = false;
         tintStack = tintStateRoot;
         
@@ -244,6 +248,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         GL11.glDisable(GL11.GL_LIGHTING);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+        
+        return true;
     }
 
     public void endRendering() {

@@ -612,11 +612,12 @@ public final class GUI extends Widget {
     public void draw() {
         numClipRects = 0;
         
-        renderer.startRenderering();
-        try {
-            drawWidget(this);
-        } finally {
-            renderer.endRendering();
+        if(renderer.startRenderering()) {
+            try {
+                drawWidget(this);
+            } finally {
+                renderer.endRendering();
+            }
         }
     }
 

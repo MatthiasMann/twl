@@ -50,12 +50,16 @@ public interface Renderer {
     
     /**
      * Setup rendering for TWL.
-     * Must be called before any Font or Image objects is drawn.
+     * <p>Must be called before any Font or Image objects is drawn.</p>
+     * <p>When this method returned {@code true} then {@link #endRendering()}
+     * must be called.</p>
+     * @return true if rendering was started, false otherwise
      */
-    public void startRenderering();
+    public boolean startRenderering();
     
     /**
      * Clean up after rendering TWL.
+     * Only call this method when {@link #startRenderering()} returned {@code true}
      */
     public void endRendering();
     
