@@ -328,6 +328,7 @@ public class EditFieldAutoCompletionWindow extends InfoWindow {
                 switch (evt.getKeyCode()) {
                     case Event.KEY_UP:
                     case Event.KEY_DOWN:
+                    case Event.KEY_NEXT:
                         listBox.handleEvent(evt);
                         startCapture();
                         return captureKeys;
