@@ -1031,6 +1031,9 @@ public final class GUI extends Widget {
         super.insertChild(popup, getNumChildren()-2);
         popup.getOwner().setOpenPopup(this, true);
         popupEventOccured = true;
+        if(activeInfoWindow != null) {
+            closeInfo(activeInfoWindow);
+        }
     }
     
     void closePopup(PopupWindow popup) {
