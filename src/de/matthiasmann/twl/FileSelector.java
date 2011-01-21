@@ -208,7 +208,7 @@ public class FileSelector extends DialogLayout {
         });
         currentFolder.addCallback(new TreeComboBox.Callback() {
             public void selectedNodeChanged(TreeTableNode node, TreeTableNode previousChildNode) {
-                setCurrentNode(node);
+                setCurrentNode(node, previousChildNode);
             }
         });
 
@@ -541,7 +541,7 @@ public class FileSelector extends DialogLayout {
         TreeTableNode node = currentFolder.getCurrentNode();
         TreeTableNode parent = node.getParent();
         if(parent != null) {
-            setCurrentNode(parent);
+            setCurrentNode(parent, node);
         }
     }
 
@@ -625,6 +625,13 @@ public class FileSelector extends DialogLayout {
         }
     }
 
+    protected void setCurrentNode(TreeTableNode node, TreeTableNode childToSelect) {
+        if(childToSelect instanceof FileSystemTreeModel.FolderNode) {
+            fileToSelectOnSetCurrentNode = ((FileSystemTreeModel.FolderNode)childToSelect).getFolder();
+        }
+        setCurrentNode(node);
+    }
+    
     protected void setCurrentNode(TreeTableNode node) {
         currentFolder.setCurrentNode(node);
         refreshFileTable();
