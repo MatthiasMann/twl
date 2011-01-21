@@ -368,7 +368,7 @@ public class FileSelector extends DialogLayout {
             currentFolder.setSeparator(fsm.getSeparator());
             autoCompletion.setDataSource(new FileSystemAutoCompletionDataSource(fsm,
                     FileSystemTreeModel.FolderFilter.instance));
-            if(folderMRU.getNumEntries() == 0 || !gotoFolderFromMRU(0)) {
+            if(folderMRU.getNumEntries() == 0 || !gotoFolderFromMRU(0) || !goHome()) {
                 setCurrentNode(model);
             }
         }
@@ -545,13 +545,14 @@ public class FileSelector extends DialogLayout {
         }
     }
 
-    public void goHome() {
+    public boolean goHome() {
         if(fsm != null) {
             Object folder = fsm.getSpecialFolder(FileSystemModel.SPECIAL_FOLDER_HOME);
             if(folder != null) {
-                setCurrentFolder(folder);
+                return setCurrentFolder(folder);
             }
         }
+        return false;
     }
 
     public void acceptSelection() {
