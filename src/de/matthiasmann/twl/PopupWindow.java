@@ -131,7 +131,11 @@ public class PopupWindow extends Widget {
             gui.openPopup(this);
             requestKeyboardFocus();
             focusFirstChild();
-            return true;
+            // check isOpen() to make sure that the popup hasn't been close
+            // in the focus transfer.
+            // This can happen if {@code setVisible(false)} is called inside
+            // {@code keyboardFocusLost()}
+            return isOpen();
         }
         return false;
     }
@@ -185,7 +189,7 @@ public class PopupWindow extends Widget {
      * Checks if this pop-up window is currently open
      * @return true if it is open
      */
-    public boolean isOpen() {
+    public final boolean isOpen() {
         return getParent() != null;
     }
 
