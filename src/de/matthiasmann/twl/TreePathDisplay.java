@@ -247,7 +247,9 @@ public class TreePathDisplay extends Widget {
     private class PathEditField extends EditField {
         @Override
         protected void keyboardFocusLost() {
-            setVisible(false);
+            if(!hasOpenPopups()) {
+                setVisible(false);
+            }
         }
 
         @Override
