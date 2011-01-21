@@ -30,25 +30,25 @@
 package de.matthiasmann.twl;
 
 /**
- * A generic popup window.
+ * A generic pop-up window.
  * Must not be added as a child to another Widget.
  *
- * While other widgets have a parent/child relationship, popup windows have
+ * While other widgets have a parent/child relationship, pop-up windows have
  * only have a owner.
  *
- * When a popup window is open it will block all mouse and keyboard events to
+ * When a pop-up window is open it will block all mouse and keyboard events to
  * the UI layer of it's owner. This includes the owner, all it's children, all
  * siblings and parents etc.
  *
- * If the popup window is hidden or disabled it will close instead.
+ * If the pop-up window is hidden or disabled it will close instead.
  * 
  * When the owner is hidden (either directly or indirectly) or removed from
- * the GUI tree then the popup is also closed.
+ * the GUI tree then the pop-up is also closed.
  *
  * To use a PopupWindow construct it with your widget as owner and add the
  * content widget. Call {@code openPopup} to make it visible.
  *
- * Only one widget should be added as child to a popup window. This widget
+ * Only one widget should be added as child to a pop-up window. This widget
  * will occupy the whole inner area. If more then one widget is added then
  * they will overlap.
  *
@@ -64,9 +64,9 @@ public class PopupWindow extends Widget {
     private boolean closeOnEscape = true;
 
     /**
-     * Creates a new popup window.
+     * Creates a new pop-up window.
      *
-     * @param owner The owner of this popup
+     * @param owner The owner of this pop-up
      */
     public PopupWindow(Widget owner) {
         if(owner == null) {
@@ -84,7 +84,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Controls if this popup window should close when a mouse click
+     * Controls if this pop-up window should close when a mouse click
      * happens outside of it's area. This is useful for context menus or
      * drop down combo boxes.
      *
@@ -101,7 +101,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Controls if this popup should close when the escape key is pressed.
+     * Controls if this pop-up should close when the escape key is pressed.
      *
      * Default is true.
      *
@@ -112,12 +112,12 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Opens the popup window with it's current size and position.
+     * Opens the pop-up window with it's current size and position.
      * In order for this to work the owner must be part of the GUI tree.
      *
-     * When a popup window is shown it is always visible and enabled.
+     * When a pop-up window is shown it is always visible and enabled.
      * 
-     * @return true if the popup window could be opened.
+     * @return true if the pop-up window could be opened.
      * @see #getOwner() 
      * @see #getGUI()
      */
@@ -137,7 +137,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Opens the popup window, calls {@code adjustSize} and centers the popup on
+     * Opens the pop-up window, calls {@code adjustSize} and centers the pop-up on
      * the screen.
      *
      * @see #adjustSize()
@@ -151,7 +151,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Opens the popup window with the specified size and centers the popup on
+     * Opens the pop-up window with the specified size and centers the pop-up on
      * the screen.
      *
      * If the specified size is larger then the available space then it is
@@ -170,7 +170,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Closes this popup window. Keyboard focus is transfered to it's owner.
+     * Closes this pop-up window. Keyboard focus is transfered to it's owner.
      */
     public void closePopup() {
         GUI gui = getGUI();
@@ -182,7 +182,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Checks if theis popup window is currently open
+     * Checks if this pop-up window is currently open
      * @return true if it is open
      */
     public boolean isOpen() {
@@ -190,8 +190,8 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Centers the popup on the screen.
-     * If the popup is not open then this method does nothing.
+     * Centers the pop-up on the screen.
+     * If the pop-up is not open then this method does nothing.
      *
      * @see #isOpen()
      */
@@ -205,12 +205,12 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Binds the current drag event (even if it's not yet started) to this popup.
+     * Binds the current drag event (even if it's not yet started) to this pop-up.
      * The mouse drag events will be send as normal mouse move events.
      * The optional callback will be called when the drag event is finished.
      *
      * @param cb the optional callback which should be called at the end of the bound drag.
-     * @return true if the binding was sucessful, false if not.
+     * @return true if the binding was successful, false if not.
      */
     public boolean bindMouseDrag(Runnable cb) {
         GUI gui = getGUI();
@@ -289,7 +289,7 @@ public class PopupWindow extends Widget {
     }
 
     /**
-     * Called when a mouse click happened outside the popup window area.
+     * Called when a mouse click happened outside the pop-up window area.
      *
      * The default implementation calls {@code requestPopupClose} when
      * {@code closeOnClickedOutside} is active.
