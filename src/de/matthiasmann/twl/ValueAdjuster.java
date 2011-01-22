@@ -400,6 +400,7 @@ public abstract class ValueAdjuster extends Widget {
     protected abstract void onDragStart();
     protected abstract void onDragUpdate(int dragDelta);
     protected abstract void onDragCancelled();
+    protected void onDragEnd() {}
     
     protected abstract void doDecrement();
     protected abstract void doIncrement();
@@ -446,6 +447,7 @@ public abstract class ValueAdjuster extends Widget {
         }
         public void dragStopped() {
             dragActive = false;
+            onDragEnd();
         }
         public void callback(int key) {
             handleEditCallback(key);
