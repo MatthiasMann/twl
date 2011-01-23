@@ -723,8 +723,10 @@ public class Widget {
     /**
      * Sets the minimum size of the widget. This size includes the border.
      *
+     * <p>The minimum size is set via the theme in {@link #applyThemeMinSize(de.matthiasmann.twl.ThemeInfo)}</p>
+     *
      * @param width the minimum width
-     * @param height the minimum wheight
+     * @param height the minimum height
      * @see #getMinWidth()
      * @see #getMinHeight()
      * @throws IllegalArgumentException when width or height is negative
@@ -852,6 +854,8 @@ public class Widget {
      * Sets the maximum size of the widget.
      * A value of 0 means no expansion, use {@link Short#MAX_VALUE} for unbounded expansion.
      *
+     * <p>The maximum size is set via the theme in {@link #applyThemeMaxSize(de.matthiasmann.twl.ThemeInfo)}</p>
+     * 
      * @param width the maximum width
      * @param height the maximum height
      * @see #getMaxWidth()
