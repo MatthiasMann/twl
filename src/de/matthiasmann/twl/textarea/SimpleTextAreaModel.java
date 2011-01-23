@@ -48,14 +48,36 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
     public SimpleTextAreaModel() {
     }
 
+    /**
+     * Constructs a SimpleTextAreaModel with pre-formatted text.
+     * Use {@code '\n'} to create line breaks.
+     * 
+     * @param text the text (interpreted as pre-formatted)
+     * @see #setText(java.lang.String)
+     */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public SimpleTextAreaModel(String text) {
         setText(text);
     }
 
+    /**
+     * Sets the text for this SimpleTextAreaModel as pre-formatted text.
+     * Use {@code '\n'} to create line breaks.
+     *
+     * This is equivalent to calling {@code setText(text, true);}
+     * @param text the text (interpreted as pre-formatted)
+     */
     public void setText(String text) {
         setText(text, true);
     }
 
+    /**
+     * Sets the text for this SimpleTextAreaModel.
+     * Use {@code '\n'} to create line breaks.
+     *
+     * @param text the text
+     * @param preformatted if the text should be treated as pre-formated or not.
+     */
     public void setText(String text, boolean preformatted) {
         Style style = EMPTY_STYLE;
         if(preformatted) {
