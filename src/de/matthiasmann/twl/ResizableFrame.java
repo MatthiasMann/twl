@@ -444,6 +444,13 @@ public class ResizableFrame extends Widget {
 
     @Override
     protected boolean handleEvent(Event evt) {
+        boolean isMouseExit = evt.getType() == Event.Type.MOUSE_EXITED;
+
+        if(isMouseExit && resizeHandle != null && resizeHandle.isVisible()) {
+            resizeHandle.getAnimationState().setAnimationState(
+                    TextWidget.STATE_HOVER, false);
+        }
+
         if(dragMode != DragMode.NONE) {
             if(evt.isMouseDragEnd()) {
                 dragMode = DragMode.NONE;
@@ -457,7 +464,7 @@ public class ResizableFrame extends Widget {
         MouseCursor cursor = cursors[cursorMode.ordinal()];
         setMouseCursor(cursor);
 
-        if(resizeHandle != null && resizeHandle.isVisible()) {
+        if(!isMouseExit && resizeHandle != null && resizeHandle.isVisible()) {
             resizeHandle.getAnimationState().setAnimationState(
                     TextWidget.STATE_HOVER, resizeHandle.isMouseInside(evt));
         }
