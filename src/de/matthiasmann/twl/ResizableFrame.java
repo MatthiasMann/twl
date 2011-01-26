@@ -328,7 +328,7 @@ public class ResizableFrame extends Widget {
 
     protected void layoutResizeHandle() {
         if(hasResizeHandle && resizeHandle == null) {
-            resizeHandle = new Widget(getAnimationState());
+            resizeHandle = new Widget(getAnimationState(), true);
             resizeHandle.setTheme("resizeHandle");
             super.insertChild(resizeHandle, 0);
         }
@@ -456,6 +456,11 @@ public class ResizableFrame extends Widget {
         DragMode cursorMode = getDragMode(evt.getMouseX(), evt.getMouseY());
         MouseCursor cursor = cursors[cursorMode.ordinal()];
         setMouseCursor(cursor);
+
+        if(resizeHandle != null && resizeHandle.isVisible()) {
+            resizeHandle.getAnimationState().setAnimationState(
+                    TextWidget.STATE_HOVER, resizeHandle.isMouseInside(evt));
+        }
 
         if(!evt.isMouseDragEvent()) {
             if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
