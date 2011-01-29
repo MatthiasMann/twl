@@ -1301,7 +1301,13 @@ public class Widget {
     }
 
     /**
-     * Requests that the keyboard focus is transfered to this widget. Use with care.
+     * Requests that the keyboard focus is transfered to this widget.
+     *
+     * <p>Use with care - users don't expect focus changes while working with the UI</p>
+     *
+     * <p>Focus transfer only works when the widget is added to the GUi tree.
+     * See {@link #getGUI()}.</p>
+     * 
      * @return true if keyboard focus was transfered to this widget.
      */
     public boolean requestKeyboardFocus() {
