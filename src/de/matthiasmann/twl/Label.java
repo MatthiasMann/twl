@@ -72,6 +72,7 @@ public class Label extends TextWidget {
         super(animState, inherit);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public Label(String text) {
         this();
         setText(text);
@@ -132,6 +133,13 @@ public class Label extends TextWidget {
         return labelFor;
     }
 
+    /**
+     * Sets the associated widget for this label. This will cause the label to
+     * get it's tooltip content from the associated widget and also forward the
+     * keyboard focus to it.
+     *
+     * @param labelFor the associated widget. Can be {@code null}.
+     */
     public void setLabelFor(Widget labelFor) {
         if(labelFor == this) {
             throw new IllegalArgumentException("labelFor == this");
