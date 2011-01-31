@@ -1010,7 +1010,8 @@ public class EditField extends Widget {
     protected int computeCursorPosFromX(int x, int lineStart, int lineEnd) {
         Font font = textRenderer.getFont();
         if(font != null) {
-            return lineStart + font.computeVisibleGlpyhs(editBuffer,
+            return lineStart + font.computeVisibleGlpyhs(
+                    (passwordMasking != null) ? passwordMasking : editBuffer,
                     lineStart, lineEnd, x + font.getSpaceWidth() / 2);
         }
         return lineStart;
