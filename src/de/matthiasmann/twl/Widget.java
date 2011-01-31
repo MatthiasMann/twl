@@ -516,27 +516,7 @@ public class Widget {
      * @see #layout()
      */
     public boolean setPosition(int x, int y) {
-        int deltaX = x - posX;
-        int deltaY = y - posY;
-        if(deltaX != 0 || deltaY != 0) {
-            this.posX = x;
-            this.posY = y;
-            
-            if(children != null) {
-                for(int i=0,n=children.size() ; i<n ; i++) {
-                    adjustChildPosition(children.get(i), deltaX, deltaY);
-                }
-            }
-            
-            positionChanged();
-
-            if(propertyChangeSupport != null) {
-                firePropertyChange("x", x - deltaX, x);
-                firePropertyChange("y", y - deltaY, y);
-            }
-            return true;
-        }
-        return false;
+        return setPositionImpl(x, y);
     }
     
     /** 
@@ -2437,7 +2417,31 @@ public class Widget {
     }
     
     private static void adjustChildPosition(Widget child, int deltaX, int deltaY) {
-        child.setPosition(child.posX + deltaX, child.posY + deltaY);
+        child.setPositionImpl(child.posX + deltaX, child.posY + deltaY);
+    }
+
+    final boolean setPositionImpl(int x, int y) {
+        int deltaX = x - posX;
+        int deltaY = y - posY;
+        if(deltaX != 0 || deltaY != 0) {
+            this.posX = x;
+            this.posY = y;
+
+            if(children != null) {
+                for(int i=0,n=children.size() ; i<n ; i++) {
+                    adjustChildPosition(children.get(i), deltaX, deltaY);
+                }
+            }
+
+            positionChanged();
+
+            if(propertyChangeSupport != null) {
+                firePropertyChange("x", x - deltaX, x);
+                firePropertyChange("y", y - deltaY, y);
+            }
+            return true;
+        }
+        return false;
     }
     
     void applyTheme(ThemeManager themeManager) {
