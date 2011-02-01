@@ -56,6 +56,7 @@ class SWCursor extends TextureAreaBase implements MouseCursor {
         if(imageRef != null) {
             imageRef.draw(texture.renderer.swCursorAnimState, x-hotSpotX, y-hotSpotY);
         } else if(texture.bind()) {
+            GL11.glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
             GL11.glBegin(GL11.GL_QUADS);
             drawQuad(x-hotSpotX, y-hotSpotY, width, height);
             GL11.glEnd();

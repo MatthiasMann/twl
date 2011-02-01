@@ -254,6 +254,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public void endRendering() {
         if(swCursor != null) {
+            tintStack = tintStateRoot;
             swCursor.render(mouseX, mouseY);
         }
         GL11.glPopMatrix();
