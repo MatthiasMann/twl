@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.renderer;
 
+import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.Rect;
 import java.io.IOException;
 import java.net.URL;
@@ -158,6 +159,17 @@ public interface Renderer {
      * @param mouseY Y mouse position
      */
     public void setMousePosition(int mouseX, int mouseY);
+
+    /**
+     * Sets the mouse button state for SW mouse cursor rendering
+     * 
+     * @param button the mouse button
+     * @param state true if the mouse button is pressed
+     * @see Event#MOUSE_LBUTTON
+     * @see Event#MOUSE_MBUTTON
+     * @see Event#MOUSE_RBUTTON
+     */
+    public void setMouseButton(int button, boolean state);
 
     /**
      * Pushes a new tint color on the tint stack. The current tint color is

@@ -676,6 +676,10 @@ public final class GUI extends Widget {
         event.setModifier(buttonMask, pressed);
         boolean wasPressed = (prevButtonState & buttonMask) != 0;
 
+        if(buttonMask != 0) {
+            renderer.setMouseButton(button, pressed);
+        }
+        
         // don't send new mouse coords when still in drag area
         if(dragActive || prevButtonState == 0) {
             event.mouseX = mouseX;
@@ -829,6 +833,9 @@ public final class GUI extends Widget {
         event.setModifier(Event.MODIFIER_LBUTTON, false);
         event.setModifier(Event.MODIFIER_MBUTTON, false);
         event.setModifier(Event.MODIFIER_RBUTTON, false);
+        renderer.setMouseButton(Event.MOUSE_LBUTTON, false);
+        renderer.setMouseButton(Event.MOUSE_MBUTTON, false);
+        renderer.setMouseButton(Event.MOUSE_RBUTTON, false);
         lastMouseClickWidget = null;
         mouseClickCount = 0;
         mouseClickedTime = curTime;

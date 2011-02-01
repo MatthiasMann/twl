@@ -30,8 +30,10 @@
 package de.matthiasmann.twl.renderer.lwjgl;
 
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.Rect;
 import de.matthiasmann.twl.renderer.AnimationState;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.CacheContext;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.FontParameter;
@@ -71,6 +73,10 @@ import org.lwjgl.opengl.GLContext;
  */
 public class LWJGLRenderer implements Renderer, LineRenderer {
 
+    public static final StateKey STATE_LEFT_MOUSE_BUTTON = StateKey.get("leftMouseButton");
+    public static final StateKey STATE_MIDDLE_MOUSE_BUTTON = StateKey.get("middleMouseButton");
+    public static final StateKey STATE_RIGHT_MOUSE_BUTTON = StateKey.get("rightMouseButton");
+
     private final IntBuffer ib16;
     final int maxTextureSize;
 
@@ -88,7 +94,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private int mouseY;
     private LWJGLCacheContext cacheContext;
 
-    final AnimationState swCursorAnimState;
+    final SWCursorAnimState swCursorAnimState;
     final ArrayList<TextureArea> textureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintStack tintStack;
@@ -114,17 +120,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             emptyCursor = null;
         }
 
-        swCursorAnimState = new AnimationState() {
-            public int getAnimationTime(StateKey state) {
-                return (int)Sys.getTime() & Integer.MAX_VALUE;
-            }
-            public boolean getAnimationState(StateKey state) {
-                return false;
-            }
-            public boolean getShouldAnimateState(StateKey state) {
-                return true;
-            }
-        };
+        swCursorAnimState = new SWCursorAnimState();
     }
 
     public boolean isUseQuadsForLines() {
@@ -388,6 +384,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         this.mouseY = mouseY;
     }
 
+    public void setMouseButton(int button, boolean state) {
+        swCursorAnimState.setAnimationState(button, state);
+    }
+
     public LWJGLTexture load(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter) throws IOException {
         return load(textureUrl, fmt, filter, null);
     }
@@ -492,5 +492,56 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         ib16.clear();
         ib16.put(id).flip();
         GL11.glDeleteTextures(ib16);
+    }
+
+    private static class SWCursorAnimState implements AnimationState {
+        private final long[] lastTime;
+        private final boolean[] active;
+
+        public SWCursorAnimState() {
+            lastTime = new long[3];
+            active = new boolean[3];
+        }
+
+        void setAnimationState(int idx, boolean isActive) {
+            if(idx >= 0 && idx < 3 && active[idx] != isActive) {
+                lastTime[idx] = Sys.getTime();
+                active[idx] = isActive;
+            }
+        }
+
+        public int getAnimationTime(StateKey state) {
+            long curTime = Sys.getTime();
+            int idx = getMouseButton(state);
+            if(idx >= 0) {
+                curTime -= lastTime[idx];
+            }
+            return (int)curTime & Integer.MAX_VALUE;
+        }
+
+        public boolean getAnimationState(StateKey state) {
+            int idx = getMouseButton(state);
+            if(idx >= 0) {
+                return active[idx];
+            }
+            return false;
+        }
+
+        public boolean getShouldAnimateState(StateKey state) {
+            return true;
+        }
+
+        private int getMouseButton(StateKey key) {
+            if(key == STATE_LEFT_MOUSE_BUTTON) {
+                return Event.MOUSE_LBUTTON;
+            }
+            if(key == STATE_MIDDLE_MOUSE_BUTTON) {
+                return Event.MOUSE_MBUTTON;
+            }
+            if(key == STATE_RIGHT_MOUSE_BUTTON) {
+                return Event.MOUSE_RBUTTON;
+            }
+            return -1;
+        }
     }
 }
