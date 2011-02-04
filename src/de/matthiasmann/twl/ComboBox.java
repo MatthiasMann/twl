@@ -33,6 +33,7 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.Label.CallbackReason;
 import de.matthiasmann.twl.model.ListModel;
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
 /**
  * A drop down combobox. It creates a popup containing a Listbox.
@@ -43,6 +44,8 @@ import de.matthiasmann.twl.model.ListModel;
  */
 public class ComboBox<T> extends ComboBoxBase {
 
+    public static final StateKey STATE_ERROR = StateKey.get("error");
+
     private static final int INVALID_WIDTH = -1;
     
     private final ComboboxLabel label;
@@ -51,6 +54,8 @@ public class ComboBox<T> extends ComboBoxBase {
     private Runnable[] selectionChangedListeners;
 
     private ListModel.ChangeListener modelChangeListener;
+    String displayTextNoSelection = "";
+    boolean noSelectionIsError;
     boolean computeWidthFromModel;
     int modelWidth = INVALID_WIDTH;
     
@@ -144,6 +149,40 @@ public class ComboBox<T> extends ComboBoxBase {
         }
     }
 
+    public String getDisplayTextNoSelection() {
+        return displayTextNoSelection;
+    }
+
+    /**
+     * Sets the text to display when nothing is selected.
+     * Default is {@code ""}
+     *
+     * @param displayTextNoSelection the text to display
+     * @throws NullPointerException when displayTextNoSelection is null
+     */
+    public void setDisplayTextNoSelection(String displayTextNoSelection) {
+        if(displayTextNoSelection == null) {
+            throw new NullPointerException("displayTextNoSelection");
+        }
+        this.displayTextNoSelection = displayTextNoSelection;
+        updateLabel();
+    }
+
+    public boolean isNoSelectionIsError() {
+        return noSelectionIsError;
+    }
+
+    /**
+     * Controls the value of {@link #STATE_ERROR} on the combobox display when nothing is selected.
+     * Default is false.
+     * 
+     * @param noSelectionIsError
+     */
+    public void setNoSelectionIsError(boolean noSelectionIsError) {
+        this.noSelectionIsError = noSelectionIsError;
+        updateLabel();
+    }
+
     private void registerModelChangeListener() {
         final ListModel<?> model = getModel();
         if(model != null) {
@@ -193,9 +232,11 @@ public class ComboBox<T> extends ComboBoxBase {
     protected void updateLabel() {
         int selected = getSelected();
         if(selected == ListBox.NO_SELECTION) {
-            label.setText("");
+            label.setText(displayTextNoSelection);
+            label.getAnimationState().setAnimationState(STATE_ERROR, noSelectionIsError);
         } else {
             label.setText(getModelData(selected));
+            label.getAnimationState().setAnimationState(STATE_ERROR, false);
         }
         if(!computeWidthFromModel) {
             invalidateLayout();
