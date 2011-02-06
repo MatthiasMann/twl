@@ -128,10 +128,29 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         return false;
     }
 
+    /**
+     * Equivalent to calling {@code setAnimationState(StateKey.get(stateName), active);}
+     * 
+     * @param stateName the string specifying the state key
+     * @param active the new value
+     * @deprecated
+     * @see #setAnimationState(de.matthiasmann.twl.renderer.AnimationState.StateKey, boolean)
+     * @see de.matthiasmann.twl.renderer.AnimationState.StateKey#get(java.lang.String)
+     */
+    @Deprecated
     public void setAnimationState(String stateName, boolean active) {
         setAnimationState(StateKey.get(stateName), active);
     }
-    
+
+    /**
+     * Sets the specified animation state to the given value.
+     * If the value is changed then the animation time is reset too.
+     *
+     * @param stateKey the state key
+     * @param active the new value
+     * @see #getAnimationState(de.matthiasmann.twl.renderer.AnimationState.StateKey)
+     * @see #resetAnimationTime(de.matthiasmann.twl.renderer.AnimationState.StateKey)
+     */
     public void setAnimationState(StateKey stateKey, boolean active) {
         State state = getOrCreate(stateKey);
         if(state.active != active) {
@@ -141,20 +160,52 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
         }
     }
 
+    /**
+     * Equivalent to calling {@code resetAnimationTime(StateKey.get(stateName));}
+     *
+     * @param stateName the string specifying the state key
+     * @deprecated
+     * @see #resetAnimationTime(de.matthiasmann.twl.renderer.AnimationState.StateKey) 
+     * @see de.matthiasmann.twl.renderer.AnimationState.StateKey#get(java.lang.String)
+     */
+    @Deprecated
     public void resetAnimationTime(String stateName) {
         resetAnimationTime(StateKey.get(stateName));
     }
 
+    /**
+     * Resets the animation time of the specified animation state.
+     * Resetting the animation time also enables the {@code shouldAnimate} flag.
+     *
+     * @param stateKey the state key.
+     * @see #getAnimationTime(de.matthiasmann.twl.renderer.AnimationState.StateKey)
+     * @see #getShouldAnimateState(de.matthiasmann.twl.renderer.AnimationState.StateKey) 
+     */
     public void resetAnimationTime(StateKey stateKey) {
         State state = getOrCreate(stateKey);
         state.lastChangedTime = getCurrentTime();
         state.shouldAnimate = true;
     }
 
+    /**
+     * Equivalent to calling {@code dontAnimate(StateKey.get(stateName));}
+     * 
+     * @param stateName the string specifying the state key
+     * @deprecated
+     * @see #dontAnimate(de.matthiasmann.twl.renderer.AnimationState.StateKey) 
+     * @see de.matthiasmann.twl.renderer.AnimationState.StateKey#get(java.lang.String)
+     */
+    @Deprecated
     public void dontAnimate(String stateName) {
         dontAnimate(StateKey.get(stateName));
     }
 
+    /**
+     * Clears the {@code shouldAnimate} flag of the specified animation state.
+     *
+     * @param stateKey the state key.
+     * @see #getShouldAnimateState(de.matthiasmann.twl.renderer.AnimationState.StateKey)
+     */
     public void dontAnimate(StateKey stateKey) {
         State state = getState(stateKey);
         if(state != null) {

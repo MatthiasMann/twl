@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -975,8 +976,8 @@ public class DialogLayout extends Widget {
          * @return this Group
          */
         public Group addWidgetsWithGap(String gapName, Widget ... widgets) {
-            String stateNotFirst = gapName.concat("NotFirst");
-            String stateNotLast = gapName.concat("NotLast");
+            StateKey stateNotFirst = StateKey.get(gapName.concat("NotFirst"));
+            StateKey stateNotLast = StateKey.get(gapName.concat("NotLast"));
             for(int i=0,n=widgets.length ; i<n ;i++) {
                 if(i > 0) {
                     addGap(gapName);
