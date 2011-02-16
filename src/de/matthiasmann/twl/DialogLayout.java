@@ -920,10 +920,15 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds a widget to this group. The widget is automatically added as child widget.
+         * Adds a widget to this group.
+         *
+         * <p>If the widget is already a child widget of the DialogLayout then it
+         * keeps it current settings, otherwise it is added the alignment is set
+         * to {@link Alignment#FILL}.</p>
          *
          * @param w the child widget.
          * @return this Group
+         * @see Widget#add(de.matthiasmann.twl.Widget)
          */
         public Group addWidget(Widget w) {
             if(w.getParent() != DialogLayout.this) {
@@ -938,11 +943,16 @@ public class DialogLayout extends Widget {
         }
 
         /**
-         * Adds a widget to this group. The widget is automatically added as child widget.
+         * Adds a widget to this group.
+         *
+         * <p>If the widget is already a child widget of the DialogLayout then it
+         * it's alignment is set to the specified value overwriting any current
+         * alignment setting, otherwise it is added to the DialogLayout.</p>
          *
          * @param w the child widget.
          * @param alignment the alignment of the child widget.
          * @return this Group
+         * @see Widget#add(de.matthiasmann.twl.Widget) 
          * @see #setWidgetAlignment(de.matthiasmann.twl.Widget, de.matthiasmann.twl.Alignment)
          */
         public Group addWidget(Widget w, Alignment alignment) {
