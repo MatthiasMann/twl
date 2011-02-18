@@ -114,6 +114,7 @@ public class TextArea extends Widget {
         this.userImages = new HashMap<String, Image>();
         this.imageResolvers = new ArrayList<ImageResolver>();
         this.layoutRoot = new LClip(null);
+        this.layoutRoot.lineInfo = new char[0];
         this.allBGImages = new ArrayList<LImage>();
         
         this.modelCB = new Runnable() {
