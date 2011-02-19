@@ -59,6 +59,10 @@ public class ProgressBar extends TextWidget {
         return value;
     }
 
+    /**
+     * Sets the progress bar to an indeterminate state.
+     * @see #STATE_INDETERMINATE
+     */
     public void setIndeterminate() {
         if(value >= 0) {
             value = VALUE_INDETERMINATE;
@@ -67,7 +71,13 @@ public class ProgressBar extends TextWidget {
             animationState.resetAnimationTime(STATE_VALUE_CHANGED);
         }
     }
-    
+
+    /**
+     * Sets the progress value to the specified value between 0.0f and 1.0f.
+     * This will also clear the {@link #STATE_INDETERMINATE} state.
+     *
+     * @param value the progress value between 0.0f and 1.0f.
+     */
     public void setValue(float value) {
         if(!(value > 0)) {  // protect against NaN
             value = 0;
@@ -86,6 +96,10 @@ public class ProgressBar extends TextWidget {
         return (String)getCharSequence();
     }
 
+    /**
+     * Sets the text which is displayed on top of the progress bar image.
+     * @param text the text
+     */
     public void setText(String text) {
         setCharSequence(text);
     }
@@ -94,6 +108,17 @@ public class ProgressBar extends TextWidget {
         return progressImage;
     }
 
+    /**
+     * Sets the progress image.
+     *
+     * <p>This is called from {@link #applyThemeProgressBar(de.matthiasmann.twl.ThemeInfo) }</p>
+     *
+     * <p>When the progress bar is in indeterminate state then the image is not
+     * drawn, otherwise it is drawn with a scaled width based on the current
+     * progress value.</p>
+     *
+     * @param progressImage the progress image, can be null.
+     */
     public void setProgressImage(Image progressImage) {
         this.progressImage = progressImage;
     }
