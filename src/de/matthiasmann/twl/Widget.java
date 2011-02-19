@@ -496,23 +496,22 @@ public class Widget {
 
     /**
      * Changes the position of this widget.
-     * Negative position is allowed.
      * 
-     * When the position has changed then
-     * - positions of all children are updated
-     * - positionChanged is called
-     * - PropertyChangeEvent are fired for "x" and "y"
+     * <p>When the position has changed then<ul>
+     * <li>The positions of all children are updated</li>
+     * <li>{@link #positionChanged()} is called</li>
+     * <li>{@link PropertyChangeEvent} are fired for "x" and "y"</li>
+     * </ul></p>
      *
-     * This method should only be called from within the layout() method of the
+     * <p>This method should only be called from within the layout() method of the
      * parent. Otherwise it could lead to bad interaction with theming and result
-     * in a wrong position after the theme has been applied.
+     * in a wrong position after the theme has been applied.</p>
      *
-     * NOTE: Position is absolute in the widget's tree.
+     * <p>NOTE: Position is absolute in the widget's tree.</p>
      *
-     * @param x The new x position
-     * @param y The new y position
+     * @param x The new x position, can be negative
+     * @param y The new y position, can be negative
      * @return true if the position was changed, false if new position == old position
-     * @see #positionChanged()
      * @see #layout()
      */
     public boolean setPosition(int x, int y) {
