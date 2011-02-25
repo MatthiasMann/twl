@@ -954,7 +954,7 @@ public class Widget {
      */
     public void setTheme(String theme) {
         if(theme == null) {
-            throw new NullPointerException("theme");
+            throw new IllegalArgumentException("theme is null");
         }
         if(theme.length() > 0) {
             int slashIdx = theme.lastIndexOf('/');
@@ -1129,7 +1129,7 @@ public class Widget {
      */
     public void insertChild(Widget child, int index) throws IndexOutOfBoundsException {
         if(child == null) {
-            throw new NullPointerException();
+            throw new IllegalArgumentException("child is null");
         }
         if(child == this) {
             throw new IllegalArgumentException("can't add to self");

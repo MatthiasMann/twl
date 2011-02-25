@@ -177,10 +177,10 @@ public final class GUI extends Widget {
     @SuppressWarnings("LeakingThisInConstructor")
     public GUI(Widget rootPane, Renderer renderer, Input input) {
         if(rootPane == null) {
-            throw new NullPointerException("rootPane");
+            throw new IllegalArgumentException("rootPane is null");
         }
         if(renderer == null) {
-            throw new NullPointerException("renderer");
+            throw new IllegalArgumentException("renderer is null");
         }
 
         this.guiInstance = this;
@@ -225,7 +225,7 @@ public final class GUI extends Widget {
     @Override
     public void applyTheme(ThemeManager themeManager) {
         if(themeManager == null) {
-            throw new NullPointerException("themeManager");
+            throw new IllegalArgumentException("themeManager is null");
         }
         
         super.applyTheme(themeManager);
@@ -237,7 +237,7 @@ public final class GUI extends Widget {
 
     public void setRootPane(Widget rootPane) {
         if(rootPane == null) {
-            throw new NullPointerException("rootPane");
+            throw new IllegalArgumentException("rootPane is null");
         }
         this.rootPane = rootPane;
         super.removeChild(0);
@@ -294,15 +294,15 @@ public final class GUI extends Widget {
      * Queues a Runnable to be executed in the GUI main loop.
      * This method is thread safe.
      * 
-     * @param r the Runnable to execute
+     * @param runnable  the Runnable to execute
      * @see Widget#getGUI()
      */
-    public void invokeLater(Runnable r) {
-        if(r == null) {
-            throw new NullPointerException();
+    public void invokeLater(Runnable runnable) {
+        if(runnable == null) {
+            throw new IllegalArgumentException("runnable is null");
         }
         synchronized(invokeLaterQueue) {
-            invokeLaterQueue.add(r);
+            invokeLaterQueue.add(runnable);
         }
     }
 
@@ -323,10 +323,10 @@ public final class GUI extends Widget {
      */
     public<V> Future<V> invokeAsync(Callable<V> job, AsyncCompletionListener<V> listener) {
         if(job == null) {
-            throw new NullPointerException("job");
+            throw new IllegalArgumentException("job is null");
         }
         if(listener == null) {
-            throw new NullPointerException("listener");
+            throw new IllegalArgumentException("listener is null");
         }
         return executorService.submit((Callable<V>)new AC<V>(job, null, listener));
     }
@@ -348,10 +348,10 @@ public final class GUI extends Widget {
      */
     public<V> Future<V> invokeAsync(Runnable job, AsyncCompletionListener<V> listener) {
         if(job == null) {
-            throw new NullPointerException("job");
+            throw new IllegalArgumentException("job is null");
         }
         if(listener == null) {
-            throw new NullPointerException("listener");
+            throw new IllegalArgumentException("listener is null");
         }
         return executorService.submit((Callable<V>)new AC<V>(null, job, listener));
     }
@@ -359,7 +359,7 @@ public final class GUI extends Widget {
     public boolean requestToolTip(Widget widget, int x, int y,
             Object content, Alignment alignment) {
         if(alignment == null) {
-            throw new NullPointerException("alignment");
+            throw new IllegalArgumentException("alignment is null");
         }
         if(widget == getWidgetUnderMouse()) {
             setTooltip(x, y, widget, content, alignment);

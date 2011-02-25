@@ -143,10 +143,10 @@ public class ThemeManager {
      */
     public static ThemeManager createThemeManager(URL url, Renderer renderer) throws IOException {
         if(url == null) {
-            throw new NullPointerException("url");
+            throw new IllegalArgumentException("url is null");
         }
         if(renderer == null) {
-            throw new NullPointerException("renderer");
+            throw new IllegalArgumentException("renderer is null");
         }
         return createThemeManager(url, renderer, renderer.createNewCacheContext());
     }
@@ -171,13 +171,13 @@ public class ThemeManager {
      */
     public static ThemeManager createThemeManager(URL url, Renderer renderer, CacheContext cacheContext) throws IOException {
         if(url == null) {
-            throw new NullPointerException("url");
+            throw new IllegalArgumentException("url is null");
         }
         if(renderer == null) {
-            throw new NullPointerException("renderer");
+            throw new IllegalArgumentException("renderer is null");
         }
         if(cacheContext == null) {
-            throw new NullPointerException("cacheContext");
+            throw new IllegalArgumentException("cacheContext is null");
         }
         try {
             renderer.setActiveCacheContext(cacheContext);
