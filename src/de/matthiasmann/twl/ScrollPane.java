@@ -759,7 +759,7 @@ public class ScrollPane extends Widget {
                 content.setSize(Math.max(availWidth, requiredWidth),
                         Math.max(availHeight, requiredHeight));
             } else {
-                content.setSize(requiredWidth, requiredHeight);
+                content.setSize(Math.max(0, requiredWidth), Math.max(0, requiredHeight));
             }
 
             AnimationState animationState = getAnimationState();
