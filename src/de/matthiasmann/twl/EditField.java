@@ -48,7 +48,7 @@ public class EditField extends Widget {
     public static final StateKey STATE_ERROR = StateKey.get("error");
     public static final StateKey STATE_READONLY = StateKey.get("readonly");
     public static final StateKey STATE_HOVER = StateKey.get("hover");
-    
+
     public interface Callback {
         /**
          * Gets called for any change in the edit field, or when ESCAPE or RETURN was pressed
@@ -421,7 +421,7 @@ public class EditField extends Widget {
 
     private int computeInnerWidth() {
         if(columns > 0) {
-            Font font = textRenderer.getFont();
+            Font font = getFont();
             if(font != null) {
                 return font.computeTextWidth("X")*columns;
             }
@@ -918,9 +918,13 @@ public class EditField extends Widget {
     protected boolean hasFocusOrPopup() {
         return hasKeyboardFocus() || hasOpenPopups();
     }
+    
+    protected Font getFont() {
+        return textRenderer.getFont();
+    }
 
     protected int getLineHeight() {
-        Font font = textRenderer.getFont();
+        Font font = getFont();
         if(font != null) {
             return font.getLineHeight();
         }
@@ -977,7 +981,7 @@ public class EditField extends Widget {
     }
 
     protected int getCursorPosFromMouse(int x, int y) {
-        Font font = textRenderer.getFont();
+        Font font = getFont();
         if(font != null) {
             x -= textRenderer.lastTextX;
             int lineStart = 0;
@@ -1008,7 +1012,7 @@ public class EditField extends Widget {
     }
     
     protected int computeCursorPosFromX(int x, int lineStart, int lineEnd) {
-        Font font = textRenderer.getFont();
+        Font font = getFont();
         if(font != null) {
             return lineStart + font.computeVisibleGlpyhs(
                     (passwordMasking != null) ? passwordMasking : editBuffer,
@@ -1022,8 +1026,7 @@ public class EditField extends Widget {
         if(cursorImage != null && hasFocusOrPopup()) {
             int xpos = textRenderer.lastTextX + computeRelativeCursorPositionX(cursorPos);
             int ypos = textRenderer.computeTextY() + computeRelativeCursorPositionY(cursorPos);
-            cursorImage.draw(getAnimationState(), xpos, ypos,
-                    cursorImage.getWidth(), textRenderer.getFont().getLineHeight());
+            cursorImage.draw(getAnimationState(), xpos, ypos, cursorImage.getWidth(), getLineHeight());
         }
         super.paintOverlay(gui);
     }
