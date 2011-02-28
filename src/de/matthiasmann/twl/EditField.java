@@ -465,10 +465,7 @@ public class EditField extends Widget {
         getAnimationState().setAnimationState(STATE_ERROR, errorMsg != null);
         if(this.errorMsg != errorMsg) {
             this.errorMsg = errorMsg;
-            GUI gui = getGUI();
-            if(gui != null) {
-                gui.requestToolTipUpdate(this);
-            }
+            updateTooltip();
         }
         if(errorMsg != null) {
             if(hasKeyboardFocus()) {
