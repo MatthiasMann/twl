@@ -1569,7 +1569,20 @@ public class Widget {
     protected void updateTooltip() {
         GUI gui = getGUI();
         if(gui != null) {
-            gui.requestToolTipUpdate(this);
+            gui.requestTooltipUpdate(this, false);
+        }
+    }
+
+    /**
+     * If this widget currently has an open tooltip then this tooltip is reset
+     * and the tooltip timer is restarted.
+     *
+     * @see #getTooltipContent()
+     */
+    protected void resetTooltip() {
+        GUI gui = getGUI();
+        if(gui != null) {
+            gui.requestTooltipUpdate(this, true);
         }
     }
 

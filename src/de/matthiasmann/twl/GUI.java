@@ -111,6 +111,7 @@ public final class GUI extends Widget {
     private int mouseClickedX;
     private int mouseClickedY;
     private long mouseEventTime;
+    private long tooltipEventTime;
     private long mouseClickedTime;
     private long keyEventTime;
     private int keyRepeatDelay;
@@ -366,12 +367,6 @@ public final class GUI extends Widget {
             return true;
         }
         return false;
-    }
-
-    public void requestToolTipUpdate(Widget widget) {
-        if(tooltipOwner == widget) {
-            tooltipOwner = null;
-        }
     }
 
     public MouseIdleListener getMouseIdleListener() {
@@ -656,6 +651,7 @@ public final class GUI extends Widget {
      */
     public final boolean handleMouse(int mouseX, int mouseY, int button, boolean pressed) {
         mouseEventTime = curTime;
+        tooltipEventTime = curTime;
         event.mouseButton = button;
 
         // only the previously pressed mouse button
@@ -941,7 +937,7 @@ public final class GUI extends Widget {
         Widget widgetUnderMouse = getWidgetUnderMouse();
         if(widgetUnderMouse != tooltipOwner) {
             if(widgetUnderMouse != null && (
-                    ((curTime-mouseEventTime) > tooltipDelay) ||
+                    ((curTime-tooltipEventTime) > tooltipDelay) ||
                     (hadOpenTooltip && (curTime-tooltipClosedTime) < tooltipReappearDelay))) {
                 setTooltip(
                         event.mouseX + tooltipOffsetX,
@@ -1160,6 +1156,17 @@ public final class GUI extends Widget {
             }
         }
         return super.requestKeyboardFocus(child);
+    }
+
+    void requestTooltipUpdate(Widget widget, boolean resetToolTipTimer) {
+        if(tooltipOwner == widget) {
+            tooltipOwner = null;
+            if(resetToolTipTimer) {
+                hideTooltip();
+                hadOpenTooltip = false;
+                tooltipEventTime = curTime;
+            }
+        }
     }
 
     private void hideTooltip() {
