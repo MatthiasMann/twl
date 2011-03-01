@@ -1231,7 +1231,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 if(lastMouseRow != -1 || lastMouseColumn != -1) {
                     lastMouseRow = -1;
                     lastMouseColumn = -1;
-                    updateTooltip();
+                    resetTooltip();
                 }
             } else {
                 final int row = getRowUnderMouse(evt.getMouseY());
@@ -1240,7 +1240,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 if(lastMouseRow != row || lastMouseColumn != column) {
                     lastMouseRow = row;
                     lastMouseColumn = column;
-                    updateTooltip();
+                    resetTooltip();
                 }
             }
         }
