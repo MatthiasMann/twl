@@ -378,7 +378,7 @@ public abstract class ValueAdjuster extends Widget {
                         }
                     }
                 }
-                return true;
+                return false;
             }
         } else if(!editField.isVisible() && useMouseWheel && evt.getType() == Event.Type.MOUSE_WHEEL) {
             if(evt.getMouseWheelDelta() < 0) {
