@@ -30,6 +30,8 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.AutoCompletionDataSource;
+import de.matthiasmann.twl.model.DefaultEditFieldModel;
+import de.matthiasmann.twl.model.EditFieldModel;
 import de.matthiasmann.twl.model.StringModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.utils.TextUtil;
@@ -62,7 +64,7 @@ public class EditField extends Widget {
         public void callback(int key);
     }
 
-    final StringBuilder editBuffer;
+    final EditFieldModel editBuffer;
     private final TextRenderer textRenderer;
     private PasswordMasker passwordMasking;
     private Runnable modelChangeListener;
@@ -104,12 +106,17 @@ public class EditField extends Widget {
      * one as parent.
      *
      * @param parentAnimationState
+     * @param editFieldModel the edit field model to use
      * @see AnimationState#AnimationState(de.matthiasmann.twl.AnimationState) 
      */
-    public EditField(AnimationState parentAnimationState) {
+    public EditField(AnimationState parentAnimationState, EditFieldModel editFieldModel) {
         super(parentAnimationState, true);
-        
-        this.editBuffer = new StringBuilder();
+
+        if(editFieldModel == null) {
+            throw new NullPointerException("editFieldModel");
+        }
+
+        this.editBuffer = editFieldModel;
         this.textRenderer = new TextRenderer(getAnimationState());
         this.passwordChar = '*';
 
@@ -124,6 +131,20 @@ public class EditField extends Widget {
         addActionMapping("copy", "copyToClipboard");
         addActionMapping("paste", "pasteFromClipboard");
         addActionMapping("selectAll", "selectAll");
+    }
+
+    /**
+     * Creates a new EditField with an optional parent animation state.
+     *
+     * Unlike other widgets which use the passed animation state directly,
+     * the EditField always creates it's animation state with the passed
+     * one as parent.
+     *
+     * @param parentAnimationState
+     * @see AnimationState#AnimationState(de.matthiasmann.twl.AnimationState)
+     */
+    public EditField(AnimationState parentAnimationState) {
+        this(parentAnimationState, new DefaultEditFieldModel());
     }
 
     public EditField() {
@@ -322,9 +343,11 @@ public class EditField extends Widget {
             }
             int insertLength = Math.min(str.length(), maxTextLength - editBuffer.length());
             if(insertLength > 0) {
-                editBuffer.insert(cursorPos, str, 0, insertLength);
-                cursorPos += insertLength;
-                update = true;
+                int inserted = editBuffer.replace(cursorPos, 0, str.substring(0, insertLength));
+                if(inserted > 0) {
+                    cursorPos += inserted;
+                    update = true;
+                }
             }
             if(update) {
                 updateText(true, Event.KEY_NONE);
@@ -865,9 +888,10 @@ public class EditField extends Widget {
                 update = true;
             }
             if(editBuffer.length() < maxTextLength) {
-                editBuffer.insert(cursorPos, ch);
-                cursorPos++;
-                update = true;
+                if(editBuffer.replace(cursorPos, 0, ch)) {
+                    cursorPos++;
+                    update = true;
+                }
             }
             if(update) {
                 updateText(true, Event.KEY_NONE);
@@ -893,16 +917,18 @@ public class EditField extends Widget {
                 deleteSelection();
                 updateText(true, Event.KEY_DELETE);
             } else if(cursorPos < editBuffer.length()) {
-                editBuffer.deleteCharAt(cursorPos);
-                updateText(true, Event.KEY_DELETE);
+                if(editBuffer.replace(cursorPos, 1, "") >= 0) {
+                    updateText(true, Event.KEY_DELETE);
+                }
             }
         }
     }
 
     protected void deleteSelection() {
-        editBuffer.delete(selectionStart, selectionEnd);
-        selectionEnd = selectionStart;
-        setCursorPos(selectionStart, false);
+        if(editBuffer.replace(selectionStart, selectionEnd-selectionStart, "") >= 0) {
+            selectionEnd = selectionStart;
+            setCursorPos(selectionStart, false);
+        }
     }
 
     protected void modelChanged() {
@@ -929,7 +955,7 @@ public class EditField extends Widget {
     }
 
     protected int computeLineNumber(int cursorPos) {
-        final StringBuilder eb = this.editBuffer;
+        final EditFieldModel eb = this.editBuffer;
         int lineNr = 0;
         for(int i=0 ; i<cursorPos ; i++) {
             if(eb.charAt(i) == '\n') {
@@ -943,7 +969,7 @@ public class EditField extends Widget {
         if(!multiLine) {
             return 0;
         }
-        final StringBuilder eb = this.editBuffer;
+        final EditFieldModel eb = this.editBuffer;
         while(cursorPos > 0 && eb.charAt(cursorPos-1) != '\n') {
             cursorPos--;
         }
@@ -951,7 +977,7 @@ public class EditField extends Widget {
     }
 
     protected int computeLineEnd(int cursorPos) {
-        final StringBuilder eb = this.editBuffer;
+        final EditFieldModel eb = this.editBuffer;
         int endIndex = eb.length();
         if(!multiLine) {
             return endIndex;
@@ -1119,7 +1145,7 @@ public class EditField extends Widget {
         }
 
         protected void paintMultiLineWithSelection() {
-            final StringBuilder eb = editBuffer;
+            final EditFieldModel eb = editBuffer;
             int lineStart = 0;
             int endIndex = eb.length();
             int yoff = computeTextY();
