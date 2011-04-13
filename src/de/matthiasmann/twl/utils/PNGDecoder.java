@@ -144,8 +144,27 @@ public class PNGDecoder {
         return width;
     }
     
+    /**
+     * Checks if the image has a real alpha channel.
+     * This method does not check for the presence of a tRNS chunk.
+     *
+     * @return true if the image has an alpha channel
+     * @see #hasAlpha()
+     */
+    public boolean hasAlphaChannel() {
+        return colorType == COLOR_TRUEALPHA || colorType == COLOR_GREYALPHA;
+    }
+
+    /**
+     * Checks if the image has transparency information either from
+     * an alpha channel or from a tRNS chunk.
+     * 
+     * @return true if the image has transparency
+     * @see #hasAlphaChannel()
+     * @see #overwriteTRNS(byte, byte, byte)
+     */
     public boolean hasAlpha() {
-        return colorType == COLOR_TRUEALPHA ||
+        return hasAlphaChannel() ||
                 paletteA != null || transPixel != null;
     }
     
@@ -153,6 +172,27 @@ public class PNGDecoder {
         return colorType == COLOR_TRUEALPHA ||
                 colorType == COLOR_TRUECOLOR ||
                 colorType == COLOR_INDEXED;
+    }
+
+    /**
+     * Overwrites the tRNS chunk entry to make a selected color transparent.
+     * <p>This can only be invoked when the image has no alpha channel.</p>
+     * <p>Calling this method causes {@link #hasAlpha()} to return true.</p>
+     *
+     * @param r the red component of the color to make transparent
+     * @param g the green component of the color to make transparent
+     * @param b the blue component of the color to make transparent
+     * @throws UnsupportedOperationException if the tRNS chunk data can't be set
+     * @see #hasAlphaChannel() 
+     */
+    public void overwriteTRNS(byte r, byte g, byte b) {
+        if(colorType == COLOR_TRUEALPHA || colorType == COLOR_GREYALPHA) {
+            throw new UnsupportedOperationException("image has an alpha channel");
+        }
+        if(palette != null) {
+            throw new UnsupportedOperationException("not yet implemented for indexed images");
+        }
+        transPixel = new byte[] { 0, r, 0, g, 0, b };
     }
 
     /**
