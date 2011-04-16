@@ -239,7 +239,19 @@ public class PNGDecoder {
             throw new UnsupportedOperationException("Not yet implemented");
         }
     }
-    
+
+    /**
+     * Decodes the image into the specified buffer. The first line is placed at
+     * the current position. After decode the buffer position is at the end of
+     * the last line.
+     *
+     * @param buffer the buffer
+     * @param stride the stride in bytes from start of a line to start of the next line, can be negative.
+     * @param fmt the target format into which the image should be decoded.
+     * @throws IOException if a read or data error occurred
+     * @throws IllegalArgumentException if the start position of a line falls outside the buffer
+     * @throws UnsupportedOperationException if the image can't be decoded into the desired format
+     */
     public void decode(ByteBuffer buffer, int stride, Format fmt) throws IOException {
         final int offset = buffer.position();
         final int lineSize = ((width * bitdepth + 7) / 8) * bytesPerPixel;
@@ -313,6 +325,29 @@ public class PNGDecoder {
         } finally {
             inflater.end();
         }
+    }
+
+    /**
+     * Decodes the image into the specified buffer. The last line is placed at
+     * the current position. After decode the buffer position is at the end of
+     * the first line.
+     *
+     * @param buffer the buffer
+     * @param stride the stride in bytes from start of a line to start of the next line, must be positive.
+     * @param fmt the target format into which the image should be decoded.
+     * @throws IOException if a read or data error occurred
+     * @throws IllegalArgumentException if the start position of a line falls outside the buffer
+     * @throws UnsupportedOperationException if the image can't be decoded into the desired format
+     */
+    public void decodeFlipped(ByteBuffer buffer, int stride, Format fmt) throws IOException {
+        if(stride <= 0) {
+            throw new IllegalArgumentException("stride");
+        }
+        int pos = buffer.position();
+        int posDelta = (height-1) * stride;
+        buffer.position(pos + posDelta);
+        decode(buffer, -stride, fmt);
+        buffer.position(buffer.position() + posDelta);
     }
     
     private void copy(ByteBuffer buffer, byte[] curLine) {
