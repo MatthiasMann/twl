@@ -186,13 +186,20 @@ public class PNGDecoder {
      * @see #hasAlphaChannel() 
      */
     public void overwriteTRNS(byte r, byte g, byte b) {
-        if(colorType == COLOR_TRUEALPHA || colorType == COLOR_GREYALPHA) {
+        if(hasAlphaChannel()) {
             throw new UnsupportedOperationException("image has an alpha channel");
         }
-        if(palette != null) {
-            throw new UnsupportedOperationException("not yet implemented for indexed images");
+        byte[] pal = this.palette;
+        if(pal == null) {
+            transPixel = new byte[] { 0, r, 0, g, 0, b };
+        } else {
+            paletteA = new byte[pal.length/3];
+            for(int i=0,j=0 ; i<pal.length ; i+=3,j++) {
+                if(pal[i] != r || pal[i+1] != g || pal[i+2] != b) {
+                    paletteA[j] = (byte)0xFF;
+                }
+            }
         }
-        transPixel = new byte[] { 0, r, 0, g, 0, b };
     }
 
     /**
@@ -428,7 +435,7 @@ public class PNGDecoder {
 
     private void copyRGBAtoBGRA(ByteBuffer buffer, byte[] curLine) {
         for(int i=1,n=curLine.length ; i<n ; i+=4) {
-            buffer.put(curLine[i+2]).put(curLine[i+1]).put(curLine[i+0]).put(curLine[i+3]);
+            buffer.put(curLine[i+2]).put(curLine[i+1]).put(curLine[i]).put(curLine[i+3]);
         }
     }
 
