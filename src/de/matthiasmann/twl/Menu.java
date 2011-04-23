@@ -175,7 +175,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
      * @see #createMenuBar()
      */
     public void createMenuBar(Widget container) {
-        MenuManager mm = new MenuManager(container, true);
+        MenuManager mm = createMenuManager(container, true);
         for(Widget w : createWidgets(mm, 0)) {
             container.add(w);
         }
@@ -191,7 +191,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         DialogLayout l = new DialogLayout();
         setWidgetTheme(l, "menubar");
 
-        MenuManager mm = new MenuManager(l, true);
+        MenuManager mm = createMenuManager(l, true);
         Widget[] widgets = createWidgets(mm, 0);
 
         l.setHorizontalGroup(l.createSequentialGroup().addWidgetsWithGap("menuitem", widgets));
@@ -210,7 +210,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
      * @see MenuManager#closePopup() 
      */
     public MenuManager openPopupMenu(Widget parent) {
-        MenuManager mm = new MenuManager(parent, false);
+        MenuManager mm = createMenuManager(parent, false);
         mm.openSubMenu(0, this, parent, true);
         return mm;
     }
@@ -225,7 +225,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
      * @see MenuManager#closePopup()
      */
     public MenuManager openPopupMenu(Widget parent, int x, int y) {
-        MenuManager mm = new MenuManager(parent, false);
+        MenuManager mm = createMenuManager(parent, false);
         Widget popup = mm.openSubMenu(0, this, parent, false);
         if(popup != null) {
             popup.setPosition(x, y);
@@ -240,7 +240,11 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         return smb;
     }
 
-    private Widget[] createWidgets(MenuManager mm, int level) {
+    protected MenuManager createMenuManager(Widget parent, boolean isMenuBar) {
+        return new MenuManager(parent, isMenuBar);
+    }
+
+    protected Widget[] createWidgets(MenuManager mm, int level) {
         Widget[] widgets = new Widget[elements.size()];
         for(int i=0,n=elements.size() ; i<n ; i++) {
             MenuElement e = elements.get(i);
@@ -291,6 +295,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         private final MenuManager mm;
         private final int level;
 
+        @SuppressWarnings("LeakingThisInConstructor")
         public SubMenuBtn(MenuManager mm, int level) {
             this.mm = mm;
             this.level = level;
