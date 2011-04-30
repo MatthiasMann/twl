@@ -29,9 +29,11 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.IntegerModel;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.ListModel.ChangeListener;
+import de.matthiasmann.twl.model.SelectedListEntryModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
 /**
@@ -75,6 +77,8 @@ public class ListBox<T> extends Widget {
     private final Scrollbar scrollbar;
     private ListBoxDisplay[] labels;
     private ListModel<T> model;
+    private IntegerModel selectedModel;
+    private Runnable selectedModelCallback;
     private int cellHeight = DEFAULT_CELL_HEIGHT;
     private int cellWidth = SINGLE_COLUMN;
     private boolean rowMajor = true;
@@ -86,6 +90,7 @@ public class ListBox<T> extends Widget {
     private int selected = NO_SELECTION;
     private int numEntries;
     private boolean needUpdate;
+    private boolean inSetSelected;
     private CallbackWithReason<?>[] callbacks;
     
     public ListBox() {
@@ -109,6 +114,12 @@ public class ListBox<T> extends Widget {
         setModel(model);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
+    public ListBox(SelectedListEntryModel<T> model) {
+        this();
+        setModel(model);
+    }
+
     public ListModel<T> getModel() {
         return model;
     }
@@ -123,6 +134,40 @@ public class ListBox<T> extends Widget {
                 model.addChangeListener(modelCallback);
             }
             modelCallback.allChanged();
+        }
+    }
+
+    public IntegerModel getSelectedModel() {
+        return selectedModel;
+    }
+
+    public void setSelectedModel(IntegerModel selectedModel) {
+        if(this.selectedModel != selectedModel) {
+            if(this.selectedModel != null) {
+                this.selectedModel.removeCallback(selectedModelCallback);
+            }
+            this.selectedModel = selectedModel;
+            if(selectedModel != null) {
+                if(selectedModelCallback == null) {
+                    selectedModelCallback = new Runnable() {
+                        public void run() {
+                            syncSelectionFromModel();
+                        }
+                    };
+                }
+                this.selectedModel.addCallback(selectedModelCallback);
+                syncSelectionFromModel();
+            }
+        }
+    }
+
+    public void setModel(SelectedListEntryModel<T> model) {
+        setSelectedModel(null);
+        if(model == null) {
+            setModel((ListModel<T>)null);
+        } else {
+            setModel(model.getListModel());
+            setSelectedModel(model);
         }
     }
 
@@ -220,7 +265,7 @@ public class ListBox<T> extends Widget {
      * Selects the specified entry and optionally scrolls to that entry
      *
      * @param selected the index or {@link #NO_SELECTION}
-     * @param scroll treu if it should scroll to make the entry visible
+     * @param scroll true if it should scroll to make the entry visible
      * @throws IllegalArgumentException if index is invalid
      */
     public void setSelected(int selected, boolean scroll) {
@@ -251,6 +296,14 @@ public class ListBox<T> extends Widget {
         }
         if(this.selected != selected) {
             this.selected = selected;
+            if(selectedModel != null) {
+                try {
+                    inSetSelected = true;
+                    selectedModel.setValue(selected);
+                } finally {
+                    inSetSelected = false;
+                }
+            }
             needUpdate = true;
             doCallback(reason);
         } else if(reason.actionRequested() || reason == CallbackReason.MOUSE_CLICK) {
@@ -722,6 +775,12 @@ public class ListBox<T> extends Widget {
 
     void scrollbarChanged() {
         setFirstVisible(scrollbar.getValue() * numCols);
+    }
+
+    void syncSelectionFromModel() {
+        if(!inSetSelected) {
+            setSelected(selectedModel.getValue());
+        }
     }
 
     private class LImpl implements ChangeListener, Runnable {

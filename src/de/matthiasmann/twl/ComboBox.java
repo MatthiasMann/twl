@@ -29,9 +29,11 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.SelectedListEntryModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.Label.CallbackReason;
+import de.matthiasmann.twl.model.IntegerModel;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
@@ -59,6 +61,19 @@ public class ComboBox<T> extends ComboBoxBase {
     boolean computeWidthFromModel;
     int modelWidth = INVALID_WIDTH;
     
+    @SuppressWarnings("OverridableMethodCallInConstructor")
+    public ComboBox(SelectedListEntryModel<T> model) {
+        this();
+        setModel(model);
+    }
+
+    @SuppressWarnings("OverridableMethodCallInConstructor")
+    public ComboBox(ListModel<T> model, IntegerModel selectedModel) {
+        this();
+        setModel(model);
+        setSelectedModel(selectedModel);
+    }
+
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public ComboBox(ListModel<T> model) {
         this();
@@ -123,6 +138,18 @@ public class ComboBox<T> extends ComboBoxBase {
 
     public ListModel<T> getModel() {
         return listbox.getModel();
+    }
+
+    public void setSelectedModel(IntegerModel selectedModel) {
+        listbox.setSelectedModel(selectedModel);
+    }
+
+    public IntegerModel getSelectedModel() {
+        return listbox.getSelectedModel();
+    }
+
+    public void setModel(SelectedListEntryModel<T> model) {
+        listbox.setModel(model);
     }
 
     public void setSelected(int selected) {
