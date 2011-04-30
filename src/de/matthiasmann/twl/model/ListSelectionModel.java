@@ -30,64 +30,27 @@
 package de.matthiasmann.twl.model;
 
 /**
- * A simple selected list model
+ * Represents the selection of a list box or combo box.
  *
+ * Implementation should not register callbacks on the list model.
+ * 
  * @param <T> the data type of the list model
  * @author Matthias Mann
  */
-public class SimpleSelectedListEntryModel<T> extends HasCallback implements SelectedListEntryModel<T> {
+public interface ListSelectionModel<T> extends IntegerModel {
 
-    private final ListModel<T> listModel;
-    private int selected;
+    public ListModel<T> getListModel();
 
-    public SimpleSelectedListEntryModel(ListModel<T> listModel) {
-        if(listModel == null) {
-            throw new NullPointerException("listModel");
-        }
-        this.listModel = listModel;
-    }
+    /**
+     * Returns the selected entry in the list or null if nothing is selected.
+     * @return the selected entry or null.
+     */
+    public T getSelectedEntry();
 
-    public ListModel<T> getListModel() {
-        return listModel;
-    }
-
-    public T getSelectedEntry() {
-        if(selected >= 0 && selected < listModel.getNumEntries()) {
-            return listModel.getEntry(selected);
-        } else {
-            return null;
-        }
-    }
-
-    public boolean setSelectedEntry(T entry) {
-        if(entry != null) {
-            for(int i=0,n=listModel.getNumEntries() ; i<n ; i++) {
-                if(entry.equals(listModel.getEntry(i))) {
-                    setValue(i);
-                    return true;
-                }
-            }
-        }
-        setValue(-1);
-        return false;
-    }
-
-    public int getMaxValue() {
-        return listModel.getNumEntries()-1;
-    }
-
-    public int getMinValue() {
-        return -1;  // no selection
-    }
-
-    public int getValue() {
-        return selected;
-    }
-
-    public void setValue(int value) {
-        if(this.selected != value) {
-            this.selected = value;
-            doCallback();
-        }
-    }
+    /**
+     * Selects the specified entry or nothing if the entry was not found
+     * @param entry the entry to select - can be null.
+     * @return true if the entry was found
+     */
+    public boolean setSelectedEntry(T entry);
 }

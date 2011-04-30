@@ -33,7 +33,7 @@ import de.matthiasmann.twl.model.IntegerModel;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.model.ListModel.ChangeListener;
-import de.matthiasmann.twl.model.SelectedListEntryModel;
+import de.matthiasmann.twl.model.ListSelectionModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
 /**
@@ -77,8 +77,8 @@ public class ListBox<T> extends Widget {
     private final Scrollbar scrollbar;
     private ListBoxDisplay[] labels;
     private ListModel<T> model;
-    private IntegerModel selectedModel;
-    private Runnable selectedModelCallback;
+    private IntegerModel selectionModel;
+    private Runnable selectionModelCallback;
     private int cellHeight = DEFAULT_CELL_HEIGHT;
     private int cellWidth = SINGLE_COLUMN;
     private boolean rowMajor = true;
@@ -115,7 +115,7 @@ public class ListBox<T> extends Widget {
     }
 
     @SuppressWarnings("OverridableMethodCallInConstructor")
-    public ListBox(SelectedListEntryModel<T> model) {
+    public ListBox(ListSelectionModel<T> model) {
         this();
         setModel(model);
     }
@@ -137,37 +137,37 @@ public class ListBox<T> extends Widget {
         }
     }
 
-    public IntegerModel getSelectedModel() {
-        return selectedModel;
+    public IntegerModel getSelectionModel() {
+        return selectionModel;
     }
 
-    public void setSelectedModel(IntegerModel selectedModel) {
-        if(this.selectedModel != selectedModel) {
-            if(this.selectedModel != null) {
-                this.selectedModel.removeCallback(selectedModelCallback);
+    public void setSelectionModel(IntegerModel selectionModel) {
+        if(this.selectionModel != selectionModel) {
+            if(this.selectionModel != null) {
+                this.selectionModel.removeCallback(selectionModelCallback);
             }
-            this.selectedModel = selectedModel;
-            if(selectedModel != null) {
-                if(selectedModelCallback == null) {
-                    selectedModelCallback = new Runnable() {
+            this.selectionModel = selectionModel;
+            if(selectionModel != null) {
+                if(selectionModelCallback == null) {
+                    selectionModelCallback = new Runnable() {
                         public void run() {
                             syncSelectionFromModel();
                         }
                     };
                 }
-                this.selectedModel.addCallback(selectedModelCallback);
+                this.selectionModel.addCallback(selectionModelCallback);
                 syncSelectionFromModel();
             }
         }
     }
 
-    public void setModel(SelectedListEntryModel<T> model) {
-        setSelectedModel(null);
+    public void setModel(ListSelectionModel<T> model) {
+        setSelectionModel(null);
         if(model == null) {
             setModel((ListModel<T>)null);
         } else {
             setModel(model.getListModel());
-            setSelectedModel(model);
+            setSelectionModel(model);
         }
     }
 
@@ -296,10 +296,10 @@ public class ListBox<T> extends Widget {
         }
         if(this.selected != selected) {
             this.selected = selected;
-            if(selectedModel != null) {
+            if(selectionModel != null) {
                 try {
                     inSetSelected = true;
-                    selectedModel.setValue(selected);
+                    selectionModel.setValue(selected);
                 } finally {
                     inSetSelected = false;
                 }
@@ -779,7 +779,7 @@ public class ListBox<T> extends Widget {
 
     void syncSelectionFromModel() {
         if(!inSetSelected) {
-            setSelected(selectedModel.getValue());
+            setSelected(selectionModel.getValue());
         }
     }
 
