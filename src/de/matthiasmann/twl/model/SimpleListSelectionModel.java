@@ -60,6 +60,10 @@ public class SimpleListSelectionModel<T> extends HasCallback implements ListSele
     }
 
     public boolean setSelectedEntry(T entry) {
+        return setSelectedEntry(entry, NO_SELECTION);
+    }
+
+    public boolean setSelectedEntry(T entry, int defaultIndex) {
         if(entry != null) {
             for(int i=0,n=listModel.getNumEntries() ; i<n ; i++) {
                 if(entry.equals(listModel.getEntry(i))) {
@@ -68,7 +72,7 @@ public class SimpleListSelectionModel<T> extends HasCallback implements ListSele
                 }
             }
         }
-        setValue(-1);
+        setValue(defaultIndex);
         return false;
     }
 
@@ -77,7 +81,7 @@ public class SimpleListSelectionModel<T> extends HasCallback implements ListSele
     }
 
     public int getMinValue() {
-        return -1;  // no selection
+        return NO_SELECTION;
     }
 
     public int getValue() {
@@ -85,6 +89,9 @@ public class SimpleListSelectionModel<T> extends HasCallback implements ListSele
     }
 
     public void setValue(int value) {
+        if(value < NO_SELECTION) {
+            throw new IllegalArgumentException("value");
+        }
         if(this.selected != value) {
             this.selected = value;
             doCallback();

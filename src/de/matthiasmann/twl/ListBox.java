@@ -49,7 +49,7 @@ public class ListBox<T> extends Widget {
      * @see #setSelected(int)
      * @see #setSelected(int, boolean)
      */
-    public static final int NO_SELECTION = -1;
+    public static final int NO_SELECTION = ListSelectionModel.NO_SELECTION;
     public static final int DEFAULT_CELL_HEIGHT = 20;
     public static final int SINGLE_COLUMN = -1;
     
