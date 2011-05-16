@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -212,6 +212,12 @@ public class ThemeManager {
     private ThemeInfo findThemeInfo(String themePath, boolean warn) {
         int start = TextUtil.indexOf(themePath, '.', 0);
         ThemeInfo info = themes.get(themePath.substring(0, start));
+        if(info == null) {
+            info = themes.get("*");
+            if(info != null) {
+                DebugHook.getDebugHook().usingFallbackTheme(themePath);
+            }
+        }
         while(info != null && ++start < themePath.length()) {
             int next = TextUtil.indexOf(themePath, '.', start);
             info = info.getChildTheme(themePath.substring(start, next));
@@ -402,9 +408,12 @@ public class ThemeManager {
     }
     
     private ThemeInfoImpl parseTheme(XMLParser xmlp, String themeName, ThemeInfoImpl parent, URL baseUrl) throws IOException, XmlPullParserException {
-        ParserUtil.checkNameNotEmpty(themeName, xmlp);
-        if(themeName.indexOf('.') >= 0 || themeName.indexOf('*') >= 0) {
-            throw xmlp.error("name must not contain '.' or '*'");
+        // allow top level theme "*" as fallback theme
+        if(!themeName.equals("*") || parent != null) {
+            ParserUtil.checkNameNotEmpty(themeName, xmlp);
+            if(themeName.indexOf('.') >= 0) {
+                throw xmlp.error("'.' is not allowed in names");
+            }
         }
         ThemeInfoImpl ti = new ThemeInfoImpl(this, themeName, parent);
         ThemeInfoImpl oldEnv = mathInterpreter.setEnv(ti);

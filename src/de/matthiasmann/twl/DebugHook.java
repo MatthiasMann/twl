@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -126,7 +126,7 @@ public class DebugHook {
     /**
      * Called when GUI has validated the layout tree
      * @param iterations the number of iterations required to solve layout
-     * @param loop the widgets involved in a layout loop if the layout could not be solved - is null layout was solved
+     * @param loop the widgets involved in a layout loop if the layout could not be solved - is null if layout was solved
      */
     public void guiLayoutValidated(int iterations, Collection<Widget> loop) {
         if(loop != null) {
@@ -137,5 +137,13 @@ public class DebugHook {
                 index++;
             }
         }
+    }
+
+    /**
+     * Called when wildcard resolution failed to find a theme and the fallback theme was specified
+     * @param themePath the requested theme name
+     */
+    public void usingFallbackTheme(String themePath) {
+        System.err.println("Selected fallback theme for missing theme \"" + themePath + "\"");
     }
 }
