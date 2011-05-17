@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -96,6 +96,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     final SWCursorAnimState swCursorAnimState;
     final ArrayList<TextureArea> textureAreas;
+    final ArrayList<TextureAreaRotated> rotatedTextureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintStack tintStack;
 
@@ -103,6 +104,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
         this.textureAreas = new ArrayList<TextureArea>();
+        this.rotatedTextureAreas = new ArrayList<TextureAreaRotated>();
         this.dynamicImages = new ArrayList<LWJGLDynamicImage>();
         this.tintStateRoot = new TintStack();
         this.tintStack = tintStateRoot;
@@ -181,8 +183,12 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             for(TextureArea ta : textureAreas) {
                 ta.destroyRepeatCache();
             }
+            for(TextureAreaRotated tar : rotatedTextureAreas) {
+                tar.destroyRepeatCache();
+            }
         } finally {
             textureAreas.clear();
+            rotatedTextureAreas.clear();
         }
     }
 

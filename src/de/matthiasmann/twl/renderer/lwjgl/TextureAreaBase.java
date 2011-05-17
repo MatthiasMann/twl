@@ -54,10 +54,14 @@ public class TextureAreaBase {
         if(width == 1) {
             fx += 0.5f;
             width = 0;
+        } else if(width < -1) {
+            fx -= width + 1;
         }
         if(height == 1) {
             fy += 0.5f;
             height = 0;
+        } else if(height < -1) {
+            fy -= height + 1;
         }
         this.tx0 = fx / texWidth;
         this.ty0 = fy / texHeight;

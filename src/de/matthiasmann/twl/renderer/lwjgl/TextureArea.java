@@ -42,26 +42,22 @@ import org.lwjgl.opengl.GL11;
  */
 public class TextureArea extends TextureAreaBase implements Image, SupportsDrawRepeat {
 
-    private static final int REPEAT_CACHE_SIZE = 10;
+    protected static final int REPEAT_CACHE_SIZE = 10;
     
-    private final LWJGLTexture texture;
-    private final Color tintColor;
-    private final boolean tile;
-    private int repeatCacheID = -1;
+    protected final LWJGLTexture texture;
+    protected final Color tintColor;
+    protected int repeatCacheID = -1;
     
-    public TextureArea(LWJGLTexture texture, int x, int y, int width, int height,
-            Color tintColor, boolean tile) {
+    public TextureArea(LWJGLTexture texture, int x, int y, int width, int height, Color tintColor) {
         super(x, y, width, height, texture.getTexWidth(), texture.getTexHeight());
         this.texture = texture;
         this.tintColor = (tintColor == null) ? Color.WHITE : tintColor;
-        this.tile = tile;
     }
 
     TextureArea(TextureArea src, Color tintColor) {
         super(src);
         this.texture = src.texture;
         this.tintColor = tintColor;
-        this.tile = src.tile;
     }
 
     public void draw(AnimationState as, int x, int y) {
@@ -70,13 +66,9 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
 
     public void draw(AnimationState as, int x, int y, int w, int h) {
         if(texture.bind(tintColor)) {
-            if(tile) {
-                drawTiled(x, y, w, h);
-            } else {
-                GL11.glBegin(GL11.GL_QUADS);
-                drawQuad(x, y, w, h);
-                GL11.glEnd();
-            }
+            GL11.glBegin(GL11.GL_QUADS);
+            drawQuad(x, y, w, h);
+            GL11.glEnd();
         }
     }
 
@@ -113,7 +105,7 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
         GL11.glEnd();
     }
     
-    private void drawRepeat(int x, int y, int repeatCountX, int repeatCountY) {
+    protected void drawRepeat(int x, int y, int repeatCountX, int repeatCountY) {
         final int w = width;
         final int h = height;
         GL11.glBegin(GL11.GL_QUADS);
@@ -129,7 +121,7 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
         GL11.glEnd();
     }
 
-    private void drawRepeatCached(int x, int y, int repeatCountX, int repeatCountY) {
+    protected void drawRepeatCached(int x, int y, int repeatCountX, int repeatCountY) {
         if(repeatCacheID < 0) {
             createRepeatCache();
         }
@@ -162,65 +154,7 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
         }
     }
 
-    private void drawTiled(int x, int y, int width, int height) {
-        int repeatCountX = width / this.width;
-        int repeatCountY = height / this.height;
-
-        if(repeatCountX < REPEAT_CACHE_SIZE || repeatCountY < REPEAT_CACHE_SIZE) {
-            drawRepeat(x, y, repeatCountX, repeatCountY);
-        } else {
-            drawRepeatCached(x, y, repeatCountX, repeatCountY);
-        }
-
-        int drawnX = repeatCountX * this.width;
-        int drawnY = repeatCountY * this.height;
-        int restWidth = width - drawnX;
-        int restHeight = height - drawnY;
-        if(restWidth > 0 || restHeight > 0) {
-            GL11.glBegin(GL11.GL_QUADS);
-            if(restWidth > 0 && repeatCountY > 0) {
-                drawClipped(x + drawnX, y, restWidth, this.height, 1, repeatCountY);
-            }
-            if(restHeight > 0) {
-                if(repeatCountX > 0) {
-                    drawClipped(x, y + drawnY, this.width, restHeight, repeatCountX, 1);
-                }
-                if(restWidth > 0) {
-                    drawClipped(x + drawnX, y + drawnY, restWidth, restHeight, 1, 1);
-                }
-            }
-            GL11.glEnd();
-        }
-    }
-
-    private void drawClipped(int x, int y, int width, int height, int repeatCountX, int repeatCountY) {
-        float ctx0 = tx0;
-        float cty0 = ty0;
-        float ctx1 = tx1;
-        float cty1 = ty1;
-        if(this.width > 1) {
-            ctx1 = ctx0 + width / (float)texture.getTexWidth();
-        }
-        if(this.height > 1) {
-            cty1 = cty0 + height / (float)texture.getTexHeight();
-        }
-
-        while(repeatCountY-- > 0) {
-            int y1 = y + height;
-            int x0 = x;
-            for(int cx=repeatCountX ; cx-- > 0 ;) {
-                int x1 = x0 + width;
-                GL11.glTexCoord2f(ctx0, cty0); GL11.glVertex2i(x0, y );
-                GL11.glTexCoord2f(ctx0, cty1); GL11.glVertex2i(x0, y1);
-                GL11.glTexCoord2f(ctx1, cty1); GL11.glVertex2i(x1, y1);
-                GL11.glTexCoord2f(ctx1, cty0); GL11.glVertex2i(x1, y );
-                x0 = x1;
-            }
-            y = y1;
-        }
-    }
-
-    private void createRepeatCache() {
+    protected void createRepeatCache() {
         repeatCacheID = GL11.glGenLists(1);
         texture.renderer.textureAreas.add(this);
 
@@ -232,14 +166,6 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
     void destroyRepeatCache() {
         GL11.glDeleteLists(repeatCacheID, 1);
         repeatCacheID = -1;
-    }
-    
-    int getX() {
-        return (int)(tx0 * texture.getTexWidth());
-    }
-    
-    int getY() {
-        return (int)(ty0 * texture.getTexHeight());
     }
 
     public Image createTintedVersion(Color color) {

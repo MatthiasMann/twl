@@ -203,7 +203,7 @@ public class LWJGLTexture implements Texture, Resource {
         return false;
     }
 
-    public Image getImage(int x, int y, int width, int height, Color tintColor, boolean tiled) {
+    public Image getImage(int x, int y, int width, int height, Color tintColor, boolean tiled, Rotation rotation) {
         if(x < 0 || x >= getWidth()) {
             throw new IllegalArgumentException("x");
         }
@@ -216,10 +216,13 @@ public class LWJGLTexture implements Texture, Resource {
         if(y + Math.abs(height) > getHeight()) {
             throw new IllegalArgumentException("height");
         }
-        if(tiled && (width <= 0 || height <= 0)) {
-            throw new IllegalArgumentException("Tiled rendering requires positive width & height");
+        if(rotation != Rotation.NONE || (tiled && (width < 0 || height < 0))) {
+            return new TextureAreaRotated(this, x, y, width, height, tintColor, tiled, rotation);
+        } else if(tiled) {
+            return new TextureAreaTiled(this, x, y, width, height, tintColor);
+        } else {
+            return new TextureArea(this, x, y, width, height, tintColor);
         }
-        return new TextureArea(this, x, y, width, height, tintColor, tiled);
     }
 
     public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY, Image imageRef) {

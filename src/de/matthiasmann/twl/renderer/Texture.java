@@ -57,11 +57,12 @@ public interface Texture extends Resource {
      * @param width width in pixels of the image - if negative the image is horizontaly flipped
      * @param height height in pixels of the image - if negative the image is vertically flipped
      * @param tintColor the tintColor - maybe null
-     * @param tiled truw if this image should do tiled rendering
+     * @param tiled true if this image should do tiled rendering
+     * @param rotation the rotation to apply to this sub section while rendering
      * @see Image#createTintedVersion(de.matthiasmann.twl.Color)
      * @return an image object
      */
-    public Image getImage(int x, int y, int width, int height, Color tintColor, boolean tiled);
+    public Image getImage(int x, int y, int width, int height, Color tintColor, boolean tiled, Rotation rotation);
 
     public MouseCursor createCursor(int x, int y, int width, int height, int hotSpotX, int hotSpotY, Image imageRef);
 
@@ -69,4 +70,11 @@ public interface Texture extends Resource {
      * After calling this function getImage() and createCursor() may fail to work
      */
     public void themeLoadingDone();
+    
+    public enum Rotation {
+        NONE,
+        CLOCKWISE_90,
+        CLOCKWISE_180,
+        CLOCKWISE_270
+    }
 }
