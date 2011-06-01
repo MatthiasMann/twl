@@ -135,7 +135,7 @@ final class ParserUtil {
         return map.subMap(baseName, baseName.concat("\uFFFF"));
     }
 
-    static<V> Map<String,V> resolve(SortedMap<String,V> map, String ref, String name) {
+    static<V> Map<String,V> resolve(SortedMap<String,V> map, String ref, String name, V mapToNull) {
         name = ParserUtil.appendDot(name);
         int refLen = ref.length() - 1;
         ref = ref.substring(0, refLen);
@@ -149,7 +149,11 @@ final class ParserUtil {
         for(Map.Entry<String, V> texEntry : matched.entrySet()) {
             String entryName = texEntry.getKey();
             assert entryName.startsWith(ref);
-            result.put(name.concat(entryName.substring(refLen)), texEntry.getValue());
+            V value = texEntry.getValue();
+            if(value == mapToNull) {
+                value = null;
+            }
+            result.put(name.concat(entryName.substring(refLen)), value);
         }
 
         return result;

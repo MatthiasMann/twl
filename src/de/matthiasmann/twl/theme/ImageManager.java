@@ -61,6 +61,7 @@ class ImageManager {
     private Texture currentTexture;
     
     static final EmptyImage NONE = new EmptyImage(0, 0);
+    static final MouseCursor NOCURSOR = new MouseCursor() {};
     
     ImageManager(Renderer renderer) {
         this.renderer = renderer;
@@ -91,23 +92,23 @@ class ImageManager {
     }
 
     MouseCursor getReferencedCursor(XMLParser xmlp, String ref) throws XmlPullParserException {
-        MouseCursor cursor = getCursor(ref);
+        MouseCursor cursor = cursors.get(ref);
         if(cursor == null) {
             throw xmlp.error("referenced cursor \"" + ref + "\" not found");
         }
-        return cursor;
+        return unwrapCursor(cursor);
     }
 
     Map<String, Image> getImages(String ref, String name) {
-        return ParserUtil.resolve(images, ref, name);
+        return ParserUtil.resolve(images, ref, name, null);
     }
 
     public MouseCursor getCursor(String name) {
-        return cursors.get(name);
+        return unwrapCursor(cursors.get(name));
     }
 
     Map<String, MouseCursor> getCursors(String ref, String name) {
-        return ParserUtil.resolve(cursors, ref, name);
+        return ParserUtil.resolve(cursors, ref, name, NOCURSOR);
     }
 
     void parseImages(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
@@ -156,6 +157,10 @@ class ImageManager {
         }
     }
 
+    private MouseCursor unwrapCursor(MouseCursor cursor) {
+        return (cursor == NOCURSOR) ? null : cursor;
+    }
+    
     private void checkImageName(String name, XMLParser xmlp) throws XmlPullParserException, XmlPullParserException {
         ParserUtil.checkNameNotEmpty(name, xmlp);
         if(images.containsKey(name)) {
@@ -175,6 +180,9 @@ class ImageManager {
         MouseCursor cursor;
         if(ref != null) {
             cursor = cursors.get(ref);
+            if(cursor == null) {
+                throw xmlp.error("referenced cursor \"" + ref + "\" not found");
+            }
         } else {
             ImageParams imageParams = new ImageParams();
             parseRectFromAttribute(xmlp, imageParams);
@@ -187,10 +195,11 @@ class ImageManager {
                 imageRef = getReferencedImage(xmlp, imageRefStr);
             }
             cursor = currentTexture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY, imageRef);
+            if(cursor == null) {
+                cursor = NOCURSOR;
+            }
         }
-        if(cursor != null) {
-            cursors.put(name, cursor);
-        }
+        cursors.put(name, cursor);
         xmlp.nextTag();
     }
 
