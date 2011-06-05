@@ -39,6 +39,12 @@ import de.matthiasmann.twl.HAlignment;
 public interface Font extends Resource {
 
     /**
+     * Returns true if the font is proportional or false if it's fixed width.
+     * @return true if the font is proportional
+     */
+    boolean isProportional();
+    
+    /**
      * Returns the base line of the font measured in pixels from the top of the text bounding box
      * @return the base line of the font measured in pixels from the top of the text bounding box
      */
@@ -50,6 +56,10 @@ public interface Font extends Resource {
      */
     int getLineHeight();
 
+    /**
+     * Returns the width of a ' '
+     * @return the width of a ' '
+     */
     int getSpaceWidth();
     
     /**
@@ -100,7 +110,7 @@ public interface Font extends Resource {
     int computeVisibleGlpyhs(CharSequence str, int start, int end, int width);
 
     /**
-     * Draws multi line text - lines are spliited at '\n'
+     * Draws multi line text - lines are splitted at '\n'
      * @param as A time source for animation - may be null
      * @param x left coordinate of the text block 
      * @param y top coordinate of the text block

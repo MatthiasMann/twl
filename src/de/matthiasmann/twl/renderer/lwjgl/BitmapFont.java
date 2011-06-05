@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.URL;
+import java.nio.FloatBuffer;
 import java.util.HashMap;
 import org.lwjgl.opengl.GL11;
 import org.xmlpull.v1.XmlPullParser;
@@ -68,6 +69,15 @@ public class BitmapFont {
         
         void draw(int x, int y) {
             drawQuad(x+xoffset, y+yoffset, width, height);
+        }
+    
+        void draw(FloatBuffer va, int x, int y) {
+            x += xoffset;
+            y += yoffset;
+            va.put(tx0).put(ty0).put(x        ).put(y);
+            va.put(tx0).put(ty1).put(x        ).put(y + height);
+            va.put(tx1).put(ty1).put(x + width).put(y + height);
+            va.put(tx1).put(ty0).put(x + width).put(y);
         }
         
         int getKerning(char ch) {
@@ -98,6 +108,7 @@ public class BitmapFont {
     private final int baseLine;
     private final int spaceWidth;
     private final int ex;
+    private final boolean proportional;
 
     public BitmapFont(LWJGLRenderer renderer, XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
         xmlp.require(XmlPullParser.START_TAG, null, "font");
@@ -138,6 +149,9 @@ public class BitmapFont {
         xmlp.ignoreOtherAttributes();
         xmlp.nextTag();
         
+        int firstXAdvance = Integer.MIN_VALUE;
+        boolean prop = true;
+        
         glyphs = new Glyph[PAGES][];
         while(!xmlp.isEndTag()) {
             xmlp.require(XmlPullParser.START_TAG, null, "char");
@@ -158,6 +172,13 @@ public class BitmapFont {
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, "char");
             xmlp.nextTag();
+            if(g.xadvance != firstXAdvance) {
+                if(firstXAdvance == Integer.MIN_VALUE) {
+                    firstXAdvance = g.xadvance;
+                } else {
+                    prop = false;
+                }
+            }
         }
         
         xmlp.require(XmlPullParser.END_TAG, null, "chars");
@@ -186,6 +207,8 @@ public class BitmapFont {
 
         Glyph gx = getGlyph('x');
         ex = (gx != null) ? gx.height : 1;
+        
+        proportional = prop;
     }
 
     public BitmapFont(LWJGLRenderer renderer, Reader reader, URL baseUrl) throws IOException {
@@ -210,6 +233,8 @@ public class BitmapFont {
         this.glyphs = new Glyph[PAGES][];
         parseFntLine(parseFntLine(br, "chars"), params);
         int charCount = parseInt(params, "count");
+        int firstXAdvance = Integer.MIN_VALUE;
+        boolean prop = true;
         for(int charIdx=0 ; charIdx<charCount ; charIdx++) {
             parseFntLine(parseFntLine(br, "char"), params);
             int idx = parseInt(params, "id");
@@ -225,6 +250,14 @@ public class BitmapFont {
             g.yoffset = parseShort(params, "yoffset");
             g.xadvance = parseShort(params, "xadvance");
             addGlyph(idx, g);
+            
+            if(g.xadvance != firstXAdvance) {
+                if(firstXAdvance == Integer.MIN_VALUE) {
+                    firstXAdvance = g.xadvance;
+                } else {
+                    prop = false;
+                }
+            }
         }
         parseFntLine(parseFntLine(br, "kernings"), params);
         int kerningCount = parseInt(params, "count");
@@ -241,6 +274,8 @@ public class BitmapFont {
 
         Glyph gx = getGlyph('x');
         ex = (gx != null) ? gx.height : 1;
+        
+        this.proportional = prop;
     }
 
     public static BitmapFont loadFont(LWJGLRenderer renderer, URL url) throws IOException {
@@ -267,6 +302,10 @@ public class BitmapFont {
                 is.close();
             }
         }
+    }
+
+    public boolean isProportional() {
+        return proportional;
     }
     
     public int getBaseLine() {
@@ -313,7 +352,7 @@ public class BitmapFont {
         }
     }
 
-    private Glyph getGlyph(char ch) {
+    final Glyph getGlyph(char ch) {
         Glyph[] page = glyphs[ch >> LOG2_PAGE_SIZE];
         if(page != null) {
             return page[ch & (PAGE_SIZE-1)];
@@ -355,10 +394,17 @@ public class BitmapFont {
                     width += lastGlyph.getKerning(ch);
                 }
                 lastGlyph = g;
-                if(width + g.width + g.xoffset > availWidth) {
-                    break;
+                if(proportional) {
+                    width += g.xadvance;
+                    if(width > availWidth) {
+                        break;
+                    }
+                } else {
+                    if(width + g.width + g.xoffset > availWidth) {
+                        break;
+                    }
+                    width += g.xadvance;
                 }
-                width += g.xadvance;
             }
         }
         return index - start;
@@ -512,6 +558,10 @@ public class BitmapFont {
             return cache;
         }
         return null;
+    }
+
+    boolean bind() {
+        return texture.bind();
     }
 
     protected boolean prepare() {
