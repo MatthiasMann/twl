@@ -195,6 +195,8 @@ public class TabbedPane extends Widget {
                     setScrollPos(end - size);
                 }
             }
+            
+            tab.pane.requestKeyboardFocus();
         }
     }
 
