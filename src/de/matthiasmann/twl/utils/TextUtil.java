@@ -90,24 +90,35 @@ public final class TextUtil {
      * Searches for a specific character.
      * @param cs the CharSequence to search in
      * @param ch the character to search
-     * @param start the start index. must be >= 0.
+     * @param start the start index. must be &gt;= 0.
      * @return the index of the character or cs.length().
      */
     public static int indexOf(CharSequence cs, char ch, int start) {
-        final int n = cs.length();
-        for(; start<n ; start++) {
+        return indexOf(cs, ch, start, cs.length());
+    }
+
+    /**
+     * Searches for a specific character.
+     * @param cs the CharSequence to search in
+     * @param ch the character to search
+     * @param start the start index. must be &gt;= 0.
+     * @param end the end index. must be &gt;= start and &lt;= cs.length.
+     * @return the index of the character or end.
+     */
+    public static int indexOf(CharSequence cs, char ch, int start, int end) {
+        for(; start<end ; start++) {
             if(cs.charAt(start) == ch) {
                 return start;
             }
         }
-        return n;
+        return end;
     }
 
     /**
      * Searches for a specific character.
      * @param str the String to search in
      * @param ch the character to search
-     * @param start the start index. must be >= 0.
+     * @param start the start index. must be &gt;= 0.
      * @return the index of the character or str.length().
      */
     public static int indexOf(String str, char ch, int start) {
