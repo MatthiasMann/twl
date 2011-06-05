@@ -345,6 +345,7 @@ public class LWJGLFont implements Font, Font2 {
             cache = new LWJGLAttributedStringFontCache(renderer, font);
         }
         cache.allocateVA(end - start);
+        attributedString.setPosition(start);
         BitmapFont.Glyph lastGlyph = null;
         int x = 0;
         int y = 0;
@@ -367,30 +368,24 @@ public class LWJGLFont implements Font, Font2 {
                 nextStop = TextUtil.indexOf(attributedString, '\n', start, nextStop);
             }
             
-            while(lastGlyph == null && start < nextStop) {
-                lastGlyph = font.getGlyph(attributedString.charAt(start++));
-                if(lastGlyph != null) {
-                    lastGlyph.draw(cache.va, x, y);
-                    x += lastGlyph.xadvance;
-                    runLength++;
-                    break;
-                }
-            }
-            
             while(start < nextStop) {
                 char ch = attributedString.charAt(start++);
                 BitmapFont.Glyph g = font.getGlyph(ch);
                 if(g != null) {
-                    x += lastGlyph.getKerning(ch);
+                    if(lastGlyph != null) {
+                        x += lastGlyph.getKerning(ch);
+                    }
                     lastGlyph = g;
-                    g.draw(cache.va, x, y);
+                    if(g.width > 0 && g.height > 0) {
+                        g.draw(cache.va, x, y);
+                        runLength++;
+                    }
                     x += g.xadvance;
-                    runLength++;
                 }
             }
             
             run.numQlyphs = runLength;
-            run.x = x;
+            run.xend = x;
             run.y = y;
             
             x -= fontState.offsetX;

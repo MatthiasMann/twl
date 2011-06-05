@@ -114,8 +114,10 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
                     
                     renderer.tintStack.setColor(state.color);
                     
-                    GL11.glDrawArrays(GL11.GL_QUADS, idx, numVertices);
-                    idx += numVertices;
+                    if(numVertices > 0) {
+                        GL11.glDrawArrays(GL11.GL_QUADS, idx, numVertices);
+                        idx += numVertices;
+                    }
                     
                     if(state.style != 0) {
                         drawLines(run);
