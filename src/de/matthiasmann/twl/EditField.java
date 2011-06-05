@@ -816,9 +816,12 @@ public class EditField extends Widget {
     protected void setCursorPos(int pos, boolean select) {
         pos = Math.max(0, Math.min(editBuffer.length(), pos));
         if(!select) {
+            boolean hadSelection = hasSelection();
             selectionStart = pos;
             selectionEnd = pos;
-            updateSelection();
+            if(hadSelection) {
+                updateSelection();
+            }
         }
         if(this.cursorPos != pos) {
             if(select) {
