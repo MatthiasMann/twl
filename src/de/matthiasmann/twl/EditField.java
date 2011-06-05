@@ -1175,7 +1175,7 @@ public class EditField extends Widget {
             }
         }
 
-        protected void paintSelectionBackground(int lineStart, int lineEnd, int yoff) {
+        protected void paintWithSelection(int lineStart, int lineEnd, int yoff) {
             int selStart = selectionStart;
             int selEnd = selectionEnd;
             if(selectionImage != null && selEnd > lineStart && selStart <= lineEnd) {
@@ -1185,11 +1185,8 @@ public class EditField extends Widget {
                 selectionImage.draw(getAnimationState(), xpos0, yoff,
                         xpos1 - xpos0, getFont().getLineHeight());
             }
-        }
-        
-        protected void paintWithSelection(int lineStart, int lineEnd, int yoff) {
-            paintSelectionBackground(lineStart, lineEnd, yoff);
-            paintWithSelection(getAnimationState(), selectionStart, selectionEnd, lineStart, lineEnd, yoff);
+            
+            paintWithSelection(getAnimationState(), selStart, selEnd, lineStart, lineEnd, yoff);
         }
 
         protected void paintMultiLineWithSelection() {
@@ -1237,7 +1234,7 @@ public class EditField extends Widget {
             if(selectionEnd > selectionStart && selectionImage != null) {
                 paintMultiLineSelectionBackground();
             }
-            if(cache != null || cacheDirty) {
+            if(cache == null || cacheDirty) {
                 cacheDirty = false;
                 if(multiLine) {
                     cache = font.cacheMultiLineText(cache, attributes);
