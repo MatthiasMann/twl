@@ -45,9 +45,9 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
     final BitmapFont font;
     int width;
     int height;
-    Run[] runs;
     FloatBuffer va;
-    int numRuns;
+    private Run[] runs;
+    private int numRuns;
 
     public LWJGLAttributedStringFontCache(LWJGLRenderer renderer, BitmapFont font) {
         this.renderer = renderer;
@@ -104,15 +104,16 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
             GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
             GL11.glPushMatrix();
             GL11.glTranslatef(x, y, 0f);
+            final TintStack tintStack = renderer.tintStack;
             
             try {
                 int idx = 0;
                 for(int i=0 ; i<numRuns ; i++) {
                     final Run run = runs[i];
                     final FontState state = run.state;
-                    final int numVertices = 4 * run.numQlyphs;
+                    final int numVertices = run.numVertices;
                     
-                    renderer.tintStack.setColor(state.color);
+                    tintStack.setColor(state.color);
                     
                     if(numVertices > 0) {
                         GL11.glDrawArrays(GL11.GL_QUADS, idx, numVertices);
@@ -150,7 +151,7 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
     
     static class Run {
         LWJGLFont.FontState state;
-        int numQlyphs;
+        int numVertices;
         int x;
         int xend;
         int y;

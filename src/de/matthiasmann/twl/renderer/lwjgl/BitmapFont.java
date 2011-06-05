@@ -64,7 +64,7 @@ public class BitmapFont {
         byte[][] kerning;
 
         public Glyph(int x, int y, int width, int height, int texWidth, int texHeight) {
-            super(x, y, width, height, texWidth, texHeight);
+            super(x, y, (height <= 0) ? 0 : width, height, texWidth, texHeight);
         }
         
         void draw(int x, int y) {
@@ -416,7 +416,9 @@ public class BitmapFont {
         while(start < end) {
             lastGlyph = getGlyph(str.charAt(start++));
             if(lastGlyph != null) {
-                lastGlyph.draw(x, y);
+                if(lastGlyph.width > 0) {
+                    lastGlyph.draw(x, y);
+                }
                 x += lastGlyph.xadvance;
                 break;
             }
@@ -427,7 +429,9 @@ public class BitmapFont {
             if(g != null) {
                 x += lastGlyph.getKerning(ch);
                 lastGlyph = g;
-                g.draw(x, y);
+                if(g.width > 0) {
+                    g.draw(x, y);
+                }
                 x += g.xadvance;
             }
         }

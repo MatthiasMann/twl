@@ -287,21 +287,17 @@ public class LWJGLFont implements Font, Font2 {
                 if(multiLine) {
                     nextStop = TextUtil.indexOf(attributedString, '\n', start, nextStop);
                 }
-                while(lastGlyph == null && start < nextStop) {
-                    lastGlyph = font.getGlyph(attributedString.charAt(start++));
-                    if(lastGlyph != null) {
-                        lastGlyph.draw(x, y);
-                        x += lastGlyph.xadvance;
-                        break;
-                    }
-                }
                 while(start < nextStop) {
                     char ch = attributedString.charAt(start++);
                     BitmapFont.Glyph g = font.getGlyph(ch);
                     if(g != null) {
-                        x += lastGlyph.getKerning(ch);
+                        if(lastGlyph != null) {
+                            x += lastGlyph.getKerning(ch);
+                        }
                         lastGlyph = g;
-                        g.draw(x, y);
+                        if(g.width > 0) {
+                            g.draw(x, y);
+                        }
                         x += g.xadvance;
                     }
                 }
@@ -312,6 +308,7 @@ public class LWJGLFont implements Font, Font2 {
                     attributedString.setPosition(++start);
                     x = startX;
                     y += font.getLineHeight();
+                    lastGlyph = null;
                 }
             }while(start < end);
         } finally {
@@ -349,15 +346,14 @@ public class LWJGLFont implements Font, Font2 {
         BitmapFont.Glyph lastGlyph = null;
         int x = 0;
         int y = 0;
+        int width = 0;
         do{
-            FontState fontState = evalFontState(attributedString);
+            final FontState fontState = evalFontState(attributedString);
+            
             x += fontState.offsetX;
             y += fontState.offsetY;
             int runLength = 0;
-            
-            LWJGLAttributedStringFontCache.Run run = cache.addRun();
-            run.state = fontState;
-            run.x = x;
+            int xStart = x;
             
             int nextStop = Math.min(end, attributedString.advance());
             while(nextStop < end && fontState == evalFontState(attributedString)) {
@@ -384,19 +380,34 @@ public class LWJGLFont implements Font, Font2 {
                 }
             }
             
-            run.numQlyphs = runLength;
-            run.xend = x;
-            run.y = y;
-            
             x -= fontState.offsetX;
             y -= fontState.offsetY;
             
+            if(runLength > 0 || fontState.style != 0) {
+                LWJGLAttributedStringFontCache.Run run = cache.addRun();
+                run.state       = fontState;
+                run.numVertices = runLength * 4;
+                run.x           = xStart;
+                run.xend        = x;
+                run.y           = y;
+            }
+            
             if(multiLine && start < end && attributedString.charAt(start) == '\n') {
                 attributedString.setPosition(++start);
+                width = Math.max(width, x);
                 x = 0;
                 y += font.getLineHeight();
+                lastGlyph = null;
             }
         }while(start < end);
+        
+        if(x > 0) {
+            width = Math.max(width, x);
+            y += font.getLineHeight();
+        }
+        
+        cache.width  = width;
+        cache.height = y;
         return cache;
     }
     
