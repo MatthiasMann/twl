@@ -216,11 +216,31 @@ public class StringAttributes implements AttributedString {
         int bitIdx = key.getID() << 1;
         for(int i=start ; i<end ; i++) {
             markers.get(i).clear(bitIdx);
+            markers.get(i).clear(bitIdx+1); // also clear the active bit for optimize
         }
     }
 
     public void clearAnimationStates() {
         markers.clear();
+    }
+    
+    /**
+     * Optimizes the internal representation.
+     * This need O(n) time.
+     */
+    public void optimize() {
+        if(markers.size() > 1) {
+            Marker prev = markers.get(0);
+            for(int i=1 ; i<markers.size() ;) {
+                Marker cur = markers.get(i);
+                if(prev.equals(cur)) {
+                    markers.remove(i);
+                } else {
+                    prev = cur;
+                    i++;
+                }
+            }
+        }
     }
 
     void insert(int pos, int count) {
