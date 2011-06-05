@@ -1284,7 +1284,7 @@ public class Widget {
      *
      * <p>Use with care - users don't expect focus changes while working with the UI</p>
      *
-     * <p>Focus transfer only works when the widget is added to the GUi tree.
+     * <p>Focus transfer only works when the widget is added to the GUI tree.
      * See {@link #getGUI()}.</p>
      * 
      * @return true if keyboard focus was transfered to this widget.
