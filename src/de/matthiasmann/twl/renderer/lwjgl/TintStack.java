@@ -56,7 +56,18 @@ public class TintStack {
     private TintStack(TintStack prev) {
         this.prev = prev;
     }
-
+    
+    public TintStack pushReset() {
+        if(next == null) {
+            next = new TintStack(this);
+        }
+        next.r = ONE_OVER_255;
+        next.g = ONE_OVER_255;
+        next.b = ONE_OVER_255;
+        next.a = ONE_OVER_255;
+        return next;
+    }
+    
     public TintStack push(float r, float g, float b, float a) {
         if(next == null) {
             next = new TintStack(this);
@@ -67,7 +78,7 @@ public class TintStack {
         next.a = this.a * a;
         return next;
     }
-
+    
     public TintStack pop() {
         return prev;
     }

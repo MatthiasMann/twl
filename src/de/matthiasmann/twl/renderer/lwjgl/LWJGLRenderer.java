@@ -417,6 +417,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     public void popGlobalTintColor() {
         tintStack = tintStack.pop();
     }
+    
+    /**
+     * Pushes a white entry on the tint stack which ignores the previous
+     * tint color. It must be removed by calling {@link #popGlobalTintColor()}.
+     * <p>This is useful when rendering to texture</p>
+     */
+    public void pushGlobalTintColorReset() {
+        tintStack = tintStack.pushReset();
+    }
 
     /**
      * Calls GL11.glColor4f() with the specified color multiplied by the current global tint color.
