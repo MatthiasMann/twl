@@ -273,12 +273,32 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return width;
     }
 
-    public Font loadFont(URL baseUrl, Map<String, String> parameter, Collection<FontParameter> conditionalParameter) throws IOException {
-        String fileName = parameter.get("filename");
-        if(fileName == null) {
-            throw new IllegalArgumentException("filename parameter required");
+    /**
+     * Loads a font (either BMFont XML or ASCII format).
+     * <p>If the parameter @code "filename"} is specified then it will be resolved
+     * against the specified URL, otherwise the URL is used directly.</p>
+     * <p>The parameter {@code "color"} is required and must be in a format
+     * parsable by {@link Color#parserColor(java.lang.String)}</p>
+     * @param url the url for the font file 
+     * @param parameter a list of parameters for loading this font
+     * @param conditionalParameter condition parameters for use with {@link AnimationState}
+     * @return a Font object
+     * @throws IOException if the font could not be loaded
+     */
+    public Font loadFont(URL url, Map<String, String> parameter, Collection<FontParameter> conditionalParameter) throws IOException {
+        if(url == null) {
+            throw new NullPointerException("url");
         }
-        URL url = new URL(baseUrl, fileName);
+        if(parameter == null) {
+            throw new NullPointerException("parameter");
+        }
+        if(conditionalParameter == null) {
+            throw new NullPointerException("conditionalParameter");
+        }
+        String fileName = parameter.get("filename");
+        if(fileName != null) {
+            url = new URL(url, fileName);
+        }
         BitmapFont bmFont = activeCacheContext().loadBitmapFont(url);
         return new LWJGLFont(this, bmFont, parameter, conditionalParameter);
     }
