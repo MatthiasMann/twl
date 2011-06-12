@@ -134,6 +134,15 @@ public interface Renderer {
     public LineRenderer getLineRenderer();
 
     /**
+     * Returns the offscreen renderer. If offscreen rendering is not supported then this method returns null.
+     * 
+     * This is an optional operation.
+     *
+     * @return the offscreen renderer or null if not supported.
+     */
+    public OffscreenRenderer getOffscreenRenderer();
+    
+    /**
      * Creates a dynamic image with undefined content.
      * 
      * This is an optional operation.

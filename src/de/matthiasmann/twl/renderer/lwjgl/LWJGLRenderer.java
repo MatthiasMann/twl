@@ -40,6 +40,7 @@ import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.LineRenderer;
+import de.matthiasmann.twl.renderer.OffscreenRenderer;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import java.io.IOException;
@@ -325,6 +326,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public LineRenderer getLineRenderer() {
         return this;
+    }
+
+    public OffscreenRenderer getOffscreenRenderer() {
+        return null;
     }
 
     public DynamicImage createDynamicImage(int width, int height) {

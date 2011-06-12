@@ -32,6 +32,8 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.OffscreenRenderer;
+import de.matthiasmann.twl.renderer.OffscreenSurface;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.theme.ThemeManager;
 import de.matthiasmann.twl.utils.TextUtil;
@@ -104,6 +106,8 @@ public class Widget {
     private TintAnimator tintAnimator;
     private PropertyChangeSupport propertyChangeSupport;
     volatile GUI guiInstance;
+    private OffscreenSurface offscreenSurface;
+    private RenderOffscreen renderOffscreen;
 
     private final AnimationState animState;
     private final boolean sharedAnimState;
@@ -1261,6 +1265,10 @@ public class Widget {
                 children.get(i).destroy();
             }
         }
+        if(offscreenSurface != null) {
+            offscreenSurface.destroy();
+            offscreenSurface = null;
+        }
     }
 
     public boolean canAcceptKeyboardFocus() {
@@ -1381,6 +1389,23 @@ public class Widget {
         this.tintAnimator = tintAnimator;
     }
 
+    /**
+     * Returns the currently active offscreen rendering delegate or null if none was set
+     * @return the currently active offscreen rendering delegate or null if none was set
+     */
+    public RenderOffscreen getRenderOffscreen() {
+        return renderOffscreen;
+    }
+
+    /**
+     * Sets set offscreen rendering delegate. Can be null to disable offscreen rendering.
+     * @param renderOffscreen the offscreen rendering delegate.
+     */
+    public void setRenderOffscreen(RenderOffscreen renderOffscreen) {
+        this.renderOffscreen = renderOffscreen;
+    }
+
+    
     /**
      * Returns the currently set tooltip content.
      * @return the currently set tooltip content. Can be null.
@@ -2380,6 +2405,10 @@ public class Widget {
     }
     
     final void drawWidget(GUI gui) {
+        if(renderOffscreen != null) {
+            drawWidgetOffscreen(gui);
+            return;
+        }
         if(tintAnimator != null && tintAnimator.hasTint()) {
             drawWidgetTint(gui);
             return;
@@ -2415,6 +2444,33 @@ public class Widget {
         } finally {
             gui.clipLeave();
         }
+    }
+    
+    private void drawWidgetOffscreen(GUI gui) {
+        final RenderOffscreen ro = this.renderOffscreen;
+        final Renderer renderer = gui.getRenderer();
+        final OffscreenRenderer offscreenRenderer = renderer.getOffscreenRenderer();
+        if(offscreenRenderer != null) {
+            int extraArea = ro.getExtraArea();
+            offscreenSurface = offscreenRenderer.startOffscreenRendering(offscreenSurface,
+                    posX-extraArea, posY-extraArea, width+extraArea*2, height+extraArea*2);
+            if(offscreenSurface != null) {
+                try {
+                    if(tintAnimator != null && tintAnimator.hasTint()) {
+                        drawWidgetTint(gui);
+                    } else {
+                        paint(gui);
+                    }
+                } finally {
+                    offscreenRenderer.endOffscreenRendering();
+                }
+                ro.paintOffscreenSurface(gui, this, offscreenSurface);
+                return;
+            }
+        }
+        renderOffscreen = null;
+        ro.offscreenRenderingFailed(this);
+        drawWidget(gui);
     }
     
     Widget getWidgetUnderMouse() {
@@ -2722,5 +2778,36 @@ public class Widget {
 
     private Logger getLogger() {
         return Logger.getLogger(Widget.class.getName());
+    }
+    
+    /**
+     * When this interface is installed in a Widget then the widget tries to
+     * render into an offscreen surface.
+     */
+    public static interface RenderOffscreen {
+        /**
+         * Amount of extra area to allocate around the widget for offscreen rendering
+         * @return the extra area. Must eb &gt;= 0.
+         */
+        public int getExtraArea();
+        
+        /**
+         * This method is called after the widget has been sucessfully rendered
+         * into an offscreen surface.
+         * 
+         * @param gui the GUI instance
+         * @param widget the widget
+         * @param surface the resulting offscreen surface
+         */
+        public void paintOffscreenSurface(GUI gui, Widget widget, OffscreenSurface surface);
+        
+        /**
+         * Called when {@link OffscreenRenderer#startOffscreenRendering(de.matthiasmann.twl.renderer.OffscreenSurface, int, int, int, int) }
+         * failed.
+         * At the moment this method is called the RenderOffscreen instance has
+         * already been removed from the widget.
+         * @param widget the widget
+         */
+        public void offscreenRenderingFailed(Widget widget);
     }
 }
