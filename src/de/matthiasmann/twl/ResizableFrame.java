@@ -163,6 +163,23 @@ public class ResizableFrame extends Widget {
         }
     }
 
+    public int getFadeDurationActivate() {
+        return fadeDurationActivate;
+    }
+
+    public int getFadeDurationDeactivate() {
+        return fadeDurationDeactivate;
+    }
+
+    public int getFadeDurationHide() {
+        return fadeDurationHide;
+    }
+
+    public int getFadeDurationShow() {
+        return fadeDurationShow;
+    }
+    
+
     @Override
     public void setVisible(boolean visible) {
         if(visible) {
