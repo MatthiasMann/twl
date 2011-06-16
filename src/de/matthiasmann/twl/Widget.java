@@ -122,6 +122,11 @@ public class Widget {
     private short maxWidth;
     private short maxHeight;
 
+    private short offscreenExtraLeft;
+    private short offscreenExtraTop;
+    private short offscreenExtraRight;
+    private short offscreenExtraBottom;
+    
     private ArrayList<Widget> children;
     private Widget lastChildMouseOver;
     private Widget focusChild;
@@ -675,6 +680,56 @@ public class Widget {
         }
     }
 
+    public short getOffscreenExtraTop() {
+        return offscreenExtraTop;
+    }
+
+    public short getOffscreenExtraLeft() {
+        return offscreenExtraLeft;
+    }
+
+    public short getOffscreenExtraBottom() {
+        return offscreenExtraBottom;
+    }
+
+    public short getOffscreenExtraRight() {
+        return offscreenExtraRight;
+    }
+    
+    /**
+     * Sets the offscreen rendering extra area for this widget.
+     * @param top the extra area on top
+     * @param left the extra area on left
+     * @param bottom the extra area on bottom
+     * @param right the extra area on right
+     * @throws IllegalArgumentException if any of the parameters is negative.
+     * @see #setRenderOffscreen(de.matthiasmann.twl.Widget.RenderOffscreen) 
+     */
+    public void setOffscreenExtra(int top, int left, int bottom, int right) {
+        if(top < 0 || left < 0 || bottom < 0 || right < 0) {
+            throw new IllegalArgumentException("negative offscreen extra size");
+        }
+        this.offscreenExtraTop = (short)top;
+        this.offscreenExtraLeft = (short)left;
+        this.offscreenExtraBottom = (short)bottom;
+        this.offscreenExtraRight = (short)right;
+    }
+    
+    /**
+     * Sets the offscreen rendering extra area for this widget.
+     * @param offscreenExtra the border object or null for no extra area
+     * @throws IllegalArgumentException if any of the values is negative.
+     * @see #setRenderOffscreen(de.matthiasmann.twl.Widget.RenderOffscreen) 
+     */
+    public void setOffscreenExtra(Border offscreenExtra) {
+        if(offscreenExtra == null) {
+            setOffscreenExtra(0, 0, 0, 0);
+        } else {
+            setOffscreenExtra(offscreenExtra.getBorderTop(), offscreenExtra.getBorderLeft(),
+                    offscreenExtra.getBorderBottom(), offscreenExtra.getBorderRight());
+        }
+    }
+    
     /**
      * Returns the minimum width of the widget.
      * Layout manager will allocate atleast the minimum width to a widget even
@@ -1507,6 +1562,7 @@ public class Widget {
         applyThemeBackground(themeInfo);
         applyThemeOverlay(themeInfo);
         applyThemeBorder(themeInfo);
+        applyThemeOffscreenExtra(themeInfo);
         applyThemeMinSize(themeInfo);
         applyThemeMaxSize(themeInfo);
         applyThemeMouseCursor(themeInfo);
@@ -1525,6 +1581,10 @@ public class Widget {
 
     protected void applyThemeBorder(ThemeInfo themeInfo) {
         setBorderSize(themeInfo.getParameterValue("border", false, Border.class));
+    }
+
+    protected void applyThemeOffscreenExtra(ThemeInfo themeInfo) {
+        setOffscreenExtra(themeInfo.getParameterValue("offscreenExtra", false, Border.class));
     }
 
     protected void applyThemeMinSize(ThemeInfo themeInfo) {
@@ -2451,9 +2511,10 @@ public class Widget {
         final Renderer renderer = gui.getRenderer();
         final OffscreenRenderer offscreenRenderer = renderer.getOffscreenRenderer();
         if(offscreenRenderer != null) {
-            int extraArea = ro.getExtraArea();
             offscreenSurface = offscreenRenderer.startOffscreenRendering(offscreenSurface,
-                    posX-extraArea, posY-extraArea, width+extraArea*2, height+extraArea*2);
+                    posX-offscreenExtraLeft, posY-offscreenExtraTop,
+                    width+offscreenExtraLeft+offscreenExtraRight,
+                    height+offscreenExtraTop+offscreenExtraBottom);
             if(offscreenSurface != null) {
                 try {
                     if(tintAnimator != null && tintAnimator.hasTint()) {
@@ -2785,12 +2846,6 @@ public class Widget {
      * render into an offscreen surface.
      */
     public static interface RenderOffscreen {
-        /**
-         * Amount of extra area to allocate around the widget for offscreen rendering
-         * @return the extra area. Must eb &gt;= 0.
-         */
-        public int getExtraArea();
-        
         /**
          * This method is called after the widget has been sucessfully rendered
          * into an offscreen surface.
