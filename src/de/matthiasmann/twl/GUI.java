@@ -138,8 +138,12 @@ public final class GUI extends Widget {
     private long tooltipClosedTime;
     
     final ArrayList<Timer> activeTimers;
-    private final ArrayList<Runnable> invokeLaterQueue;
     final ExecutorService executorService;
+    
+    private final Object invokeLock;
+    private Runnable[] invokeLaterQueue;
+    private int invokeLaterQueueSize;
+    private Runnable[] invokeRunnables;
     
     /**
      * Constructs a new GUI manager with the given renderer and a default root
@@ -200,8 +204,10 @@ public final class GUI extends Widget {
         this.tooltipWindow.setVisible(false);
         
         this.activeTimers = new ArrayList<Timer>();
-        this.invokeLaterQueue = new ArrayList<Runnable>();
         this.executorService =  Executors.newSingleThreadExecutor(new TF());    // thread creatation is lazy
+        this.invokeLock = new Object();
+        this.invokeLaterQueue = new Runnable[16];
+        this.invokeRunnables = new Runnable[16];
         
         setTheme("");
         setFocusKeyEnabled(false);
@@ -302,8 +308,11 @@ public final class GUI extends Widget {
         if(runnable == null) {
             throw new IllegalArgumentException("runnable is null");
         }
-        synchronized(invokeLaterQueue) {
-            invokeLaterQueue.add(runnable);
+        synchronized(invokeLock) {
+            if(invokeLaterQueueSize == invokeLaterQueue.length) {
+                growInvokeLaterQueue();
+            }
+            invokeLaterQueue[invokeLaterQueueSize++] = runnable;
         }
     }
 
@@ -579,20 +588,23 @@ public final class GUI extends Widget {
      */
     public void invokeRunables() {
         Runnable[] runnables = null;
-        synchronized(invokeLaterQueue) {
-            int size = invokeLaterQueue.size();
-            if(size > 0) {
-                runnables = invokeLaterQueue.toArray(new Runnable[size]);
-                invokeLaterQueue.clear();
+        int count;
+        synchronized(invokeLock) {
+            count = invokeLaterQueueSize;
+            if(count > 0) {
+                invokeLaterQueueSize = 0;
+                runnables = invokeLaterQueue;
+                invokeLaterQueue = invokeRunnables;
+                invokeRunnables = runnables;
             }
         }
-        if(runnables != null) {
-            for(Runnable r : runnables) {
-                try {
-                    r.run();
-                } catch (Throwable ex) {
-                    Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in runnable", ex);
-                }
+        for(int i=0 ; i<count ;) {
+            Runnable r = runnables[i];
+            runnables[i++] = null;
+            try {
+                r.run();
+            } catch (Throwable ex) {
+                Logger.getLogger(GUI.class.getName()).log(Level.SEVERE, "Exception in runnable", ex);
             }
         }
     }
@@ -1302,6 +1314,12 @@ public final class GUI extends Widget {
                 mouseIdleListener.mouseExitIdle();
             }
         }
+    }
+    
+    private void growInvokeLaterQueue() {
+        Runnable[] tmp = new Runnable[invokeLaterQueueSize*2];
+        System.arraycopy(invokeLaterQueue, 0, tmp, 0, invokeLaterQueueSize);
+        invokeLaterQueue = tmp;
     }
 
     static class TooltipWindow extends Widget {
