@@ -125,9 +125,6 @@ public final class GUI extends Widget {
     private boolean mouseIdleState;
     private MouseIdleListener mouseIdleListener;
     
-    private Rect[] clipRects;
-    private int numClipRects;
-
     private InfoWindow activeInfoWindow;
     private final Widget infoWindowPlaceholder;
     
@@ -194,7 +191,6 @@ public final class GUI extends Widget {
         this.event = new Event();
         this.rootPane = rootPane;
         this.rootPane.setFocusKeyEnabled(false);
-        this.clipRects = new Rect[8];
 
         this.infoWindowPlaceholder = new Widget();
         this.infoWindowPlaceholder.setTheme("");
@@ -617,8 +613,6 @@ public final class GUI extends Widget {
      * @see Renderer#endRendering() 
      */
     public void draw() {
-        numClipRects = 0;
-        
         if(renderer.startRenderering()) {
             try {
                 drawWidget(this);
@@ -1272,38 +1266,6 @@ public final class GUI extends Widget {
         tooltipOwner = widget;
         tooltipWindow.setPosition(x, y);
         tooltipWindow.setVisible(true);
-    }
-
-    void clipEnter(int x, int y, int w, int h) {
-        Rect rect;
-        if(numClipRects == clipRects.length) {
-            Rect[] newRects = new Rect[numClipRects*2];
-            System.arraycopy(clipRects, 0, newRects, 0, numClipRects);
-            clipRects = newRects;
-        }
-        if((rect = clipRects[numClipRects]) == null) {
-            rect = new Rect();
-            clipRects[numClipRects] = rect;
-        }
-        rect.setXYWH(x, y, w, h);
-        if(numClipRects > 0) {
-            rect.intersect(clipRects[numClipRects-1]);
-        }
-        renderer.setClipRect(rect);
-        numClipRects++;
-    }
-
-    boolean clipEmpty() {
-        return clipRects[numClipRects-1].isEmpty();
-    }
-    
-    void clipLeave() {
-        numClipRects--;
-        if(numClipRects == 0) {
-            renderer.setClipRect(null);
-        } else {
-            renderer.setClipRect(clipRects[numClipRects-1]);
-        }
     }
     
     private void callMouseIdleListener() {

@@ -2498,11 +2498,12 @@ public class Widget {
     }
 
     private void drawWidgetClip(GUI gui) {
-        gui.clipEnter(posX, posY, width, height);
+        Renderer renderer = gui.getRenderer();
+        renderer.clipEnter(posX, posY, width, height);
         try {
             paint(gui);
         } finally {
-            gui.clipLeave();
+            renderer.clipLeave();
         }
     }
     

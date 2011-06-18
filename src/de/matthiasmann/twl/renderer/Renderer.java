@@ -152,13 +152,43 @@ public interface Renderer {
      * @return a new dynamic image or null if the image could not be created
      */
     public DynamicImage createDynamicImage(int width, int height);
-
+    
     /**
-     * Sets the clipping area for all rendering operations.
-     * @param rect A rectangle or null to disable clipping.
+     * Enters a clip region.
+     * 
+     * The new clip region is the intersection of the current clip region with
+     * the specified coordinates.
+     * 
+     * @param x the left edge
+     * @param y the top edge
+     * @param w the width
+     * @param h the height
      */
-    public void setClipRect(Rect rect);
-
+    public void clipEnter(int x, int y, int w, int h);
+    
+    /**
+     * Enters a clip region.
+     * 
+     * The new clip region is the intersection of the current clip region with
+     * the specified coordinates.
+     * 
+     * @param rect the coordinates
+     */
+    public void clipEnter(Rect rect);
+    
+    /**
+     * Checks if the active clip region is empty (nothing will render).
+     * @return true if the active clip region is empty
+     */
+    public boolean clipIsEmpty();
+    
+    /**
+     * Leaves a clip region creeated by {@code #clipEnter}
+     * @see #clipEnter(int, int, int, int) 
+     * @see #clipEnter(de.matthiasmann.twl.Rect) 
+     */
+    public void clipLeave();
+    
     public void setCursor(MouseCursor cursor);
 
     /**

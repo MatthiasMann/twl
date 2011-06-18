@@ -43,6 +43,7 @@ import de.matthiasmann.twl.renderer.LineRenderer;
 import de.matthiasmann.twl.renderer.OffscreenRenderer;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
+import de.matthiasmann.twl.utils.ClipStack;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
@@ -100,7 +101,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     final ArrayList<TextureAreaRotated> rotatedTextureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
     TintStack tintStack;
-
+    
+    protected final ClipStack clipStack;
+    protected final Rect clipRectTemp;
+    
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public LWJGLRenderer() throws LWJGLException {
         this.ib16 = BufferUtils.createIntBuffer(16);
@@ -109,6 +113,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         this.dynamicImages = new ArrayList<LWJGLDynamicImage>();
         this.tintStateRoot = new TintStack();
         this.tintStack = tintStateRoot;
+        this.clipStack = new ClipStack();
+        this.clipRectTemp = new Rect();
         syncViewportSize();
 
         GL11.glGetInteger(GL11.GL_MAX_TEXTURE_SIZE, ib16);
@@ -234,6 +240,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
         hasScissor = false;
         tintStack = tintStateRoot;
+        clipStack.clearStack();
         
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT|GL11.GL_TRANSFORM_BIT|GL11.GL_HINT_BIT|
                 GL11.GL_COLOR_BUFFER_BIT|GL11.GL_SCISSOR_BIT|GL11.GL_LINE_BIT|GL11.GL_TEXTURE_BIT);
@@ -378,17 +385,23 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return image;
     }
 
-    public void setClipRect(Rect rect) {
-        if(rect == null) {
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
-            hasScissor = false;
-        } else {
-            GL11.glScissor(viewportX + rect.getX(), viewportY + getHeight() - rect.getBottom(), rect.getWidth(), rect.getHeight());
-            if(!hasScissor) {
-                GL11.glEnable(GL11.GL_SCISSOR_TEST);
-                hasScissor = true;
-            }
-        }
+    public void clipEnter(int x, int y, int w, int h) {
+        clipStack.push(x, y, w, h);
+        setClipRect();
+    }
+
+    public void clipEnter(Rect rect) {
+        clipStack.push(rect);
+        setClipRect();
+    }
+
+    public void clipLeave() {
+        clipStack.pop();
+        setClipRect();
+    }
+
+    public boolean clipIsEmpty() {
+        return clipStack.isClipEmpty();
     }
 
     public void setCursor(MouseCursor cursor) {
@@ -516,6 +529,20 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         result[1] = tintStack.g*(color.getG()&255);
         result[2] = tintStack.b*(color.getB()&255);
         result[3] = tintStack.a*(color.getA()&255);
+    }
+
+    protected void setClipRect() {
+        final Rect rect = clipRectTemp;
+        if(clipStack.getClipRect(rect)) {
+            GL11.glScissor(viewportX + rect.getX(), viewportY + getHeight() - rect.getBottom(), rect.getWidth(), rect.getHeight());
+            if(!hasScissor) {
+                GL11.glEnable(GL11.GL_SCISSOR_TEST);
+                hasScissor = true;
+            }
+        } else if(hasScissor) {
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);
+            hasScissor = false;
+        }
     }
 
     Logger getLogger() {

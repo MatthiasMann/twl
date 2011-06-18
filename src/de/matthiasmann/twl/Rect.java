@@ -44,10 +44,12 @@ public class Rect {
     public Rect() {
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public Rect(int x, int y, int w, int h) {
         setXYWH(x, y, w, h);
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public Rect(Rect src) {
         set(src.getX(), src.getY(), src.getRight(), src.getBottom());
     }
@@ -66,6 +68,13 @@ public class Rect {
         this.y1 = y1;
     }
 
+    public void set(Rect src) {
+        this.x0 = src.x0;
+        this.y0 = src.y0;
+        this.x1 = src.x1;
+        this.y1 = src.y1;
+    }
+    
     /**
      * Computes the intersection of this rectangle with the other rectangle.
      * If they don't overlapp then this rect will be set to zero width and height.

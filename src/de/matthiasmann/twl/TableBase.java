@@ -36,6 +36,7 @@ import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
+import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.utils.CallbackSupport;
 import de.matthiasmann.twl.utils.SizeSequence;
 import de.matthiasmann.twl.utils.SparseGrid;
@@ -784,8 +785,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         final int innerHeight = getInnerHeight() - columnHeaderHeight;
         final int offsetX = getOffsetX();
         final int offsetY = getOffsetY();
+        final Renderer renderer = gui.getRenderer();
 
-        gui.clipEnter(innerX, innerY, innerWidth, innerHeight);
+        renderer.clipEnter(innerX, innerY, innerWidth, innerHeight);
         try {
             final AnimationState animState = getAnimationState();
             final int leadRow;
@@ -866,7 +868,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 imageRowDropMarker.draw(animState, getOffsetX(), getOffsetY() + y, columnModel.getEndPosition(), 1);
             }
         } finally {
-            gui.clipLeave();
+            renderer.clipLeave();
         }
     }
 

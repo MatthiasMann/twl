@@ -37,6 +37,7 @@ import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
+import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.textarea.OrderedListType;
 import de.matthiasmann.twl.textarea.Style;
 import de.matthiasmann.twl.textarea.StyleAttribute;
@@ -1890,14 +1891,14 @@ public class TextArea extends Widget {
         void draw(int offX, int offY, AnimationState as) {
             offX += x;
             offY += y;
-            GUI gui = getGUI();
-            gui.clipEnter(offX, offY, width, height);
+            Renderer renderer = getGUI().getRenderer();
+            renderer.clipEnter(offX, offY, width, height);
             try {
-                if(!gui.clipEmpty()) {
+                if(!renderer.clipIsEmpty()) {
                     drawNoClip(offX, offY, as);
                 }
             } finally {
-                gui.clipLeave();
+                renderer.clipLeave();
             }
         }
 
