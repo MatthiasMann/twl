@@ -1184,16 +1184,24 @@ public class TextArea extends Widget {
         int bgWidth;
 
         int remaining = Math.max(0, box.computeRightPadding(marginRight) - bgX);
+        int paddingLeft = convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
+        int paddingRight = convertToPX0(style, StyleAttribute.PADDING_RIGHT, box.boxWidth);
 
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
             bgWidth = remaining;
         } else {
-            bgWidth = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth, box.lineWidth);
+            bgWidth = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth, Integer.MIN_VALUE);
+            if(bgWidth == Integer.MIN_VALUE) {
+                LClip dummy = new LClip(null);
+                dummy.width = Math.max(0, box.lineWidth - paddingLeft - paddingRight);
+
+                Box dummyBox = layoutBox(dummy, box.boxWidth, paddingLeft, paddingRight, be);
+                dummyBox.nextLine(false);
+                
+                bgWidth = Math.max(0, dummy.width - dummyBox.minRemainingWidth);
+            }
         }
-
-        int paddingLeft = convertToPX0(style, StyleAttribute.PADDING_LEFT, bgWidth);
-        int paddingRight = convertToPX0(style, StyleAttribute.PADDING_RIGHT, bgWidth);
-
+        
         bgWidth += paddingLeft + paddingRight;
 
         if(floatPosition != TextAreaModel.FloatPosition.NONE) {
@@ -1419,6 +1427,7 @@ public class TextArea extends Widget {
 
         box.curY += Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_BOTTOM, box.boxWidth));
         box.checkFloaters();
+        box.accountMinRemaining(Math.max(0, box.lineWidth - tableWidth));
 
         if(tableBGImage != null) {
             tableBGImage.height = box.curY - tableBGImage.y;
