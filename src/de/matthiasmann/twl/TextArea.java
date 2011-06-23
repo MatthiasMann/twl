@@ -100,6 +100,7 @@ public class TextArea extends Widget {
     final ArrayList<LImage> allBGImages;
     private boolean inLayoutCode;
     private boolean forceRelayout;
+    private Dimension preferredInnerSize;
 
     private int lastMouseX;
     private int lastMouseY;
@@ -308,13 +309,50 @@ public class TextArea extends Widget {
         throw new UnsupportedOperationException("use registerWidget");
     }
 
+    private void computePreferredInnerSize() {
+        int prefWidth = -1;
+        int prefHeight = -1;
+        
+        if(getMaxWidth() > 0) {
+            final int borderHorizontal = getBorderHorizontal();
+            final int maxWidth = Math.max(0, getMaxWidth() - borderHorizontal);
+            final int minWidth = Math.max(0, getMinWidth() - borderHorizontal);
+            
+            if(minWidth < maxWidth) {
+                //System.out.println("Doing preferred size computation");
+                
+                LClip tmpRoot = new LClip(null);
+                tmpRoot.width = maxWidth;
+                Box box = new Box(tmpRoot, 0, 0, 0);
+                layoutElements(box, model);
+                box.finish();
+                
+                prefWidth = Math.max(0, maxWidth - box.minRemainingWidth);
+                prefHeight = box.curY;
+            }
+        }
+        preferredInnerSize = new Dimension(prefWidth, prefHeight);
+    }
+    
     @Override
     public int getPreferredInnerWidth() {
+        if(preferredInnerSize == null) {
+            computePreferredInnerSize();
+        }
+        if(preferredInnerSize.getX() >= 0) {
+            return preferredInnerSize.getX();
+        }
         return getInnerWidth();
     }
 
     @Override
     public int getPreferredInnerHeight() {
+        if(preferredInnerSize == null) {
+            computePreferredInnerSize();
+        }
+        if(preferredInnerSize.getY() >= 0) {
+            return preferredInnerSize.getY();
+        }
         validateLayout();
         return layoutRoot.height;
     }
@@ -322,15 +360,13 @@ public class TextArea extends Widget {
     @Override
     public int getPreferredWidth() {
         int maxWidth = getMaxWidth();
-        if(maxWidth > 0) {
-            return maxWidth;
-        }
         return computeSize(getMinWidth(), super.getPreferredWidth(), maxWidth);
     }
 
     @Override
     public void setMaxSize(int width, int height) {
         if(width != getMaxWidth()) {
+            preferredInnerSize = null;
             invalidateLayout();
         }
         super.setMaxSize(width, height);
@@ -339,6 +375,7 @@ public class TextArea extends Widget {
     @Override
     public void setMinSize(int width, int height) {
         if(width != getMinWidth()) {
+            preferredInnerSize = null;
             invalidateLayout();
         }
         super.setMinSize(width, height);
@@ -382,10 +419,14 @@ public class TextArea extends Widget {
                 styleClassResolver.layoutFinished();
             }
 
+            //System.out.println("layoutRoot.height="+layoutRoot.height+"  box.curY="+box.curY+"  remaining="+box.minRemainingWidth);
+            
             if(layoutRoot.height != box.curY) {
                 layoutRoot.height = box.curY;
-                // call outside of inLayoutCode range
-                invalidateLayout();
+                if(getInnerHeight() != box.curY) {
+                    // call outside of inLayoutCode range
+                    invalidateLayout();
+                }
             }
         }
     }
@@ -531,6 +572,7 @@ public class TextArea extends Widget {
 
     void forceRelayout() {
         forceRelayout = true;
+        preferredInnerSize = null;
         invalidateLayout();
     }
     
@@ -699,6 +741,7 @@ public class TextArea extends Widget {
             le.y = box.computeTopPadding(le.marginTop);
             box.computePadding();
         } else if(display != TextAreaModel.Display.INLINE) {
+            box.accountMinRemaining(Math.max(0, box.lineWidth - le.width));
             box.nextLine(false);
         }
     }
@@ -1175,7 +1218,7 @@ public class TextArea extends Widget {
         clip.marginRight = (short)marginRight;
         box.layout.add(clip);
 
-        layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be);
+        Box clipBox = layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be);
 
         // sync main box with layout
         box.lineStartIdx = box.layout.size();
@@ -1183,6 +1226,7 @@ public class TextArea extends Widget {
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
             box.advanceToY(bgY + clip.height);
             box.setMarginBottom(clip.marginBottom);
+            box.accountMinRemaining(clipBox.minRemainingWidth);
         } else {
             if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
                 box.objRight.add(clip);
@@ -1438,6 +1482,7 @@ public class TextArea extends Widget {
         int minLineHeight;
         int lastLineEnd;
         int lastLineBottom;
+        int minRemainingWidth;
         boolean inParagraph;
         boolean wasAutoBreak;
         boolean wasPreformatted;
@@ -1455,6 +1500,7 @@ public class TextArea extends Widget {
             this.curY = paddingTop;
             this.lineStartX = boxLeft;
             this.lineWidth = boxWidth;
+            this.minRemainingWidth = boxWidth;
             this.textAlignment = TextAreaModel.HAlignment.LEFT;
             assert layout.isEmpty();
         }
@@ -1469,6 +1515,8 @@ public class TextArea extends Widget {
             if(isAtStartOfLine()) {
                 curX = lineStartX;
             }
+            
+            accountMinRemaining(getRemaining());
         }
 
         int computeLeftPadding(int marginLeft) {
@@ -1511,6 +1559,10 @@ public class TextArea extends Widget {
         
         int getRemaining() {
             return Math.max(0, lineWidth - curX + lineStartX);
+        }
+        
+        void accountMinRemaining(int remaining) {
+            minRemainingWidth = Math.min(minRemainingWidth, remaining);
         }
 
         int getXAndAdvance(int amount) {
@@ -1603,6 +1655,8 @@ public class TextArea extends Widget {
                 return false;
             }
 
+            accountMinRemaining(getRemaining());
+            
             int targetY = curY;
             int lineHeight = minLineHeight;
 
