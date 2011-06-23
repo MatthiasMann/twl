@@ -1254,15 +1254,12 @@ public class TextArea extends Widget {
     }
 
     private void computeTableWidth(TextAreaModel.TableElement te,
-            int left, int right, int columnWidth[], int columnSpacing[]) {
+            int maxTableWidth, int columnWidth[], int columnSpacing[], boolean[] columnsWithFixedWidth) {
         final int numColumns = te.getNumColumns();
         final int numRows = te.getNumRows();
         final int cellSpacing = te.getCellSpacing();
         final int cellPadding = te.getCellPadding();
         
-        int maxTableWidth = Math.max(0, right - left);
-        
-        boolean[] columnsWithFixedWidth = new boolean[numColumns];
         HashMap<Integer, Integer> colspanWidths = null;
         
         for(int col=0 ; col<numColumns ; col++) {
@@ -1359,44 +1356,21 @@ public class TextArea extends Widget {
         
         int left = box.computeLeftPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_LEFT, box.boxWidth));
         int right = box.computeRightPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
-        int tableWidth = Math.min(right - left, convertToPX(tableStyle, StyleAttribute.WIDTH, box.boxWidth, Integer.MIN_VALUE));
+        int maxTableWidth = Math.max(0, right - left);
+        int tableWidth = Math.min(maxTableWidth, convertToPX(tableStyle, StyleAttribute.WIDTH, box.boxWidth, Integer.MIN_VALUE));
+        boolean autoTableWidth = tableWidth == Integer.MIN_VALUE;
 
+        if(tableWidth <= 0) {
+            tableWidth = maxTableWidth;
+        }
+        
         int columnWidth[] = new int[numColumns];
         int columnSpacing[] = new int[numColumns + 1];
-        int columnWidthSum = 0;
-        int columnsWithoutWidth = 0;
+        boolean[] columnsWithFixedWidth = new boolean[numColumns];
         
         columnSpacing[0] = Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_LEFT, box.boxWidth));
         
-        if(tableWidth == Integer.MIN_VALUE) {
-            computeTableWidth(te, left, right, columnWidth, columnSpacing);
-        } else {
-            if(tableWidth <= 0) {
-                tableWidth = Math.max(0, right - left);
-            }
-
-            for(int col=0 ; col<numColumns ; col++) {
-                int width = 0;
-                int marginLeft = 0;
-                int marginRight = 0;
-                for(int row=0 ; row<numRows ; row++) {
-                    TextAreaModel.TableCellElement cell = te.getCell(row, col);
-                    if(cell != null && cell.getColspan() == 1) {
-                        Style cellStyle = cell.getStyle();
-                        width = Math.max(width, convertToPX(cellStyle, StyleAttribute.WIDTH, tableWidth, tableWidth/numColumns));
-                        marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
-                        marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
-                    }
-                }
-                columnWidth[col] = width;
-                columnSpacing[col  ] = Math.max(columnSpacing[col], marginLeft);
-                columnSpacing[col+1] = Math.max( cellSpacing, marginRight);
-                columnWidthSum += width;
-                if(width <= 0) {
-                    columnsWithoutWidth++;
-                }
-            }
-        }
+        computeTableWidth(te, tableWidth, columnWidth, columnSpacing, columnsWithFixedWidth);
         
         columnSpacing[numColumns] = Math.max(columnSpacing[numColumns],
                 convertToPX0(tableStyle, StyleAttribute.PADDING_RIGHT, box.boxWidth));
@@ -1406,37 +1380,46 @@ public class TextArea extends Widget {
             columnSpacingSum += spacing;
         }
 
-        if(tableWidth == Integer.MIN_VALUE) {
-            for(int width : columnWidth) {
-                columnWidthSum += width;
-            }
-            tableWidth = Math.max(0, Math.min(right - left, columnWidthSum + columnSpacingSum));
+        int columnWidthSum = 0;
+        for(int width : columnWidth) {
+            columnWidthSum += width;
         }
         
-        if(columnsWithoutWidth > 0) {
-            int remainingWidth = Math.max(0, tableWidth - columnSpacingSum - columnWidthSum);
-            for(int col=0 ; col<numColumns ; col++) {
-                if(columnWidth[col] <= 0) {
-                    int width = remainingWidth / columnsWithoutWidth;
-                    columnWidth[col] = width;
-                    columnsWithoutWidth--;
-                    remainingWidth -= width;
-                    columnWidthSum += width;
-                }
-            }
+        if(autoTableWidth) {
+            tableWidth = Math.min(maxTableWidth, columnWidthSum + columnSpacingSum);
         }
         
         int availableColumnWidth = Math.max(0, tableWidth - columnSpacingSum);
         if(availableColumnWidth != columnWidthSum && columnWidthSum > 0) {
             int available = availableColumnWidth;
             int toDistribute = columnWidthSum;
-
+            int remainingCols = numColumns;
+            
             for(int col=0 ; col<numColumns ; col++) {
-                int width = columnWidth[col];
-                int newWidth = (toDistribute > 0) ? width * available / toDistribute : 0;
-                columnWidth[col] = newWidth;
-                available -= newWidth;
-                toDistribute -= width;
+                if(columnsWithFixedWidth[col]) {
+                    int width = columnWidth[col];
+                    available -= width;
+                    toDistribute -= width;
+                    remainingCols--;
+                }
+            }
+            
+            boolean allColumns = false;
+            if(availableColumnWidth < 0) {
+                available = availableColumnWidth;
+                toDistribute = columnWidthSum;
+                remainingCols = numColumns;
+                allColumns = true;
+            }
+            
+            for(int col=0 ; col<numColumns && remainingCols > 0 ; col++) {
+                if(allColumns || !columnsWithFixedWidth[col]) {
+                    int width = columnWidth[col];
+                    int newWidth = (toDistribute > 0) ? width * available / toDistribute : 0;
+                    columnWidth[col] = newWidth;
+                    available -= newWidth;
+                    toDistribute -= width;
+                }
             }
         }
         
