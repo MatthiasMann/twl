@@ -49,6 +49,7 @@ import de.matthiasmann.twl.utils.TextUtil;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -1252,6 +1253,96 @@ public class TextArea extends Widget {
         }
     }
 
+    private void computeTableWidth(TextAreaModel.TableElement te,
+            int left, int right, int columnWidth[], int columnSpacing[]) {
+        final int numColumns = te.getNumColumns();
+        final int numRows = te.getNumRows();
+        final int cellSpacing = te.getCellSpacing();
+        final int cellPadding = te.getCellPadding();
+        
+        int maxTableWidth = Math.max(0, right - left);
+        
+        boolean[] columnsWithFixedWidth = new boolean[numColumns];
+        HashMap<Integer, Integer> colspanWidths = null;
+        
+        for(int col=0 ; col<numColumns ; col++) {
+            int width = 0;
+            int marginLeft = 0;
+            int marginRight = 0;
+            boolean hasFixedWidth = false;
+            
+            for(int row=0 ; row<numRows ; row++) {
+                TextAreaModel.TableCellElement cell = te.getCell(row, col);
+                if(cell != null) {
+                    Style cellStyle = cell.getStyle();
+                    int colspan = cell.getColspan();
+                    int cellWidth = convertToPX(cellStyle, StyleAttribute.WIDTH, maxTableWidth, Integer.MIN_VALUE);
+                    if(cellWidth == Integer.MIN_VALUE && (colspan > 1 || !hasFixedWidth)) {
+                        int paddingLeft = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_LEFT, maxTableWidth));
+                        int paddingRight = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_RIGHT, maxTableWidth));
+
+                        LClip dummy = new LClip(null);
+                        dummy.width = maxTableWidth;
+                        Box dummyBox = layoutBox(dummy, maxTableWidth, paddingLeft, paddingRight, cell);
+                        dummyBox.finish();
+
+                        cellWidth = maxTableWidth - dummyBox.minRemainingWidth;
+                    } else if(colspan == 1 && cellWidth >= 0) {
+                        hasFixedWidth = true;
+                    }
+                    
+                    if(colspan > 1) {
+                        if(colspanWidths == null) {
+                            colspanWidths = new HashMap<Integer, Integer>();
+                        }
+                        Integer key = (col << 16) + colspan;
+                        Integer value = colspanWidths.get(key);
+                        if(value == null || cellWidth > value) {
+                            colspanWidths.put(key, cellWidth);
+                        }
+                    } else {
+                        width = Math.max(width, cellWidth);
+                        marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, maxTableWidth, 0));
+                        marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, maxTableWidth, 0));
+                    }
+                }
+            }
+            
+            columnsWithFixedWidth[col] = hasFixedWidth;
+            columnWidth[col] = width;
+            columnSpacing[col  ] = Math.max(columnSpacing[col], marginLeft);
+            columnSpacing[col+1] = Math.max(cellSpacing, marginRight);
+        }
+        
+        if(colspanWidths != null) {
+            for(Map.Entry<Integer, Integer> e : colspanWidths.entrySet()) {
+                int key = e.getKey();
+                int col = key >>> 16;
+                int colspan = key & 0xFFFF;
+                int width = e.getValue();
+                int remainingCols = colspan;
+                
+                for(int i=0 ; i<colspan ; i++) {
+                    if(columnsWithFixedWidth[col+i]) {
+                        width -= columnWidth[col+i];
+                        remainingCols--;
+                    }
+                }
+                
+                if(width > 0) {
+                    for(int i=0 ; i<colspan && remainingCols > 0 ; i++) {
+                        if(!columnsWithFixedWidth[col+i]) {
+                            int colWidth = width / remainingCols;
+                            columnWidth[col+i] = Math.max(columnWidth[col+i], colWidth);
+                            width -= colWidth;
+                            remainingCols--;
+                        }
+                    }
+                }
+            }
+        }
+    } 
+    
     private void layoutTableElement(Box box, TextAreaModel.TableElement te) {
         final int numColumns = te.getNumColumns();
         final int numRows = te.getNumRows();
@@ -1268,49 +1359,60 @@ public class TextArea extends Widget {
         
         int left = box.computeLeftPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_LEFT, box.boxWidth));
         int right = box.computeRightPadding(convertToPX0(tableStyle, StyleAttribute.MARGIN_RIGHT, box.boxWidth));
-        int tableWidth = Math.min(right - left, convertToPX0(tableStyle, StyleAttribute.WIDTH, box.boxWidth));
-
-        if(tableWidth <= 0) {
-            tableWidth = Math.max(0, right - left);
-        }
+        int tableWidth = Math.min(right - left, convertToPX(tableStyle, StyleAttribute.WIDTH, box.boxWidth, Integer.MIN_VALUE));
 
         int columnWidth[] = new int[numColumns];
         int columnSpacing[] = new int[numColumns + 1];
         int columnWidthSum = 0;
         int columnsWithoutWidth = 0;
-
+        
         columnSpacing[0] = Math.max(cellSpacing, convertToPX0(tableStyle, StyleAttribute.PADDING_LEFT, box.boxWidth));
         
-        for(int col=0 ; col<numColumns ; col++) {
-            int width = 0;
-            int marginLeft = 0;
-            int marginRight = 0;
-            for(int row=0 ; row<numRows ; row++) {
-                TextAreaModel.TableCellElement cell = te.getCell(row, col);
-                if(cell != null && cell.getColspan() == 1) {
-                    Style cellStyle = cell.getStyle();
-                    width = Math.max(width, convertToPX(cellStyle, StyleAttribute.WIDTH, tableWidth, tableWidth/numColumns));
-                    marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
-                    marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
+        if(tableWidth == Integer.MIN_VALUE) {
+            computeTableWidth(te, left, right, columnWidth, columnSpacing);
+        } else {
+            if(tableWidth <= 0) {
+                tableWidth = Math.max(0, right - left);
+            }
+
+            for(int col=0 ; col<numColumns ; col++) {
+                int width = 0;
+                int marginLeft = 0;
+                int marginRight = 0;
+                for(int row=0 ; row<numRows ; row++) {
+                    TextAreaModel.TableCellElement cell = te.getCell(row, col);
+                    if(cell != null && cell.getColspan() == 1) {
+                        Style cellStyle = cell.getStyle();
+                        width = Math.max(width, convertToPX(cellStyle, StyleAttribute.WIDTH, tableWidth, tableWidth/numColumns));
+                        marginLeft = Math.max(marginLeft, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
+                        marginRight = Math.max(marginRight, convertToPX(cellStyle, StyleAttribute.MARGIN_LEFT, tableWidth, 0));
+                    }
+                }
+                columnWidth[col] = width;
+                columnSpacing[col  ] = Math.max(columnSpacing[col], marginLeft);
+                columnSpacing[col+1] = Math.max( cellSpacing, marginRight);
+                columnWidthSum += width;
+                if(width <= 0) {
+                    columnsWithoutWidth++;
                 }
             }
-            columnWidth[col] = width;
-            columnSpacing[col  ] = Math.max(columnSpacing[col], marginLeft);
-            columnSpacing[col+1] = Math.max( cellSpacing, marginRight);
-            columnWidthSum += width;
-            if(width <= 0) {
-                columnsWithoutWidth++;
-            }
         }
-
+        
         columnSpacing[numColumns] = Math.max(columnSpacing[numColumns],
                 convertToPX0(tableStyle, StyleAttribute.PADDING_RIGHT, box.boxWidth));
-        
+
         int columnSpacingSum = 0;
         for(int spacing : columnSpacing) {
             columnSpacingSum += spacing;
         }
 
+        if(tableWidth == Integer.MIN_VALUE) {
+            for(int width : columnWidth) {
+                columnWidthSum += width;
+            }
+            tableWidth = Math.max(0, Math.min(right - left, columnWidthSum + columnSpacingSum));
+        }
+        
         if(columnsWithoutWidth > 0) {
             int remainingWidth = Math.max(0, tableWidth - columnSpacingSum - columnWidthSum);
             for(int col=0 ; col<numColumns ; col++) {
@@ -1323,7 +1425,7 @@ public class TextArea extends Widget {
                 }
             }
         }
-
+        
         int availableColumnWidth = Math.max(0, tableWidth - columnSpacingSum);
         if(availableColumnWidth != columnWidthSum && columnWidthSum > 0) {
             int available = availableColumnWidth;
