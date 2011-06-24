@@ -49,6 +49,11 @@ import de.matthiasmann.twl.utils.SizeSequence;
  */
 public class TreeTable extends TableBase {
     
+    public interface ExpandListener {
+        public void nodeExpanded(int row, TreeTableNode node);
+        public void nodeCollapsed(int row, TreeTableNode node);
+    }
+    
     private final ModelChangeListener modelChangeListener;
     private final TreeLeafCellRenderer leafRenderer;
     private final TreeNodeCellRenderer nodeRenderer;
@@ -57,6 +62,7 @@ public class TreeTable extends TableBase {
     private int nodeStateTableSize;
     TreeTableModel model;
     private NodeState rootNodeState;
+    private ExpandListener[] expandListeners;
 
     @SuppressWarnings("LeakingThisInConstructor")
     public TreeTable() {
@@ -102,6 +108,14 @@ public class TreeTable extends TableBase {
         invalidateLayout();
     }
 
+    public void addExpandListener(ExpandListener listener) {
+        expandListeners = CallbackSupport.addCallbackToList(expandListeners, listener, ExpandListener.class);
+    }
+    
+    public void removeExpandListener(ExpandListener listener) {
+        expandListeners = CallbackSupport.removeCallbackFromList(expandListeners, listener);
+    }
+    
     @Override
     protected void applyTheme(ThemeInfo themeInfo) {
         super.applyTheme(themeInfo);
@@ -275,6 +289,16 @@ public class TreeTable extends TableBase {
                 int rowEnd = getRowEndPosition(row + count);
                 int height = rowEnd - rowStart;
                 scrollPane.scrollToAreaY(rowStart, height, rowHeight/2);
+            }
+        }
+        
+        if(expandListeners != null) {
+            for(ExpandListener el : expandListeners) {
+                if(ns.expanded) {
+                    el.nodeExpanded(row, ns.key);
+                } else {
+                    el.nodeCollapsed(row, ns.key);
+                }
             }
         }
     }
@@ -453,6 +477,7 @@ public class TreeTable extends TableBase {
         Runnable[] callbacks;
         int level;
 
+        @SuppressWarnings("LeakingThisInConstructor")
         public NodeState(TreeTableNode key, NodeState parent) {
             super(key);
             this.parent = parent;
