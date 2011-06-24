@@ -439,9 +439,32 @@ public final class GUI extends Widget {
         this.tooltipOffsetX = tooltipOffsetX;
         this.tooltipOffsetY = tooltipOffsetY;
     }
+    
+    /**
+     * Sets set offscreen rendering delegate on the tooltip window.
+     * Can be null to disable offscreen rendering.
+     * 
+     * @param renderOffscreen the offscreen rendering delegate.
+     * @see Widget#setRenderOffscreen(de.matthiasmann.twl.Widget.RenderOffscreen) 
+     */
+    public void setTooltipWindowRenderOffscreen(RenderOffscreen renderOffscreen) {
+        tooltipWindow.setRenderOffscreen(renderOffscreen);
+    }
+    
+    /**
+     * Changes the theme name of the tooltip window and applies and calls {@link #reapplyTheme() }
+     * 
+     * @param theme the new theme path element
+     * @see Widget#setTheme(java.lang.String) 
+     */
+    public void setTooltipWindowTheme(String theme) {
+        tooltipWindow.setTheme(theme);
+        tooltipWindow.reapplyTheme();
+    }
 
     /**
      * Throws UnsupportedOperationException
+     * @throws UnsupportedOperationException always
      */
     @Override
     public boolean setPosition(int x, int y) {
@@ -450,6 +473,7 @@ public final class GUI extends Widget {
 
     /**
      * Throws UnsupportedOperationException
+     * @throws UnsupportedOperationException always
      */
     @Override
     public void insertChild(Widget child, int index) {
@@ -458,6 +482,7 @@ public final class GUI extends Widget {
 
     /**
      * Throws UnsupportedOperationException
+     * @throws UnsupportedOperationException always
      */
     @Override
     public void removeAllChildren() {
@@ -466,6 +491,7 @@ public final class GUI extends Widget {
 
     /**
      * Throws UnsupportedOperationException
+     * @throws UnsupportedOperationException always
      */
     @Override
     public Widget removeChild(int index) {
