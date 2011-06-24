@@ -2082,6 +2082,18 @@ public class Widget {
     }
 
     /**
+     * Called after all other widgets have been rendered when a drag operation is in progress.
+     * The mouse position can be outsife of this widget
+     * 
+     * @param gui the GUI object
+     * @param mouseX the current mouse X position
+     * @param mouseY the current mouse Y position
+     * @param modifier the current active modifiers - see {@link Event#getModifiers() }
+     */
+    protected void paintDragOverlay(GUI gui, int mouseX, int mouseY, int modifier) {
+    }
+    
+    /**
      * Invalidates only the layout of this widget. Does not invalidate the layout of the parent.
      * Should only be used for things like scrolling.
      *

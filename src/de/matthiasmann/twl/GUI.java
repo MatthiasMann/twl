@@ -616,6 +616,11 @@ public final class GUI extends Widget {
         if(renderer.startRenderering()) {
             try {
                 drawWidget(this);
+                
+                if(dragActive && boundDragPopup == null && lastMouseDownWidget != null) {
+                    lastMouseDownWidget.paintDragOverlay(this,
+                            event.mouseX, event.mouseY, event.modifier);
+                }
             } finally {
                 renderer.endRendering();
             }
