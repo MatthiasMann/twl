@@ -31,6 +31,7 @@ package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+import de.matthiasmann.twl.utils.CallbackSupport;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -43,8 +44,37 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
 
     public static final StateKey STATE_HAS_OPEN_MENUS = StateKey.get("hasOpenMenus");
     
+    public interface Listener {
+        /**
+         * Called before a menu popup is created.
+         * <p>This is only called once until all open popups are closed.</p>
+         * <p>When a menu is displayed as menu bar then no events are fired.</p>
+         * 
+         * @param menu the {@code Menu} which for which a popup will be opened
+         */
+        public void menuOpening(Menu menu);
+        
+        /**
+         * Called after a popup has been opened.
+         * <p>When a menu is displayed as menu bar then no events are fired.</p>
+         * 
+         * @param menu the {@code Menu} which has been opened
+         * @see #menuOpening(de.matthiasmann.twl.Menu) 
+         */
+        public void menuOpened(Menu menu);
+        
+        /**
+         * Called after a popup has been closed.
+         * <p>When a menu is displayed as menu bar then no events are fired.</p>
+         * 
+         * @param menu the {@code Menu} which has been closed
+         */
+        public void menuClosed(Menu menu);
+    }
+    
     private final ArrayList<MenuElement> elements = new ArrayList<MenuElement>();
     private String popupTheme;
+    private Listener[] listeners;
 
     /**
      * Creates a new menu without name.
@@ -68,6 +98,14 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
      */
     public Menu(String name) {
         super(name);
+    }
+    
+    public void addListener(Listener listener) {
+        listeners = CallbackSupport.addCallbackToList(listeners, listener, Listener.class);
+    }
+    
+    public void removeListener(Listener listener) {
+        listeners = CallbackSupport.removeCallbackFromList(listeners, listener);
     }
 
     /**
@@ -254,8 +292,14 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
     }
 
     DialogLayout createPopup(MenuManager mm, int level, Widget btn) {
+        if(listeners != null) {
+            for(Listener l : listeners) {
+                l.menuOpening(this);
+            }
+        }
+        
         Widget[] widgets = createWidgets(mm, level);
-        MenuPopup popup = new MenuPopup(btn, level);
+        MenuPopup popup = new MenuPopup(btn, level, this);
         if(popupTheme != null) {
             popup.setTheme(popupTheme);
         }
@@ -263,25 +307,45 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         popup.setVerticalGroup(popup.createSequentialGroup().addWidgetsWithGap("menuitem", widgets));
         return popup;
     }
+    
+    void fireMenuOpened() {
+        if(listeners != null) {
+            for(Listener l : listeners) {
+                l.menuOpened(this);
+            }
+        }
+    }
+    
+    void fireMenuClosed() {
+        if(listeners != null) {
+            for(Listener l : listeners) {
+                l.menuClosed(this);
+            }
+        }
+    }
 
     static class MenuPopup extends DialogLayout {
         private final Widget btn;
+        private final Menu menu;
         final int level;
 
-        MenuPopup(Widget btn, int level) {
+        MenuPopup(Widget btn, int level, Menu menu) {
             this.btn = btn;
+            this.menu = menu;
             this.level = level;
         }
 
         @Override
         protected void afterAddToGUI(GUI gui) {
             super.afterAddToGUI(gui);
+            menu.fireMenuOpened();
             btn.getAnimationState().setAnimationState(STATE_HAS_OPEN_MENUS, true);
         }
 
         @Override
         protected void beforeRemoveFromGUI(GUI gui) {
             btn.getAnimationState().setAnimationState(STATE_HAS_OPEN_MENUS, false);
+            menu.fireMenuClosed();
             super.beforeRemoveFromGUI(gui);
         }
 
