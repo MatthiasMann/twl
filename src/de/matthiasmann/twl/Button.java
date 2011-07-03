@@ -273,10 +273,6 @@ public class Button extends TextWidget {
             model.setHover(hover);
             model.setArmed(hover && model.isPressed());
         }
-        if(!model.isEnabled()) {
-            // don't process event for a disabled button (except hover above)
-            return false;
-        }
         switch (evt.getType()) {
         case MOUSE_BTNDOWN:
             if(evt.getMouseButton() == mouseButton) {
