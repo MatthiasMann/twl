@@ -91,6 +91,7 @@ public class EditField extends Widget {
     Image selectionImage;
     private char passwordChar;
     private Object errorMsg;
+    private boolean errorMsgFromModel;
     private Callback[] callbacks;
     private Menu popupMenu;
     private boolean textLongerThenWidget;
@@ -505,6 +506,7 @@ public class EditField extends Widget {
     }
 
     public void setErrorMessage(Object errorMsg) {
+        errorMsgFromModel = false;
         getAnimationState().setAnimationState(STATE_ERROR, errorMsg != null);
         if(this.errorMsg != errorMsg) {
             this.errorMsg = errorMsg;
@@ -764,7 +766,17 @@ public class EditField extends Widget {
 
     private void updateText(boolean updateAutoCompletion, int key) {
         if(model != null) {
-            model.setValue(getText());
+            try {
+                model.setValue(getText());
+                if(errorMsgFromModel) {
+                    setErrorMessage(null);
+                }
+            } catch(Exception ex) {
+                if(errorMsg == null || errorMsgFromModel) {
+                    setErrorMessage(ex.getMessage());
+                    errorMsgFromModel = true;
+                }
+            }
         }
         updateTextDisplay();
         if(multiLine) {
@@ -1111,8 +1123,22 @@ public class EditField extends Widget {
     }
 
     private void layoutErrorInfoWindow() {
-        errorInfoWindow.setSize(getWidth(), errorInfoWindow.getPreferredHeight());
-        errorInfoWindow.setPosition(getX(), getBottom());
+        int x = getX();
+        int width = getWidth();
+        
+        Widget container = errorInfoWindow.getParent();
+        if(container != null) {
+            width = Math.max(width, computeSize(
+                    errorInfoWindow.getMinWidth(),
+                    errorInfoWindow.getPreferredWidth(),
+                    errorInfoWindow.getMaxWidth()));
+            int popupMaxRight = container.getInnerRight();
+            if(x + width > popupMaxRight) {
+                x = popupMaxRight - Math.min(width, container.getInnerWidth());
+            }
+            errorInfoWindow.setSize(width, errorInfoWindow.getPreferredHeight());
+            errorInfoWindow.setPosition(x, getBottom());
+        }
     }
 
     @Override
