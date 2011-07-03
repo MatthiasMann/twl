@@ -117,9 +117,12 @@ public abstract class ComboBoxBase extends Widget {
     protected void layout() {
         int btnWidth = button.getPreferredWidth();
         int innerHeight = getInnerHeight();
-        button.setPosition(getInnerRight() - btnWidth, getInnerY());
+        int innerX = getInnerX();
+        int innerY = getInnerY();
+        button.setPosition(getInnerRight() - btnWidth, innerY);
         button.setSize(btnWidth, innerHeight);
-        getLabel().setSize(Math.max(0, button.getX() - getInnerX()), innerHeight);
+        getLabel().setPosition(innerX, innerY);
+        getLabel().setSize(Math.max(0, button.getX() - innerX), innerHeight);
     }
 
     @Override
