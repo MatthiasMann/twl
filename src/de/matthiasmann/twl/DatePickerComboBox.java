@@ -181,17 +181,14 @@ public class DatePickerComboBox extends ComboBoxBase {
     }
     
     class L implements Runnable, CallbackWithReason<Label.CallbackReason>, DatePicker.Callback {
-        @Override
         public void run() {
             updateHover();
         }
 
-        @Override
         public void callback(Label.CallbackReason reason) {
             openPopup();
         }
 
-        @Override
         public void calendarChanged(Calendar calendar) {
             updateLabel();
         }

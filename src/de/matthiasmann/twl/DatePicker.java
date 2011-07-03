@@ -399,7 +399,6 @@ public class DatePicker extends DialogLayout {
             this.day = day;
         }
 
-        @Override
         public boolean getValue() {
             return active;
         }
@@ -412,7 +411,6 @@ public class DatePicker extends DialogLayout {
             }
         }
 
-        @Override
         public void setValue(boolean value) {
             if(value && !active) {
                 calendar.set(Calendar.DAY_OF_MONTH, day);
