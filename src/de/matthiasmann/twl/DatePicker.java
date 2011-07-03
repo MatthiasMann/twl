@@ -112,7 +112,6 @@ public class DatePicker extends DialogLayout {
         this.calendar = Calendar.getInstance();
         
         this.modelChangedCB = new Runnable() {
-            @Override
             public void run() {
                 modelChanged();
             }
