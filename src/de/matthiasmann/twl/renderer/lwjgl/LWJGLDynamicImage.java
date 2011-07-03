@@ -67,10 +67,18 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
     }
 
     public void update(ByteBuffer data, Format format) {
-        update(0, 0, width, height, data, format);
+        update(0, 0, width, height, data, width*4, format);
+    }
+    
+    public void update(ByteBuffer data, int stride, Format format) {
+        update(0, 0, width, height, data, stride, format);
     }
 
     public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data, Format format) {
+        update(xoffset, yoffset, width, height, data, width*4, format);
+    }
+    
+    public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data, int stride, Format format) {
         if(xoffset < 0 || yoffset < 0 || getWidth() <= 0 || getHeight() <= 0) {
             throw new IllegalArgumentException("Negative offsets or size <= 0");
         }
@@ -86,12 +94,20 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
         if(format == null) {
             throw new NullPointerException("format");
         }
-        if(data.remaining() < width*height*4) {
+        if(stride < 0 || (stride & 3) != 0) {
+            throw new IllegalArgumentException("stride");
+        }
+        if(stride < width*4) {
+            throw new IllegalArgumentException("stride too short for width");
+        }
+        if(data.remaining() < stride*(height-1)+width*4) {
             throw new IllegalArgumentException("Not enough data remaining in the buffer");
         }
         int glFormat = (format == Format.RGBA) ? GL11.GL_RGBA : GL12.GL_BGRA;
         bind();
+        GL11.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, stride/4);
         GL11.glTexSubImage2D(target, 0, xoffset, yoffset, width, height, glFormat, GL11.GL_UNSIGNED_BYTE, data);
+        GL11.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, 0);
     }
 
     public Image createTintedVersion(Color color) {

@@ -60,6 +60,17 @@ public interface DynamicImage extends Image, Resource {
     public void update(ByteBuffer data, Format format);
 
     /**
+     * Updates the complete image.
+     * 
+     * @param data The new texels
+     * @param stride The number of bytes from one row to the next
+     * @param format The format of the texel data
+     * @throws IllegalArgumentException if the ByteBuffer does not contain enough data
+     * or the stride is not a multiple of the bytes per pixel of specifed format
+     */
+    public void update(ByteBuffer data, int stride, Format format);
+
+    /**
      * Updates a region of the image with new data.
      * 
      * @param xoffset Specifies a texel offset in the x direction within the image
@@ -72,5 +83,21 @@ public interface DynamicImage extends Image, Resource {
      * or the ByteBuffer does not contain enough data
      */
     public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data, Format format);
+    
+    /**
+     * Updates a region of the image with new data.
+     * 
+     * @param xoffset Specifies a texel offset in the x direction within the image
+     * @param yoffset Specifies a texel offset in the y direction within the image
+     * @param width Specifies the width of the update area
+     * @param height Specifies the height of the update area
+     * @param data The new texels
+     * @param stride The number of bytes from one row to the next
+     * @param format The format of the texel data
+     * @throws IllegalArgumentException if the update area is not within the image bounds
+     * or the ByteBuffer does not contain enough data
+     * or the stride is not a multiple of the bytes per pixel of specifed format
+     */
+    public void update(int xoffset, int yoffset, int width, int height, ByteBuffer data, int stride, Format format);
 
 }
