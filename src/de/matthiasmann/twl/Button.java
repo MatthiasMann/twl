@@ -313,7 +313,10 @@ public class Button extends TextWidget {
             // ignore mouse wheel
             return false;
         }
-        // eat all mouse events
+        if(super.handleEvent(evt)) {
+            return true;
+        }
+        // eat all mouse events - except moused wheel which was checked above
         return evt.isMouseEvent();
     }
 
