@@ -81,6 +81,8 @@ public class TextArea extends Widget {
 
     public static final StateKey STATE_HOVER = StateKey.get("hover");
     
+    private static final char[] EMPTY_CHAR_ARRAY = new char[0];
+    
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
     private final HashMap<String, Image> userImages;
@@ -117,7 +119,6 @@ public class TextArea extends Widget {
         this.userImages = new HashMap<String, Image>();
         this.imageResolvers = new ArrayList<ImageResolver>();
         this.layoutRoot = new LClip(null);
-        this.layoutRoot.lineInfo = new char[0];
         this.allBGImages = new ArrayList<LImage>();
         
         this.modelCB = new Runnable() {
@@ -2033,6 +2034,7 @@ public class TextArea extends Widget {
             this.layout = new ArrayList<LElement>();
             this.bgImages = new ArrayList<LImage>();
             this.anchors = new ArrayList<LElement>();
+            this.lineInfo = EMPTY_CHAR_ARRAY;
         }
 
         @Override
@@ -2089,6 +2091,7 @@ public class TextArea extends Widget {
             }
             layout.clear();
             bgImages.clear();
+            lineInfo = EMPTY_CHAR_ARRAY;
         }
 
         @Override
