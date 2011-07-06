@@ -206,15 +206,18 @@ public class ThemeManager {
     }
 
     public ThemeInfo findThemeInfo(String themePath) {
-        return findThemeInfo(themePath, true);
+        return findThemeInfo(themePath, true, true);
     }
 
-    private ThemeInfo findThemeInfo(String themePath, boolean warn) {
+    private ThemeInfo findThemeInfo(String themePath, boolean warn, boolean useFallback) {
         int start = TextUtil.indexOf(themePath, '.', 0);
         ThemeInfo info = themes.get(themePath.substring(0, start));
         if(info == null) {
             info = themes.get("*");
             if(info != null) {
+                if(!useFallback) {
+                    return null;
+                }
                 DebugHook.getDebugHook().usingFallbackTheme(themePath);
             }
         }
@@ -656,10 +659,10 @@ public class ThemeManager {
         }
     }
 
-    ThemeInfo resolveWildcard(String base, String name) {
+    ThemeInfo resolveWildcard(String base, String name, boolean useFallback) {
         assert(base.length() == 0 || base.endsWith("."));
         String fullPath = base.concat(name);
-        ThemeInfo info = findThemeInfo(fullPath, false);
+        ThemeInfo info = findThemeInfo(fullPath, false, useFallback);
         if(info != null && ((ThemeInfoImpl)info).maybeUsedFromWildcard) {
             return info;
         }
@@ -682,7 +685,7 @@ public class ThemeManager {
                     push(obj);
                     return;
                 }
-                obj = env.getChildTheme(name);
+                obj = env.getChildThemeImpl(name, false);
                 if(obj != null) {
                     push(obj);
                     return;

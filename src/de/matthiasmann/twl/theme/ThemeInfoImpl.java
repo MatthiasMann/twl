@@ -62,12 +62,16 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
     }
 
     public ThemeInfo getChildTheme(String theme) {
+        return getChildThemeImpl(theme, true);
+    }
+    
+    ThemeInfo getChildThemeImpl(String theme, boolean useFallback) {
         ThemeInfo info = children.get(theme);
         if(info == null) {
             if(wildcardImportPath != null) {
-                info = manager.resolveWildcard(wildcardImportPath, theme);
+                info = manager.resolveWildcard(wildcardImportPath, theme, useFallback);
             }
-            if(info == null) {
+            if(info == null && useFallback) {
                 DebugHook.getDebugHook().missingChildTheme(this, theme);
             }
         }
