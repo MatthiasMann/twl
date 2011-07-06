@@ -693,6 +693,11 @@ public class ThemeManager {
                 push(obj);
                 return;
             }
+            Font font = fonts.get(name);
+            if(font != null) {
+                push(font);
+                return;
+            }
             throw new IllegalArgumentException("variable not found: " + name);
         }
 
