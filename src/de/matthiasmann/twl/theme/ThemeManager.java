@@ -636,7 +636,7 @@ public class ThemeManager {
         try {
             return mathInterpreter.execute(str);
         } catch(ParseException ex) {
-            throw xmlp.error("unable to evaluate", ex);
+            throw xmlp.error("unable to evaluate", unwrap(ex));
         }
     }
 
@@ -644,7 +644,15 @@ public class ThemeManager {
         try {
             return mathInterpreter.executeCreateObject(str, type);
         } catch(ParseException ex) {
-            throw xmlp.error("unable to evaluate", ex);
+            throw xmlp.error("unable to evaluate", unwrap(ex));
+        }
+    }
+    
+    private Throwable unwrap(ParseException ex) {
+        if(ex.getCause() != null) {
+            return ex.getCause();
+        } else {
+            return ex;
         }
     }
 
