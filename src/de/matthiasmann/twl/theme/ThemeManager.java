@@ -679,13 +679,13 @@ public class ThemeManager {
         }
 
         public void accessVariable(String name) {
-            if(env != null) {
-                Object obj = env.getParameterValue(name, false);
+            for(ThemeInfoImpl e=env ; e!=null ; e=e.parent) {
+                Object obj = e.getParameterValue(name, false);
                 if(obj != null) {
                     push(obj);
                     return;
                 }
-                obj = env.getChildThemeImpl(name, false);
+                obj = e.getChildThemeImpl(name, false);
                 if(obj != null) {
                     push(obj);
                     return;
