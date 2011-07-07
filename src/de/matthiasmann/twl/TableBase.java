@@ -189,6 +189,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     public static final StateKey STATE_ROW_SELECTED = StateKey.get("rowSelected");
     public static final StateKey STATE_ROW_HOVER = StateKey.get("rowHover");
     public static final StateKey STATE_ROW_DROPTARGET = StateKey.get("rowDropTarget");
+    public static final StateKey STATE_ROW_ODD = StateKey.get("rowOdd");
     public static final StateKey STATE_LEAD_ROW = StateKey.get("leadRow");
     public static final StateKey STATE_SELECTED = StateKey.get("selected");
     public static final StateKey STATE_SORT_ASCENDING  = StateKey.get("sortAscending");
@@ -889,6 +890,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                     lastMouseY >= curY && lastMouseY < (curY + curRowHeight));
             animState.setAnimationState(STATE_LEAD_ROW, row == leadRow);
             animState.setAnimationState(STATE_ROW_DROPTARGET, !dropMarkerBeforeRow && row == dropMarkerRow);
+            animState.setAnimationState(STATE_ROW_ODD, (row & 1) == 1);
             img.draw(animState, x, curY, width, curRowHeight);
 
             rowStartPos = rowEndPos;
