@@ -222,6 +222,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     protected MouseCursor columnResizeCursor;
     protected MouseCursor normalCursor;
     protected MouseCursor dragNotPossibleCursor;
+    protected boolean ensureColumnHeaderMinWidth;
 
     protected int numRows;
     protected int numColumns;
@@ -623,6 +624,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
         this.defaultColumnWidth = themeInfo.getParameter("columnHeaderWidth", 256);
         this.columnHeaderHeight = themeInfo.getParameter("columnHeaderHeight", 10);
         this.columnDividerDragableDistance = themeInfo.getParameter("columnDividerDragableDistance", 3);
+        this.ensureColumnHeaderMinWidth = themeInfo.getParameter("ensureColumnHeaderMinWidth", false);
         
         for(CellRenderer cellRenderer : cellRenderers.getUniqueValues()) {
             applyCellRendererTheme(cellRenderer);
@@ -1617,6 +1619,9 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 width = clampColumnWidth(columnHeaders[index].springWidth);
             } else {
                 width = computePreferredColumnWidth(index);
+                if(ensureColumnHeaderMinWidth) {
+                    width = Math.max(width, columnHeaders[index].getMinWidth());
+                }
             }
             return setSize(index, width);
         }
@@ -1719,6 +1724,17 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 mouseLeftTableArea();
             }
             return super.handleEvent(evt);
+        }
+
+        @Override
+        protected void paintWidget(GUI gui) {
+            Renderer renderer = gui.getRenderer();
+            renderer.clipEnter(getX(), getY(), getWidth(), getHeight());
+            try {
+                paintLabelText(getAnimationState());
+            } finally {
+                renderer.clipLeave();
+            }
         }
 
         public void run() {
