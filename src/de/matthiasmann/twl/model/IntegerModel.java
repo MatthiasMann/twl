@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,12 +29,14 @@
  */
 package de.matthiasmann.twl.model;
 
+import de.matthiasmann.twl.utils.WithRunnableCallback;
+
 /**
  * A generic model for integer values.
  * 
  * @author Matthias Mann
  */
-public interface IntegerModel {
+public interface IntegerModel extends WithRunnableCallback {
 
     public int getValue();
 
@@ -43,8 +45,5 @@ public interface IntegerModel {
     public int getMaxValue();
     
     public void setValue(int value);
-
-    public void addCallback(Runnable callback);
     
-    public void removeCallback(Runnable callback);
 }

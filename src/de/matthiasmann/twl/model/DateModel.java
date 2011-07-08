@@ -29,20 +29,18 @@
  */
 package de.matthiasmann.twl.model;
 
+import de.matthiasmann.twl.utils.WithRunnableCallback;
+
 /**
  * A date model which stores the current date in milliseconds
  * 
  * @author Matthias Mann
  * @see System#currentTimeMillis() 
  */
-public interface DateModel {
+public interface DateModel extends WithRunnableCallback {
     
     public long getValue();
     
     public void setValue(long date);
-    
-    public void addCallback(Runnable callback);
-    
-    public void removeCallback(Runnable callback);
     
 }

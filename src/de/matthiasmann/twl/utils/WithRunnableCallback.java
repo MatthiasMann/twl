@@ -27,19 +27,17 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package de.matthiasmann.twl.model;
-
-import de.matthiasmann.twl.utils.WithRunnableCallback;
+package de.matthiasmann.twl.utils;
 
 /**
- * A string data model.
+ * An interface to add/remove callbacks of type Runnable
  * 
  * @author Matthias Mann
  */
-public interface StringModel extends WithRunnableCallback {
+public interface WithRunnableCallback {
     
-    String getValue();
-
-    void setValue(String value);
+    public void addCallback(Runnable cb);
+    
+    public void removeCallback(Runnable cb);
     
 }

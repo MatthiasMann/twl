@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,12 +29,14 @@
  */
 package de.matthiasmann.twl.model;
 
+import de.matthiasmann.twl.utils.WithRunnableCallback;
+
 /**
  * A generic model for float values.
  *
  * @author Matthias Mann
  */
-public interface FloatModel {
+public interface FloatModel extends WithRunnableCallback {
 
     public float getValue();
 
@@ -43,8 +45,5 @@ public interface FloatModel {
     public float getMaxValue();
 
     public void setValue(float value);
-
-    public void addCallback(Runnable callback);
-
-    public void removeCallback(Runnable callback);
+    
 }

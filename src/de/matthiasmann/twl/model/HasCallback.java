@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,13 +30,14 @@
 package de.matthiasmann.twl.model;
 
 import de.matthiasmann.twl.utils.CallbackSupport;
+import de.matthiasmann.twl.utils.WithRunnableCallback;
 
 /**
  * A class to manage callbacks.
  *
  * @author Matthias Mann
  */
-public class HasCallback {
+public class HasCallback implements WithRunnableCallback {
 
     private Runnable[] callbacks;
 
