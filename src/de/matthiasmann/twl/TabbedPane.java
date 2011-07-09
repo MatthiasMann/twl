@@ -196,7 +196,9 @@ public class TabbedPane extends Widget {
                 }
             }
             
-            tab.pane.requestKeyboardFocus();
+            if(tab.pane != null) {
+                tab.pane.requestKeyboardFocus();
+            }
         }
     }
 
@@ -437,12 +439,12 @@ public class TabbedPane extends Widget {
     }
 
     public class Tab extends HasCallback implements BooleanModel {
-        final ToggleButton button;
+        final TabButton button;
         Widget pane;
+        Runnable closeCallback;
 
         Tab() {
-            button = new ToggleButton(this);
-            button.setTheme("tabbutton");
+            button = new TabButton(this);
         }
 
         public boolean getValue() {
@@ -482,6 +484,20 @@ public class TabbedPane extends Widget {
             return this;
         }
 
+        public Runnable getCloseCallback() {
+            return closeCallback;
+        }
+
+        public void setCloseCallback(Runnable closeCallback) {
+            if(this.closeCallback != null) {
+                button.removeCloseButton();
+            }
+            this.closeCallback = closeCallback;
+            if(closeCallback != null) {
+                button.setCloseButton(closeCallback);
+            }
+        }
+
         @Override
         protected void doCallback() {
             if(pane != null) {
@@ -491,6 +507,58 @@ public class TabbedPane extends Widget {
         }
     }
 
+    private static class TabButton extends ToggleButton {
+        Button closeButton;
+        Alignment closeButtonAlignment;
+        int closeButtonOffsetX;
+        int closeButtonOffsetY;
+        
+        TabButton(BooleanModel model) {
+            super(model);
+            closeButtonAlignment = Alignment.RIGHT;
+        }
+
+        @Override
+        protected void applyTheme(ThemeInfo themeInfo) {
+            super.applyTheme(themeInfo);
+            if(closeButton != null) {
+                closeButtonAlignment = themeInfo.getParameter("closeButtonAlignment", Alignment.RIGHT);
+                closeButtonOffsetX = themeInfo.getParameter("closeButtonOffsetX", 0);
+                closeButtonOffsetY = themeInfo.getParameter("closeButtonOffsetY", 0);
+            } else {
+                closeButtonAlignment = Alignment.RIGHT;
+                closeButtonOffsetX = 0;
+                closeButtonOffsetY = 0;
+            }
+        }
+
+        void setCloseButton(Runnable callback) {
+            closeButton = new Button();
+            closeButton.setTheme("closeButton");
+            setTheme("tabbuttonWithCloseButton");
+            reapplyTheme();
+            add(closeButton);
+            closeButton.addCallback(callback);
+        }
+        
+        void removeCloseButton() {
+            removeChild(closeButton);
+            closeButton = null;
+            setTheme("tabbutton");
+            reapplyTheme();
+        }
+        
+        @Override
+        protected void layout() {
+            if(closeButton != null) {
+                closeButton.adjustSize();
+                closeButton.setPosition(
+                        getX() + closeButtonOffsetX + closeButtonAlignment.computePositionX(getWidth(), closeButton.getWidth()),
+                        getY() + closeButtonOffsetY + closeButtonAlignment.computePositionY(getHeight(), closeButton.getHeight()));
+            }
+        }
+        
+    }
     private static class Container extends Widget {
         @Override
         public int getMinWidth() {
