@@ -84,6 +84,7 @@ public class ListBox<T> extends Widget {
     private boolean rowMajor = true;
     private boolean fixedCellWidth;
     private boolean fixedCellHeight;
+    private int minDisplayedRows = 1;
 
     private int numCols = 1;
     private int firstVisible;
@@ -394,6 +395,7 @@ public class ListBox<T> extends Widget {
         setRowMajor(themeInfo.getParameter("rowMajor", true));
         setFixedCellWidth(themeInfo.getParameter("fixedCellWidth", false));
         setFixedCellHeight(themeInfo.getParameter("fixedCellHeight", false));
+        minDisplayedRows = themeInfo.getParameter("minDisplayedRows", 1);
     }
 
     protected void goKeyboard(int dir) {
@@ -494,7 +496,12 @@ public class ListBox<T> extends Widget {
 
     @Override
     public int getMinHeight() {
-        return Math.max(super.getMinHeight(), scrollbar.getMinHeight());
+        int minHeight = Math.max(super.getMinHeight(), scrollbar.getMinHeight());
+        if(minDisplayedRows > 0) {
+            minHeight = Math.max(minHeight, getBorderVertical() +
+                    Math.min(numEntries, minDisplayedRows) * cellHeight);
+        }
+        return minHeight;
     }
 
     @Override
