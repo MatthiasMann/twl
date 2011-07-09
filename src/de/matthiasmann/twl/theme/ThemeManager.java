@@ -712,6 +712,12 @@ public class ThemeManager {
 
         @Override
         protected Object accessField(Object obj, String field) {
+            if(obj instanceof ThemeInfoImpl) {
+                Object result = ((ThemeInfoImpl)obj).get(field);
+                if(result != null) {
+                    return result;
+                }
+            }
             if(obj instanceof ParameterMapImpl) {
                 Object result = ((ParameterMapImpl)obj).getParameterValue(field, false);
                 if(result == null) {
