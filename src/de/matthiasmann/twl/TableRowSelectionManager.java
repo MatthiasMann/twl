@@ -66,6 +66,10 @@ public class TableRowSelectionManager implements TableSelectionManager {
         this(new DefaultTableSelectionModel());
     }
 
+    public TableSelectionModel getSelectionModel() {
+        return selectionModel;
+    }
+
     public void setAssociatedTable(TableBase base) {
         if(tableBase != base) {
             if(tableBase != null && base != null) {

@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.TableSelectionModel;
+
 /**
  *
  * @author Matthias Mann
@@ -40,6 +42,8 @@ public interface TableSelectionManager {
         CELLS
     }
 
+    public TableSelectionModel getSelectionModel();
+    
     public void setAssociatedTable(TableBase base);
 
     public SelectionGranularity getSelectionGranularity();
