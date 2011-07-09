@@ -79,6 +79,22 @@ public class Border {
         return top;
     }
 
+    public int getBottom() {
+        return bottom;
+    }
+
+    public int getLeft() {
+        return left;
+    }
+
+    public int getRight() {
+        return right;
+    }
+
+    public int getTop() {
+        return top;
+    }
+
     @Override
     public String toString() {
         return "[Border top="+top+" left="+left+" bottom="+bottom+" right="+right+"]";
