@@ -78,6 +78,10 @@ class ThemeInfoImpl extends ParameterMapImpl implements ThemeInfo {
         return info;
     }
 
+    ThemeInfoImpl get(String name) {
+        return children.get(name);
+    }
+    
     public String getThemePath() {
         return getThemePath(0).toString();
     }

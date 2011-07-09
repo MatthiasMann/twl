@@ -432,7 +432,13 @@ public class ThemeManager {
             }
             String ref = xmlp.getAttributeValue(null, "ref");
             if(ref != null) {
-                ThemeInfoImpl tiRef = (ThemeInfoImpl)findThemeInfo(ref);
+                ThemeInfoImpl tiRef = null;
+                if(parent != null) {
+                    tiRef = parent.get(ref);
+                }
+                if(tiRef == null) {
+                    tiRef = (ThemeInfoImpl)findThemeInfo(ref);
+                }
                 if(tiRef == null) {
                     throw xmlp.error("referenced theme info not found: " + ref);
                 }
