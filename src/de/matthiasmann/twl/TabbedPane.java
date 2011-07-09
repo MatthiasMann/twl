@@ -547,6 +547,16 @@ public class TabbedPane extends Widget {
             setTheme("tabbutton");
             reapplyTheme();
         }
+
+        @Override
+        public int getPreferredInnerHeight() {
+            return computeTextHeight();
+        }
+
+        @Override
+        public int getPreferredInnerWidth() {
+            return computeTextWidth();
+        }
         
         @Override
         protected void layout() {
