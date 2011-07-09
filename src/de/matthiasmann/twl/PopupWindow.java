@@ -225,6 +225,16 @@ public class PopupWindow extends Widget {
     }
 
     @Override
+    public int getMinWidth() {
+        return BoxLayout.computeMinWidthVertical(this);
+    }
+
+    @Override
+    public int getMinHeight() {
+        return BoxLayout.computeMinHeightHorizontal(this);
+    }
+
+    @Override
     public int getPreferredInnerWidth() {
         return BoxLayout.computePreferredWidthVertical(this);
     }
