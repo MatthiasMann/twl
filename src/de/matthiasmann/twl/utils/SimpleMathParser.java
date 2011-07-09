@@ -47,6 +47,7 @@ public class SimpleMathParser {
         public void mul();
         public void div();
         public void callFunction(String name, int args);
+        public void negate();
     }
 
     final String str;
@@ -159,6 +160,10 @@ public class SimpleMathParser {
                 }
                 ch = peek();
             }
+        } else if(ch == '-') {
+            pos++;
+            parseIdentOrConst();
+            interpreter.negate();
         } else if(ch == '.' || ch == '-' || ch == '+' || Character.isDigit((char)ch)) {
             parseConst();
         } else if(ch == '(') {

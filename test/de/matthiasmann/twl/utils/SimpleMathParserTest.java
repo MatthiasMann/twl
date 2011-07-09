@@ -91,7 +91,8 @@ public class SimpleMathParserTest {
         TestInterpreter ti = new TestInterpreter();
         SimpleMathParser.interpret("-3 / 2", ti);
         assertEquals(
-                "loadConst -3\n" +
+                "loadConst 3\n" +
+                "negate\n" +
                 "loadConst 2\n" +
                 "div\n", ti.toString());
     }
@@ -152,6 +153,10 @@ public class SimpleMathParserTest {
 
         public void callFunction(String name, int args) {
             sb.append("callFunction ").append(name).append(' ').append(args).append('\n');
+        }
+
+        public void negate() {
+            sb.append("negate\n");
         }
     }
 }

@@ -197,6 +197,15 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
         }
     }
 
+    public void negate() {
+        Number a = popNumber();
+        if(isFloat(a)) {
+            push(-a.floatValue());
+        } else {
+            push(-a.intValue());
+        }
+    }
+
     public void accessArray() {
         Number idx = popNumber();
         Object obj = pop();
@@ -223,29 +232,47 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
     }
 
     protected Object accessField(Object obj, String field) {
+        Class<? extends Object> clazz = obj.getClass();
         try {
-            if(obj.getClass().isArray()) {
+            if(clazz.isArray()) {
                 if("length".equals(field)) {
                     return Array.getLength(obj);
                 }
             } else {
-                for(Method m : obj.getClass().getMethods()) {
-                    if((m.getModifiers() & Modifier.STATIC) == 0 &&
-                            m.getReturnType() != Void.TYPE &&
-                            m.getParameterTypes().length == 0 &&
-                            (cmpName(m, field, "get") || cmpName(m, field, "is"))) {
-                        return m.invoke(obj);
+                Method m = findGetter(clazz, field);
+                if(m == null) {
+                    for(Class<?> i : clazz.getInterfaces()) {
+                        m = findGetter(i, field);
+                        if(m != null) {
+                            break;
+                        }
                     }
+                }
+                if(m != null) {
+                    return m.invoke(obj);
                 }
             }
         } catch(Throwable ex) {
             throw new IllegalStateException("error accessing field '"+field+
-                        "' of class '"+obj.getClass()+"'", ex);
+                        "' of class '"+clazz+"'", ex);
         }
         throw new IllegalStateException("unknown field '"+field+
-                    "' of class '"+obj.getClass()+"'");
+                    "' of class '"+clazz+"'");
     }
 
+    private static Method findGetter(Class<?> clazz, String field) {
+        for(Method m : clazz.getMethods()) {
+            if(!Modifier.isStatic(m.getModifiers()) &&
+                    m.getReturnType() != Void.TYPE &&
+                    Modifier.isPublic(m.getDeclaringClass().getModifiers()) &&
+                    m.getParameterTypes().length == 0 &&
+                    (cmpName(m, field, "get") || cmpName(m, field, "is"))) {
+                return m;
+            }
+        }
+        return null;
+    }
+    
     private static boolean cmpName(Method m, String fieldName, String prefix) {
         String methodName = m.getName();
         int prefixLength = prefix.length();
