@@ -29,6 +29,7 @@
     splitx          CDATA #IMPLIED
     splity          CDATA #IMPLIED
     center          (true|false) #IMPLIED
+    rot             (0|90|180|270) #IMPLIED
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
