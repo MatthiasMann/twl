@@ -75,17 +75,19 @@ public class LWJGLFont implements Font, Font2 {
 
     private FontState createFontState(StateExpression cond, Map<String, String> params) {
         String colorStr = params.get("color");
+        Color color;
         if(colorStr == null) {
-            throw new IllegalArgumentException("color needs to be defined");
+            color = Color.WHITE; 
+        } else {
+            color = Color.parserColor(colorStr);
+            if(color == null) {
+                throw new IllegalArgumentException("unknown color name: " + colorStr);
+            }
         }
         int offsetX = parseInt(params.get("offsetX"), 0);
         int offsetY = parseInt(params.get("offsetY"), 0);
         int style = 0;
         int underlineOffset = parseInt(params.get("underlineOffset"), 0);
-        Color color = Color.parserColor(colorStr);
-        if(color == null) {
-            throw new IllegalArgumentException("unknown color name: " + colorStr);
-        }
         if(parseBoolean(params.get("underline"))) {
             style |= STYLE_UNDERLINE;
         }
