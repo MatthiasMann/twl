@@ -439,12 +439,13 @@ public class TextArea extends Widget {
         final int innerX = getInnerX();
         final int innerY = getInnerY();
         final AnimationState as = getAnimationState();
+        final Renderer renderer = gui.getRenderer();
 
         for(int i=0,n=bi.size() ; i<n ; i++) {
-            bi.get(i).draw(innerX, innerY, as);
+            bi.get(i).draw(innerX, innerY, as, renderer);
         }
 
-        layoutRoot.draw(innerX, innerY, as);
+        layoutRoot.draw(innerX, innerY, as, renderer);
     }
 
     @Override
@@ -849,6 +850,7 @@ public class TextArea extends Widget {
         final Style style = te.getStyle();
         final Font font = selectFont(style);
         final boolean pre = style.get(StyleAttribute.PREFORMATTED, styleClassResolver);
+        final Color color = style.get(StyleAttribute.COLOR, styleClassResolver);
 
         if(font == null) {
             return;
@@ -864,9 +866,9 @@ public class TextArea extends Widget {
         while(idx < text.length()) {
             int end = TextUtil.indexOf(text, '\n', idx);
             if(pre) {
-                layoutTextPre(box, te, font, text, idx, end);
+                layoutTextPre(box, te, font, color, text, idx, end);
             } else {
-                layoutText(box, te, font, text, idx, end);
+                layoutText(box, te, font, color, text, idx, end);
             }
             
             if(end < text.length() && text.charAt(end) == '\n') {
@@ -880,7 +882,7 @@ public class TextArea extends Widget {
     }
 
     private void layoutText(Box box, TextAreaModel.TextElement te, Font font,
-            String text, int textStart, int textEnd) {
+            Color color, String text, int textStart, int textEnd) {
         int idx = textStart;
         // trim start
         while(textStart < textEnd && isSkip(text.charAt(textStart))) {
@@ -968,7 +970,7 @@ public class TextArea extends Widget {
             }
 
             if(idx < end) {
-                LText lt = new LText(te, font, text, idx, end);
+                LText lt = new LText(te, font, color, text, idx, end);
                 if(advancePastFloaters) {
                     box.advancePastFloaters(lt.width, box.marginLeft, box.marginRight);
                 }
@@ -1000,7 +1002,7 @@ public class TextArea extends Widget {
     }
 
     private void layoutTextPre(Box box, TextAreaModel.TextElement te, Font font,
-            String text, int textStart, int textEnd) {
+            Color color, String text, int textStart, int textEnd) {
         int idx = textStart;
         for(;;) {
             while(idx < textEnd) {
@@ -1028,7 +1030,7 @@ public class TextArea extends Widget {
 
                     end = idx + Math.max(1, count);
 
-                    LText lt = new LText(te, font, text, idx, end);
+                    LText lt = new LText(te, font, color, text, idx, end);
                     lt.x = box.getXAndAdvance(lt.width);
                     lt.marginTop = (short)box.marginTop;
                     box.layout.add(lt);
@@ -1108,6 +1110,8 @@ public class TextArea extends Widget {
             return;
         }
         
+        Color color = style.get(StyleAttribute.COLOR, styleClassResolver);
+        
         doMarginTop(box, style);
         LElement anchor = box.addAnchor(ole);
 
@@ -1129,7 +1133,7 @@ public class TextArea extends Widget {
             Style liStyle = li.getStyle();
             doMarginTop(box, liStyle);
             
-            LText lt = new LText(ole, font, label, 0, label.length());
+            LText lt = new LText(ole, font, color, label, 0, label.length());
             int labelWidth = lt.width;
             int labelHeight = lt.height;
 
@@ -1929,7 +1933,7 @@ public class TextArea extends Widget {
         }
 
         void adjustWidget(int offX, int offY) {}
-        void draw(int offX, int offY, AnimationState as) {}
+        void draw(int offX, int offY, AnimationState as, Renderer renderer) {}
         void destroy() {}
 
         boolean isInside(int x, int y) {
@@ -1953,14 +1957,16 @@ public class TextArea extends Widget {
 
     static class LText extends LElement {
         final Font font;
+        final Color color;
         final String text;
         final int start;
         final int end;
         FontCache cache;
 
-        public LText(TextAreaModel.Element element, Font font, String text, int start, int end) {
+        public LText(TextAreaModel.Element element, Font font, Color color, String text, int start, int end) {
             super(element);
             this.font = font;
+            this.color = Color.WHITE.equals(color) ? null : color;
             this.text = text;
             this.start = start;
             this.end = end;
@@ -1975,7 +1981,22 @@ public class TextArea extends Widget {
         }
 
         @Override
-        void draw(int offX, int offY, AnimationState as) {
+        void draw(int offX, int offY, AnimationState as, Renderer renderer) {
+            if(color != null) {
+                drawTextWithColor(offX, offY, as, renderer);
+            } else {
+                drawText(offX, offY, as);
+            }
+        }
+        
+        private void drawTextWithColor(int offX, int offY, AnimationState as, Renderer renderer) {
+            Color c = color;
+            renderer.pushGlobalTintColor(c.getRedFloat(), c.getGreenFloat(), c.getBlueFloat(), c.getAlphaFloat());
+            drawText(offX, offY, as);
+            renderer.popGlobalTintColor();
+        }
+        
+        private void drawText(int offX, int offY, AnimationState as) {
             if(cache != null) {
                 cache.draw(as, x+offX, y+offY);
             } else {
@@ -2018,7 +2039,7 @@ public class TextArea extends Widget {
         }
         
         @Override
-        void draw(int offX, int offY, AnimationState as) {
+        void draw(int offX, int offY, AnimationState as, Renderer renderer) {
             img.draw(as, x+offX, y+offY, width, height);
         }
     }
@@ -2038,21 +2059,20 @@ public class TextArea extends Widget {
         }
 
         @Override
-        void draw(int offX, int offY, AnimationState as) {
+        void draw(int offX, int offY, AnimationState as, Renderer renderer) {
             offX += x;
             offY += y;
-            Renderer renderer = getGUI().getRenderer();
             renderer.clipEnter(offX, offY, width, height);
             try {
                 if(!renderer.clipIsEmpty()) {
-                    drawNoClip(offX, offY, as);
+                    drawNoClip(offX, offY, as, renderer);
                 }
             } finally {
                 renderer.clipLeave();
             }
         }
 
-        void drawNoClip(int offX, int offY, AnimationState as) {
+        void drawNoClip(int offX, int offY, AnimationState as, Renderer renderer) {
             final ArrayList<LElement> ll = layout;
             final TextAreaModel.Element hoverElement;
             if(curLElementUnderMouse != null) {
@@ -2063,7 +2083,7 @@ public class TextArea extends Widget {
             for(int i=0,n=ll.size() ; i<n ; i++) {
                 LElement le = ll.get(i);
                 as.setAnimationState(STATE_HOVER, hoverElement == le.element);
-                le.draw(offX, offY, as);
+                le.draw(offX, offY, as, renderer);
             }
         }
 

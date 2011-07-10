@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.textarea;
 
+import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.textarea.TextAreaModel.Clear;
 import de.matthiasmann.twl.textarea.TextAreaModel.Display;
 import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 
 /**
  *
+ * @param <T> the data type for this style attribute
  * @author Matthias Mann
  */
 public final class StyleAttribute<T> {
@@ -55,6 +57,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<OrderedListType> LIST_STYLE_TYPE = new StyleAttribute<OrderedListType>(true, OrderedListType.class, OrderedListType.DECIMAL);
     public static final StyleAttribute<Boolean> PREFORMATTED = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
     public static final StyleAttribute<Boolean> BREAKWORD = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
+    public static final StyleAttribute<Color> COLOR = new StyleAttribute<Color>(true, Color.class, Color.WHITE);
 
     // non cascading attribute
     public static final StyleAttribute<Clear> CLEAR = new StyleAttribute<Clear>(false, Clear.class, Clear.NONE);
@@ -131,6 +134,7 @@ public final class StyleAttribute<T> {
     private final T defaultValue;
     private final int ordinal;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     private StyleAttribute(boolean inherited, Class<T> dataType, T defaultValue) {
         this.inherited = inherited;
         this.dataType = dataType;

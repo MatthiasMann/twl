@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.textarea;
 
+import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.utils.ParameterStringParser;
 import de.matthiasmann.twl.utils.TextUtil;
 import java.util.HashMap;
@@ -131,6 +132,10 @@ public class CSSStyle extends Style {
         }
         if("background-image".equals(key)) {
             parseURL(StyleAttribute.BACKGROUND_IMAGE, value);
+            return;
+        }
+        if("color".equals(key)) {
+            parseColor(StyleAttribute.COLOR, value);
             return;
         }
         throw new IllegalArgumentException("Unsupported key: " + key);
@@ -237,6 +242,40 @@ public class CSSStyle extends Style {
             }
         }
         put(attribute, value);
+    }
+
+    private void parseColor(StyleAttribute<Color> attribute, String value) {
+        Color color;
+        if(value.startsWith("rgb(") && value.endsWith(")")) {
+            value = value.substring(4, value.length() - 1).trim();
+            String[] parts = value.split(",");
+            if(parts.length != 3) {
+                throw new IllegalArgumentException("3 values required for rgb()");
+            }
+            int[] rgb = new int[3];
+            for(int i=0 ; i<3 ; i++) {
+                String part = parts[i].trim();
+                boolean percent = part.endsWith("%");
+                if(percent) {
+                    part = part.substring(0, part.length()-1).trim();
+                }
+                int v = Integer.parseInt(part);
+                if(percent) {
+                    v = 255*v / 100;
+                }
+                if(v < 0 || v > 255) {
+                    throw new IllegalArgumentException("Value out of range");
+                }
+                rgb[i] = v;
+            }
+            color = new Color((byte)rgb[0], (byte)rgb[1], (byte)rgb[2], (byte)255);
+        } else {
+            color = Color.parserColor(value);
+            if(color == null) {
+                throw new IllegalArgumentException("unknown color name: " + value);
+            }
+        }
+        put(attribute, color);
     }
     
     static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
