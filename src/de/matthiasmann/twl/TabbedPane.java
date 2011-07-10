@@ -176,6 +176,8 @@ public class TabbedPane extends Widget {
             }
 
             if(scrollTabs) {
+                validateLayout();
+                
                 int pos, end, size;
                 if(tabPosition.horz) {
                     pos  = tab.button.getX() - tabBox.getX();
