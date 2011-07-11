@@ -92,6 +92,8 @@ import org.xmlpull.v1.XmlPullParserFactory;
  */
 public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     
+    private static final XmlPullParserFactory XPPF;
+    
     private final ArrayList<Element> elements;
     private final ArrayList<String> styleSheetLinks;
     private final HashMap<String, Element> idMap;
@@ -103,6 +105,19 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private ContainerElement curContainer;
 
+    static {
+        XmlPullParserFactory xppf = null;
+        try {
+            xppf = XmlPullParserFactory.newInstance();
+            xppf.setNamespaceAware(false);
+            xppf.setValidating(false);
+        } catch(XmlPullParserException ex) {
+             Logger.getLogger(HTMLTextAreaModel.class.getName()).log(
+                     Level.SEVERE, "Unable to construct XmlPullParserFactory", ex);
+        }
+        XPPF = xppf;
+    }
+    
     /**
      * Creates a new {@code HTMLTextAreaModel} without content.
      */
@@ -120,6 +135,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * @param html the HTML to parse
      * @see #setHtml(java.lang.String)
      */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public HTMLTextAreaModel(String html) {
         this();
         setHtml(html);
@@ -133,6 +149,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
      * @param r the reader to parse html from
      * @throws IOException if an error occured while reading
      */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public HTMLTextAreaModel(Reader r) throws IOException {
         this();
         parseXHTML(r);
@@ -224,11 +241,13 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.idMap.clear();
         this.title = null;
 
+        if(XPPF == null) {
+            doCallback();
+            return;
+        }
+        
         try {
-            XmlPullParserFactory xppf = XmlPullParserFactory.newInstance();
-            xppf.setNamespaceAware(false);
-            xppf.setValidating(false);
-            XmlPullParser xpp = xppf.newPullParser();
+            XmlPullParser xpp = XPPF.newPullParser();
             xpp.setInput(reader);
             xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
