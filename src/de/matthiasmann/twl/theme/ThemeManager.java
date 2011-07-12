@@ -37,6 +37,7 @@ import de.matthiasmann.twl.Dimension;
 import de.matthiasmann.twl.InputMap;
 import de.matthiasmann.twl.KeyStroke;
 import de.matthiasmann.twl.ListBox;
+import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.PositionAnimatedPanel;
@@ -82,7 +83,7 @@ public class ThemeManager {
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
     private final HashMap<String, InputMap> inputMaps;
-    final HashMap<String, Object> constants;
+    final ParameterMapImpl constants;
     private final MathInterpreter mathInterpreter;
     private Font defaultFont;
     private Font firstFont;
@@ -97,7 +98,7 @@ public class ThemeManager {
         this.fonts  = new HashMap<String, Font>();
         this.themes = new HashMap<String, ThemeInfoImpl>();
         this.inputMaps = new HashMap<String, InputMap>();
-        this.constants = new HashMap<String, Object>();
+        this.constants = new ParameterMapImpl(this, null);
         this.emptyMap = new ParameterMapImpl(this, null);
         this.emptyList = new ParameterListImpl(this, null);
         this.mathInterpreter = new MathInterpreter();
@@ -248,20 +249,15 @@ public class ThemeManager {
         return imageManager.getCursor(name);
     }
 
-    public final void insertConstant(String name, Object value) {
-        if(constants.containsKey(name)) {
-            throw new IllegalArgumentException("Constant '"+name+"' already declared");
-        }
-        if(value == null) {
-            value = NULL;
-        }
-        constants.put(name, value);
+    public ParameterMap getConstants() {
+        return constants;
     }
     
-    protected void insertDefaultConstants() {
-        insertConstant("SINGLE_COLUMN", ListBox.SINGLE_COLUMN);
+    private void insertDefaultConstants() {
+        constants.params.put("SINGLE_COLUMN", ListBox.SINGLE_COLUMN);
+        constants.params.put("MAX", Short.MAX_VALUE);
     }
-
+    
     private void parseThemeFile(URL url) throws XmlPullParserException, IOException {
         try {
             XMLParser xmlp = new XMLParser(url);
@@ -324,7 +320,7 @@ public class ThemeManager {
                     if(value.size() != 1) {
                         throw xmlp.error("constant definitions must define exactly 1 value");
                     }
-                    insertConstant(name, value.values().iterator().next());
+                    constants.addParameters(value);
                 } else {
                     throw xmlp.unexpected();
                 }
@@ -524,7 +520,7 @@ public class ThemeManager {
         if(ref != null) {
             Object obj = parent.params.get(ref);
             if(obj == null) {
-                obj = constants.get(ref);
+                obj = constants.params.get(ref);
                 if(obj == null) {
                     throw new IOException("Referenced map not found: " + ref);
                 }
@@ -605,7 +601,7 @@ public class ThemeManager {
                 return parseObject(xmlp, value, DialogLayout.Gap.class);
             }
             if("constant".equals(tagName)) {
-                Object result = constants.get(value);
+                Object result = constants.params.get(value);
                 if(result == null) {
                     throw xmlp.error("Unknown constant: " + value);
                 }
@@ -640,7 +636,7 @@ public class ThemeManager {
             throw xmlp.error("unable to parse value", ex);
         }
     }
-
+    
     private Number parseMath(XMLParser xmlp, String str) throws XmlPullParserException {
         try {
             return mathInterpreter.execute(str);
@@ -697,7 +693,7 @@ public class ThemeManager {
                     return;
                 }
             }
-            Object obj = constants.get(name);
+            Object obj = constants.params.get(name);
             if(obj != null) {
                 push(obj);
                 return;
