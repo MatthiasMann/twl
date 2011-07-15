@@ -86,10 +86,16 @@ public final class Event {
         MOUSE_WHEEL(true, false),
         /**
          * A key has been pressed. Not all keys generate characters.
+         * @see #isKeyEvent()
+         * @see #isKeyPressedEvent() 
+         * @see #isKeyRepeated() 
+         * @see #hasKeyChar() 
+         * @see #hasKeyCharNoModifiers() 
          */
         KEY_PRESSED(false, true),
         /**
          * A key has been released. No character data is available.
+         * @see #isKeyEvent() 
          */
         KEY_RELEASED(false, true),
         /**
