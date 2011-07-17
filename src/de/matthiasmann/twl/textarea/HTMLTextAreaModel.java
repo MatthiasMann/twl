@@ -32,6 +32,7 @@ package de.matthiasmann.twl.textarea;
 import de.matthiasmann.twl.model.HasCallback;
 import de.matthiasmann.twl.utils.MultiStringReader;
 import de.matthiasmann.twl.utils.TextUtil;
+import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -45,7 +46,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmlpull.v1.XmlPullParserFactory;
 
 /**
  * A simple XHTML parser.
@@ -92,8 +92,6 @@ import org.xmlpull.v1.XmlPullParserFactory;
  */
 public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
     
-    private static final XmlPullParserFactory XPPF;
-    
     private final ArrayList<Element> elements;
     private final ArrayList<String> styleSheetLinks;
     private final HashMap<String, Element> idMap;
@@ -105,19 +103,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
 
     private ContainerElement curContainer;
 
-    static {
-        XmlPullParserFactory xppf = null;
-        try {
-            xppf = XmlPullParserFactory.newInstance();
-            xppf.setNamespaceAware(false);
-            xppf.setValidating(false);
-        } catch(XmlPullParserException ex) {
-             Logger.getLogger(HTMLTextAreaModel.class.getName()).log(
-                     Level.SEVERE, "Unable to construct XmlPullParserFactory", ex);
-        }
-        XPPF = xppf;
-    }
-    
     /**
      * Creates a new {@code HTMLTextAreaModel} without content.
      */
@@ -241,13 +226,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
         this.idMap.clear();
         this.title = null;
 
-        if(XPPF == null) {
-            doCallback();
-            return;
-        }
-        
         try {
-            XmlPullParser xpp = XPPF.newPullParser();
+            XmlPullParser xpp = XMLParser.createParser();
             xpp.setInput(reader);
             xpp.defineEntityReplacementText("nbsp", "\u00A0");
             xpp.require(XmlPullParser.START_DOCUMENT, null, null);
