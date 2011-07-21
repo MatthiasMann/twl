@@ -468,6 +468,10 @@ public class FileSelector extends DialogLayout {
         }
         return false;
     }
+    
+    public void clearSelection() {
+        fileTable.clearSelection();
+    }
 
     /**
      * Adds a named file filter to the FileSelector.

@@ -161,6 +161,10 @@ public class FileTable extends Table {
         }
         return false;
     }
+    
+    public void clearSelection() {
+        fileTableSelectionModel.clearSelection();
+    }
 
     public void setSortColumn(SortColumn column) {
         if(column == null) {
