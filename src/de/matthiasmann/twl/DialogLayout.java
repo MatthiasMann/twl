@@ -1291,23 +1291,17 @@ public class DialogLayout extends Widget {
                     Arrays.sort(deltas, 0, resizeable);
                 }
                 
-                int sdelta = delta / resizeable;
-                int rest = delta - sdelta * resizeable;
                 int sizes[] = new int[springs.size()];
 
+                int remaining = resizeable;
                 for(int i=0 ; i<resizeable ; i++) {
                     SpringDelta d = deltas[i];
-                    if(i+1 == resizeable) {
-                        // last one gets all
-                        sdelta += rest;
-                    }
+                    
+                    int sdelta = delta / remaining;
                     int ddelta = Math.min(d.delta, sdelta);
                     delta -= ddelta;
-                    if(ddelta != sdelta && i+1 < resizeable) {
-                        int remaining = resizeable - i - 1;
-                        sdelta = delta / remaining;
-                        rest = delta - sdelta * remaining;
-                    }
+                    remaining--;
+                    
                     if(useMin) {
                         ddelta = -ddelta;
                     }
