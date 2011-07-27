@@ -1253,7 +1253,7 @@ public class TextArea extends Widget {
         int paddingRight = convertToPX0(style, StyleAttribute.PADDING_RIGHT, box.boxWidth);
 
         if(floatPosition == TextAreaModel.FloatPosition.NONE) {
-            bgWidth = remaining;
+            bgWidth = convertToPX(style, StyleAttribute.WIDTH, remaining, remaining);
         } else {
             bgWidth = convertToPX(style, StyleAttribute.WIDTH, box.boxWidth, Integer.MIN_VALUE);
             if(bgWidth == Integer.MIN_VALUE) {
@@ -1267,7 +1267,7 @@ public class TextArea extends Widget {
             }
         }
         
-        bgWidth += paddingLeft + paddingRight;
+        bgWidth = Math.max(0, bgWidth) + paddingLeft + paddingRight;
 
         if(floatPosition != TextAreaModel.FloatPosition.NONE) {
             box.advancePastFloaters(bgWidth, marginLeft, marginRight);
@@ -1277,7 +1277,7 @@ public class TextArea extends Widget {
             remaining = Math.max(0, box.computeRightPadding(marginRight) - bgX);
         }
 
-        bgWidth = Math.max(0, Math.min(bgWidth, remaining));
+        bgWidth = Math.min(bgWidth, remaining);
 
         if(floatPosition == TextAreaModel.FloatPosition.RIGHT) {
             bgX = box.computeRightPadding(marginRight) - bgWidth;
