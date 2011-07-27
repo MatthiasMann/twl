@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -101,6 +101,7 @@ public class TextArea extends Widget {
 
     final LClip layoutRoot;
     final ArrayList<LImage> allBGImages;
+    final AnimationState elementsAnimationState;
     private boolean inLayoutCode;
     private boolean forceRelayout;
     private Dimension preferredInnerSize;
@@ -112,6 +113,7 @@ public class TextArea extends Widget {
     private int dragStartX;
     private int dragStartY;
     LElement curLElementUnderMouse;
+    long hoverUpdateTime;
 
     public TextArea() {
         this.widgets = new HashMap<String, Widget>();
@@ -120,6 +122,15 @@ public class TextArea extends Widget {
         this.imageResolvers = new ArrayList<ImageResolver>();
         this.layoutRoot = new LClip(null);
         this.allBGImages = new ArrayList<LImage>();
+        this.elementsAnimationState = new AnimationState(getAnimationState()) {
+            @Override
+            public int getAnimationTime(StateKey stateKey) {
+                if(stateKey == STATE_HOVER) {
+                    return getHoverAnimationTime();
+                }
+                return super.getAnimationTime(stateKey);
+            }
+        };
         
         this.modelCB = new Runnable() {
             public void run() {
@@ -297,6 +308,12 @@ public class TextArea extends Widget {
     }
 
     @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        hoverUpdateTime = getTime();
+    }
+
+    @Override
     public void insertChild(Widget child, int index) {
         throw new UnsupportedOperationException("use registerWidget");
     }
@@ -438,7 +455,7 @@ public class TextArea extends Widget {
         final ArrayList<LImage> bi = allBGImages;
         final int innerX = getInnerX();
         final int innerY = getInnerY();
-        final AnimationState as = getAnimationState();
+        final AnimationState as = elementsAnimationState;
         final Renderer renderer = gui.getRenderer();
 
         for(int i=0,n=bi.size() ; i<n ; i++) {
@@ -563,6 +580,8 @@ public class TextArea extends Widget {
         }
         if(curLElementUnderMouse != le) {
             curLElementUnderMouse = le;
+            layoutRoot.setHover(le);
+            hoverUpdateTime = getTime();
             updateTooltip();
         }
         
@@ -571,8 +590,20 @@ public class TextArea extends Widget {
         } else {
             setMouseCursor(mouseCursorNormal);
         }
+        
+        getAnimationState().setAnimationState(STATE_HOVER, lastMouseInside);
     }
 
+    int getHoverAnimationTime() {
+        long time = getTime();
+        return (int)(time - hoverUpdateTime) & Integer.MAX_VALUE;
+    }
+    
+    long getTime() {
+        GUI gui = getGUI();
+        return (gui != null) ? gui.getCurrentTime() : 0;
+    }
+    
     void forceRelayout() {
         forceRelayout = true;
         preferredInnerSize = null;
@@ -1069,7 +1100,15 @@ public class TextArea extends Widget {
     private void layoutLinkElement(Box box, TextAreaModel.LinkElement le) {
         String oldHref = box.href;
         box.href = le.getHREF();
-        layoutContainerElement(box, le);
+        
+        Style style = le.getStyle();
+        TextAreaModel.Display display = style.get(StyleAttribute.DISPLAY, styleClassResolver);
+        if(display == TextAreaModel.Display.BLOCK) {
+            layoutBlockElement(box, le);
+        } else {
+            layoutContainerElement(box, le);
+        }
+        
         box.href = oldHref;
     }
     
@@ -1081,7 +1120,7 @@ public class TextArea extends Widget {
         Image image = selectImage(style, StyleAttribute.LIST_STYLE_IMAGE);
         if(image != null) {
             LImage li = new LImage(le, image);
-            li.width += convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
+            li.marginRight = (short)convertToPX0(style, StyleAttribute.PADDING_LEFT, box.boxWidth);
             layout(box, le, li, TextAreaModel.FloatPosition.LEFT, TextAreaModel.Display.BLOCK);
             
             int imageHeight = li.height;
@@ -1157,22 +1196,42 @@ public class TextArea extends Widget {
         doMarginBottom(box, style);
     }
 
-    private Box layoutBox(LClip clip, int continerWidth, int paddingLeft, int paddingRight, TextAreaModel.ContainerElement ce) {
+    private Box layoutBox(LClip clip, int continerWidth, int paddingLeft, int paddingRight, TextAreaModel.ContainerElement ce, String href) {
         Style style = ce.getStyle();
         int paddingTop = convertToPX0(style, StyleAttribute.PADDING_TOP, continerWidth);
         int paddingBottom = convertToPX0(style, StyleAttribute.PADDING_BOTTOM, continerWidth);
         int marginBottom = convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, continerWidth);
 
         Box box = new Box(clip, paddingLeft, paddingRight, paddingTop);
+        box.href = href;
         layoutElements(box, ce);
         box.finish();
-        clip.height = box.curY + paddingBottom;
-        clip.height = Math.max(clip.height, convertToPX(style, StyleAttribute.HEIGHT, clip.height, clip.height));
+        
+        int contentHeight = box.curY + paddingBottom;
+        int boxHeight = Math.max(contentHeight, convertToPX(style, StyleAttribute.HEIGHT, contentHeight, contentHeight));
+        if(boxHeight > contentHeight) {
+            int amount = 0;
+            switch(style.get(StyleAttribute.VERTICAL_ALIGNMENT, styleClassResolver)) {
+                case BOTTOM:
+                    amount = boxHeight - contentHeight;
+                    break;
+                    
+                case FILL:
+                case MIDDLE:
+                    amount = (boxHeight - contentHeight)/2;
+                    break;
+            }
+            if(amount > 0) {
+                clip.moveContentY(amount);
+            }
+        }
+            
+        clip.height = boxHeight;
         clip.marginBottom = (short)Math.max(marginBottom, box.marginBottomAbs - box.curY);
         return box;
     }
 
-    private void layoutBlockElement(Box box, TextAreaModel.BlockElement be) {
+    private void layoutBlockElement(Box box, TextAreaModel.ContainerElement be) {
         box.nextLine(false);
 
         final Style style = be.getStyle();
@@ -1201,7 +1260,7 @@ public class TextArea extends Widget {
                 LClip dummy = new LClip(null);
                 dummy.width = Math.max(0, box.lineWidth - paddingLeft - paddingRight);
 
-                Box dummyBox = layoutBox(dummy, box.boxWidth, paddingLeft, paddingRight, be);
+                Box dummyBox = layoutBox(dummy, box.boxWidth, paddingLeft, paddingRight, be, null);
                 dummyBox.nextLine(false);
                 
                 bgWidth = Math.max(0, dummy.width - dummyBox.minRemainingWidth);
@@ -1230,9 +1289,10 @@ public class TextArea extends Widget {
         clip.width = bgWidth;
         clip.marginLeft = (short)marginLeft;
         clip.marginRight = (short)marginRight;
+        clip.href = box.href;
         box.layout.add(clip);
 
-        Box clipBox = layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be);
+        Box clipBox = layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be, box.href);
 
         // sync main box with layout
         box.lineStartIdx = box.layout.size();
@@ -1255,6 +1315,7 @@ public class TextArea extends Widget {
             bgImage.y = bgY;
             bgImage.width = bgWidth;
             bgImage.height = clip.height;
+            bgImage.hoverSrc = clip;
         }
     }
 
@@ -1285,7 +1346,7 @@ public class TextArea extends Widget {
 
                         LClip dummy = new LClip(null);
                         dummy.width = maxTableWidth;
-                        Box dummyBox = layoutBox(dummy, maxTableWidth, paddingLeft, paddingRight, cell);
+                        Box dummyBox = layoutBox(dummy, maxTableWidth, paddingLeft, paddingRight, cell, null);
                         dummyBox.finish();
 
                         cellWidth = maxTableWidth - dummyBox.minRemainingWidth;
@@ -1474,21 +1535,22 @@ public class TextArea extends Widget {
                     int paddingLeft = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_LEFT, tableWidth));
                     int paddingRight = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_RIGHT, tableWidth));
 
+                    LClip clip = new LClip(cell);
                     LImage bgImage = createBGImage(box, cell);
                     if(bgImage != null) {
                         bgImage.x = x;
                         bgImage.width = width;
+                        bgImage.hoverSrc = clip;
                         bgImages[col] = bgImage;
                     }
                     
-                    LClip clip = new LClip(cell);
                     clip.x = x;
                     clip.y = box.curY;
                     clip.width = width;
                     clip.marginTop = (short)convertToPX0(cellStyle, StyleAttribute.MARGIN_TOP, tableWidth);
                     box.layout.add(clip);
 
-                    layoutBox(clip, tableWidth, paddingLeft, paddingRight, cell);
+                    layoutBox(clip, tableWidth, paddingLeft, paddingRight, cell, null);
 
                     col += Math.max(0, cell.getColspan()-1);
                 }
@@ -1588,7 +1650,7 @@ public class TextArea extends Widget {
         TextAreaModel.HAlignment textAlignment;
         String href;
 
-        public Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
+        Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
             this.clip = clip;
             this.layout = clip.layout;
             this.boxLeft = paddingLeft;
@@ -1883,7 +1945,7 @@ public class TextArea extends Widget {
                 computePadding();
                 curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, boxWidth, 0));
             }
-
+            
             marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, boxWidth);
         }
 
@@ -1927,8 +1989,9 @@ public class TextArea extends Widget {
         short marginRight;
         short marginBottom;
         String href;
+        boolean isHover;
 
-        public LElement(TextAreaModel.Element element) {
+        LElement(TextAreaModel.Element element) {
             this.element = element;
         }
 
@@ -1949,6 +2012,10 @@ public class TextArea extends Widget {
             }
             return null;
         }
+        boolean setHover(LElement le) {
+            isHover = (this == le) || (le != null && element == le.element);
+            return isHover;
+        }
 
         int bottom() {
             return y + height + marginBottom;
@@ -1963,7 +2030,7 @@ public class TextArea extends Widget {
         final int end;
         FontCache cache;
 
-        public LText(TextAreaModel.Element element, Font font, Color color, String text, int start, int end) {
+        LText(TextAreaModel.Element element, Font font, Color color, String text, int start, int end) {
             super(element);
             this.font = font;
             this.color = Color.WHITE.equals(color) ? null : color;
@@ -1982,6 +2049,7 @@ public class TextArea extends Widget {
 
         @Override
         void draw(int offX, int offY, AnimationState as, Renderer renderer) {
+            as.setAnimationState(STATE_HOVER, isHover);
             if(color != null) {
                 drawTextWithColor(offX, offY, as, renderer);
             } else {
@@ -2016,7 +2084,7 @@ public class TextArea extends Widget {
     static class LWidget extends LElement {
         final Widget widget;
 
-        public LWidget(TextAreaModel.Element element, Widget widget) {
+        LWidget(TextAreaModel.Element element, Widget widget) {
             super(element);
             this.widget = widget;
         }
@@ -2030,16 +2098,20 @@ public class TextArea extends Widget {
 
     static class LImage extends LElement {
         final Image img;
+        LElement hoverSrc;
 
-        public LImage(TextAreaModel.Element element, Image img) {
+        @SuppressWarnings("LeakingThisInConstructor")
+        LImage(TextAreaModel.Element element, Image img) {
             super(element);
             this.img = img;
             this.width = img.getWidth();
             this.height = img.getHeight();
+            this.hoverSrc = this;
         }
         
         @Override
         void draw(int offX, int offY, AnimationState as, Renderer renderer) {
+            as.setAnimationState(STATE_HOVER, hoverSrc.isHover);
             img.draw(as, x+offX, y+offY, width, height);
         }
     }
@@ -2050,7 +2122,7 @@ public class TextArea extends Widget {
         final ArrayList<LElement> anchors;
         char[] lineInfo;
 
-        public LClip(TextAreaModel.Element element) {
+        LClip(TextAreaModel.Element element) {
             super(element);
             this.layout = new ArrayList<LElement>();
             this.bgImages = new ArrayList<LImage>();
@@ -2074,16 +2146,8 @@ public class TextArea extends Widget {
 
         void drawNoClip(int offX, int offY, AnimationState as, Renderer renderer) {
             final ArrayList<LElement> ll = layout;
-            final TextAreaModel.Element hoverElement;
-            if(curLElementUnderMouse != null) {
-                hoverElement = curLElementUnderMouse.element;
-            } else {
-                hoverElement = null;
-            }
             for(int i=0,n=ll.size() ; i<n ; i++) {
-                LElement le = ll.get(i);
-                as.setAnimationState(STATE_HOVER, hoverElement == le.element);
-                le.draw(offX, offY, as, renderer);
+                ll.get(i).draw(offX, offY, as, renderer);
             }
         }
 
@@ -2148,7 +2212,7 @@ public class TextArea extends Widget {
                     lineTop = lineBottom;
                 }
             }
-            return null;
+            return this;
         }
 
         @Override
@@ -2175,6 +2239,44 @@ public class TextArea extends Widget {
                 }
             }
             return null;
+        }
+
+        @Override
+        boolean setHover(LElement le) {
+            boolean childHover = false;
+            for(int i=0,n=layout.size() ; i<n ; i++) {
+                childHover |= layout.get(i).setHover(le);
+            }
+            if(childHover) {
+                isHover = true;
+                return true;
+            } else {
+                return super.setHover(le);
+            }
+        }
+        
+        void moveContentY(int amount) {
+            for(int i=0,n=layout.size() ; i<n ; i++) {
+                layout.get(i).y += amount;
+            }
+            if(lineInfo.length > 0) {
+                if(lineInfo[1] == 0) {
+                    lineInfo[0] += amount;
+                } else {
+                    int n = lineInfo.length;
+                    char[] tmpLineInfo = new char[n+2];
+                    tmpLineInfo[0] = (char)amount;
+                    for(int i=0 ; i<n ; i+=2) {
+                        int lineBottom = lineInfo[i];
+                        if(lineBottom > 0) {
+                            lineBottom += amount;
+                        }
+                        tmpLineInfo[i+2] = (char)lineBottom;
+                        tmpLineInfo[i+3] = lineInfo[i+1];
+                    }
+                    lineInfo = tmpLineInfo;
+                }
+            }
         }
     }
 }
