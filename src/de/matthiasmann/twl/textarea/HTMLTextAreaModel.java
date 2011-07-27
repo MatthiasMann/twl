@@ -304,7 +304,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     String btnName = TextUtil.notNull(xpp.getAttributeValue(null, "name"));
                     String btnParam = TextUtil.notNull(xpp.getAttributeValue(null, "value"));
                     element = new WidgetElement(style, btnName, btnParam);
-                } else if("ul".equals(name) || "h1".equals(name)) {
+                } else if("ul".equals(name)) {
                     ContainerElement ce = new ContainerElement(style);
                     parseContainer(xpp, ce);
                     element = ce;
@@ -317,7 +317,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     parseContainer(xpp, le);
                     element = le;
                     --level;
-                } else if("div".equals(name)) {
+                } else if("div".equals(name) || isHeading(name)) {
                     BlockElement be = new BlockElement(style);
                     parseContainer(xpp, be);
                     element = be;
@@ -507,6 +507,11 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             return doc.startsWith("<?xml") || doc.startsWith("<!DOCTYPE") || doc.startsWith("<html>");
         }
         return false;
+    }
+    
+    private boolean isHeading(String name) {
+        return name.length() == 2 && name.charAt(0) == 'h' &&
+                (name.charAt(1) >= '0' && name.charAt(1) <= '6');
     }
     
     private boolean isPre() {
