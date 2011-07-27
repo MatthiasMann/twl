@@ -57,6 +57,17 @@ public final class Color {
     public static final Color BLUE = new Color(0xFF0000FF);
     public static final Color TEAL = new Color(0xFF008080);
     public static final Color AQUA = new Color(0xFF00FFFF);
+    public static final Color SKYBLUE = new Color(0xFF87CEEB);
+    
+    public static final Color LIGHTBLUE    = new Color(0xFFADD8E6);
+    public static final Color LIGHTCORAL   = new Color(0xFFF08080);
+    public static final Color LIGHTCYAN    = new Color(0xFFE0FFFF);
+    public static final Color LIGHTGRAY    = new Color(0xFFD3D3D3);
+    public static final Color LIGHTGREEN   = new Color(0xFF90EE90);
+    public static final Color LIGHTPINK    = new Color(0xFFFFB6C1);
+    public static final Color LIGHTSALMON  = new Color(0xFFFFA07A);
+    public static final Color LIGHTSKYBLUE = new Color(0xFF87CEFA);
+    public static final Color LIGHTYELLOW  = new Color(0xFFFFFFE0);
     
     private final byte r;
     private final byte g;
