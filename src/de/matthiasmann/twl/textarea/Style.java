@@ -216,7 +216,29 @@ public class Style {
         newStyle.put(attribute, value);
         return newStyle;
     }
-
+    
+    /**
+     * Returns a Style which doesn't contain any value for an attribute where
+     * {@link StyleAttribute#isInherited() } returns false.
+     * 
+     * @return a Style with the same parent, styleSheetKey and modified attribute.
+     */
+    public Style withoutNonInheritable() {
+        for(int i=0,n=values.length ; i<n ; i++) {
+            if(values[i] != null && !StyleAttribute.getAttribute(i).isInherited()) {
+                Style result = new Style(this);
+                for(int j=i ; j<n ; j++) {
+                    StyleAttribute<?> attribute = StyleAttribute.getAttribute(j);
+                    if(!attribute.isInherited()) {
+                        result.put(attribute, null);
+                    }
+                }
+                return result;
+            }
+        }
+        return this;
+    }
+    
     protected void put(StyleAttribute<?> attribute, Object value) {
         if(attribute == null) {
             throw new IllegalArgumentException("attribute is null");

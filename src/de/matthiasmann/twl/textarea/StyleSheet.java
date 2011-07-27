@@ -190,16 +190,27 @@ public class StyleSheet implements StyleSheetResolver {
     }
 
     public Style resolve(Style style) {
-        while(style.getStyleSheetKey() == null) {
-            style = style.getParent();
-            if(style == null) {
-                return null;
-            }
-        }
-
         Object cacheData = cache.get(style);
         if(cacheData != null) {
-            return (cacheData == this) ? null : (Style)cacheData;
+            return unmask(cacheData);
+        }
+        
+        if(style.getStyleSheetKey() == null) {
+            Style styleWithKey = style;
+            do {
+                styleWithKey = styleWithKey.getParent();
+                if(styleWithKey == null) {
+                    return null;
+                }
+            } while(styleWithKey.getStyleSheetKey() == null);
+            
+            Style result = resolve(styleWithKey);
+            if(result != null) {
+                result = result.withoutNonInheritable();
+            }
+            
+            putIntoCache(style, result);
+            return result;
         }
 
         Selector[] candidates = new Selector[rules.size()];
@@ -235,8 +246,20 @@ public class StyleSheet implements StyleSheetResolver {
             }
         }
 
-        cache.put(style, (result == null) ? this : result);
+        putIntoCache(style, result);
         return result;
+    }
+    
+    private Style unmask(Object obj) {
+        if(obj == Void.class) {
+            return null;
+        } else {
+            return (Style)obj;
+        }
+    }
+    
+    private void putIntoCache(Style key, Style style) {
+        cache.put(key, (style == null) ? Void.class : style);
     }
 
     private boolean matches(Selector selector, Style style) {
@@ -263,7 +286,7 @@ public class StyleSheet implements StyleSheetResolver {
         CSSStyle style;
         int score;
 
-        public Selector(String element, String className, String id, Selector tail) {
+        Selector(String element, String className, String id, Selector tail) {
             super(element, className, id);
             this.tail = tail;
         }
