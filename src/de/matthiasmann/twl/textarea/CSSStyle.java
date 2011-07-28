@@ -252,12 +252,12 @@ public class CSSStyle extends Style {
         Color color;
         if(value.startsWith("rgb(") && value.endsWith(")")) {
             value = value.substring(4, value.length() - 1).trim();
-            int[] rgb = parseRGB(value, 3);
-            color = new Color((byte)rgb[0], (byte)rgb[1], (byte)rgb[2], (byte)255);
+            byte[] rgb = parseRGBA(value, 3);
+            color = new Color(rgb[0], rgb[1], rgb[2], (byte)255);
         } else if(value.startsWith("rgba(") && value.endsWith(")")) {
             value = value.substring(5, value.length() - 1).trim();
-            int[] rgba = parseRGB(value, 4);
-            color = new Color((byte)rgba[0], (byte)rgba[1], (byte)rgba[2], (byte)rgba[3]);
+            byte[] rgba = parseRGBA(value, 4);
+            color = new Color(rgba[0], rgba[1], rgba[2], rgba[3]);
         } else {
             color = Color.parserColor(value);
             if(color == null) {
@@ -267,28 +267,32 @@ public class CSSStyle extends Style {
         put(attribute, color);
     }
     
-    private int[] parseRGB(String value, int numElements) {
+    private byte[] parseRGBA(String value, int numElements) {
         String[] parts = value.split(",");
         if(parts.length != numElements) {
             throw new IllegalArgumentException("3 values required for rgb()");
         }
-        int[] rgb = new int[numElements];
+        byte[] rgba = new byte[numElements];
         for(int i=0 ; i<numElements ; i++) {
             String part = parts[i].trim();
-            boolean percent = part.endsWith("%");
-            if(percent) {
-                part = part.substring(0, part.length()-1).trim();
+            int v;
+            if(i == 3) {
+                // handle alpha component specially
+                float f = Float.parseFloat(part);
+                v = Math.round(f * 255.0f);
+            } else {
+                boolean percent = part.endsWith("%");
+                if(percent) {
+                    part = part.substring(0, part.length()-1).trim();
+                }
+                v = Integer.parseInt(part);
+                if(percent) {
+                    v = 255*v / 100;
+                }
             }
-            int v = Integer.parseInt(part);
-            if(percent) {
-                v = 255*v / 100;
-            }
-            if(v < 0 || v > 255) {
-                throw new IllegalArgumentException("Value out of range");
-            }
-            rgb[i] = v;
+            rgba[i] = (byte)Math.max(0, Math.min(255, v));
         }
-        return rgb;
+        return rgba;
     }
     
     static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
