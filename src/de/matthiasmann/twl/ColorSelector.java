@@ -425,12 +425,7 @@ public class ColorSelector extends DialogLayout {
             previewArea.setTheme("colorarea");
             previewArea.setTintAnimator(previewTintAnimator);
 
-            Widget preview = new Widget() {
-                @Override
-                protected void layout() {
-                    layoutChildrenFullInnerArea();
-                }
-            };
+            Widget preview = new Container();
             preview.setTheme("preview");
             preview.add(previewArea);
             
@@ -549,7 +544,7 @@ public class ColorSelector extends DialogLayout {
     class ColorValueModel extends AbstractFloatModel {
         private final int component;
 
-        public ColorValueModel(int component) {
+        ColorValueModel(int component) {
             this.component = component;
         }
 
@@ -579,7 +574,7 @@ public class ColorSelector extends DialogLayout {
     class ARGBModel extends AbstractIntegerModel {
         private final int startBit;
 
-        public ARGBModel(int startBit) {
+        ARGBModel(int startBit) {
             this.startBit = startBit;
         }
 
@@ -668,7 +663,7 @@ public class ColorSelector extends DialogLayout {
     class ColorArea1D extends ColorArea {
         final int component;
 
-        public ColorArea1D(int component) {
+        ColorArea1D(int component) {
             this.component = component;
 
             for(int i=0,n=getNumComponents() ; i<n ; i++) {
@@ -726,7 +721,7 @@ public class ColorSelector extends DialogLayout {
         private final int componentX;
         private final int componentY;
 
-        public ColorArea2D(int componentX, int componentY) {
+        ColorArea2D(int componentX, int componentY) {
             this.componentX = componentX;
             this.componentY = componentY;
 

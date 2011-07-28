@@ -1315,7 +1315,7 @@ public final class GUI extends Widget {
         invokeLaterQueue = tmp;
     }
 
-    static class TooltipWindow extends Widget {
+    static class TooltipWindow extends Container {
         public static final StateKey STATE_FADE = StateKey.get("fade");
         private int fadeInTime;
 
@@ -1346,31 +1346,6 @@ public final class GUI extends Widget {
                 super.paint(gui);
             }
         }
-
-        @Override
-        public int getMinWidth() {
-            return BoxLayout.computeMinWidthVertical(this);
-        }
-
-        @Override
-        public int getMinHeight() {
-            return BoxLayout.computeMinHeightHorizontal(this);
-        }
-
-        @Override
-        public int getPreferredInnerWidth() {
-            return BoxLayout.computePreferredWidthVertical(this);
-        }
-
-        @Override
-        public int getPreferredInnerHeight() {
-            return BoxLayout.computePreferredHeightHorizontal(this);
-        }
-
-        @Override
-        protected void layout() {
-            layoutChildrenFullInnerArea();
-        }
     }
 
     class AC<V> implements Callable<V>, Runnable {
@@ -1380,7 +1355,7 @@ public final class GUI extends Widget {
         private V result;
         private Exception exception;
 
-        public AC(Callable<V> jobC, Runnable jobR, AsyncCompletionListener<V> listener) {
+        AC(Callable<V> jobC, Runnable jobR, AsyncCompletionListener<V> listener) {
             this.jobC = jobC;
             this.jobR = jobR;
             this.listener = listener;
@@ -1416,7 +1391,7 @@ public final class GUI extends Widget {
         final AtomicInteger threadNumber = new AtomicInteger(1);
         final String prefix;
 
-        public TF() {
+        TF() {
             this.prefix = "GUI-" + poolNumber.getAndIncrement() + "-invokeAsync-";
         }
 

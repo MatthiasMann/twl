@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,68 +30,36 @@
 package de.matthiasmann.twl;
 
 /**
- * A info window. It can interact with the mouse but not keyboard.
- * Only one can be visible at any time. It is designed to provide additional
- * information for the user while editing a text.
  *
  * @author Matthias Mann
  */
-public class InfoWindow extends Container {
-
-    private final Widget owner;
-
-    public InfoWindow(Widget owner) {
-        if(owner == null) {
-            throw new NullPointerException("owner");
-        }
-        
-        this.owner = owner;
+class Container extends Widget {
+    
+    @Override
+    public int getMinWidth() {
+        return Math.max(super.getMinWidth(), getBorderHorizontal() +
+                BoxLayout.computeMinWidthVertical(this));
     }
 
-    public Widget getOwner() {
-        return owner;
+    @Override
+    public int getMinHeight() {
+        return Math.max(super.getMinHeight(), getBorderVertical() +
+                BoxLayout.computeMinHeightHorizontal(this));
     }
 
-    public boolean isOpen() {
-        return getParent() != null;
+    @Override
+    public int getPreferredInnerWidth() {
+        return BoxLayout.computePreferredWidthVertical(this);
+    }
+
+    @Override
+    public int getPreferredInnerHeight() {
+        return BoxLayout.computePreferredHeightHorizontal(this);
+    }
+
+    @Override
+    protected void layout() {
+        layoutChildrenFullInnerArea();
     }
     
-    public boolean openInfo() {
-        if(getParent() != null) {
-            return true;
-        }
-        if(isParentInfoWindow(owner)) {
-            return false;
-        }
-        GUI gui = owner.getGUI();
-        if(gui != null) {
-            gui.openInfo(this);
-            focusFirstChild();
-            return true;
-        }
-        return false;
-    }
-
-    public void closeInfo() {
-        GUI gui = getGUI();
-        if(gui != null) {
-            gui.closeInfo(this);
-        }
-    }
-
-    /**
-     * Called after the info window has been closed
-     */
-    protected void infoWindowClosed() {
-    }
-
-    private static boolean isParentInfoWindow(Widget w) {
-        while(w != null) {
-            if(w instanceof InfoWindow) {
-                return true;
-            }
-            w = w.getParent();
-        }
-        return false;
-    }
 }

@@ -56,7 +56,7 @@ package de.matthiasmann.twl;
  * @see #openPopup()
  * @see #layoutChildrenFullInnerArea()
  */
-public class PopupWindow extends Widget {
+public class PopupWindow extends Container {
 
     private final Widget owner;
 
@@ -225,26 +225,6 @@ public class PopupWindow extends Widget {
     }
 
     @Override
-    public int getMinWidth() {
-        return BoxLayout.computeMinWidthVertical(this);
-    }
-
-    @Override
-    public int getMinHeight() {
-        return BoxLayout.computeMinHeightHorizontal(this);
-    }
-
-    @Override
-    public int getPreferredInnerWidth() {
-        return BoxLayout.computePreferredWidthVertical(this);
-    }
-
-    @Override
-    public int getPreferredInnerHeight() {
-        return BoxLayout.computePreferredHeightHorizontal(this);
-    }
-
-    @Override
     public int getPreferredWidth() {
         int parentWidth = (getParent() != null) ? getParent().getInnerWidth() : Short.MAX_VALUE;
         return Math.min(parentWidth, super.getPreferredWidth());
@@ -254,11 +234,6 @@ public class PopupWindow extends Widget {
     public int getPreferredHeight() {
         int parentHeight = (getParent() != null) ? getParent().getInnerHeight() : Short.MAX_VALUE;
         return Math.min(parentHeight, super.getPreferredHeight());
-    }
-
-    @Override
-    protected void layout() {
-        layoutChildrenFullInnerArea();
     }
     
     @Override

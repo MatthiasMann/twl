@@ -569,41 +569,12 @@ public class TabbedPane extends Widget {
                         getY() + closeButtonOffsetY + closeButtonAlignment.computePositionY(getHeight(), closeButton.getHeight()));
             }
         }
-        
-    }
-    private static class Container extends Widget {
-        @Override
-        public int getMinWidth() {
-            return Math.max(super.getMinWidth(), getBorderHorizontal() +
-                    BoxLayout.computeMinWidthVertical(this));
-        }
-
-        @Override
-        public int getMinHeight() {
-            return Math.max(super.getMinHeight(), getBorderVertical() +
-                    BoxLayout.computeMinHeightHorizontal(this));
-        }
-
-        @Override
-        public int getPreferredInnerWidth() {
-            return BoxLayout.computePreferredWidthVertical(this);
-        }
-
-        @Override
-        public int getPreferredInnerHeight() {
-            return BoxLayout.computePreferredHeightHorizontal(this);
-        }
-
-        @Override
-        protected void layout() {
-            layoutChildrenFullInnerArea();
-        }
     }
 
     private class CB implements Runnable {
         final int dir;
 
-        public CB(int dir) {
+        CB(int dir) {
             this.dir = dir;
         }
 

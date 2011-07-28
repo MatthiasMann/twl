@@ -80,9 +80,9 @@ public class DatePicker extends DialogLayout {
     
     private Locale locale;
     private DateFormatSymbols formatSymbols;
-    private String[] monthNamesLong;
-    private String[] monthNamesShort;
-    private Calendar calendar;
+    String[] monthNamesLong;
+    String[] monthNamesShort;
+    Calendar calendar;
     private DateFormat dateFormat;
     private DateFormat dateParser;
     private ParseHook parseHook;
@@ -394,7 +394,7 @@ public class DatePicker extends DialogLayout {
         final int day;
         boolean active;
 
-        public DayModel(int day) {
+        DayModel(int day) {
             this.day = day;
         }
 
