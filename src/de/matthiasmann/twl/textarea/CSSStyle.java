@@ -82,7 +82,7 @@ public class CSSStyle extends Style {
             parseValueUnit(StyleAttribute.TEXT_IDENT, value);
             return;
         }
-        if("font-family".equals(key) || "font".equals(key)) {
+        if("font-family".equals(key) || "font".equals(key) || "-twl-font".equals(key)) {
             put(StyleAttribute.FONT_NAME, value);
             return;
         }
@@ -132,6 +132,10 @@ public class CSSStyle extends Style {
         }
         if("background-image".equals(key)) {
             parseURL(StyleAttribute.BACKGROUND_IMAGE, value);
+            return;
+        }
+        if("background-color".equals(key) || "-twl-background-color".equals(key)) {
+            parseColor(StyleAttribute.BACKGROUND_COLOR, value);
             return;
         }
         if("color".equals(key)) {
@@ -248,27 +252,12 @@ public class CSSStyle extends Style {
         Color color;
         if(value.startsWith("rgb(") && value.endsWith(")")) {
             value = value.substring(4, value.length() - 1).trim();
-            String[] parts = value.split(",");
-            if(parts.length != 3) {
-                throw new IllegalArgumentException("3 values required for rgb()");
-            }
-            int[] rgb = new int[3];
-            for(int i=0 ; i<3 ; i++) {
-                String part = parts[i].trim();
-                boolean percent = part.endsWith("%");
-                if(percent) {
-                    part = part.substring(0, part.length()-1).trim();
-                }
-                int v = Integer.parseInt(part);
-                if(percent) {
-                    v = 255*v / 100;
-                }
-                if(v < 0 || v > 255) {
-                    throw new IllegalArgumentException("Value out of range");
-                }
-                rgb[i] = v;
-            }
+            int[] rgb = parseRGB(value, 3);
             color = new Color((byte)rgb[0], (byte)rgb[1], (byte)rgb[2], (byte)255);
+        } else if(value.startsWith("rgba(") && value.endsWith(")")) {
+            value = value.substring(5, value.length() - 1).trim();
+            int[] rgba = parseRGB(value, 4);
+            color = new Color((byte)rgba[0], (byte)rgba[1], (byte)rgba[2], (byte)rgba[3]);
         } else {
             color = Color.parserColor(value);
             if(color == null) {
@@ -276,6 +265,30 @@ public class CSSStyle extends Style {
             }
         }
         put(attribute, color);
+    }
+    
+    private int[] parseRGB(String value, int numElements) {
+        String[] parts = value.split(",");
+        if(parts.length != numElements) {
+            throw new IllegalArgumentException("3 values required for rgb()");
+        }
+        int[] rgb = new int[numElements];
+        for(int i=0 ; i<numElements ; i++) {
+            String part = parts[i].trim();
+            boolean percent = part.endsWith("%");
+            if(percent) {
+                part = part.substring(0, part.length()-1).trim();
+            }
+            int v = Integer.parseInt(part);
+            if(percent) {
+                v = 255*v / 100;
+            }
+            if(v < 0 || v > 255) {
+                throw new IllegalArgumentException("Value out of range");
+            }
+            rgb[i] = v;
+        }
+        return rgb;
     }
     
     static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();

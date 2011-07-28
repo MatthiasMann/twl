@@ -81,7 +81,7 @@ public class TextArea extends Widget {
 
     public static final StateKey STATE_HOVER = StateKey.get("hover");
     
-    private static final char[] EMPTY_CHAR_ARRAY = new char[0];
+    static final char[] EMPTY_CHAR_ARRAY = new char[0];
     
     private final HashMap<String, Widget> widgets;
     private final HashMap<String, WidgetResolver> widgetResolvers;
@@ -99,9 +99,9 @@ public class TextArea extends Widget {
     private MouseCursor mouseCursorLink;
     private DraggableButton.DragListener dragListener;
 
-    final LClip layoutRoot;
-    final ArrayList<LImage> allBGImages;
-    final AnimationState elementsAnimationState;
+    private final LClip layoutRoot;
+    private final ArrayList<LImage> allBGImages;
+    private final AnimationState elementsAnimationState;
     private boolean inLayoutCode;
     private boolean forceRelayout;
     private Dimension preferredInnerSize;
@@ -112,8 +112,8 @@ public class TextArea extends Widget {
     private boolean dragging;
     private int dragStartX;
     private int dragStartY;
-    LElement curLElementUnderMouse;
-    long hoverUpdateTime;
+    private LElement curLElementUnderMouse;
+    private long hoverUpdateTime;
 
     public TextArea() {
         this.widgets = new HashMap<String, Widget>();
@@ -428,6 +428,7 @@ public class TextArea extends Widget {
 
                     // set position & size of all widget elements
                     layoutRoot.adjustWidget(getInnerX(), getInnerY());
+                    layoutRoot.collectBGImages(0, 0, allBGImages);
                 }
                 updateMouseHover();
             } finally {
@@ -1596,7 +1597,17 @@ public class TextArea extends Widget {
     }
 
     private LImage createBGImage(Box box, TextAreaModel.Element element) {
-        Image image = selectImage(element.getStyle(), StyleAttribute.BACKGROUND_IMAGE);
+        Style style = element.getStyle();
+        Image image = selectImage(style, StyleAttribute.BACKGROUND_IMAGE);
+        if(image == null) {
+            Color color = style.get(StyleAttribute.BACKGROUND_COLOR, styleClassResolver);
+            if(color.getA() != 0) {
+                Image white = selectImage("white");
+                if(white != null) {
+                    image = white.createTintedVersion(color);
+                }
+            }
+        }
         if(image != null) {
             LImage bgImage = new LImage(element, image);
             bgImage.y = box.curY;
@@ -1996,6 +2007,7 @@ public class TextArea extends Widget {
         }
 
         void adjustWidget(int offX, int offY) {}
+        void collectBGImages(int offX, int offY, ArrayList<LImage> allBGImages) {}
         void draw(int offX, int offY, AnimationState as, Renderer renderer) {}
         void destroy() {}
 
@@ -2116,7 +2128,7 @@ public class TextArea extends Widget {
         }
     }
 
-    class LClip extends LElement {
+    static class LClip extends LElement {
         final ArrayList<LElement> layout;
         final ArrayList<LImage> bgImages;
         final ArrayList<LElement> anchors;
@@ -2158,13 +2170,20 @@ public class TextArea extends Widget {
             for(int i=0,n=layout.size() ; i<n ; i++) {
                 layout.get(i).adjustWidget(offX, offY);
             }
-            offX -= getInnerX();
-            offY -= getInnerY();
+        }
+        
+        @Override
+        void collectBGImages(int offX, int offY, ArrayList<LImage> allBGImages) {
+            offX += x;
+            offY += y;
             for(int i=0,n=bgImages.size() ; i<n ; i++) {
                 LImage img = bgImages.get(i);
                 img.x += offX;
                 img.y += offY;
                 allBGImages.add(img);
+            }
+            for(int i=0,n=layout.size() ; i<n ; i++) {
+                layout.get(i).collectBGImages(offX, offY, allBGImages);
             }
         }
 

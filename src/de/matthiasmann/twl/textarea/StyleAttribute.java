@@ -66,6 +66,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<Value> WIDTH = new StyleAttribute<Value>(false, Value.class, Value.AUTO);
     public static final StyleAttribute<Value> HEIGHT = new StyleAttribute<Value>(false, Value.class, Value.AUTO);
     public static final StyleAttribute<String> BACKGROUND_IMAGE = new StyleAttribute<String>(false, String.class, null);
+    public static final StyleAttribute<Color> BACKGROUND_COLOR = new StyleAttribute<Color>(false, Color.class, Color.TRANSPARENT);
     public static final StyleAttribute<Value> MARGIN_TOP = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<Value> MARGIN_LEFT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<Value> MARGIN_RIGHT = new StyleAttribute<Value>(false, Value.class, Value.ZERO_PX);
