@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -68,6 +68,8 @@ public final class Color {
     public static final Color LIGHTSALMON  = new Color(0xFFFFA07A);
     public static final Color LIGHTSKYBLUE = new Color(0xFF87CEFA);
     public static final Color LIGHTYELLOW  = new Color(0xFFFFFFE0);
+    
+    public static final Color TRANSPARENT = new Color(0);
     
     private final byte r;
     private final byte g;
