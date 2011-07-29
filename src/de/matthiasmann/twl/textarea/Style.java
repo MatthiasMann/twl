@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -41,7 +41,7 @@ public class Style {
 
     private final Style parent;
     private final StyleSheetKey styleSheetKey;
-    private final Object[] values;
+    private Object[] values;
 
     /**
      * Creates an empty Style without a parent, class reference and no attributes
@@ -59,7 +59,6 @@ public class Style {
     public Style(Style parent, StyleSheetKey styleSheetKey) {
         this.parent = parent;
         this.styleSheetKey = styleSheetKey;
-        this.values = new Object[StyleAttribute.getNumAttributes()];
     }
 
     /**
@@ -81,7 +80,7 @@ public class Style {
     protected Style(Style src) {
         this.parent = src.parent;
         this.styleSheetKey = src.styleSheetKey;
-        this.values = src.values.clone();
+        this.values = (src.values != null) ? src.values.clone() : null;
     }
 
     /**
@@ -112,12 +111,12 @@ public class Style {
             if(style.parent == null) {
                 return style;
             }
-            if(style.values[ord] != null) {
+            if(style.rawGet(ord) != null) {
                 return style;
             }
             if(resolver != null) {
                 Style styleSheetStyle = resolver.resolve(style);
-                if(styleSheetStyle != null && styleSheetStyle.values[ord] != null) {
+                if(styleSheetStyle != null && styleSheetStyle.rawGet(ord) != null) {
                     // return main style here because class style has no parent chain
                     return style;
                 }
@@ -139,15 +138,17 @@ public class Style {
      * @return The attribute value if it was set, or the default value of the attribute.
      */
     public<V> V getNoResolve(StyleAttribute<V> attribute, StyleSheetResolver resolver) {
-        Object value = values[attribute.ordinal()];
-        if(value == null && resolver != null) {
-            Style styleSheetStyle = resolver.resolve(this);
-            if(styleSheetStyle != null) {
-                value = styleSheetStyle.values[attribute.ordinal()];
-            }
-        }
+        Object value = rawGet(attribute.ordinal());
         if(value == null) {
-            return attribute.getDefaultValue();
+            if(resolver != null) {
+                Style styleSheetStyle = resolver.resolve(this);
+                if(styleSheetStyle != null) {
+                    value = styleSheetStyle.rawGet(attribute.ordinal());
+                }
+            }
+            if(value == null) {
+                return attribute.getDefaultValue();
+            }
         }
         return attribute.getDataType().cast(value);
     }
@@ -224,48 +225,81 @@ public class Style {
      * @return a Style with the same parent, styleSheetKey and modified attribute.
      */
     public Style withoutNonInheritable() {
-        for(int i=0,n=values.length ; i<n ; i++) {
-            if(values[i] != null && !StyleAttribute.getAttribute(i).isInherited()) {
-                Style result = new Style(this);
-                for(int j=i ; j<n ; j++) {
-                    StyleAttribute<?> attribute = StyleAttribute.getAttribute(j);
-                    if(!attribute.isInherited()) {
-                        result.put(attribute, null);
-                    }
+        if(values != null) {
+            for(int i=0,n=values.length ; i<n ; i++) {
+                if(values[i] != null && !StyleAttribute.getAttribute(i).isInherited()) {
+                    return withoutNonInheritableCopy();
                 }
-                return result;
             }
         }
         return this;
+    }
+    
+    private Style withoutNonInheritableCopy() {
+        Style result = new Style(parent, styleSheetKey);
+        for(int i=0,n=values.length ; i<n ; i++) {
+            Object value = values[i];
+            if(value != null) {
+                StyleAttribute<?> attribute = StyleAttribute.getAttribute(i);
+                if(attribute.isInherited()) {
+                    result.put(attribute, value);
+                }
+            }
+        }
+        return result;
     }
     
     protected void put(StyleAttribute<?> attribute, Object value) {
         if(attribute == null) {
             throw new IllegalArgumentException("attribute is null");
         }
-        if(value != null && !attribute.getDataType().isInstance(value)) {
-            throw new IllegalArgumentException("value is a " + value.getClass() +
-                    " but must be a " + attribute.getDataType());
+        if(value == null) {
+            if(values == null) {
+                return;
+            }
+        } else {
+            if(!attribute.getDataType().isInstance(value)) {
+                throw new IllegalArgumentException("value is a " + value.getClass() +
+                        " but must be a " + attribute.getDataType());
+            }
+            ensureValues();
         }
 
         values[attribute.ordinal()] = value;
     }
 
-    protected void putAll(Map<StyleAttribute<?>, Object> values) {
+    protected final void putAll(Map<StyleAttribute<?>, Object> values) {
         for(Map.Entry<StyleAttribute<?>, Object> e : values.entrySet()) {
             put(e.getKey(), e.getValue());
         }
     }
 
-    protected void putAll(Style src) {
-        for(int i=0,n=values.length ; i<n ; i++) {
-            Object value = src.values[i];
-            if(value != null) {
-                this.values[i] = value;
+    protected final void putAll(Style src) {
+        if(src.values != null) {
+            ensureValues();
+            for(int i=0,n=values.length ; i<n ; i++) {
+                Object value = src.values[i];
+                if(value != null) {
+                    this.values[i] = value;
+                }
             }
         }
     }
 
+    protected final void ensureValues() {
+        if(this.values == null) {
+            this.values = new Object[StyleAttribute.getNumAttributes()];
+        }
+    }
+    
+    protected final Object rawGet(int idx) {
+        final Object[] vals = values;
+        if(vals != null) {
+            return vals[idx];
+        }
+        return null;
+    }
+    
     /**
      * Creates a map which will contain all set attributes of this Style.
      * Changes to that map have no impact on this Style.
