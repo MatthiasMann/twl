@@ -45,6 +45,8 @@ import java.util.IdentityHashMap;
  */
 public class StyleSheet implements StyleSheetResolver {
 
+    static final Object NULL = new Object();
+    
     private final ArrayList<Selector> rules;
     private final IdentityHashMap<Style, Object> cache;
 
@@ -191,10 +193,16 @@ public class StyleSheet implements StyleSheetResolver {
 
     public Style resolve(Style style) {
         Object cacheData = cache.get(style);
-        if(cacheData != null) {
-            return unmask(cacheData);
+        if(cacheData == null) {
+            return resolveSlow(style);
         }
-        
+        if(cacheData == NULL) {
+            return null;
+        }
+        return (Style)cacheData;
+    }
+    
+    private Style resolveSlow(Style style) {
         if(style.getStyleSheetKey() == null) {
             Style styleWithKey = style;
             do {
@@ -250,16 +258,8 @@ public class StyleSheet implements StyleSheetResolver {
         return result;
     }
     
-    private Style unmask(Object obj) {
-        if(obj == Void.class) {
-            return null;
-        } else {
-            return (Style)obj;
-        }
-    }
-    
     private void putIntoCache(Style key, Style style) {
-        cache.put(key, (style == null) ? Void.class : style);
+        cache.put(key, (style == null) ? NULL : style);
     }
 
     private boolean matches(Selector selector, Style style) {
