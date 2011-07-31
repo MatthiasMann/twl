@@ -1954,7 +1954,7 @@ public class TextArea extends Widget {
                 marginRight = convertToPX0(style, StyleAttribute.MARGIN_RIGHT, boxWidth);
                 textAlignment = style.get(StyleAttribute.HORIZONTAL_ALIGNMENT, styleClassResolver);
                 computePadding();
-                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_IDENT, boxWidth, 0));
+                curX = Math.max(0, lineStartX + convertToPX(style, StyleAttribute.TEXT_INDENT, boxWidth, 0));
             }
             
             marginTop = convertToPX0(style, StyleAttribute.MARGIN_TOP, boxWidth);

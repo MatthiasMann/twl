@@ -79,7 +79,7 @@ public class CSSStyle extends Style {
             return;
         }
         if("text-indent".equals(key)) {
-            parseValueUnit(StyleAttribute.TEXT_IDENT, value);
+            parseValueUnit(StyleAttribute.TEXT_INDENT, value);
             return;
         }
         if("font-family".equals(key) || "font".equals(key) || "-twl-font".equals(key)) {

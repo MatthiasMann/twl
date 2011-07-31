@@ -51,7 +51,7 @@ public final class StyleAttribute<T> {
     // cascading attributes
     public static final StyleAttribute<HAlignment> HORIZONTAL_ALIGNMENT = new StyleAttribute<HAlignment>(true, HAlignment.class, HAlignment.LEFT);
     public static final StyleAttribute<VAlignment> VERTICAL_ALIGNMENT = new StyleAttribute<VAlignment>(true, VAlignment.class, VAlignment.BOTTOM);
-    public static final StyleAttribute<Value> TEXT_IDENT = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
+    public static final StyleAttribute<Value> TEXT_INDENT = new StyleAttribute<Value>(true, Value.class, Value.ZERO_PX);
     public static final StyleAttribute<String> FONT_NAME = new StyleAttribute<String>(true, String.class, "default");
     public static final StyleAttribute<String> LIST_STYLE_IMAGE = new StyleAttribute<String>(true, String.class, "ul-bullet");
     public static final StyleAttribute<OrderedListType> LIST_STYLE_TYPE = new StyleAttribute<OrderedListType>(true, OrderedListType.class, OrderedListType.DECIMAL);
