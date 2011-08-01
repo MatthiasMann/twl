@@ -366,11 +366,13 @@ public class TextArea extends Widget {
 
     @Override
     public int getPreferredInnerHeight() {
-        if(preferredInnerSize == null) {
-            computePreferredInnerSize();
-        }
-        if(preferredInnerSize.getY() >= 0) {
-            return preferredInnerSize.getY();
+        if(getInnerWidth() == 0) {
+            if(preferredInnerSize == null) {
+                computePreferredInnerSize();
+            }
+            if(preferredInnerSize.getY() >= 0) {
+                return preferredInnerSize.getY();
+            }
         }
         validateLayout();
         return layoutRoot.height;
@@ -402,10 +404,9 @@ public class TextArea extends Widget {
     
     @Override
     protected void layout() {
-        int targetWidth = computeSize(getMinWidth(), getWidth(), getMaxWidth());
-        targetWidth -= getBorderHorizontal();
+        int targetWidth = getInnerWidth();
 
-        //System.out.println(this+" minWidth="+getMinWidth()+" width="+getWidth()+" maxWidth="+getMaxWidth());
+        //System.out.println(this+" minWidth="+getMinWidth()+" width="+getWidth()+" maxWidth="+getMaxWidth()+" targetWidth="+targetWidth+" preferredInnerSize="+preferredInnerSize);
         
         // only recompute the layout when it has changed
         if(layoutRoot.width != targetWidth || forceRelayout) {
