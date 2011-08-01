@@ -2476,6 +2476,10 @@ public class Widget {
         setOpenPopup(gui, false);
     }
     
+    final boolean isLayoutInvalid() {
+        return layoutInvalid != 0;
+    }
+    
     final void drawWidget(GUI gui) {
         if(renderOffscreen != null) {
             drawWidgetOffscreen(gui);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -1239,7 +1239,6 @@ public final class GUI extends Widget {
             }
             tooltipLabel.setBackground(null);
             tooltipLabel.setText(text);
-            tooltipWindow.adjustSize();
         } else if(content instanceof Widget) {
             Widget tooltipWidget = (Widget)content;
             if(tooltipWidget.getParent() != null && tooltipWidget.getParent() != tooltipWindow) {
@@ -1247,9 +1246,16 @@ public final class GUI extends Widget {
             }
             tooltipWindow.removeAllChildren();
             tooltipWindow.add(tooltipWidget);
-            tooltipWindow.adjustSize();
         } else {
             throw new IllegalArgumentException("Unsupported data type");
+        }
+        
+        tooltipWindow.adjustSize();
+        
+        // some Widgets (esp TextArea) have complex sizing policy
+        // give them a 2nd chance
+        if(tooltipWindow.isLayoutInvalid()) {
+            tooltipWindow.adjustSize();
         }
         
         int ttWidth = tooltipWindow.getWidth();
