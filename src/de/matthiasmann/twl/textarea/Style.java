@@ -114,7 +114,7 @@ public class Style {
             if(style.rawGet(ord) != null) {
                 return style;
             }
-            if(resolver != null) {
+            if(resolver != null && style.styleSheetKey != null) {
                 Style styleSheetStyle = resolver.resolve(style);
                 if(styleSheetStyle != null && styleSheetStyle.rawGet(ord) != null) {
                     // return main style here because class style has no parent chain
@@ -140,7 +140,7 @@ public class Style {
     public<V> V getNoResolve(StyleAttribute<V> attribute, StyleSheetResolver resolver) {
         Object value = rawGet(attribute.ordinal());
         if(value == null) {
-            if(resolver != null) {
+            if(resolver != null && styleSheetKey != null) {
                 Style styleSheetStyle = resolver.resolve(this);
                 if(styleSheetStyle != null) {
                     value = styleSheetStyle.rawGet(attribute.ordinal());

@@ -203,24 +203,6 @@ public class StyleSheet implements StyleSheetResolver {
     }
     
     private Style resolveSlow(Style style) {
-        if(style.getStyleSheetKey() == null) {
-            Style styleWithKey = style;
-            do {
-                styleWithKey = styleWithKey.getParent();
-                if(styleWithKey == null) {
-                    return null;
-                }
-            } while(styleWithKey.getStyleSheetKey() == null);
-            
-            Style result = resolve(styleWithKey);
-            if(result != null) {
-                result = result.withoutNonInheritable();
-            }
-            
-            putIntoCache(style, result);
-            return result;
-        }
-
         Selector[] candidates = new Selector[rules.size()];
         int numCandidates = 0;
         
