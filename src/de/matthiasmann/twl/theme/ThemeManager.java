@@ -440,7 +440,7 @@ public class ThemeManager {
                 }
                 ti.copy(tiRef);
             }
-            ti.maybeUsedFromWildcard = xmlp.parseBoolFromAttribute("allowWildcard", false);
+            ti.maybeUsedFromWildcard = xmlp.parseBoolFromAttribute("allowWildcard", true);
             xmlp.nextTag();
             while(!xmlp.isEndTag()) {
                 xmlp.require(XmlPullParser.START_TAG, null, null);
