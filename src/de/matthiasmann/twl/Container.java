@@ -30,10 +30,11 @@
 package de.matthiasmann.twl;
 
 /**
- *
+ * Can contain a single Widget and uses {@link Widget#layoutChildrenFullInnerArea() }
+ * 
  * @author Matthias Mann
  */
-class Container extends Widget {
+public class Container extends Widget {
     
     @Override
     public int getMinWidth() {
