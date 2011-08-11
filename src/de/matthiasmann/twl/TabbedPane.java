@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -319,29 +319,29 @@ public class TabbedPane extends Widget {
         switch(tabPosition) {
             case TOP:
                 tabBoxClip.setPosition(getInnerX(), getInnerY());
-                tabBoxClip.setSize(getInnerWidth() - scrollCtrlsWidth, tabBoxHeight);
-                container.setSize(getInnerWidth(), getInnerHeight() - tabBoxHeight);
+                tabBoxClip.setSize(Math.max(0, getInnerWidth() - scrollCtrlsWidth), tabBoxHeight);
+                container.setSize(getInnerWidth(), Math.max(0, getInnerHeight() - tabBoxHeight));
                 container.setPosition(getInnerX(), tabBoxClip.getBottom());
                 break;
 
             case LEFT:
                 tabBoxClip.setPosition(getInnerX(), getInnerY());
-                tabBoxClip.setSize(tabBoxWidth, getInnerHeight() - scrollCtrlsHeight);
-                container.setSize(getInnerWidth() - tabBoxWidth, getInnerHeight());
+                tabBoxClip.setSize(tabBoxWidth, Math.max(0, getInnerHeight() - scrollCtrlsHeight));
+                container.setSize(Math.max(0, getInnerWidth() - tabBoxWidth), getInnerHeight());
                 container.setPosition(tabBoxClip.getRight(), getInnerY());
                 break;
 
             case RIGHT:
                 tabBoxClip.setPosition(getInnerX() - tabBoxWidth, getInnerY());
-                tabBoxClip.setSize(tabBoxWidth, getInnerHeight() - scrollCtrlsHeight);
-                container.setSize(getInnerWidth() - tabBoxWidth, getInnerHeight());
+                tabBoxClip.setSize(tabBoxWidth, Math.max(0, getInnerHeight() - scrollCtrlsHeight));
+                container.setSize(Math.max(0, getInnerWidth() - tabBoxWidth), getInnerHeight());
                 container.setPosition(getInnerX(), getInnerY());
                 break;
 
             case BOTTOM:
                 tabBoxClip.setPosition(getInnerX(), getInnerY() - tabBoxHeight);
-                tabBoxClip.setSize(getInnerWidth() - scrollCtrlsWidth, tabBoxHeight);
-                container.setSize(getInnerWidth(), getInnerHeight() - tabBoxHeight);
+                tabBoxClip.setSize(Math.max(0, getInnerWidth() - scrollCtrlsWidth), tabBoxHeight);
+                container.setSize(getInnerWidth(), Math.max(0, getInnerHeight() - tabBoxHeight));
                 container.setPosition(getInnerX(), getInnerY());
                 break;
         }
