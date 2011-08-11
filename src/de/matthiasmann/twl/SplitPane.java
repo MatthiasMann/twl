@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -40,10 +40,22 @@ public class SplitPane extends Widget {
             int get(int x, int y) {
                 return x;
             }
+            int getMinSize(Widget w) {
+                return w.getMinWidth();
+            }
+            int getPrefSize(Widget w) {
+                return w.getPreferredWidth();
+            }
         },
         VERTICAL("splitterVertical") {
             int get(int x, int y) {
                 return y;
+            }
+            int getMinSize(Widget w) {
+                return w.getMinHeight();
+            }
+            int getPrefSize(Widget w) {
+                return w.getPreferredHeight();
             }
         };
 
@@ -52,21 +64,43 @@ public class SplitPane extends Widget {
             this.splitterTheme = splitterTheme;
         }
         abstract int get(int x, int y);
+        abstract int getMinSize(Widget w);
+        abstract int getPrefSize(Widget w);
     }
 
+    /**
+     * Magic constant for {@link #setSplitPosition(int) } to keep both
+     * widgets on equal size.
+     */
     public static final int CENTER = -1;
+    
+    /**
+     * Magic constant for {@link #setSplitPosition(int) } to keep the first
+     * (or second widget when {@link #getReverseSplitPosition() } is active)
+     * in it's minimum size.
+     */
+    public static final int MIN_SIZE = -2;
+    
+    /**
+     * Magic constant for {@link #setSplitPosition(int) } to keep the first
+     * (or second widget when {@link #getReverseSplitPosition() } is active)
+     * in it's preferred size.
+     */
+    public static final int PREFERRED_SIZE = -3;
     
     private final DraggableButton splitter;
     private Direction direction;
     private int splitPosition = CENTER;
     private boolean reverseSplitPosition;
+    private boolean respectMinSizes;
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public SplitPane() {
         splitter = new DraggableButton();
         splitter.setListener(new DraggableButton.DragListener() {
             int initialPos;
             public void dragStarted() {
-                initialPos = getSplitPosNoCenter();
+                initialPos = getEffectiveSplitPosition();
             }
             public void dragged(int deltaX, int deltaY) {
                 SplitPane.this.dragged(initialPos, deltaX, deltaY);
@@ -101,8 +135,11 @@ public class SplitPane extends Widget {
     }
 
     public void setSplitPosition(int pos) {
+        if(pos < PREFERRED_SIZE) {
+            throw new IllegalArgumentException("pos");
+        }
         splitPosition = pos;
-        invalidateLayout();
+        invalidateLayoutLocally();
     }
 
     public boolean getReverseSplitPosition() {
@@ -110,7 +147,21 @@ public class SplitPane extends Widget {
     }
 
     public void setReverseSplitPosition(boolean reverseSplitPosition) {
-        this.reverseSplitPosition = reverseSplitPosition;
+        if(this.reverseSplitPosition != reverseSplitPosition) {
+            this.reverseSplitPosition = reverseSplitPosition;
+            invalidateLayoutLocally();
+        }
+    }
+
+    public boolean isRespectMinSizes() {
+        return respectMinSizes;
+    }
+
+    public void setRespectMinSizes(boolean respectMinSizes) {
+        if(this.respectMinSizes != respectMinSizes) {
+            this.respectMinSizes = respectMinSizes;
+            invalidateLayoutLocally();
+        }
     }
 
     void dragged(int initialPos, int deltaX, int deltaY) {
@@ -199,7 +250,7 @@ public class SplitPane extends Widget {
 
         int innerX = getInnerX();
         int innerY = getInnerY();
-        int splitPos = getSplitPosNoCenter();
+        int splitPos = getEffectiveSplitPosition();
 
         if(reverseSplitPosition) {
             splitPos = getMaxSplitPosition() - splitPos;
@@ -236,12 +287,73 @@ public class SplitPane extends Widget {
         }
     }
 
-    int getSplitPosNoCenter() {
-        if(splitPosition == CENTER) {
-            return getMaxSplitPosition()/2;
-        } else {
-            return clamp(splitPosition);
+    int getEffectiveSplitPosition() {
+        final int maxSplitPosition = getMaxSplitPosition();
+        
+        int pos = splitPosition;
+        switch(pos) {
+            case CENTER:
+                pos = maxSplitPosition/2;
+                break;
+            case MIN_SIZE: {
+                Widget w = getPrimaryWidget();
+                if(w != null) {
+                    pos = direction.getMinSize(w);
+                } else {
+                    pos = maxSplitPosition/2;
+                }
+                break;
+            }
+            case PREFERRED_SIZE: {
+                Widget w = getPrimaryWidget();
+                if(w != null) {
+                    pos = direction.getPrefSize(w);
+                } else {
+                    pos = maxSplitPosition/2;
+                }
+                break;
+            }
         }
+        
+        int minValue = 0;
+        int maxValue = maxSplitPosition;
+
+        if(respectMinSizes) {
+            Widget a = null;
+            Widget b = null;
+            for(int i=0 ; i<getNumChildren() ; ++i) {
+                Widget w = getChild(i);
+                if(w != splitter) {
+                    if(a == null) {
+                        a = w;
+                    } else {
+                        b = w;
+                        break;
+                    }
+                }
+            }
+            
+            int aMinSize = (a != null) ? direction.getMinSize(a) : 0;
+            int bMinSize = (b != null) ? direction.getMinSize(b) : 0;
+            
+            if(reverseSplitPosition) {
+                minValue = bMinSize;
+                maxValue = Math.max(0, maxSplitPosition - aMinSize);
+            } else {
+                minValue = aMinSize;
+                maxValue = Math.max(0, maxSplitPosition - bMinSize);
+            }
+        }
+        
+        return Math.max(minValue, Math.min(maxValue, pos));
+    }
+    
+    private Widget getPrimaryWidget() {
+        int idx = reverseSplitPosition ? 1 : 0;
+        if(getNumChildren() > idx) {
+            return getChild(idx);
+        }
+        return null;
     }
 
     private int clamp(int pos) {
