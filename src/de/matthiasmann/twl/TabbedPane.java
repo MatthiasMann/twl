@@ -481,8 +481,16 @@ public class TabbedPane extends Widget {
             return this;
         }
 
+        /**
+         * Sets the user theme for the tab button. If no user theme is set
+         * ({@code null}) then it will use "tabbutton" or
+         * "tabbuttonWithCloseButton" if a close callback is registered.
+         * 
+         * @param theme the user theme name - can be null.
+         * @return {@code this}
+         */
         public Tab setTheme(String theme) {
-            button.setTheme(theme);
+            button.setUserTheme(theme);
             return this;
         }
 
@@ -514,10 +522,27 @@ public class TabbedPane extends Widget {
         Alignment closeButtonAlignment;
         int closeButtonOffsetX;
         int closeButtonOffsetY;
+        String userTheme;
         
         TabButton(BooleanModel model) {
             super(model);
             closeButtonAlignment = Alignment.RIGHT;
+        }
+
+        public void setUserTheme(String userTheme) {
+            this.userTheme = userTheme;
+            doSetTheme();
+        }
+        
+        private void doSetTheme() {
+            if(userTheme != null) {
+                setTheme(userTheme);
+            } else if(closeButton != null) {
+                setTheme("tabbuttonWithCloseButton");
+            } else {
+                setTheme("tabbutton");
+            }
+            reapplyTheme();
         }
 
         @Override
@@ -537,8 +562,7 @@ public class TabbedPane extends Widget {
         void setCloseButton(Runnable callback) {
             closeButton = new Button();
             closeButton.setTheme("closeButton");
-            setTheme("tabbuttonWithCloseButton");
-            reapplyTheme();
+            doSetTheme();
             add(closeButton);
             closeButton.addCallback(callback);
         }
@@ -546,8 +570,7 @@ public class TabbedPane extends Widget {
         void removeCloseButton() {
             removeChild(closeButton);
             closeButton = null;
-            setTheme("tabbutton");
-            reapplyTheme();
+            doSetTheme();
         }
 
         @Override
