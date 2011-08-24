@@ -77,13 +77,13 @@ public class ThemeManager {
 
     static final Object NULL = new Object();
     
+    final ParameterMapImpl constants;
     private final Renderer renderer;
     private final CacheContext cacheContext;
     private final ImageManager imageManager;
     private final HashMap<String, Font> fonts;
     private final HashMap<String, ThemeInfoImpl> themes;
     private final HashMap<String, InputMap> inputMaps;
-    final ParameterMapImpl constants;
     private final MathInterpreter mathInterpreter;
     private Font defaultFont;
     private Font firstFont;
@@ -92,13 +92,13 @@ public class ThemeManager {
     final ParameterListImpl emptyList;
 
     private ThemeManager(Renderer renderer, CacheContext cacheContext) throws XmlPullParserException, IOException {
+        this.constants = new ParameterMapImpl(this, null);
         this.renderer = renderer;
         this.cacheContext = cacheContext;
-        this.imageManager = new ImageManager(renderer);
+        this.imageManager = new ImageManager(constants, renderer);
         this.fonts  = new HashMap<String, Font>();
         this.themes = new HashMap<String, ThemeInfoImpl>();
         this.inputMaps = new HashMap<String, InputMap>();
-        this.constants = new ParameterMapImpl(this, null);
         this.emptyMap = new ParameterMapImpl(this, null);
         this.emptyList = new ParameterListImpl(this, null);
         this.mathInterpreter = new MathInterpreter();
@@ -573,7 +573,7 @@ public class ThemeManager {
             String value = xmlp.nextText();
 
             if("color".equals(tagName)) {
-                return ParserUtil.parseColor(xmlp, value);
+                return ParserUtil.parseColor(xmlp, value, constants);
             }
             if("float".equals(tagName)) {
                 return parseMath(xmlp, value).floatValue();

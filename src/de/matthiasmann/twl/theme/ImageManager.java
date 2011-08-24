@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -54,6 +54,7 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 class ImageManager {
 
+    private final ParameterMapImpl constants;
     private final Renderer renderer;
     private final TreeMap<String, Image> images;
     private final TreeMap<String, MouseCursor> cursors;
@@ -63,7 +64,8 @@ class ImageManager {
     static final EmptyImage NONE = new EmptyImage(0, 0);
     static final MouseCursor NOCURSOR = new MouseCursor() {};
     
-    ImageManager(Renderer renderer) {
+    ImageManager(ParameterMapImpl constants, Renderer renderer) {
+        this.constants = constants;
         this.renderer = renderer;
         this.images = new TreeMap<String, Image>();
         this.cursors = new TreeMap<String, MouseCursor>();
@@ -501,7 +503,7 @@ class ImageManager {
 
     private AnimParams parseAnimParams(XMLParser xmlp) throws XmlPullParserException {
         AnimParams params = new AnimParams();
-        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", Color.WHITE);
+        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", constants, Color.WHITE);
         float zoom = xmlp.parseFloatFromAttribute("zoom", 1.0f);
         params.zoomX = xmlp.parseFloatFromAttribute("zoomX", zoom);
         params.zoomY = xmlp.parseFloatFromAttribute("zoomY", zoom);
@@ -669,7 +671,7 @@ class ImageManager {
     }
 
     private void parseStdAttributes(XMLParser xmlp, ImageParams params) throws XmlPullParserException {
-        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", null);
+        params.tintColor = ParserUtil.parseColorFromAttribute(xmlp, "tint", constants, null);
         params.border = ParserUtil.parseBorderFromAttribute(xmlp, "border");
         params.inset = ParserUtil.parseBorderFromAttribute(xmlp, "inset");
         params.repeatX = xmlp.parseBoolFromAttribute("repeatX", false);
