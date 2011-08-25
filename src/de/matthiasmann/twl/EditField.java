@@ -97,6 +97,7 @@ public class EditField extends Widget {
     private boolean textLongerThenWidget;
     private boolean forwardUnhandledKeysToCallback;
     private boolean autoCompletionOnSetText = true;
+    boolean scrollToCursorOnSizeChange = true;
 
     private EditFieldAutoCompletionWindow autoCompletionWindow;
     private int autoCompletionHeight = 100;
@@ -195,6 +196,14 @@ public class EditField extends Widget {
         this.autoCompletionOnSetText = autoCompletionOnSetText;
     }
 
+    public boolean isScrollToCursorOnSizeChange() {
+        return scrollToCursorOnSizeChange;
+    }
+
+    public void setScrollToCursorOnSizeChange(boolean scrollToCursorOnSizeChange) {
+        this.scrollToCursorOnSizeChange = scrollToCursorOnSizeChange;
+    }
+    
     protected void doCallback(int key) {
         if(callbacks != null) {
             for(Callback cb : callbacks) {
@@ -291,16 +300,18 @@ public class EditField extends Widget {
      * Set a new text for this EditField.
      * If the new text is longer then {@link #getMaxTextLength()} then it is truncated.
      * The selection is cleared.
-     * The cursor is positioned at the end of the new text.
+     * The cursor is positioned at the end of the new text (single line) or at
+     * the start of the text (multi line).
      * If a model is set, then the model is also updated.
      *
      * @param text the new text
      * @throws NullPointerException if text is null
+     * @see #setMultiLine(boolean)
      */
     public void setText(String text) {
         text = TextUtil.limitStringLength(text, maxTextLength);
         editBuffer.replace(0, editBuffer.length(), text);
-        cursorPos = editBuffer.length();
+        cursorPos = multiLine ? 0 : editBuffer.length();
         selectionStart = 0;
         selectionEnd = 0;
         updateSelection();
@@ -1283,7 +1294,9 @@ public class EditField extends Widget {
 
         @Override
         protected void sizeChanged() {
-            scrollToCursor(true);
+            if(scrollToCursorOnSizeChange) {
+                scrollToCursor(true);
+            }
         }
 
         @Override
