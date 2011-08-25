@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -172,7 +172,7 @@ public class BitmapFont {
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, "char");
             xmlp.nextTag();
-            if(g.xadvance != firstXAdvance) {
+            if(g.xadvance != firstXAdvance && g.xadvance > 0) {
                 if(firstXAdvance == Integer.MIN_VALUE) {
                     firstXAdvance = g.xadvance;
                 } else {
@@ -251,7 +251,7 @@ public class BitmapFont {
             g.xadvance = parseShort(params, "xadvance");
             addGlyph(idx, g);
             
-            if(g.xadvance != firstXAdvance) {
+            if(g.xadvance != firstXAdvance && g.xadvance > 0) {
                 if(firstXAdvance == Integer.MIN_VALUE) {
                     firstXAdvance = g.xadvance;
                 } else {
