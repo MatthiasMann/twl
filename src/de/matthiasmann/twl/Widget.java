@@ -2707,10 +2707,6 @@ public class Widget {
                                     child.focusGainedCause = FocusGainedCause.MOUSE_BTNDOWN;
                                     if(child.isEnabled() && child.canAcceptKeyboardFocus()) {
                                         requestKeyboardFocus(child);
-                                    } else {
-                                        // when the clicked child doesn't want the focus
-                                        // then steal the focus from the current focused child
-                                        requestKeyboardFocus(null);
                                     }
                                 } finally {
                                     child.focusGainedCause = null;
