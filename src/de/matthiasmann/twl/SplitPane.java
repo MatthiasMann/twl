@@ -97,6 +97,7 @@ public class SplitPane extends Widget {
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public SplitPane() {
         splitter = new DraggableButton();
+        splitter.setCanAcceptKeyboardFocus(false);
         splitter.setListener(new DraggableButton.DragListener() {
             int initialPos;
             public void dragStarted() {
