@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -540,7 +540,7 @@ public class TreeTable extends TableBase {
         return level;
     }
 
-    class TreeLeafCellRenderer implements CellRenderer {
+    class TreeLeafCellRenderer implements CellRenderer, CellWidgetCreator {
         protected int treeIndent;
         protected int level;
         protected Dimension treeButtonSize = new Dimension(5, 5);
@@ -599,12 +599,72 @@ public class TreeTable extends TableBase {
             }
             return null;
         }
+        
+        public Widget updateWidget(Widget existingWidget) {
+            if(subRenderer instanceof CellWidgetCreator) {
+                CellWidgetCreator subCreator = (CellWidgetCreator)subRenderer;
+                return subCreator.updateWidget(existingWidget);
+            }
+            return null;
+        }
+        
+        public void positionWidget(Widget widget, int x, int y, int w, int h) {
+            if(subRenderer instanceof CellWidgetCreator) {
+                CellWidgetCreator subCreator = (CellWidgetCreator)subRenderer;
+                int indent = level * treeIndent;
+                subCreator.positionWidget(widget, x+indent, y, Math.max(0, w-indent), h);
+            }
+        }
+    }
+    
+    static class WidgetChain extends Widget {
+        final ToggleButton expandButton;
+        Widget userWidget;
+        
+        WidgetChain() {
+            setTheme("");
+            expandButton = new ToggleButton();
+            expandButton.setTheme("treeButton");
+            add(expandButton);
+        }
+
+        void setUserWidget(Widget userWidget) {
+            if(this.userWidget != userWidget) {
+                if(this.userWidget != null) {
+                    removeChild(1);
+                }
+                this.userWidget = userWidget;
+                if(userWidget != null) {
+                    insertChild(userWidget, 1);
+                }
+            }
+        }
     }
 
-    class TreeNodeCellRenderer extends TreeLeafCellRenderer implements CellWidgetCreator {
+    class TreeNodeCellRenderer extends TreeLeafCellRenderer {
         private NodeState nodeState;
 
+        @Override
         public Widget updateWidget(Widget existingWidget) {
+            if(subRenderer instanceof CellWidgetCreator) {
+                CellWidgetCreator subCreator = (CellWidgetCreator)subRenderer;
+                WidgetChain widgetChain = null;
+                if(existingWidget instanceof WidgetChain) {
+                    widgetChain = (WidgetChain)existingWidget;
+                }
+                if(nodeState.hasNoChildren()) {
+                    if(widgetChain != null) {
+                        existingWidget = null;
+                    }
+                    return subCreator.updateWidget(existingWidget);
+                }
+                if(widgetChain == null) {
+                    widgetChain = new WidgetChain();
+                }
+                setExpandButtonState(widgetChain.expandButton);
+                widgetChain.setUserWidget(subCreator.updateWidget(widgetChain.userWidget));
+                return widgetChain;
+            }
             if(nodeState.hasNoChildren()) {
                 return null;
             }
@@ -613,15 +673,33 @@ public class TreeTable extends TableBase {
                 tb = new ToggleButton();
                 tb.setTheme("treeButton");
             }
-            ((ToggleButtonModel)tb.getModel()).setModel(nodeState);
+            setExpandButtonState(tb);
             return tb;
         }
 
+        private void setExpandButtonState(ToggleButton tb) {
+            ((ToggleButtonModel)tb.getModel()).setModel(nodeState);
+        }
+
+        @Override
         public void positionWidget(Widget widget, int x, int y, int w, int h) {
             int indent = level * treeIndent;
             int availWidth = Math.max(0, w-indent);
+            int expandButtonWidth = Math.min(availWidth, treeButtonSize.getX());
             widget.setPosition(x + indent, y + (h-treeButtonSize.getY())/2);
-            widget.setSize(Math.min(availWidth, treeButtonSize.getX()), treeButtonSize.getY());
+            if(subRenderer instanceof CellWidgetCreator) {
+                CellWidgetCreator subCreator = (CellWidgetCreator)subRenderer;
+                WidgetChain widgetChain = (WidgetChain)widget;
+                ToggleButton expandButton = widgetChain.expandButton;
+                widgetChain.setSize(Math.max(0, w-indent), h);
+                expandButton.setSize(expandButtonWidth, treeButtonSize.getY());
+                if(widgetChain.userWidget != null) {
+                    subCreator.positionWidget(widgetChain.userWidget,
+                            expandButton.getRight(), y, widget.getWidth(), h);
+                }
+            } else {
+                widget.setSize(expandButtonWidth, treeButtonSize.getY());
+            }
         }
 
         public void setCellData(int row, int column, Object data, NodeState nodeState) {
