@@ -30,7 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.BooleanModel;
-import de.matthiasmann.twl.model.ToggleButtonModel;
 import de.matthiasmann.twl.model.TreeTableModel;
 import de.matthiasmann.twl.model.TreeTableNode;
 import de.matthiasmann.twl.utils.CallbackSupport;
@@ -661,7 +660,7 @@ public class TreeTable extends TableBase {
                 if(widgetChain == null) {
                     widgetChain = new WidgetChain();
                 }
-                setExpandButtonState(widgetChain.expandButton);
+                widgetChain.expandButton.setModel(nodeState);
                 widgetChain.setUserWidget(subCreator.updateWidget(widgetChain.userWidget));
                 return widgetChain;
             }
@@ -673,12 +672,8 @@ public class TreeTable extends TableBase {
                 tb = new ToggleButton();
                 tb.setTheme("treeButton");
             }
-            setExpandButtonState(tb);
+            tb.setModel(nodeState);
             return tb;
-        }
-
-        private void setExpandButtonState(ToggleButton tb) {
-            ((ToggleButtonModel)tb.getModel()).setModel(nodeState);
         }
 
         @Override
