@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -84,7 +84,7 @@ public class SimpleTableModel extends AbstractTableModel {
     }
 
     public void addRows(Collection<Object[]> rows) {
-        insertRows(rows.size(), rows);
+        insertRows(this.rows.size(), rows);
     }
 
     public void insertRow(int index, Object ... data) {
