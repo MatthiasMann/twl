@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -62,8 +62,7 @@ public class Scrollbar extends Widget {
     private final Button btnUpLeft;
     private final Button btnDownRight;
     private final DraggableButton thumb;
-    private final DraggableButton.DragListener dragListener;
-    private final Runnable timerCallback;
+    private final L dragTimerCB;
     private Timer timer;
     private int trackClicked;
     private int trackClickLimit;
@@ -105,25 +104,7 @@ public class Scrollbar extends Widget {
             btnDownRight.setTheme("downbutton");
         }
 
-        dragListener = new DraggableButton.DragListener() {
-            private int startValue;
-            public void dragStarted() {
-                startValue = getValue();
-            }
-            public void dragged(int deltaX, int deltaY) {
-                int mouseDelta;
-                if(getOrientation() == Orientation.HORIZONTAL) {
-                    mouseDelta = deltaX;
-                } else {
-                    mouseDelta = deltaY;
-                }
-                int delta = (getMaxValue() - getMinValue()) * mouseDelta / calcThumbArea();
-                int newValue = range(startValue + delta);
-                setValue(newValue);
-            }
-            public void dragStopped() {
-            }
-        };
+        dragTimerCB = new L();
 
         btnUpLeft.setCanAcceptKeyboardFocus(false);
         btnUpLeft.getModel().addStateCallback(cbUpdateTimer);
@@ -131,13 +112,7 @@ public class Scrollbar extends Widget {
         btnDownRight.getModel().addStateCallback(cbUpdateTimer);
         thumb.setCanAcceptKeyboardFocus(false);
         thumb.setTheme("thumb");
-        thumb.setListener(dragListener);
-        
-        timerCallback = new Runnable() {
-            public void run() {
-                onTimer(REPEAT_DELAY);
-            }
-        };
+        thumb.setListener(dragTimerCB);
         
         add(btnUpLeft);
         add(btnDownRight);
@@ -288,15 +263,15 @@ public class Scrollbar extends Widget {
 
     public void externalDragStart() {
         thumb.getAnimationState().setAnimationState(Button.STATE_PRESSED, true);
-        dragListener.dragStarted();
+        dragTimerCB.dragStarted();
     }
 
     public void externalDragged(int deltaX, int deltaY) {
-        dragListener.dragged(deltaX, deltaY);
+        dragTimerCB.dragged(deltaX, deltaY);
     }
 
     public void externalDragStopped() {
-        dragListener.dragStopped();
+        // dragTimerCB.dragStopped(); (it's empty anyway)
         thumb.getAnimationState().setAnimationState(Button.STATE_PRESSED, false);
     }
 
@@ -366,7 +341,7 @@ public class Scrollbar extends Widget {
     protected void afterAddToGUI(GUI gui) {
         super.afterAddToGUI(gui);
         timer = gui.createTimer();
-        timer.setCallback(timerCallback);
+        timer.setCallback(dragTimerCB);
         timer.setContinuous(true);
     }
 
@@ -596,4 +571,27 @@ public class Scrollbar extends Widget {
             thumb.setPosition(getX(), ypos);
         }
     }
+    
+    final class L implements DraggableButton.DragListener, Runnable {
+        private int startValue;
+        public void dragStarted() {
+            startValue = getValue();
+        }
+        public void dragged(int deltaX, int deltaY) {
+            int mouseDelta;
+            if(getOrientation() == Orientation.HORIZONTAL) {
+                mouseDelta = deltaX;
+            } else {
+                mouseDelta = deltaY;
+            }
+            int delta = (getMaxValue() - getMinValue()) * mouseDelta / calcThumbArea();
+            int newValue = range(startValue + delta);
+            setValue(newValue);
+        }
+        public void dragStopped() {
+        }
+        public void run() {
+            onTimer(REPEAT_DELAY);
+        }
+    };
 }
