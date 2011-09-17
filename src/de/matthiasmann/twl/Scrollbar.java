@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl;
 
+import de.matthiasmann.twl.model.IntegerModel;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.utils.CallbackSupport;
 
@@ -69,6 +70,8 @@ public class Scrollbar extends Widget {
     private Runnable[] callbacks;
     private Image trackImageUpLeft;
     private Image trackImageDownRight;
+    private IntegerModel model;
+    private Runnable modelCB;
 
     private int pageSize;
     private int stepSize;
@@ -142,6 +145,30 @@ public class Scrollbar extends Widget {
         return orientation;
     }
 
+    public IntegerModel getModel() {
+        return model;
+    }
+
+    public void setModel(IntegerModel model) {
+        if(this.model != model) {
+            if(this.model != null) {
+                this.model.removeCallback(modelCB);
+            }
+            this.model = model;
+            if(model != null) {
+                if(modelCB == null) {
+                    modelCB = new Runnable() {
+                        public void run() {
+                            syncModel();
+                        }
+                    };
+                }
+                model.addCallback(modelCB);
+                syncModel();
+            }
+        }
+    }
+
     public int getValue() {
         return value;
     }
@@ -157,6 +184,9 @@ public class Scrollbar extends Widget {
             this.value = value;
             setThumbPos();
             firePropertyChange("value", oldValue, value);
+            if(model != null) {
+                model.setValue(value);
+            }
             if(fireCallbacks) {
                 doCallback();
             }
@@ -343,11 +373,18 @@ public class Scrollbar extends Widget {
         timer = gui.createTimer();
         timer.setCallback(dragTimerCB);
         timer.setContinuous(true);
+        if(model != null) {
+            // modelCB is created when the model was set
+            model.addCallback(modelCB);
+        }
     }
 
     @Override
     protected void beforeRemoveFromGUI(GUI gui) {
         super.beforeRemoveFromGUI(gui);
+        if(model != null) {
+            model.removeCallback(modelCB);
+        }
         if(timer != null) {
             timer.stop();
         }
@@ -481,12 +518,21 @@ public class Scrollbar extends Widget {
                     btnDownRight.getModel().isArmed()) {
                 if(!timer.isRunning()) {
                     onTimer(INITIAL_DELAY);
-                    timer.start();
+                    // onTimer() can call setValue() which calls user code
+                    // that user code could potentially remove the Scrollbar from GUI
+                    if(timer != null) {
+                        timer.start();
+                    }
                 }
             } else {
                 timer.stop();
             }
         }
+    }
+    
+    void syncModel() {
+        setMinMaxValue(model.getMinValue(), model.getMaxValue());
+        setValue(model.getValue());
     }
 
     @Override
