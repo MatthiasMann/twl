@@ -382,16 +382,16 @@ public final class Event {
     }
 
     /**
-     * Returns the current mouse X coordinate
-     * @return the current mouse X coordinate
+     * Returns the current absolute mouse X coordinate
+     * @return the current absolute mouse X coordinate
      */
     public final int getMouseX() {
         return mouseX;
     }
 
     /**
-     * Returns the current mouse Y coordinate
-     * @return the current mouse Y coordinate
+     * Returns the current absolute mouse Y coordinate
+     * @return the current absolute mouse Y coordinate
      */
     public final int getMouseY() {
         return mouseY;
