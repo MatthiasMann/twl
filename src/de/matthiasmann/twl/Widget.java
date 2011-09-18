@@ -1994,26 +1994,22 @@ public class Widget {
      * This method is called when this widget has been disabled,
      * either directly or one of it's parents.
      *
-     * The default implementation does nothing.
+     * <p>The default implementation does nothing.</p>
      */
     protected void widgetDisabled() {
     }
 
     /**
      * Paints this widget and it's children.
-     * A subclass should overwrite paintWidget() instead of this function.
+     * <p>A subclass should overwrite paintWidget() instead of this function.</p>
      * 
-     * The default implementation calls the following method in order:
-     *   paintBackground(gui)
-     *   paintWidget(gui)
-     *   paintChildren(gui)
-     *   paintOverlay(gui)
+     * <p>The default implementation calls the following method in order:</p><ol>
+     * <li>{@link #paintBackground(de.matthiasmann.twl.GUI)}</li>
+     * <li>{@link #paintWidget(de.matthiasmann.twl.GUI)}</li>
+     * <li>{@link #paintChildren(de.matthiasmann.twl.GUI)}</li>
+     * <li>{@link #paintOverlay(de.matthiasmann.twl.GUI)}</li></ol>
      *
      * @param gui the GUI object
-     * @see #paintBackground(de.matthiasmann.twl.GUI) 
-     * @see #paintWidget(de.matthiasmann.twl.GUI)
-     * @see #paintChildren(de.matthiasmann.twl.GUI)
-     * @see #paintOverlay(de.matthiasmann.twl.GUI)
      */
     protected void paint(GUI gui) {
         paintBackground(gui);
@@ -2023,9 +2019,14 @@ public class Widget {
     }
     
     /**
-     * Called by paint() after painting the background and before painting all children.
-     * This should be overwritten instead of paint() if normal themeable
-     * painting is desired by the subclass.
+     * Called by {@link #paint(de.matthiasmann.twl.GUI)} after painting the
+     * background and before painting all children.
+     * 
+     * <p>This should be overwritten instead of {@code paint} if normal themeable
+     * painting is desired by the subclass.</p>
+     * 
+     * <p>The default implementation does nothing.</p>
+     * 
      * @param gui the GUI object - it's the same as getGUI()
      */
     protected void paintWidget(GUI gui) {
@@ -2034,6 +2035,7 @@ public class Widget {
     /**
      * Paint the background image of this widget.
      * @param gui the GUI object
+     * @see #paint(de.matthiasmann.twl.GUI) 
      */
     protected void paintBackground(GUI gui) {
         Image bgImage = getBackground();
@@ -2045,6 +2047,7 @@ public class Widget {
     /**
      * Paints the overlay image of this widget.
      * @param gui the GUI object
+     * @see #paint(de.matthiasmann.twl.GUI) 
      */
     protected void paintOverlay(GUI gui) {
         Image ovImage = getOverlay();
@@ -2056,6 +2059,7 @@ public class Widget {
     /**
      * Paints all children in index order. Invisible children are skipped.
      * @param gui the GUI object
+     * @see #paint(de.matthiasmann.twl.GUI) 
      */
     protected void paintChildren(GUI gui) {
         if(children != null) {
