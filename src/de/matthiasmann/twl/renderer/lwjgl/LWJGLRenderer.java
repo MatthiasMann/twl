@@ -237,10 +237,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         if(width <= 0 || height <= 0) {
             return false;
         }
-
-        hasScissor = false;
-        tintStack = tintStateRoot;
-        clipStack.clearStack();
+        
+        prepareForRendering();
         
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT|GL11.GL_TRANSFORM_BIT|GL11.GL_HINT_BIT|
                 GL11.GL_COLOR_BUFFER_BIT|GL11.GL_SCISSOR_BIT|GL11.GL_LINE_BIT|GL11.GL_TEXTURE_BIT);
@@ -263,10 +261,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     }
 
     public void endRendering() {
-        if(swCursor != null) {
-            tintStack = tintStateRoot;
-            swCursor.render(mouseX, mouseY);
-        }
+        renderSWCursor();
         GL11.glPopMatrix();
         GL11.glMatrixMode(GL11.GL_PROJECTION);
         GL11.glPopMatrix();
@@ -522,6 +517,19 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         GL11.glVertex2f(x0 - dx - dy, y0 - dy + dx);
         GL11.glVertex2f(x1 + dx - dy, y1 + dy + dx);
         GL11.glVertex2f(x1 + dx + dy, y1 + dy - dx);
+    }
+
+    protected void prepareForRendering() {
+        hasScissor = false;
+        tintStack = tintStateRoot;
+        clipStack.clearStack();
+    }
+
+    protected void renderSWCursor() {
+        if(swCursor != null) {
+            tintStack = tintStateRoot;
+            swCursor.render(mouseX, mouseY);
+        }
     }
 
     protected void getTintedColor(Color color, float[] result) {
