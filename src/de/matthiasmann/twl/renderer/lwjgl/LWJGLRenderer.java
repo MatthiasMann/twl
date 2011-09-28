@@ -538,6 +538,18 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         result[2] = tintStack.b*(color.getB()&255);
         result[3] = tintStack.a*(color.getA()&255);
     }
+    
+    /**
+     * Computes the tinted color from the given color.
+     * @param color the input color in RGBA order, value range is 0.0 (black) to 255.0 (white).
+     * @param result the tinted color in RGBA order, can be the same array as color.
+     */
+    protected void getTintedColor(float[] color, float[] result) {
+        result[0] = tintStack.r*color[0];
+        result[1] = tintStack.g*color[1];
+        result[2] = tintStack.b*color[2];
+        result[3] = tintStack.a*color[3];
+    }
 
     protected void setClipRect() {
         final Rect rect = clipRectTemp;
