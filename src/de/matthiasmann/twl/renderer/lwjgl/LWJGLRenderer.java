@@ -229,17 +229,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         }
         return time;
     }
-
-    /**
-     * Setup GL to start rendering the GUI. It assumes default GL state.
-     */
-    public boolean startRenderering() {
-        if(width <= 0 || height <= 0) {
-            return false;
-        }
-        
-        prepareForRendering();
-        
+    
+    protected void setupGLState() {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT|GL11.GL_TRANSFORM_BIT|GL11.GL_HINT_BIT|
                 GL11.GL_COLOR_BUFFER_BIT|GL11.GL_SCISSOR_BIT|GL11.GL_LINE_BIT|GL11.GL_TEXTURE_BIT);
         GL11.glMatrixMode(GL11.GL_PROJECTION);
@@ -254,18 +245,53 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         GL11.glEnable(GL11.GL_LINE_SMOOTH);
         GL11.glDisable(GL11.GL_DEPTH_TEST);
         GL11.glDisable(GL11.GL_LIGHTING);
+        GL11.glDisable(GL11.GL_SCISSOR_TEST);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
         GL11.glHint(GL11.GL_LINE_SMOOTH_HINT, GL11.GL_NICEST);
+    }
+    
+    protected void revertGLState() {
+        GL11.glPopMatrix();
+        GL11.glMatrixMode(GL11.GL_PROJECTION);
+        GL11.glPopMatrix();
+        GL11.glPopAttrib();
+    }
+    
+    /**
+     * Setup GL to start rendering the GUI. It assumes default GL state.
+     */
+    public boolean startRenderering() {
+        if(width <= 0 || height <= 0) {
+            return false;
+        }
+        
+        prepareForRendering();
+        setupGLState();
         
         return true;
     }
 
     public void endRendering() {
         renderSWCursor();
-        GL11.glPopMatrix();
-        GL11.glMatrixMode(GL11.GL_PROJECTION);
-        GL11.glPopMatrix();
-        GL11.glPopAttrib();
+        revertGLState();
+    }
+    
+    /**
+     * Call to revert the GL state to the state before calling
+     * {@link #startRenderering()}.
+     * @see #resumeRendering() 
+     */
+    public void pauseRendering() {
+        revertGLState();
+    }
+    
+    /**
+     * Resume rendering after a call to {@link #pauseRendering()}.
+     */
+    public void resumeRendering() {
+        hasScissor = false;
+        setupGLState();
+        setClipRect();
     }
     
     public int getHeight() {
