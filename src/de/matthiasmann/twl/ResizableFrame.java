@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -78,6 +78,7 @@ public class ResizableFrame extends Widget {
     
     private final MouseCursor[] cursors;
     private ResizableAxis resizableAxis = ResizableAxis.BOTH;
+    private boolean draggable = true;
     private DragMode dragMode = DragMode.NONE;
     private int dragStartX;
     private int dragStartY;
@@ -138,6 +139,23 @@ public class ResizableFrame extends Widget {
         if(resizeHandle != null) {
             layoutResizeHandle();
         }
+    }
+
+    public boolean isDraggable() {
+        return draggable;
+    }
+
+    /**
+     * Controls weather the ResizableFrame can be dragged via the title bar or
+     * not, default is true.
+     * 
+     * <p>When set to false the resizing should also be disabled to present a
+     * consistent behavior to the user.</p>
+     * 
+     * @param movable if dragging via the title bar is allowed - default is true.
+     */
+    public void setDraggable(boolean movable) {
+        this.draggable = movable;
     }
 
     public boolean hasTitleBar() {
@@ -511,7 +529,11 @@ public class ResizableFrame extends Widget {
 
         if(titleWidget != null && titleWidget.getParent() == this) {
             if(titleWidget.isInside(mx, my)) {
-                return DragMode.POSITION;
+                if(draggable) {
+                    return DragMode.POSITION;
+                } else {
+                    return DragMode.NONE;
+                }
             }
             top = my < titleWidget.getY();
         }
