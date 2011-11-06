@@ -632,14 +632,14 @@ public final class GUI extends Widget {
     }
 
     /**
-     * Renders all visible widgets. Calls {@code startRenderering} before and
+     * Renders all visible widgets. Calls {@code startRendering} before and
      * {@code endRendering} after rendering all widgets.
      *
-     * @see Renderer#startRenderering()
+     * @see Renderer#startRendering()
      * @see Renderer#endRendering() 
      */
     public void draw() {
-        if(renderer.startRenderering()) {
+        if(renderer.startRendering()) {
             try {
                 drawWidget(this);
                 

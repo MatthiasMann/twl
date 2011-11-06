@@ -260,7 +260,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     /**
      * Setup GL to start rendering the GUI. It assumes default GL state.
      */
-    public boolean startRenderering() {
+    public boolean startRendering() {
         if(width <= 0 || height <= 0) {
             return false;
         }
@@ -278,7 +278,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     
     /**
      * Call to revert the GL state to the state before calling
-     * {@link #startRenderering()}.
+     * {@link #startRendering()}.
      * @see #resumeRendering() 
      */
     public void pauseRendering() {

@@ -56,11 +56,11 @@ public interface Renderer {
      * must be called.</p>
      * @return true if rendering was started, false otherwise
      */
-    public boolean startRenderering();
+    public boolean startRendering();
     
     /**
      * Clean up after rendering TWL.
-     * Only call this method when {@link #startRenderering()} returned {@code true}
+     * Only call this method when {@link #startRendering()} returned {@code true}
      */
     public void endRendering();
     
