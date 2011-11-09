@@ -71,6 +71,7 @@ class ImageManager {
         this.cursors = new TreeMap<String, MouseCursor>();
 
         images.put("none", NONE);
+        cursors.put("os-default", NOCURSOR);
     }
 
     Image getImage(String name) {
