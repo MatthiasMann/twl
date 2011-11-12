@@ -142,7 +142,11 @@ public abstract class MenuElement {
         }
     }
 
-    void setWidgetTheme(Widget w, String defaultTheme) {
+    /**
+     * Helper method to apply the theme from the menu element to the widget
+     * if it was set, otherwise the defaultTheme is used.
+     */
+    protected void setWidgetTheme(Widget w, String defaultTheme) {
         if(theme != null) {
             w.setTheme(theme);
         } else {
