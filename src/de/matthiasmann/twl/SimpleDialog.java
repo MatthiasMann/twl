@@ -44,6 +44,7 @@ public class SimpleDialog {
     private Object msg;
     private Runnable cbOk;
     private Runnable cbCancel;
+    private boolean focusCancelButton;
 
     public SimpleDialog() {
     }
@@ -112,6 +113,20 @@ public class SimpleDialog {
      */
     public void setCancelCallback(Runnable cbCancel) {
         this.cbCancel = cbCancel;
+    }
+
+    public boolean isFocusCancelButton() {
+        return focusCancelButton;
+    }
+
+    /**
+     * Should the cancel button be focused when the dialog is created?
+     * Default is false (eg focus the message or the OK button).
+     * 
+     * @param focusCancelButton true to focus the cancel button
+     */
+    public void setFocusCancelButton(boolean focusCancelButton) {
+        this.focusCancelButton = focusCancelButton;
     }
 
     /**
@@ -201,7 +216,9 @@ public class SimpleDialog {
         popupWindow.add(layout);
         popupWindow.openPopupCentered();
 
-        if(msgWidget != null && msgWidget.canAcceptKeyboardFocus()) {
+        if(focusCancelButton) {
+            btnCancel.requestKeyboardFocus();
+        } else if(msgWidget != null && msgWidget.canAcceptKeyboardFocus()) {
             msgWidget.requestKeyboardFocus();
         }
 
