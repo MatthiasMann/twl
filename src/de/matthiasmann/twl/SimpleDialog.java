@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -155,9 +155,12 @@ public class SimpleDialog {
         btnOk.setTheme("btnOk");
         btnOk.addCallback(new ButtonCB(popupWindow, cbOk));
 
+        ButtonCB btnCancelCallback = new ButtonCB(popupWindow, cbCancel);
+        popupWindow.setRequestCloseCallback(btnCancelCallback);
+        
         Button btnCancel = new Button("Cancel");
         btnCancel.setTheme("btnCancel");
-        btnCancel.addCallback(new ButtonCB(popupWindow, cbCancel));
+        btnCancel.addCallback(btnCancelCallback);
 
         DialogLayout layout = new DialogLayout();
         layout.setTheme("content");

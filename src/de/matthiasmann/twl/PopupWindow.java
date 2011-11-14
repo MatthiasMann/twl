@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -62,7 +62,8 @@ public class PopupWindow extends Container {
 
     private boolean closeOnClickedOutside = true;
     private boolean closeOnEscape = true;
-
+    private Runnable requestCloseCallback;
+    
     /**
      * Creates a new pop-up window.
      *
@@ -111,6 +112,20 @@ public class PopupWindow extends Container {
         this.closeOnEscape = closeOnEscape;
     }
 
+    public Runnable getRequestCloseCallback() {
+        return requestCloseCallback;
+    }
+
+    /**
+     * Sets a callback to be called when {@link #requestPopupClose()} is executed.
+     * This will override the default behavior of closing the popup.
+     * 
+     * @param requestCloseCallback the new callback or null
+     */
+    public void setRequestCloseCallback(Runnable requestCloseCallback) {
+        this.requestCloseCallback = requestCloseCallback;
+    }
+    
     /**
      * Opens the pop-up window with it's current size and position.
      * In order for this to work the owner must be part of the GUI tree.
@@ -270,11 +285,18 @@ public class PopupWindow extends Container {
      * Also called by the default implementation of {@code mouseClickedOutside}
      * when {@code closeOnClickedOutside} is active.
      *
+     * <p>By default it calls {@link #closePopup() } except when a
+     * {@link #setRequestCloseCallback(java.lang.Runnable) } had been set.</p>
+     * 
      * @see #setCloseOnEscape(boolean)
      * @see #mouseClickedOutside(de.matthiasmann.twl.Event)
      */
     protected void requestPopupClose() {
-        closePopup();
+        if(requestCloseCallback != null) {
+            requestCloseCallback.run();
+        } else {
+            closePopup();
+        }
     }
 
     /**
