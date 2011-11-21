@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -59,6 +59,23 @@ public enum Alignment {
     public HAlignment getFontHAlignment() {
         return fontHAlignment;
     }
+
+    /**
+     * Returns the horizontal position for this alignment.
+     * @return 0 for left, 1 for center and 2 for right
+     */
+    public int getHPosition() {
+        return hpos;
+    }
+
+    /**
+     * Returns the vertical position for this alignment.
+     * @return 0 for top, 1 for center and 2 for bottom
+     */
+    public int getVPosition() {
+        return vpos;
+    }
+    
 
     public int computePositionX(int containerWidth, int objectWidth) {
         return Math.max(0, containerWidth - objectWidth) * hpos / 2;
