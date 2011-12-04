@@ -150,6 +150,15 @@ public class MenuManager extends PopupWindow {
             gui.resendLastMouseMove();
         }
     }
+    
+    /**
+     * Returns the popup widget for the specified menu
+     * @param menu the menu for which to return the popup
+     * @return the popup widget or null if not open
+     */
+    public Widget getPopupForMenu(Menu menu) {
+        return popups.get(menu);
+    }
 
     @Override
     protected void afterAddToGUI(GUI gui) {
