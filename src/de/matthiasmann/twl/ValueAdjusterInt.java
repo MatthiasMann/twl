@@ -178,6 +178,8 @@ public class ValueAdjusterInt extends ValueAdjuster {
 
     protected void syncWithModel() {
         cancelEdit();
+        this.minValue = model.getMinValue();
+        this.maxValue = model.getMaxValue();
         this.value = model.getValue();
         setDisplayText();
     }
