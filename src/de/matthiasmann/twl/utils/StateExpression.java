@@ -33,6 +33,7 @@ import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.BitSet;
 
 /**
  * A class to handle animation state expression
@@ -117,14 +118,11 @@ public abstract class StateExpression {
         StateExpression[] childArray =
                 children.toArray(new StateExpression[children.size()]);
         
-        if(kind == '^') {
-            return new Xor(childArray);
-        } else {
-            return new AndOr(kind, childArray);
-        }
+        assert kind == '|' || kind == '+' || kind == '^';
+        return new Logic(kind, childArray);
     }
 
-    static class StringIterator {
+    private static class StringIterator {
         final String str;
         int pos;
 
@@ -175,46 +173,49 @@ public abstract class StateExpression {
         }
     }
 
-    protected boolean negate;
-
-    static class AndOr extends StateExpression {
-        private final StateExpression[] children;
-        private final boolean kind;
-        public AndOr(char kind, StateExpression ... children) {
-            assert kind == '|' || kind == '+';
-            this.children = children;
-            this.kind = kind == '|';
-        }
-
-        @Override
-        public boolean evaluate(AnimationState as) {
-            for(StateExpression e : children) {
-                if(kind == e.evaluate(as)) {
-                    return kind ^ negate;
-                }
-            }
-            return !kind ^ negate;
-        }
+    StateExpression() {
     }
 
-    static class Xor extends StateExpression {
-        private final StateExpression[] children;
-        public Xor(StateExpression ... children) {
+    abstract void getUsedStateKeys(BitSet bs);
+    
+    boolean negate;
+
+    static class Logic extends StateExpression {
+        final StateExpression[] children;
+        final boolean and;
+        final boolean xor;
+        
+        Logic(char kind, StateExpression ... children) {
             this.children = children;
+            this.and = kind == '+';
+            this.xor = kind == '^';
         }
 
         @Override
         public boolean evaluate(AnimationState as) {
-            boolean result = negate;
+            boolean result = and ^ negate;
             for(StateExpression e : children) {
-                result ^= e.evaluate(as);
+                boolean value = e.evaluate(as);
+                if(xor) {
+                    result ^= value;
+                } else if(and != value) {
+                    return result ^ true;
+                }
             }
             return result;
         }
-    }
 
+        @Override
+        void getUsedStateKeys(BitSet bs) {
+            for(StateExpression e : children) {
+                e.getUsedStateKeys(bs);
+            }
+        }
+    }
+        
     static class Check extends StateExpression {
-        private final StateKey state;
+        final StateKey state;
+        
         public Check(String state) {
             this.state = StateKey.get(state);
         }
@@ -222,6 +223,11 @@ public abstract class StateExpression {
         @Override
         public boolean evaluate(AnimationState as) {
             return negate ^ (as != null && as.getAnimationState(state));
+        }
+
+        @Override
+        void getUsedStateKeys(BitSet bs) {
+            bs.set(state.getID());
         }
     }
 }
