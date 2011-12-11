@@ -29,6 +29,7 @@
  */
 package de.matthiasmann.twl.renderer;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 /**
@@ -75,6 +76,8 @@ public interface AnimationState {
 
         private static final HashMap<String, StateKey> keys =
                 new HashMap<String, AnimationState.StateKey>();
+        private static final ArrayList<StateKey> keysByID =
+                new ArrayList<StateKey>();
 
         private StateKey(String name, int id) {
             this.name = name;
@@ -131,8 +134,19 @@ public interface AnimationState {
             if(key == null) {
                 key = new StateKey(name, keys.size());
                 keys.put(name, key);
+                keysByID.add(key);
             }
             return key;
+        }
+        
+        /**
+         * Returns the StateKey for the specified id.
+         * @param id the ID to lookup
+         * @return the StateKey
+         * @throws IndexOutOfBoundsException if the ID is invalid
+         */
+        public synchronized static StateKey get(int id) {
+            return keysByID.get(id);
         }
 
         public synchronized static int getNumStateKeys() {
