@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -109,6 +109,53 @@ public class SimpleMathParserTest {
                 "mul\n" +
                 "loadConst 1\n" +
                 "sub\n", ti.toString());
+    }
+
+    @Test
+    public void test7() throws ParseException {
+        TestInterpreter ti = new TestInterpreter();
+        SimpleMathParser.interpret("9 - -1", ti);
+        assertEquals(
+                "loadConst 9\n" +
+                "loadConst 1\n" +
+                "negate\n" +
+                "sub\n", ti.toString());
+    }
+    
+    @Test
+    public void test8() {
+        try {
+            TestInterpreter ti = new TestInterpreter();
+            SimpleMathParser.interpret("0x 9", ti);
+            throw new AssertionError("Should have thrown an exception");
+        } catch(ParseException ex) {
+            assertEquals("Unexpected character ' ' at 2", ex.getMessage());
+            assertEquals(2, ex.getErrorOffset());
+        }
+    }
+    
+    @Test
+    public void test9() {
+        try {
+            TestInterpreter ti = new TestInterpreter();
+            SimpleMathParser.interpret("0x123456789", ti);
+            throw new AssertionError("Should have thrown an exception");
+        } catch(ParseException ex) {
+            assertEquals("Number to large at 11", ex.getMessage());
+            assertEquals(11, ex.getErrorOffset());
+        }
+    }
+    
+    @Test
+    public void test10() {
+        try {
+            TestInterpreter ti = new TestInterpreter();
+            SimpleMathParser.interpret("0x", ti);
+            throw new AssertionError("Should have thrown an exception");
+        } catch(ParseException ex) {
+            assertEquals("Unexpected end of string", ex.getMessage());
+            assertEquals(2, ex.getErrorOffset());
+        }
     }
 
     static class TestInterpreter implements SimpleMathParser.Interpreter {

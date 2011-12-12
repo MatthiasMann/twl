@@ -113,7 +113,7 @@ public abstract class AbstractMathInterpreter implements SimpleMathParser.Interp
                         return type.cast(c.newInstance(stack.toArray(new Object[count])));
                     } catch (Exception ex) {
                         Logger.getLogger(AbstractMathInterpreter.class.getName()).log(
-                                Level.SEVERE, "can't instanciate object", ex);
+                                Level.SEVERE, "can't instantiate object", ex);
                     }
                 }
             }
