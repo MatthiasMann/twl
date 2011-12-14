@@ -251,6 +251,13 @@ public class PopupWindow extends Container {
         return Math.min(parentHeight, super.getPreferredHeight());
     }
     
+    /**
+     * This method is final to ensure correct event handling for pop-ups.
+     * To customize the event handling override the {@link #handleEventPopup(de.matthiasmann.twl.Event) }.
+     * 
+     * @param evt the event
+     * @return always returns true
+     */
     @Override
     protected final boolean handleEvent(Event evt) {
         if(handleEventPopup(evt)) {
@@ -271,6 +278,14 @@ public class PopupWindow extends Container {
         return true;
     }
 
+    /**
+     * This method can be overriden to customize the event handling of a
+     * pop-up window.
+     * <p>The default implementation calls {@link Widget#handleEvent(de.matthiasmann.twl.Event) }</p>
+     * 
+     * @param evt the event
+     * @return true if the event has been handled, false otherwise.
+     */
     protected boolean handleEventPopup(Event evt) {
         return super.handleEvent(evt);
     }

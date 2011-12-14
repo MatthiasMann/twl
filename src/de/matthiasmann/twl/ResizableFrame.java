@@ -34,8 +34,15 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.utils.TintAnimator;
 
 /**
- * A resizable frame
+ * A resizable frame.
  *
+ * <p>All child widgets (which are not part of the frame itself) cover
+ * the complete inner area {@link #layoutChildFullInnerArea(de.matthiasmann.twl.Widget) }.</p>
+ * 
+ * <p>The preferred way to use the ResizableFrame is to add a single
+ * widget which will manage the layout of all it's children.
+ * {@link DialogLayout} can be used for this to avoid creating a new class.</p>
+ * 
  * @author Matthias Mann
  */
 public class ResizableFrame extends Widget {
