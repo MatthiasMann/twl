@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -83,7 +83,7 @@ public class CSSStyle extends Style {
             return;
         }
         if("font-family".equals(key) || "font".equals(key) || "-twl-font".equals(key)) {
-            put(StyleAttribute.FONT_NAME, value);
+            put(StyleAttribute.FONT_NAME, stripQuotes(value.trim()));
             return;
         }
         if("text-align".equals(key)) {
@@ -240,12 +240,17 @@ public class CSSStyle extends Style {
     private void parseURL(StyleAttribute<String> attribute, String value) {
         if(value.startsWith("url(") && value.endsWith(")")) {
             value = value.substring(4, value.length() - 1).trim();
-            if((value.startsWith("\"") && value.endsWith("\"")) ||
-                    (value.startsWith("'") && value.endsWith("'"))) {
-                value = value.substring(1, value.length() - 1);
-            }
+            value = stripQuotes(value);
         }
         put(attribute, value);
+    }
+
+    private String stripQuotes(String value) {
+        if((value.startsWith("\"") && value.endsWith("\"")) ||
+                (value.startsWith("'") && value.endsWith("'"))) {
+            value = value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 
     private void parseColor(StyleAttribute<Color> attribute, String value) {
