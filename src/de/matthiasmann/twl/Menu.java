@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,6 +32,7 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.model.BooleanModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.utils.CallbackSupport;
+import de.matthiasmann.twl.utils.TypeMapping;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -73,6 +74,7 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
     }
     
     private final ArrayList<MenuElement> elements = new ArrayList<MenuElement>();
+    private final TypeMapping<Alignment> classAlignments = new TypeMapping<Alignment>();
     private String popupTheme;
     private Listener[] listeners;
 
@@ -127,7 +129,40 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
     }
 
     /**
-     * Returns a mutable iterator which iterators over all menu elements
+     * Sets the default alignment based on menu element subclasses.
+     * <p>By default all alignments are {@link Alignment#FILL}</p>
+     * 
+     * @param clazz the class for which a default alignment should be set
+     * @param value the alignment
+     */
+    public void setClassAlignment(Class<? extends MenuElement> clazz, Alignment value) {
+        if(value == null) {
+            throw new NullPointerException("value");
+        }
+        if(value == Alignment.FILL) {
+            classAlignments.remove(clazz);
+        } else {
+            classAlignments.put(clazz, value);
+        }
+    }
+
+    /**
+     * Retrieves the default alignment for the given menu element class.
+     * <p>By default all alignments are {@link Alignment#FILL}</p>
+     * 
+     * @param clazz the menu element class
+     * @return the alignment
+     */
+    public Alignment getClassAlignment(Class<? extends MenuElement> clazz) {
+        Alignment alignment = classAlignments.get(clazz);
+        if(alignment == null) {
+            return Alignment.FILL;
+        }
+        return alignment;
+    }
+    
+    /**
+     * Returns a mutable iterator which iterates over all menu elements
      * @return a iterator
      */
     public Iterator<MenuElement> iterator() {
@@ -235,6 +270,17 @@ public class Menu extends MenuElement implements Iterable<MenuElement> {
         l.setHorizontalGroup(l.createSequentialGroup().addWidgetsWithGap("menuitem", widgets));
         l.setVerticalGroup(l.createParallelGroup(widgets));
 
+        for(int i=0,n=elements.size() ; i<n ; i++) {
+            MenuElement e = elements.get(i);
+            
+            Alignment alignment = e.getAlignment();
+            if(alignment == null) {
+                alignment = getClassAlignment(e.getClass());
+            }
+            
+            l.setWidgetAlignment(widgets[i], alignment);
+        }
+        
         l.getHorizontalGroup().addGap();
         return l;
     }

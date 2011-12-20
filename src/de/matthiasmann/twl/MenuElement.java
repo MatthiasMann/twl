@@ -44,6 +44,7 @@ public abstract class MenuElement {
     private boolean enabled = true;
     private Object tooltipContent;
     private PropertyChangeSupport pcs;
+    private Alignment alignment;
 
     public MenuElement() {
     }
@@ -96,6 +97,27 @@ public abstract class MenuElement {
         return this;
     }
 
+    public Alignment getAlignment() {
+        return alignment;
+    }
+
+    /**
+     * Sets the alignment used for this element in the menubar.
+     * The default value is {@code null} which means that the class based
+     * default is used.
+     * 
+     * @param alignment the alignment or null.
+     * @return this
+     * @see Menu#setClassAlignment(java.lang.Class, de.matthiasmann.twl.Alignment) 
+     * @see Menu#getClassAlignment(java.lang.Class) 
+     */
+    public MenuElement setAlignment(Alignment alignment) {
+        Alignment oldAlignment = this.alignment;
+        this.alignment = alignment;
+        firePropertyChange("alignment", oldAlignment, alignment);
+        return this;
+    }
+
     protected abstract Widget createMenuWidget(MenuManager mm, int level);
 
     public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -145,6 +167,8 @@ public abstract class MenuElement {
     /**
      * Helper method to apply the theme from the menu element to the widget
      * if it was set, otherwise the defaultTheme is used.
+     * @param w the Widget to which the theme should be applied
+     * @param defaultTheme the defaultTheme when none was set 
      */
     protected void setWidgetTheme(Widget w, String defaultTheme) {
         if(theme != null) {
