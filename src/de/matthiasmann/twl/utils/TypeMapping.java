@@ -70,6 +70,15 @@ public class TypeMapping<V> {
         }
         return slowGet(clazz);
     }
+    
+    public boolean remove(Class<?> clazz) {
+        if(HashEntry.remove(table, clazz) != null) {
+            removeCached();
+            size--;
+            return true;
+        }
+        return false;
+    }
 
     public Set<V> getUniqueValues() {
         HashSet<V> result = new HashSet<V>();
