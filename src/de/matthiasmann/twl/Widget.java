@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -2532,10 +2532,20 @@ public class Widget {
         final Renderer renderer = gui.getRenderer();
         final OffscreenRenderer offscreenRenderer = renderer.getOffscreenRenderer();
         if(offscreenRenderer != null) {
-            offscreenSurface = offscreenRenderer.startOffscreenRendering(offscreenSurface,
-                    posX-offscreenExtraLeft, posY-offscreenExtraTop,
-                    width+offscreenExtraLeft+offscreenExtraRight,
-                    height+offscreenExtraTop+offscreenExtraBottom);
+            int extraTop = offscreenExtraTop;
+            int extraLeft = offscreenExtraLeft;
+            int extraRight = offscreenExtraRight;
+            int extraBottom = offscreenExtraBottom;
+            int[] effectExtra = ro.getEffectExtraArea(this);
+            if(effectExtra != null) {
+                extraTop += effectExtra[0];
+                extraLeft += effectExtra[1];
+                extraRight += effectExtra[2];
+                extraBottom += effectExtra[3];
+            }
+            offscreenSurface = offscreenRenderer.startOffscreenRendering(
+                    offscreenSurface, posX-extraLeft, posY-extraTop,
+                    width+extraLeft+extraRight, height+extraTop+extraBottom);
             if(offscreenSurface != null) {
                 try {
                     if(tintAnimator != null && tintAnimator.hasTint()) {
@@ -2881,5 +2891,17 @@ public class Widget {
          * @param widget the widget
          */
         public void offscreenRenderingFailed(Widget widget);
+        
+        /**
+         * Returns the extra area around the widget needed for the effect.
+         * <p>All returned values must be &gt;= 0.</p>
+         * 
+         * <p>The returned object can be reused on the next call and should not
+         * be stored by the caller.</p>
+         * 
+         * @param widget the widget
+         * @return the extra area in {@code top, left, right, bottom} order or null
+         */
+        public int[] getEffectExtraArea(Widget widget);
     }
 }
