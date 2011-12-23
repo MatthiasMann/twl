@@ -42,7 +42,7 @@ import de.matthiasmann.twl.utils.TypeMapping;
  * @author Matthias Mann
  */
 public class WheelWidget<T> extends Widget {
-
+    
     public interface ItemRenderer {
         public Widget getRenderWidget(Object data);
     }
@@ -56,15 +56,19 @@ public class WheelWidget<T> extends Widget {
     protected int numVisibleItems;
     protected Image selectedOverlay;
     
-    protected static final int SPEED_SHIFT = 8;
-    
+    private static final int TIMER_INTERVAL = 30;
+    private static final int MIN_SPEED = 3;
+    private static final int MAX_SPEED = 100;
+
     protected Timer timer;
     protected int dragStartY;
+    protected long lastDragTime;
+    protected long lastDragDelta;
+    protected int lastDragDist;
     protected boolean hasDragStart;
     protected boolean dragActive;
     protected int scrollOffset;
     protected int scrollAmount;
-    protected int scrollSpeed;
     
     protected ListModel<T> model;
     protected IntegerModel selectedModel;
@@ -159,10 +163,11 @@ public class WheelWidget<T> extends Widget {
     }
 
     public void scroll(int amount) {
-        scroll(amount, false);
+        scrollInt(amount);
+        scrollAmount = 0;
     }
     
-    protected void scroll(int amount, boolean fromAutoScroll) {
+    protected void scrollInt(int amount) {
         int pos = selected;
         int half = itemHeight / 2;
         
@@ -193,15 +198,6 @@ public class WheelWidget<T> extends Widget {
         
         setSelected(pos);
         
-        if(!fromAutoScroll) {
-            scrollAmount = 0;
-            scrollSpeed = 3 << SPEED_SHIFT;
-        
-            if(Math.abs(scrollOffset) > half) {
-                scrollSpeed = 6 << SPEED_SHIFT;
-            }
-        }
-        
         if(scrollOffset == 0 && scrollAmount == 0) {
             stopTimer();
         } else {
@@ -209,18 +205,12 @@ public class WheelWidget<T> extends Widget {
         }
     }
     
-    public void autoScroll(int dir, int speed) {
-        if(speed <= 0) {
-            throw new IllegalArgumentException("speed");
-        }
-        
+    public void autoScroll(int dir) {
         if(dir != 0) {
             if(scrollAmount != 0 && Integer.signum(scrollAmount) != Integer.signum(dir)) {
                 scrollAmount = dir;
-                scrollSpeed = speed << SPEED_SHIFT;
             } else {
                 scrollAmount += dir;
-                scrollSpeed = Math.max(scrollSpeed, speed << SPEED_SHIFT);
             }
             startTimer();
         }
@@ -257,16 +247,27 @@ public class WheelWidget<T> extends Widget {
 
     @Override
     protected boolean handleEvent(Event evt) {
-        if(evt.isMouseDragEnd()) {
+        if(evt.isMouseDragEnd() && dragActive) {
+            int absDist = Math.abs(lastDragDist);
+            if(absDist > 3 && lastDragDelta > 0) {
+                int amount = (int)Math.min(1000, absDist * 100 / lastDragDelta);
+                autoScroll(amount * Integer.signum(lastDragDist));
+            }
+            
             hasDragStart = false;
             dragActive = false;
+            return true;
         }
         
         if(evt.isMouseDragEvent()) {
             if(hasDragStart) {
+                long time = getTime();
                 dragActive = true;
-                scroll(dragStartY - evt.getMouseY());
+                lastDragDist = dragStartY - evt.getMouseY();
+                lastDragDelta = Math.max(1, time - lastDragTime);
+                scroll(lastDragDist);
                 dragStartY = evt.getMouseY();
+                lastDragTime = time;
             }
             return true;
         }
@@ -277,12 +278,13 @@ public class WheelWidget<T> extends Widget {
         
         switch(evt.getType()) {
             case MOUSE_WHEEL:
-                autoScroll(itemHeight * evt.getMouseWheelDelta(), 10);
+                autoScroll(itemHeight * evt.getMouseWheelDelta());
                 return true;
                 
             case MOUSE_BTNDOWN:
                 if(evt.getMouseButton() == Event.MOUSE_LBUTTON) {
                     dragStartY = evt.getMouseY();
+                    lastDragTime = getTime();
                     hasDragStart = true;
                 }
                 return true;
@@ -290,16 +292,21 @@ public class WheelWidget<T> extends Widget {
             case KEY_PRESSED:
                 switch(evt.getKeyCode()) {
                     case Event.KEY_UP:
-                        autoScroll(-itemHeight, 10);
+                        autoScroll(-itemHeight);
                         return true;
                     case Event.KEY_DOWN:
-                        autoScroll(+itemHeight, 10);
+                        autoScroll(+itemHeight);
                         return true;
                 }
                 return false;
         }
         
         return evt.isMouseEvent();
+    }
+    
+    protected long getTime() {
+        GUI gui = getGUI();
+        return (gui != null) ? gui.getCurrentTime() : 0;
     }
     
     protected int getNumEntries() {
@@ -337,8 +344,6 @@ public class WheelWidget<T> extends Widget {
     }
     
     protected void onTimer() {
-        int speed = scrollSpeed;
-        int newSpeed = (speed * 7) / 8;
         int amount = scrollAmount;
         int newAmount = amount;
         
@@ -347,15 +352,17 @@ public class WheelWidget<T> extends Widget {
         }
         
         if(amount != 0) {
-            int dir = Integer.signum(amount) * Math.min(Math.abs(amount), Math.max(1, speed >> SPEED_SHIFT));
+            int absAmount = Math.abs(amount);
+            int speed = absAmount * TIMER_INTERVAL / 200;
+            int dir = Integer.signum(amount) * Math.min(absAmount,
+                    Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed)));
+            
             if(newAmount != 0) {
                 newAmount -= dir;
             }
+            
             scrollAmount = newAmount;
-            if(Math.abs(newAmount) <= itemHeight) {
-                scrollSpeed = newSpeed;
-            }
-            scroll(dir, true);
+            scrollInt(dir);
         }
     }
 
@@ -384,7 +391,7 @@ public class WheelWidget<T> extends Widget {
         addSelectedListener();
         timer = gui.createTimer();
         timer.setCallback(timerCB);
-        timer.setDelay(50);
+        timer.setDelay(TIMER_INTERVAL);
         timer.setContinuous(true);
     }
 
