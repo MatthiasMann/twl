@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -48,10 +48,24 @@ public class AnimationState implements de.matthiasmann.twl.renderer.AnimationSta
      * to the parent.
      *
      * @param parent the parent animation state or null
+     * @param size the initial size of the state table (indexed by state IDs) 
+     */
+    public AnimationState(AnimationState parent, int size) {
+        this.parent = parent;
+        this.stateTable = new State[size];
+    }
+    
+    /**
+     * Create a new animation state with optional parent.
+     *
+     * When a parent animation state is set, then any request for a state which
+     * has not been set (to either true or false) in this instance are forwarded
+     * to the parent.
+     *
+     * @param parent the parent animation state or null
      */
     public AnimationState(AnimationState parent) {
-        this.parent = parent;
-        this.stateTable = new State[16];
+        this(parent, 16);
     }
 
     /**

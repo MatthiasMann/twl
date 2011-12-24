@@ -62,16 +62,17 @@ public final class StateSelectOptimizer {
             return null;
         }
         
-        StateKey[] keys = new StateKey[numKeys];
+        final StateKey[] keys = new StateKey[numKeys];
         for(int keyIdx=0,keyID=-1 ; (keyID=bs.nextSetBit(keyID+1)) >= 0 ; keyIdx++) {
             keys[keyIdx] = StateKey.get(keyID);
         }
         
-        byte[] matrix = new byte[1 << keys.length];
-        AnimationState as = new AnimationState();
+        final int matrixSize = 1 << numKeys;
+        final byte[] matrix = new byte[matrixSize];
+        AnimationState as = new AnimationState(null, keys[numKeys-1].getID()+1);
 
-        for(int matrixIdx=0 ; matrixIdx<matrix.length ; matrixIdx++) {
-            for(int keyIdx=0 ; keyIdx<keys.length ; keyIdx++) {
+        for(int matrixIdx=0 ; matrixIdx<matrixSize ; matrixIdx++) {
+            for(int keyIdx=0 ; keyIdx<numKeys ; keyIdx++) {
                 as.setAnimationState(keys[keyIdx], (matrixIdx & (1 << keyIdx)) != 0);
             }
             for(int exprIdx=0 ; exprIdx<numExpr ; exprIdx++) {
