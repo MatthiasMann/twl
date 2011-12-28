@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -177,20 +177,25 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
         DebugHook.getDebugHook().replacingWithDifferentType(this, paramName, oldType, newType, getParentDescription());
     }
 
-    void addParameters(Map<String, ?> params) {
+    void put(Map<String, ?> params) {
         for(Map.Entry<String, ?> e : params.entrySet()) {
-            String paramName = e.getKey();
-            Object value = e.getValue();
-            Object old = this.params.put(paramName, value);
-            if(old != null) {
-                Class<?> oldClass = old.getClass();
-                Class<?> newClass = (value != null) ? value.getClass() : null;
+            put(e.getKey(), e.getValue());
+        }
+    }
+    
+    void put(String paramName, Object value) {
+        Object old = params.put(paramName, value);
+        if(old != null && value != null) {
+            Class<?> oldClass = old.getClass();
+            Class<?> newClass = value.getClass();
 
-                if(oldClass != newClass) {
-                    replacingWithDifferentType(paramName, oldClass, newClass);
-                }
+            if(oldClass != newClass && !(isImage(oldClass) && isImage(newClass))) {
+                replacingWithDifferentType(paramName, oldClass, newClass);
             }
         }
     }
     
+    private static boolean isImage(Class<?> clazz) {
+        return Image.class.isAssignableFrom(clazz);
+    }
 }

@@ -53,7 +53,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -316,11 +315,7 @@ public class ThemeManager {
                         defaultFont = font;
                     }
                 } else if("constantDef".equals(tagName)) {
-                    Map<String, ?> value = parseParam(xmlp, baseUrl, "constantDef", null);
-                    if(value.size() != 1) {
-                        throw xmlp.error("constant definitions must define exactly 1 value");
-                    }
-                    constants.addParameters(value);
+                    parseParam(xmlp, baseUrl, "constantDef", null, constants);
                 } else {
                     throw xmlp.unexpected();
                 }
@@ -447,8 +442,7 @@ public class ThemeManager {
                 final String tagName = xmlp.getName();
                 final String name = xmlp.getAttributeNotNull("name");
                 if("param".equals(tagName)) {
-                    Map<String, ?> entries = parseParam(xmlp, baseUrl, "param", ti);
-                    ti.params.putAll(entries);
+                    parseParam(xmlp, baseUrl, "param", ti, ti);
                 } else if("theme".equals(tagName)) {
                     if(name.length() == 0) {
                         parseThemeWildcardRef(xmlp, ti);
@@ -468,8 +462,7 @@ public class ThemeManager {
         return ti;
     }
 
-    @SuppressWarnings("unchecked")
-    private Map<String, ?> parseParam(XMLParser xmlp, URL baseUrl, String tagName, ThemeInfoImpl parent) throws XmlPullParserException, IOException {
+    private void parseParam(XMLParser xmlp, URL baseUrl, String tagName, ThemeInfoImpl parent, ParameterMapImpl target) throws XmlPullParserException, IOException {
         try {
             xmlp.require(XmlPullParser.START_TAG, null, tagName);
             String name = xmlp.getAttributeNotNull("name");
@@ -480,10 +473,16 @@ public class ThemeManager {
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
             if(value instanceof Map<?,?>) {
-                return (Map<String, ?>)value;
+                @SuppressWarnings("unchecked")
+                Map<String, ?> map = (Map<String, ?>)value;
+                if(parent == null && map.size() != 1) {
+                    throw xmlp.error("constant definitions must define exactly 1 value");
+                }
+                target.put(map);
+            } else {
+                ParserUtil.checkNameNotEmpty(name, xmlp);
+                target.put(name, value);
             }
-            ParserUtil.checkNameNotEmpty(name, xmlp);
-            return Collections.singletonMap(name, value);
         } catch (NumberFormatException ex) {
             throw xmlp.error("unable to parse value", ex);
         }
@@ -511,7 +510,7 @@ public class ThemeManager {
             Object obj = parent.params.get(name);
             if(obj instanceof ParameterMapImpl) {
                 ParameterMapImpl base = (ParameterMapImpl)obj;
-                result.params.putAll(base.params);
+                result.put(base.params);
             } else if(obj != null) {
                 throw xmlp.error("Can only merge with map - found a " + obj.getClass().getSimpleName());
             }
@@ -527,7 +526,7 @@ public class ThemeManager {
             }
             if(obj instanceof ParameterMapImpl) {
                 ParameterMapImpl base = (ParameterMapImpl)obj;
-                result.params.putAll(base.params);
+                result.put(base.params);
             } else {
                 throw new IOException("Expected a map got a " + obj.getClass().getSimpleName());
             }
@@ -535,9 +534,8 @@ public class ThemeManager {
         xmlp.nextTag();
         while(xmlp.isStartTag()) {
             String tagName = xmlp.getName();
-            Map<String, ?> params = parseParam(xmlp, baseUrl, "param", parent);
+            parseParam(xmlp, baseUrl, "param", parent, result);
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
-            result.addParameters(params);
             xmlp.nextTag();
         }
         return result;
