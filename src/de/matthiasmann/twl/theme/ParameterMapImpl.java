@@ -189,13 +189,24 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
             Class<?> oldClass = old.getClass();
             Class<?> newClass = value.getClass();
 
-            if(oldClass != newClass && !(isImage(oldClass) && isImage(newClass))) {
+            if(oldClass != newClass && !isSameBaseClass(oldClass, newClass)) {
                 replacingWithDifferentType(paramName, oldClass, newClass);
             }
         }
     }
     
-    private static boolean isImage(Class<?> clazz) {
-        return Image.class.isAssignableFrom(clazz);
+    private static boolean isSameBaseClass(Class<?> classA, Class<?> classB) {
+        for(Class<?> clazz : BASE_CLASSES) {
+            if(clazz.isAssignableFrom(classA) && clazz.isAssignableFrom(classB)) {
+                return true;
+            }
+        }
+        return false;
     }
+    
+    private static final Class<?> BASE_CLASSES[] = {
+        Image.class,
+        Font.class,
+        MouseCursor.class
+    };
 }
