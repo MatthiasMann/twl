@@ -189,13 +189,13 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
             Class<?> oldClass = old.getClass();
             Class<?> newClass = value.getClass();
 
-            if(oldClass != newClass && !isSameBaseClass(oldClass, newClass)) {
+            if(oldClass != newClass && !areTypesCompatible(oldClass, newClass)) {
                 replacingWithDifferentType(paramName, oldClass, newClass);
             }
         }
     }
     
-    private static boolean isSameBaseClass(Class<?> classA, Class<?> classB) {
+    private static boolean areTypesCompatible(Class<?> classA, Class<?> classB) {
         for(Class<?> clazz : BASE_CLASSES) {
             if(clazz.isAssignableFrom(classA) && clazz.isAssignableFrom(classB)) {
                 return true;
