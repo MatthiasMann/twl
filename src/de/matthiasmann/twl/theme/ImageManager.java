@@ -36,6 +36,7 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.StateSelect;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
@@ -301,10 +302,8 @@ class ImageManager {
         if(conditions.size() < 1) {
             throw xmlp.error("state select image needs atleast 1 condition");
         }
-        Image image = new StateSelectImage(
-                stateImages.toArray(new Image[stateImages.size()]),
-                conditions.toArray(new StateExpression[conditions.size()]),
-                params.border);
+        StateSelect select = new StateSelect(conditions.toArray(new StateExpression[conditions.size()]));
+        Image image = new StateSelectImage(stateImages.toArray(new Image[stateImages.size()]), select, params.border);
         return image;
     }
 
