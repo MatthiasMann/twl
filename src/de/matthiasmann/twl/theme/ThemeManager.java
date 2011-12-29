@@ -165,7 +165,7 @@ public class ThemeManager {
      * @param cacheContext The cache context into which the resources are loaded
      * @return a new ThemeManager
      * @throws IOException if an error occured while loading
-     * @throws NullPointerException if one of the passed parameters is {@code null}
+     * @throws IllegalArgumentException if one of the passed parameters is {@code null}
      * @see Renderer#setActiveCacheContext(de.matthiasmann.twl.renderer.CacheContext)
      * @see #destroy() 
      */
@@ -253,8 +253,8 @@ public class ThemeManager {
     }
     
     private void insertDefaultConstants() {
-        constants.params.put("SINGLE_COLUMN", ListBox.SINGLE_COLUMN);
-        constants.params.put("MAX", Short.MAX_VALUE);
+        constants.put("SINGLE_COLUMN", ListBox.SINGLE_COLUMN);
+        constants.put("MAX", Short.MAX_VALUE);
     }
     
     private void parseThemeFile(URL url) throws XmlPullParserException, IOException {
@@ -340,7 +340,7 @@ public class ThemeManager {
             if(parent == null) {
                 throw xmlp.error("Can't merge on top level");
             }
-            Object o = parent.params.get(name);
+            Object o = parent.getParam(name);
             if(o instanceof InputMap) {
                 base = (InputMap)o;
             } else if(o != null) {
@@ -416,7 +416,7 @@ public class ThemeManager {
                 if(parent == null) {
                     throw xmlp.error("Can't merge on top level");
                 }
-                ThemeInfoImpl tiPrev = parent.children.get(themeName);
+                ThemeInfoImpl tiPrev = parent.getTheme(themeName);
                 if(tiPrev != null) {
                     ti.copy(tiPrev);
                 }
@@ -425,7 +425,7 @@ public class ThemeManager {
             if(ref != null) {
                 ThemeInfoImpl tiRef = null;
                 if(parent != null) {
-                    tiRef = parent.get(ref);
+                    tiRef = parent.getTheme(ref);
                 }
                 if(tiRef == null) {
                     tiRef = (ThemeInfoImpl)findThemeInfo(ref);
@@ -448,7 +448,7 @@ public class ThemeManager {
                         parseThemeWildcardRef(xmlp, ti);
                     } else {
                         ThemeInfoImpl tiChild = parseTheme(xmlp, name, ti, baseUrl);
-                        ti.children.put(name, tiChild);
+                        ti.putTheme(name, tiChild);
                     }
                 } else {
                     throw xmlp.unexpected();
@@ -507,26 +507,26 @@ public class ThemeManager {
             if(parent == null) {
                 throw xmlp.error("Can't merge on top level");
             }
-            Object obj = parent.params.get(name);
+            Object obj = parent.getParam(name);
             if(obj instanceof ParameterMapImpl) {
                 ParameterMapImpl base = (ParameterMapImpl)obj;
-                result.put(base.params);
+                result.copy(base);
             } else if(obj != null) {
                 throw xmlp.error("Can only merge with map - found a " + obj.getClass().getSimpleName());
             }
         }
         String ref = xmlp.getAttributeValue(null, "ref");
         if(ref != null) {
-            Object obj = parent.params.get(ref);
+            Object obj = parent.getParam(ref);
             if(obj == null) {
-                obj = constants.params.get(ref);
+                obj = constants.getParam(ref);
                 if(obj == null) {
                     throw new IOException("Referenced map not found: " + ref);
                 }
             }
             if(obj instanceof ParameterMapImpl) {
                 ParameterMapImpl base = (ParameterMapImpl)obj;
-                result.put(base.params);
+                result.copy(base);
             } else {
                 throw new IOException("Expected a map got a " + obj.getClass().getSimpleName());
             }
@@ -599,7 +599,7 @@ public class ThemeManager {
                 return parseObject(xmlp, value, DialogLayout.Gap.class);
             }
             if("constant".equals(tagName)) {
-                Object result = constants.params.get(value);
+                Object result = constants.getParam(value);
                 if(result == null) {
                     throw xmlp.error("Unknown constant: " + value);
                 }
@@ -680,7 +680,7 @@ public class ThemeManager {
 
         public void accessVariable(String name) {
             for(ThemeInfoImpl e=env ; e!=null ; e=e.parent) {
-                Object obj = e.getParameterValue(name, false);
+                Object obj = e.getParam(name);
                 if(obj != null) {
                     push(obj);
                     return;
@@ -691,7 +691,7 @@ public class ThemeManager {
                     return;
                 }
             }
-            Object obj = constants.params.get(name);
+            Object obj = constants.getParam(name);
             if(obj != null) {
                 push(obj);
                 return;
@@ -707,13 +707,13 @@ public class ThemeManager {
         @Override
         protected Object accessField(Object obj, String field) {
             if(obj instanceof ThemeInfoImpl) {
-                Object result = ((ThemeInfoImpl)obj).get(field);
+                Object result = ((ThemeInfoImpl)obj).getTheme(field);
                 if(result != null) {
                     return result;
                 }
             }
             if(obj instanceof ParameterMapImpl) {
-                Object result = ((ParameterMapImpl)obj).getParameterValue(field, false);
+                Object result = ((ParameterMapImpl)obj).getParam(field);
                 if(result == null) {
                     throw new IllegalArgumentException("field not found: " + field);
                 }

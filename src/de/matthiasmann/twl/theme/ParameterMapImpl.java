@@ -36,7 +36,7 @@ import de.matthiasmann.twl.ParameterMap;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
-import java.util.HashMap;
+import de.matthiasmann.twl.utils.CascadedHashMap;
 import java.util.Map;
 
 /**
@@ -45,11 +45,15 @@ import java.util.Map;
  */
 class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
     
-    final HashMap<String, Object> params;
+    private final CascadedHashMap<String, Object> params;
 
     ParameterMapImpl(ThemeManager manager, ThemeInfoImpl parent) {
         super(manager, parent);
-        this.params = new HashMap<String, Object>();
+        this.params = new CascadedHashMap<String, Object>();
+    }
+    
+    void copy(ParameterMapImpl src) {
+        params.collapseAndSetFallback(src.params);
     }
 
     public Font getFont(String name) {
@@ -177,6 +181,10 @@ class ParameterMapImpl extends ThemeChildImpl implements ParameterMap {
         DebugHook.getDebugHook().replacingWithDifferentType(this, paramName, oldType, newType, getParentDescription());
     }
 
+    Object getParam(String name) {
+        return params.get(name);
+    }
+    
     void put(Map<String, ?> params) {
         for(Map.Entry<String, ?> e : params.entrySet()) {
             put(e.getKey(), e.getValue());
