@@ -220,6 +220,23 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         height = ib16.get(3);
         viewportBottom = ib16.get(1) + height;
     }
+    
+    /**
+     * Sets the viewport size & position.
+     * <p>This method is preferred over {@link #syncViewportSize() } as it avoids
+     * calling {@link GL11#glGetInteger(int, java.nio.IntBuffer) }.</p>
+     * 
+     * @param x the X position (GL_VIEWPORT index 0)
+     * @param y the Y position (GL_VIEWPORT index 1)
+     * @param width the width (GL_VIEWPORT index 2)
+     * @param height the height (GL_VIEWPORT index 3)
+     */
+    public void setViewport(int x, int y, int width, int height) {
+        this.viewportX = x;
+        this.viewportBottom = y + height;
+        this.width = width;
+        this.height = height;
+    }
 
     public long getTimeMillis() {
         long res = Sys.getTimerResolution();
@@ -300,6 +317,22 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public int getWidth() {
         return width;
+    }
+    
+    /**
+     * Retrieves the X position of the OpenGL viewport (index 0 of GL_VIEWPORT)
+     * @return the X position of the OpenGL viewport
+     */
+    public int getViewportX() {
+        return viewportX;
+    }
+    
+    /**
+     * Retrieves the Y position of the OpenGL viewport (index 1 of GL_VIEWPORT)
+     * @return the Y position of the OpenGL viewport
+     */
+    public int getViewportY() {
+        return viewportBottom - height;
     }
 
     /**
@@ -427,15 +460,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     public void setCursor(MouseCursor cursor) {
         try {
-            if(Mouse.isInsideWindow()) {
-                swCursor = null;
+            swCursor = null;
+            if(isMouseInsideWindow()) {
                 if(cursor instanceof LWJGLCursor) {
-                    Mouse.setNativeCursor(((LWJGLCursor)cursor).cursor);
+                    setNativeCursor(((LWJGLCursor)cursor).cursor);
                 } else if(cursor instanceof SWCursor) {
-                    Mouse.setNativeCursor(emptyCursor);
+                    setNativeCursor(emptyCursor);
                     swCursor = (SWCursor)cursor;
                 } else {
-                    Mouse.setNativeCursor(null);
+                    setNativeCursor(null);
                 }
             }
         } catch(LWJGLException ex) {
@@ -556,6 +589,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             tintStack = tintStateRoot;
             swCursor.render(mouseX, mouseY);
         }
+    }
+    
+    protected void setNativeCursor(Cursor cursor) throws LWJGLException {
+        Mouse.setNativeCursor(cursor);
+    }
+    
+    protected boolean isMouseInsideWindow() {
+        return Mouse.isInsideWindow();
     }
 
     protected void getTintedColor(Color color, float[] result) {
