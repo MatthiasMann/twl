@@ -1087,6 +1087,10 @@ public class Widget {
 
     /**
      * Controls the handling of the FOCUS_KEY.
+     * <p>The default is true.</p>
+     * <p>When enabled the focus key (TAB) will cycle through all (indirect)
+     * children which can receive keyboard focus. The order is defined
+     * by {@link #getKeyboardFocusOrder() }.</p>
      * @param focusKeyEnabled if true this widget will handle the focus key.
      */
     public void setFocusKeyEnabled(boolean focusKeyEnabled) {
@@ -2141,6 +2145,13 @@ public class Widget {
         }
     }
 
+    /**
+     * Returns all children of this widget in their focus travel order.
+     * <p>The returned list is only iterated and not stored.</p>
+     * <p>The default implementation just returns an unmodifable view of
+     * the internal children list.</p>
+     * @return a read only collection with all children in focus order.
+     */
     protected List<Widget> getKeyboardFocusOrder() {
         if(children == null) {
             return Collections.<Widget>emptyList();

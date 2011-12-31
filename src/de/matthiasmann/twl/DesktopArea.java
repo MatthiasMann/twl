@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2011, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,7 +30,11 @@
 package de.matthiasmann.twl;
 
 /**
- * A widget which reorders it's child when they receive focus
+ * A widget which reorders it's child when they receive focus.
+ * <p>This widget's main purpose is to act as a container for
+ * {@link ResizableFrame}.</p>
+ * <p>This widget has the {@link #setFocusKeyEnabled(boolean) } disabled by
+ * default so that the focus cycles within the current active child.</p>
  * 
  * @author Matthias Mann
  */
