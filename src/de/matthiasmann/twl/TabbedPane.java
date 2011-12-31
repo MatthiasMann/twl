@@ -198,7 +198,7 @@ public class TabbedPane extends Widget {
                 }
             }
             
-            if(tab.pane != null) {
+            if(tab != null && tab.pane != null) {
                 tab.pane.requestKeyboardFocus();
             }
         }
