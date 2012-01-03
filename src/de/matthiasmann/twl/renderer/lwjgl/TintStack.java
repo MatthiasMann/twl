@@ -45,6 +45,7 @@ public class TintStack {
     TintStack next;
     float r,g,b,a;
 
+    @SuppressWarnings("LeakingThisInConstructor")
     public TintStack() {
         this.prev = this;
         this.r = ONE_OVER_255;
@@ -79,6 +80,14 @@ public class TintStack {
         return next;
     }
     
+    public TintStack push(Color color) {
+        return push(
+                color.getRedFloat(),
+                color.getGreenFloat(),
+                color.getBlueFloat(),
+                color.getAlphaFloat());
+    }
+    
     public TintStack pop() {
         return prev;
     }
@@ -106,9 +115,25 @@ public class TintStack {
      */
     public void setColor(Color color) {
         GL11.glColor4f(
-                r*(color.getR()&255),
-                g*(color.getG()&255),
-                b*(color.getB()&255),
-                a*(color.getA()&255));
+                r*color.getRed(),
+                g*color.getGreen(),
+                b*color.getBlue(),
+                a*color.getAlpha());
+    }
+    
+    /**
+     * GL11.glColor4f(color * tint);
+     *
+     * @param r the red component 0..255
+     * @param g the green component 0..255
+     * @param b the blue component 0..255
+     * @param a the alpha component 0..255
+     */
+    public void setColor(float r, float g, float b, float a) {
+        GL11.glColor4f(
+                this.r * r,
+                this.g * g,
+                this.b * b,
+                this.a * a);
     }
 }

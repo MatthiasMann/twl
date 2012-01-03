@@ -153,6 +153,8 @@ public interface Renderer {
      */
     public DynamicImage createDynamicImage(int width, int height);
     
+    public Image createGradient(Gradient gradient);
+    
     /**
      * Enters a clip region.
      * 

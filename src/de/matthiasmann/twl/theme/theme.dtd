@@ -6,7 +6,7 @@
 
 <!ELEMENT themes (images|fontDef|inputMapDef|theme|constantDef|include)*>
 
-<!ELEMENT images (area|alias|composed|select|grid|animation|repeatImage|cursor)*>
+<!ELEMENT images (area|alias|composed|select|grid|animation|repeatImage|cursor|gradient)*>
 <!ATTLIST images
     file    CDATA #IMPLIED
     format  CDATA #IMPLIED
@@ -48,7 +48,7 @@
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
-<!ELEMENT composed (area|alias|composed|select|grid|animation)*>
+<!ELEMENT composed (area|alias|composed|select|grid|animation|gradient)*>
 <!ATTLIST composed
     name            CDATA #IMPLIED
     tint            CDATA #IMPLIED
@@ -62,7 +62,7 @@
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
-<!ELEMENT select (area|alias|composed|select|grid|animation)*>
+<!ELEMENT select (area|alias|composed|select|grid|animation|gradient)*>
 <!ATTLIST select
     name            CDATA #IMPLIED
     tint            CDATA #IMPLIED
@@ -76,7 +76,7 @@
     if              CDATA #IMPLIED
     unless          CDATA #IMPLIED>
 
-<!ELEMENT grid (area|alias|composed|select|grid|animation)*>
+<!ELEMENT grid (area|alias|composed|select|grid|animation|gradient)*>
 <!ATTLIST grid
     name            CDATA #IMPLIED
     weightsX        CDATA #REQUIRED
@@ -132,6 +132,17 @@
 <!ELEMENT repeat (repeat|frame)+>
 <!ATTLIST repeat
     count           CDATA #IMPLIED>
+
+<!ELEMENT gradient (stop)+>
+<!ATTLIST gradient
+    name            CDATA #IMPLIED
+    type            (horizontal|vertical) #REQUIRED
+    wrap            (scale|clamp|mirror|repeat) #IMPLIED>
+
+<!ELEMENT stop EMPTY>
+<!ATTLIST stop
+    pos             CDATA #REQUIRED
+    color           CDATA #IMPLIED>
 
 <!ELEMENT cursor (#PCDATA)>
 <!ATTLIST cursor

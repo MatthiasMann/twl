@@ -31,6 +31,7 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.renderer.Gradient;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
@@ -251,6 +252,8 @@ class ImageManager {
             return parseGrid(xmlp, params);
         } else if("animation".equals(tagName)) {
             return parseAnimation(xmlp, params);
+        } else if("gradient".equals(tagName)) {
+            return parseGradient(xmlp, params);
         } else {
             throw xmlp.error("Unexpected '"+tagName+"'");
         }
@@ -602,6 +605,31 @@ class ImageManager {
                     (params.tintColor == null) ? Color.WHITE : params.tintColor, frozenTime);
             params.tintColor = null;
             return image;
+        } catch(IllegalArgumentException ex) {
+            throw xmlp.error("Unable to parse", ex);
+        }
+    }
+    
+    private Image parseGradient(XMLParser xmlp, ImageParams params) throws XmlPullParserException, IOException {
+        try {
+            Gradient.Type type = xmlp.parseEnumFromAttribute("type", Gradient.Type.class);
+            Gradient.Wrap wrap = xmlp.parseEnumFromAttribute("wrap", Gradient.Wrap.class, Gradient.Wrap.SCALE);
+
+            Gradient gradient = new Gradient(type);
+            gradient.setWrap(wrap);
+
+            xmlp.nextTag();
+            while(xmlp.isStartTag()) {
+                xmlp.require(XmlPullParser.START_TAG, null, "stop");
+                float pos = xmlp.parseFloatFromAttribute("pos");
+                Color color = ParserUtil.parseColor(xmlp, xmlp.getAttributeNotNull("color"), constants);
+                gradient.addStop(pos, color);
+                xmlp.nextTag();
+                xmlp.require(XmlPullParser.END_TAG, null, "stop");
+                xmlp.nextTag();
+            }
+            
+            return renderer.createGradient(gradient);
         } catch(IllegalArgumentException ex) {
             throw xmlp.error("Unable to parse", ex);
         }

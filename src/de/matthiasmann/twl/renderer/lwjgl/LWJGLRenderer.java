@@ -37,6 +37,8 @@ import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.CacheContext;
 import de.matthiasmann.twl.renderer.DynamicImage;
 import de.matthiasmann.twl.renderer.FontParameter;
+import de.matthiasmann.twl.renderer.Gradient;
+import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.renderer.LineRenderer;
@@ -439,6 +441,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return image;
     }
 
+    public Image createGradient(Gradient gradient) {
+        return new GradientImage(this, gradient);
+    }
+
     public void clipEnter(int x, int y, int w, int h) {
         clipStack.push(x, y, w, h);
         setClipRect();
@@ -600,10 +606,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     }
 
     protected void getTintedColor(Color color, float[] result) {
-        result[0] = tintStack.r*(color.getR()&255);
-        result[1] = tintStack.g*(color.getG()&255);
-        result[2] = tintStack.b*(color.getB()&255);
-        result[3] = tintStack.a*(color.getA()&255);
+        result[0] = tintStack.r*color.getRed();
+        result[1] = tintStack.g*color.getGreen();
+        result[2] = tintStack.b*color.getBlue();
+        result[3] = tintStack.a*color.getAlpha();
     }
     
     /**
