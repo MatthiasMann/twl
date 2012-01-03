@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -410,7 +410,7 @@ class ImageManager {
             try {
                 int[] result = new int[4];
                 for(int i=0,start=0 ; i<2 ; i++) {
-                    String part = splitStr.substring(start, comma).trim();
+                    String part = TextUtil.trim(splitStr, start, comma);
                     if(part.length() == 0) {
                         throw new NumberFormatException("empty string");
                     }
@@ -428,7 +428,7 @@ class ImageManager {
                         case 'T':
                         case 'l':
                         case 'L':
-                            part = part.substring(1).trim();
+                            part = TextUtil.trim(part, 1);
                             break;
                     }
                     int value = Integer.parseInt(part);

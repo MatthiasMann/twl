@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -42,6 +42,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import de.matthiasmann.twl.model.DateModel;
+import de.matthiasmann.twl.utils.TextUtil;
 
 /**
  * A date picker panel
@@ -221,7 +222,7 @@ public class DatePicker extends DialogLayout {
                 String name = monthNames[i].toLowerCase(locale);
                 if(name.length() > 0 && lowerText.startsWith(name)) {
                     month = i;
-                    lowerText = lowerText.substring(name.length()).trim();
+                    lowerText = TextUtil.trim(lowerText, name.length());
                     break outer;
                 }
             }

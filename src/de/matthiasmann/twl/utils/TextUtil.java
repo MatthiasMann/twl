@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -138,6 +138,47 @@ public final class TextUtil {
             start++;
         }
         return start;
+    }
+    
+    /**
+     * Returns a whitespace trimmed substring.
+     * 
+     * This method is mostly equivant to
+     * <pre>{@code s.subSequence(start).toString().trim() }</pre>
+     * 
+     * @param s the sequence
+     * @param start the start index (inclusive)
+     * @return the sub string without leading or trailing whitespace
+     * @see Character#isWhitespace(char) 
+     */
+    public static String trim(CharSequence s, int start) {
+        return trim(s, start, s.length());
+    }
+    
+    /**
+     * Returns a whitespace trimmed substring.
+     * 
+     * This method is mostly equivant to
+     * <pre>{@code s.subSequence(start, end).toString().trim() }</pre>
+     * 
+     * @param s the sequence
+     * @param start the start index (inclusive)
+     * @param end the end index (exclusive)
+     * @return the sub string without leading or trailing whitespace
+     * @see Character#isWhitespace(char) 
+     */
+    public static String trim(CharSequence s, int start, int end) {
+        start = skipSpaces(s, start, end);
+        while(end > start && Character.isWhitespace(s.charAt(end-1))) {
+            end--;
+        }
+        if(s instanceof String) {
+            return ((String)s).substring(start, end);
+        }
+        if(s instanceof StringBuilder) {
+            return ((StringBuilder)s).substring(start, end);
+        }
+        return s.subSequence(start, end).toString();
     }
 
     public static String createString(char ch, int len) {
