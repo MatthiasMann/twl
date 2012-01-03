@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -129,20 +129,36 @@ public final class Color {
         return a;
     }
 
+    public int getRed() {
+        return r&255;
+    }
+
+    public int getGreen() {
+        return g&255;
+    }
+
+    public int getBlue() {
+        return b&255;
+    }
+
+    public int getAlpha() {
+        return a&255;
+    }
+
     public float getRedFloat() {
-        return (r & 255) / 255f;
+        return (r & 255) * (1.0f / 255f);
     }
 
     public float getGreenFloat() {
-        return (g & 255) / 255f;
+        return (g & 255) * (1.0f / 255f);
     }
 
     public float getBlueFloat() {
-        return (b & 255) / 255f;
+        return (b & 255) * (1.0f / 255f);
     }
 
     public float getAlphaFloat() {
-        return (a & 255) / 255f;
+        return (a & 255) * (1.0f / 255f);
     }
 
     public void getFloats(float[] dst, int off) {
