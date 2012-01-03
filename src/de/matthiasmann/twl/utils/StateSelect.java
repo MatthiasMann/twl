@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -31,6 +31,7 @@ package de.matthiasmann.twl.utils;
 
 import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
+import java.util.Collection;
 
 /**
  *
@@ -44,6 +45,12 @@ public class StateSelect {
     private final StateKey[] programKeys;
     private final short[] programCodes;
 
+    public static final StateSelect EMPTY = new StateSelect();
+    
+    public StateSelect(Collection<StateExpression> expressions) {
+        this(expressions.toArray(new StateExpression[expressions.size()]));
+    }
+    
     public StateSelect(StateExpression ... expressions) {
         this.expressions = expressions;
         
@@ -73,42 +80,48 @@ public class StateSelect {
         StateSelect.useOptimizer = useOptimizer;
     }
     
+    /**
+     * Returns the number of expressions.
+     * <p>This is also the return value of {@link #evaluate(de.matthiasmann.twl.renderer.AnimationState) }
+     * when no expression matched.</p>
+     * @return the number of expressions
+     */
     public int getNumExpressions() {
         return expressions.length;
     }
     
-    public StateExpression getExpression(int idx) {
-        return expressions[idx];
-    }
-    
-    public int evaluate(AnimationState as, int noMatchIndex) {
+    /**
+     * Evaluates the expression list.
+     * 
+     * @param as the animation stateor null
+     * @return the index of the first matching expression or
+     *         {@link #getNumExpressions()} when no expression matches
+     */
+    public int evaluate(AnimationState as) {
         if(programKeys != null) {
-            return evaluateProgram(as, noMatchIndex);
+            return evaluateProgram(as);
         }
-        return evaluateExpr(as, noMatchIndex);
+        return evaluateExpr(as);
     }
     
-    private int evaluateExpr(AnimationState as, int noMatchIndex) {
-        for(int i=0,n=expressions.length ; i<n ; i++) {
+    private int evaluateExpr(AnimationState as) {
+        int i = 0;
+        for(int n=expressions.length ; i<n ; i++) {
             if(expressions[i].evaluate(as)) {
-                return i;
+                break;
             }
         }
-        return noMatchIndex;
+        return i;
     }
     
-    private int evaluateProgram(AnimationState as, int noMatchIndex) {
+    private int evaluateProgram(AnimationState as) {
         int pos = 0;
         do {
-            if(!as.getAnimationState(programKeys[pos >> 1])) {
+            if(as == null || !as.getAnimationState(programKeys[pos >> 1])) {
                 pos++;
             }
             pos = programCodes[pos];
         } while(pos >= 0);
-        
-        if(pos == -1) {
-            return noMatchIndex;
-        }
         return pos & CODE_MASK;
     }
 

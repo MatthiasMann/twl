@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -75,12 +75,13 @@ public final class StateSelectOptimizer {
             for(int keyIdx=0 ; keyIdx<numKeys ; keyIdx++) {
                 as.setAnimationState(keys[keyIdx], (matrixIdx & (1 << keyIdx)) != 0);
             }
-            for(int exprIdx=0 ; exprIdx<numExpr ; exprIdx++) {
+            int exprIdx = 0;
+            for(; exprIdx<numExpr ; exprIdx++) {
                 if(expressions[exprIdx].evaluate(as)) {
-                    matrix[matrixIdx] = (byte)(exprIdx+1);
                     break;
                 }
             }
+            matrix[matrixIdx] = (byte)exprIdx;
         }
         
         StateSelectOptimizer sso = new StateSelectOptimizer(keys, matrix);
@@ -108,8 +109,7 @@ public final class StateSelectOptimizer {
 
     private int compute(int bits, int mask) {
         if(mask == matrix.length-1) {
-            int result = matrix[bits] - 1;
-            return result | StateSelect.CODE_RESULT;
+            return matrix[bits] | StateSelect.CODE_RESULT;
         }
 
         int best = -1;
@@ -152,7 +152,7 @@ public final class StateSelectOptimizer {
         }
 
         if(bestSet0 == bestSet1 && (bestSet0 & (bestSet0-1)) == 0) {
-            int result = Integer.numberOfTrailingZeros(bestSet0) - 1;
+            int result = Integer.numberOfTrailingZeros(bestSet0);
             return result | StateSelect.CODE_RESULT;
         }
 

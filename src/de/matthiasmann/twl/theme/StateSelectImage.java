@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -39,13 +39,13 @@ import de.matthiasmann.twl.utils.StateSelect;
  *
  * @author Matthias Mann
  */
-class StateSelectImage implements Image, HasBorder {
+public class StateSelectImage implements Image, HasBorder {
 
     private final Image[] images;
     private final StateSelect select;
     private final Border border;
 
-    StateSelectImage(Image[] images, StateSelect select, Border border) {
+    public StateSelectImage(StateSelect select, Border border, Image ... images) {
         assert images.length >= select.getNumExpressions();
         assert images.length <= select.getNumExpressions() + 1;
         
@@ -67,7 +67,7 @@ class StateSelectImage implements Image, HasBorder {
     }
 
     public void draw(AnimationState as, int x, int y, int width, int height) {
-        int idx = select.evaluate(as, select.getNumExpressions());
+        int idx = select.evaluate(as);
         if(idx < images.length) {
             images[idx].draw(as, x, y, width, height);
         }
@@ -82,7 +82,7 @@ class StateSelectImage implements Image, HasBorder {
         for(int i=0 ; i<newImages.length ; i++) {
             newImages[i] = images[i].createTintedVersion(color);
         }
-        return new StateSelectImage(newImages, select, border);
+        return new StateSelectImage(select, border, newImages);
     }
 
 }

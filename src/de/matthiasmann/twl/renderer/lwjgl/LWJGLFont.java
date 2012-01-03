@@ -124,7 +124,7 @@ public class LWJGLFont implements Font, Font2 {
     }
 
     FontState evalFontState(AnimationState as) {
-        return fontStates[stateSelect.evaluate(as, stateSelect.getNumExpressions())];
+        return fontStates[stateSelect.evaluate(as)];
     }
 
     private int[] getMultiLineInfo(int numLines) {
