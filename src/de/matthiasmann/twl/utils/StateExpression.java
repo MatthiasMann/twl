@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -74,7 +74,7 @@ public abstract class StateExpression {
 
             StateExpression child = null;
             if(Character.isJavaIdentifierStart(ch)) {
-                child = new Check(si.getIdent());
+                child = new Check(StateKey.get(si.getIdent()));
             } else if(ch == '(') {
                 si.pos++;
                 child = parse(si);
@@ -114,12 +114,8 @@ public abstract class StateExpression {
         if(children.size() == 1) {
             return children.get(0);
         }
-
-        StateExpression[] childArray =
-                children.toArray(new StateExpression[children.size()]);
         
-        assert kind == '|' || kind == '+' || kind == '^';
-        return new Logic(kind, childArray);
+        return new Logic(kind, children.toArray(new StateExpression[children.size()]));
     }
 
     private static class StringIterator {
@@ -180,12 +176,15 @@ public abstract class StateExpression {
     
     boolean negate;
 
-    static class Logic extends StateExpression {
+    public static class Logic extends StateExpression {
         final StateExpression[] children;
         final boolean and;
         final boolean xor;
         
-        Logic(char kind, StateExpression ... children) {
+        public Logic(char kind, StateExpression ... children) {
+            if(kind != '|' && kind != '+' && kind != '^') {
+                throw new IllegalArgumentException("kind");
+            }
             this.children = children;
             this.and = kind == '+';
             this.xor = kind == '^';
@@ -212,12 +211,12 @@ public abstract class StateExpression {
             }
         }
     }
-        
-    static class Check extends StateExpression {
+    
+    public static class Check extends StateExpression {
         final StateKey state;
-        
-        public Check(String state) {
-            this.state = StateKey.get(state);
+
+        public Check(StateKey state) {
+            this.state = state;
         }
 
         @Override
