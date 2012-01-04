@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -259,7 +259,7 @@ public class TreePathDisplay extends Widget {
 
             switch(key) {
             case Event.KEY_RETURN:
-                if(fireResolvePath(getEditField().getText())) {
+                if(fireResolvePath(getText())) {
                     endEdit();
                 }
                 break;
