@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -333,6 +333,10 @@ public class XMLParser implements Closeable {
         unusedAttributes.clear();
     }
     
+    public boolean isAttributeUnused(int idx) {
+        return unusedAttributes.get(idx);
+    }
+    
     public XmlPullParserException error(String msg) {
         return new XmlPullParserException(msg, xpp, null);
     }
@@ -358,7 +362,7 @@ public class XMLParser implements Closeable {
                 + "\" for enum class " + enumClazz, xpp, null);
     }
 
-    protected boolean parseBool(String value) throws XmlPullParserException {
+    public boolean parseBool(String value) throws XmlPullParserException {
         if("true".equals(value)) {
             return true;
         } else if("false".equals(value)) {
@@ -436,6 +440,9 @@ public class XMLParser implements Closeable {
                 return xppf.newPullParser();
             }
             throw xppfex;
+        }
+
+        private XPPF() {
         }
     }
 }

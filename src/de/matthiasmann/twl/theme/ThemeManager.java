@@ -31,6 +31,7 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Alignment;
 import de.matthiasmann.twl.Border;
+import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.DebugHook;
 import de.matthiasmann.twl.DialogLayout;
 import de.matthiasmann.twl.Dimension;
@@ -47,6 +48,7 @@ import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.utils.AbstractMathInterpreter;
 import de.matthiasmann.twl.utils.StateExpression;
+import de.matthiasmann.twl.utils.StateSelect;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
@@ -358,28 +360,73 @@ public class ThemeManager {
         InputMap im = base.addKeyStrokes(keyStrokes);
         return im;
     }
-
+    
     private Font parseFont(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
-        Map<String, String> params = xmlp.getUnusedAttributes();
+        URL url = baseUrl;
+        String fileName = xmlp.getAttributeValue(null, "filename");
+        if(fileName != null) {
+            url = new URL(url, fileName);
+        }
+        
+        FontParameter baseParams = new FontParameter();
+        parseFontParameter(xmlp, baseParams);
         ArrayList<FontParameter> fontParams = new ArrayList<FontParameter>();
-        params.remove("name");
-        params.remove("default");
+        ArrayList<StateExpression> stateExpr = new ArrayList<StateExpression>();
+        
         xmlp.nextTag();
         while(!xmlp.isEndTag()) {
             xmlp.require(XmlPullParser.START_TAG, null, "fontParam");
+            
             StateExpression cond = ParserUtil.parseCondition(xmlp);
             if(cond == null) {
                 throw xmlp.error("Condition required");
             }
-            Map<String, String> condParams = xmlp.getUnusedAttributes();
-            condParams.remove("if");
-            condParams.remove("unless");
-            fontParams.add(new FontParameter(cond, condParams));
+            stateExpr.add(cond);
+            
+            FontParameter params = new FontParameter(baseParams);
+            parseFontParameter(xmlp, params);
+            fontParams.add(params);
+            
             xmlp.nextTag();
             xmlp.require(XmlPullParser.END_TAG, null, "fontParam");
             xmlp.nextTag();
         }
-        return renderer.loadFont(baseUrl, params, fontParams);
+        
+        fontParams.add(baseParams);
+        return renderer.loadFont(url, new StateSelect(stateExpr),
+                fontParams.toArray(new FontParameter[fontParams.size()]));
+    }
+    
+    private void parseFontParameter(XMLParser xmlp, FontParameter fp) throws XmlPullParserException {
+        for(int i=0,n=xmlp.getAttributeCount() ; i<n ; i++) {
+            if(xmlp.isAttributeUnused(i)) {
+                String name = xmlp.getAttributeName(i);
+                FontParameter.Parameter<?> type = FontParameter.getParameter(name);
+                if(type != null) {
+                    String value = xmlp.getAttributeValue(i);
+                    Class<?> dataClass = type.getDataClass();
+                    
+                    if(dataClass == Color.class) {
+                        @SuppressWarnings("unchecked")
+                        FontParameter.Parameter<Color> colorType = (FontParameter.Parameter<Color>)type;
+                        fp.put(colorType, ParserUtil.parseColor(xmlp, value, constants));
+                        
+                    } else if(dataClass == Integer.class) {
+                        @SuppressWarnings("unchecked")
+                        FontParameter.Parameter<Integer> intType = (FontParameter.Parameter<Integer>)type;
+                        fp.put(intType, parseMath(xmlp, value).intValue());
+                        
+                    } else if(dataClass == Boolean.class) {
+                        @SuppressWarnings("unchecked")
+                        FontParameter.Parameter<Boolean> boolType = (FontParameter.Parameter<Boolean>)type;
+                        fp.put(boolType, xmlp.parseBool(value));
+                        
+                    } else {
+                        throw xmlp.error("dataClass not yet implemented: " + dataClass);
+                    }
+                }
+            }
+        }
     }
 
     private void parseThemeWildcardRef(XMLParser xmlp, ThemeInfoImpl parent) throws IOException, XmlPullParserException {

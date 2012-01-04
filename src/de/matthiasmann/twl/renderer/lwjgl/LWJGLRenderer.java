@@ -46,14 +46,13 @@ import de.matthiasmann.twl.renderer.OffscreenRenderer;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
 import de.matthiasmann.twl.utils.ClipStack;
+import de.matthiasmann.twl.utils.StateSelect;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Locale;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.lwjgl.BufferUtils;
@@ -81,6 +80,10 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     public static final StateKey STATE_MIDDLE_MOUSE_BUTTON = StateKey.get("middleMouseButton");
     public static final StateKey STATE_RIGHT_MOUSE_BUTTON = StateKey.get("rightMouseButton");
 
+    public static final FontParameter.Parameter<Integer> FONTPARAM_OFFSET_X = FontParameter.newParameter("offsetX", 0);
+    public static final FontParameter.Parameter<Integer> FONTPARAM_OFFSET_Y = FontParameter.newParameter("offsetY", 0);
+    public static final FontParameter.Parameter<Integer> FONTPARAM_UNDERLINE_OFFSET = FontParameter.newParameter("underlineOffset", 0);  
+    
     private final IntBuffer ib16;
     final int maxTextureSize;
 
@@ -337,34 +340,21 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return viewportBottom - height;
     }
 
-    /**
-     * Loads a font (either BMFont XML or ASCII format).
-     * <p>If the parameter @code "filename"} is specified then it will be resolved
-     * against the specified URL, otherwise the URL is used directly.</p>
-     * <p>The parameter {@code "color"} is required and must be in a format
-     * parsable by {@link Color#parserColor(java.lang.String)}</p>
-     * @param url the url for the font file 
-     * @param parameter a list of parameters for loading this font
-     * @param conditionalParameter condition parameters for use with {@link AnimationState}
-     * @return a Font object
-     * @throws IOException if the font could not be loaded
-     */
-    public Font loadFont(URL url, Map<String, String> parameter, Collection<FontParameter> conditionalParameter) throws IOException {
+    public Font loadFont(URL url, StateSelect select, FontParameter ... parameterList) throws IOException {
         if(url == null) {
             throw new NullPointerException("url");
         }
-        if(parameter == null) {
-            throw new NullPointerException("parameter");
+        if(select == null) {
+            throw new NullPointerException("select");
         }
-        if(conditionalParameter == null) {
-            throw new NullPointerException("conditionalParameter");
+        if(parameterList == null) {
+            throw new NullPointerException("parameterList");
         }
-        String fileName = parameter.get("filename");
-        if(fileName != null) {
-            url = new URL(url, fileName);
+        if(select.getNumExpressions() + 1 != parameterList.length) {
+            throw new IllegalArgumentException("select.getNumExpressions() + 1 != parameterList.length");
         }
         BitmapFont bmFont = activeCacheContext().loadBitmapFont(url);
-        return new LWJGLFont(this, bmFont, parameter, conditionalParameter);
+        return new LWJGLFont(this, bmFont, select, parameterList);
     }
 
     public Texture loadTexture(URL url, String formatStr, String filterStr) throws IOException {
