@@ -421,6 +421,11 @@ public class ThemeManager {
                         FontParameter.Parameter<Boolean> boolType = (FontParameter.Parameter<Boolean>)type;
                         fp.put(boolType, xmlp.parseBool(value));
                         
+                    } else if(dataClass == String.class) {
+                        @SuppressWarnings("unchecked")
+                        FontParameter.Parameter<String> strType = (FontParameter.Parameter<String>)type;
+                        fp.put(strType, value);
+                        
                     } else {
                         throw xmlp.error("dataClass not yet implemented: " + dataClass);
                     }

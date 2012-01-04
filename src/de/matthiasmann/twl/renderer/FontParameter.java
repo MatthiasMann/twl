@@ -65,7 +65,7 @@ public final class FontParameter {
         if(param == null) {
             throw new NullPointerException("type");
         }
-        if(value != null && param.dataClass.isInstance(value)) {
+        if(value != null && !param.dataClass.isInstance(value)) {
             throw new ClassCastException("value");
         }
         int ordinal = param.ordinal;
