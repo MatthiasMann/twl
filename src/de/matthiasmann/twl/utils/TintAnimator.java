@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -66,6 +66,7 @@ public class TintAnimator {
     private int fadeDuration;
     private boolean fadeActive;
     private boolean hasTint;
+    private Runnable[] fadeDoneCallbacks;
 
     /**
      * Creates a new TintAnimator which starts in the specified color
@@ -73,6 +74,7 @@ public class TintAnimator {
      * @param timeSource the time source for the fade animation
      * @param color the starting color
      */
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     public TintAnimator(TimeSource timeSource, Color color) {
         if(timeSource == null) {
             throw new NullPointerException("timeSource");
@@ -110,10 +112,33 @@ public class TintAnimator {
     }
 
     /**
-     * Fade the current color to the specified color. Any active fade is stopped.
+     * Registers a callback to be executed when the fade animation is finished.
+     * NOTE: the callback is only fired if the fade finishes via timeout and not
+     * when it is stopped through a call to {@link #fadeTo(de.matthiasmann.twl.Color, int) }
+     * or {@link #fadeToHide(int) }.
+     * 
+     * @param cb the callback
+     */
+    public void addFadeDoneCallback(Runnable cb) {
+        fadeDoneCallbacks = CallbackSupport.addCallbackToList(fadeDoneCallbacks, cb, Runnable.class);
+    }
+    
+    public void removeFadeDoneCallback(Runnable cb) {
+        fadeDoneCallbacks = CallbackSupport.removeCallbackFromList(fadeDoneCallbacks, cb);
+    }
+    
+    /**
+     * Fade the current color to the specified color.
+     * 
+     * <p>Any active fade is stopped.</p>
+     * 
+     * <p>A zero or negative fadeDuration will set the new color
+     * directly and does not start a fade. So no callbacks are fired as a
+     * result of this.</p>
      *
      * @param color the destination color of the fade
      * @param fadeDuration the fade time in miliseconds
+     * @see #addFadeDoneCallback(java.lang.Runnable) 
      */
     public void fadeTo(Color color, int fadeDuration) {
         if(fadeDuration <= 0) {
@@ -131,13 +156,18 @@ public class TintAnimator {
     /**
      * Fade the current color to alpha 0.0f. Any active fade is stopped.
      *
-     * This method uses the current color (which may be a mix if a fade was
+     * <p>This method uses the current color (which may be a mix if a fade was
      * active) as a base to fade the alpha value. Because of that the only
      * defined part of the target color is the alpha channel. This is
      * the reason why no fadeToShow method exists. Use fadeTo with the
-     * desired color to make the widget visible again.
+     * desired color to make the widget visible again.</p>
+     * 
+     * <p>A zero or negative fadeDuration will set the alpha value
+     * directly and does not start a fade. So no callbacks are fired as a
+     * result of this.</p>
      *
      * @param fadeDuration the fade time in miliseconds
+     * @see #addFadeDoneCallback(java.lang.Runnable) 
      */
     public void fadeToHide(int fadeDuration) {
         if(fadeDuration <= 0) {
@@ -175,6 +205,12 @@ public class TintAnimator {
                         (currentTint[1] < ONE_EPSILON) ||
                         (currentTint[2] < ONE_EPSILON) ||
                         (currentTint[3] < ONE_EPSILON);
+                // fire callbacks
+                if(fadeDoneCallbacks != null) {
+                    for(Runnable cb : fadeDoneCallbacks) {
+                        cb.run();
+                    }
+                }
             }
         }
     }
