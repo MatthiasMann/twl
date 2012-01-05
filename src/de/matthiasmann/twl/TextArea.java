@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -101,7 +101,7 @@ public class TextArea extends Widget {
 
     private final LClip layoutRoot;
     private final ArrayList<LImage> allBGImages;
-    private final AnimationState elementsAnimationState;
+    private final RenderInfo renderInfo;
     private boolean inLayoutCode;
     private boolean forceRelayout;
     private Dimension preferredInnerSize;
@@ -122,15 +122,7 @@ public class TextArea extends Widget {
         this.imageResolvers = new ArrayList<ImageResolver>();
         this.layoutRoot = new LClip(null);
         this.allBGImages = new ArrayList<LImage>();
-        this.elementsAnimationState = new AnimationState(getAnimationState()) {
-            @Override
-            public int getAnimationTime(StateKey stateKey) {
-                if(stateKey == STATE_HOVER) {
-                    return getHoverAnimationTime();
-                }
-                return super.getAnimationTime(stateKey);
-            }
-        };
+        this.renderInfo = new RenderInfo(getAnimationState());
         
         this.modelCB = new Runnable() {
             public void run() {
@@ -310,7 +302,8 @@ public class TextArea extends Widget {
     @Override
     protected void afterAddToGUI(GUI gui) {
         super.afterAddToGUI(gui);
-        hoverUpdateTime = getTime();
+        renderInfo.asNormal.setGUI(gui);
+        renderInfo.asHover.setGUI(gui);
     }
 
     @Override
@@ -455,16 +448,16 @@ public class TextArea extends Widget {
     @Override
     protected void paintWidget(GUI gui) {
         final ArrayList<LImage> bi = allBGImages;
-        final int innerX = getInnerX();
-        final int innerY = getInnerY();
-        final AnimationState as = elementsAnimationState;
-        final Renderer renderer = gui.getRenderer();
+        final RenderInfo ri = renderInfo;
+        ri.offsetX = getInnerX();
+        ri.offsetY = getInnerY();
+        ri.renderer = gui.getRenderer();
 
         for(int i=0,n=bi.size() ; i<n ; i++) {
-            bi.get(i).draw(innerX, innerY, as, renderer);
+            bi.get(i).draw(ri);
         }
 
-        layoutRoot.draw(innerX, innerY, as, renderer);
+        layoutRoot.draw(ri);
     }
 
     @Override
@@ -583,7 +576,8 @@ public class TextArea extends Widget {
         if(curLElementUnderMouse != le) {
             curLElementUnderMouse = le;
             layoutRoot.setHover(le);
-            hoverUpdateTime = getTime();
+            renderInfo.asNormal.resetAnimationTime(STATE_HOVER);
+            renderInfo.asHover.resetAnimationTime(STATE_HOVER);
             updateTooltip();
         }
         
@@ -594,16 +588,6 @@ public class TextArea extends Widget {
         }
         
         getAnimationState().setAnimationState(STATE_HOVER, lastMouseInside);
-    }
-
-    int getHoverAnimationTime() {
-        long time = getTime();
-        return (int)(time - hoverUpdateTime) & Integer.MAX_VALUE;
-    }
-    
-    long getTime() {
-        GUI gui = getGUI();
-        return (gui != null) ? gui.getCurrentTime() : 0;
     }
     
     void forceRelayout() {
@@ -1990,6 +1974,25 @@ public class TextArea extends Widget {
         }
     }
 
+    static class RenderInfo {
+        int offsetX;
+        int offsetY;
+        Renderer renderer;
+        final AnimationState asNormal;
+        final AnimationState asHover;
+
+        RenderInfo(AnimationState parent) {
+            asNormal = new AnimationState(parent);
+            asNormal.setAnimationState(STATE_HOVER, false);
+            asHover = new AnimationState(parent);
+            asHover.setAnimationState(STATE_HOVER, true);
+        }
+        
+        AnimationState getAnimationState(boolean isHover) {
+            return isHover ? asHover : asNormal;
+        }
+    }
+
     static class LElement {
         final TextAreaModel.Element element;
         int x;
@@ -2009,7 +2012,7 @@ public class TextArea extends Widget {
 
         void adjustWidget(int offX, int offY) {}
         void collectBGImages(int offX, int offY, ArrayList<LImage> allBGImages) {}
-        void draw(int offX, int offY, AnimationState as, Renderer renderer) {}
+        void draw(RenderInfo ri) {}
         void destroy() {}
 
         boolean isInside(int x, int y) {
@@ -2061,27 +2064,27 @@ public class TextArea extends Widget {
         }
 
         @Override
-        void draw(int offX, int offY, AnimationState as, Renderer renderer) {
-            as.setAnimationState(STATE_HOVER, isHover);
+        void draw(RenderInfo ri) {
             if(color != null) {
-                drawTextWithColor(offX, offY, as, renderer);
+                drawTextWithColor(ri);
             } else {
-                drawText(offX, offY, as);
+                drawText(ri);
             }
         }
         
-        private void drawTextWithColor(int offX, int offY, AnimationState as, Renderer renderer) {
+        private void drawTextWithColor(RenderInfo ri) {
             Color c = color;
-            renderer.pushGlobalTintColor(c.getRedFloat(), c.getGreenFloat(), c.getBlueFloat(), c.getAlphaFloat());
-            drawText(offX, offY, as);
-            renderer.popGlobalTintColor();
+            ri.renderer.pushGlobalTintColor(c.getRedFloat(), c.getGreenFloat(), c.getBlueFloat(), c.getAlphaFloat());
+            drawText(ri);
+            ri.renderer.popGlobalTintColor();
         }
         
-        private void drawText(int offX, int offY, AnimationState as) {
+        private void drawText(RenderInfo ri) {
+            AnimationState as = ri.getAnimationState(isHover);
             if(cache != null) {
-                cache.draw(as, x+offX, y+offY);
+                cache.draw(as, x+ri.offsetX, y+ri.offsetY);
             } else {
-                font.drawText(as, x+offX, y+offY, text, start, end);
+                font.drawText(as, x+ri.offsetX, y+ri.offsetY, text, start, end);
             }
         }
 
@@ -2123,9 +2126,9 @@ public class TextArea extends Widget {
         }
         
         @Override
-        void draw(int offX, int offY, AnimationState as, Renderer renderer) {
-            as.setAnimationState(STATE_HOVER, hoverSrc.isHover);
-            img.draw(as, x+offX, y+offY, width, height);
+        void draw(RenderInfo ri) {
+            img.draw(ri.getAnimationState(hoverSrc.isHover),
+                    x+ri.offsetX, y+ri.offsetY, width, height);
         }
     }
 
@@ -2142,28 +2145,26 @@ public class TextArea extends Widget {
             this.anchors = new ArrayList<LElement>();
             this.lineInfo = EMPTY_CHAR_ARRAY;
         }
-
+        
         @Override
-        void draw(int offX, int offY, AnimationState as, Renderer renderer) {
-            offX += x;
-            offY += y;
-            renderer.clipEnter(offX, offY, width, height);
+        void draw(RenderInfo ri) {
+            ri.offsetX += x;
+            ri.offsetY += y;
+            ri.renderer.clipEnter(ri.offsetX, ri.offsetY, width, height);
             try {
-                if(!renderer.clipIsEmpty()) {
-                    drawNoClip(offX, offY, as, renderer);
+                if(!ri.renderer.clipIsEmpty()) {
+                    final ArrayList<LElement> ll = layout;
+                    for(int i=0,n=ll.size() ; i<n ; i++) {
+                        ll.get(i).draw(ri);
+                    }
                 }
             } finally {
-                renderer.clipLeave();
+                ri.renderer.clipLeave();
+                ri.offsetX -= x;
+                ri.offsetY -= y;
             }
         }
-
-        void drawNoClip(int offX, int offY, AnimationState as, Renderer renderer) {
-            final ArrayList<LElement> ll = layout;
-            for(int i=0,n=ll.size() ; i<n ; i++) {
-                ll.get(i).draw(offX, offY, as, renderer);
-            }
-        }
-
+        
         @Override
         void adjustWidget(int offX, int offY) {
             offX += x;
