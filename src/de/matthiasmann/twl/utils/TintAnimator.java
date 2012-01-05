@@ -69,7 +69,7 @@ public class TintAnimator {
     private Runnable[] fadeDoneCallbacks;
 
     /**
-     * Creates a new TintAnimator which starts in the specified color
+     * Creates a new TintAnimator which starts in the specified color.
      *
      * @param timeSource the time source for the fade animation
      * @param color the starting color
@@ -88,12 +88,56 @@ public class TintAnimator {
     }
 
     /**
+     * Creates a new TintAnimator which starts in the specified color
+     * and uses the specified GUI as time source.
+     * 
+     * @param gui the GUI instance - must not be null
+     * @param color the starting color
+     */
+    public TintAnimator(GUI gui, Color color) {
+        this(new GUITimeSource(gui), color);
+    }
+
+    /**
+     * Creates a new TintAnimator which starts in the specified color
+     * and uses the specified Widget as time source.
+     * 
+     * @param owner the Widget instance - must not be null
+     * @param color the starting color
+     */
+    public TintAnimator(Widget owner, Color color) {
+        this(new GUITimeSource(owner), color);
+    }
+
+    /**
      * Creates a new TintAnimator which starts with Color.WHITE
      *
      * @param timeSource the time source for the fade animation
      */
     public TintAnimator(TimeSource timeSource) {
         this(timeSource, Color.WHITE);
+    }
+
+    /**
+     * Creates a new TintAnimator which starts with Color.WHITE
+     * and uses the specified GUI as time source.
+     * 
+     * @param gui the GUI instance - must not be null
+     * @see GUITimeSource#GUITimeSource(de.matthiasmann.twl.GUI) 
+     */
+    public TintAnimator(GUI gui) {
+        this(new GUITimeSource(gui));
+    }
+
+    /**
+     * Creates a new TintAnimator which starts with Color.WHITE
+     * and uses the specified Widget as time source.
+     * 
+     * @param owner the Widget instance - must not be null
+     * @see GUITimeSource#GUITimeSource(de.matthiasmann.twl.GUI) 
+     */
+    public TintAnimator(Widget owner) {
+        this(new GUITimeSource(owner));
     }
 
     /**
@@ -256,30 +300,60 @@ public class TintAnimator {
 
     /**
      * A time source which uses the GUI object of the specified widget
+     * or a directly specified GUI instance.
+     * 
+     * <p>If using a Widget which is not part of a GUI tree then the time is
+     * frozen at 0, and starts ticking as soon as the widget is added to a
+     * GUI tree.</p>
      */
     public static final class GUITimeSource implements TimeSource {
         private final Widget owner;
+        private final GUI gui;
         private long startTime;
+        private boolean pendingReset;
 
         public GUITimeSource(Widget owner) {
             if(owner == null) {
                 throw new NullPointerException("owner");
             }
             this.owner = owner;
+            this.gui = null;
             resetTime();
         }
 
+        public GUITimeSource(GUI gui) {
+            if(gui == null) {
+                throw new NullPointerException("gui");
+            }
+            this.owner = null;
+            this.gui = gui;
+        }
+        
+
         public int getTime() {
-            return (int)(getCurrentTime() - startTime);
+            GUI g = getGUI();
+            if(g != null) {
+                if(pendingReset) {
+                    pendingReset = false;
+                    startTime = g.getCurrentTime();
+                }
+                return (int)(g.getCurrentTime() - startTime) & Integer.MAX_VALUE;
+            }
+            return 0;
         }
 
         public void resetTime() {
-            startTime = getCurrentTime();
+            GUI g = getGUI();
+            if(g != null) {
+                startTime = g.getCurrentTime();
+                pendingReset = false;
+            } else {
+                pendingReset = true;
+            }
         }
 
-        private long getCurrentTime() {
-            GUI gui = owner.getGUI();
-            return (gui != null) ? gui.getCurrentTime() : 0;
+        private GUI getGUI() {
+            return (gui != null) ? gui : owner.getGUI();
         }
     }
 

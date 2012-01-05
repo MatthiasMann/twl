@@ -451,7 +451,7 @@ public class ColorSelector extends DialogLayout {
 
         if(showPreview) {
             if(previewTintAnimator == null) {
-                previewTintAnimator = new TintAnimator(new TintAnimator.GUITimeSource(this), getColor());
+                previewTintAnimator = new TintAnimator(this, getColor());
             }
 
             Widget previewArea = new Widget();
