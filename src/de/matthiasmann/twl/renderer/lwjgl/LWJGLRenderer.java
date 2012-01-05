@@ -105,8 +105,8 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     final ArrayList<TextureArea> textureAreas;
     final ArrayList<TextureAreaRotated> rotatedTextureAreas;
     final ArrayList<LWJGLDynamicImage> dynamicImages;
-    TintStack tintStack;
     
+    protected TintStack tintStack;
     protected final ClipStack clipStack;
     protected final Rect clipRectTemp;
     
