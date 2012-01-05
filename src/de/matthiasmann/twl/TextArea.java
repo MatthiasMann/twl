@@ -113,7 +113,6 @@ public class TextArea extends Widget {
     private int dragStartX;
     private int dragStartY;
     private LElement curLElementUnderMouse;
-    private long hoverUpdateTime;
 
     public TextArea() {
         this.widgets = new HashMap<String, Widget>();
