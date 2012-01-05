@@ -59,8 +59,8 @@ public class StateSelect {
                 : null;
         
         if(sso != null) {
-            programKeys = sso.getProgramKeys();
-            programCodes = sso.getProgramCodes();
+            programKeys = sso.programKeys;
+            programCodes = sso.programCodes;
         } else {
             programKeys = null;
             programCodes = null;
