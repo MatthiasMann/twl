@@ -335,7 +335,7 @@ public class TextArea extends Widget {
                 
                 LClip tmpRoot = new LClip(null);
                 tmpRoot.width = maxWidth;
-                Box box = new Box(tmpRoot, 0, 0, 0);
+                Box box = new Box(tmpRoot, 0, 0, 0, false);
                 layoutElements(box, model);
                 box.finish();
                 
@@ -412,7 +412,7 @@ public class TextArea extends Widget {
             }
             
             clearLayout();
-            Box box = new Box(layoutRoot, 0, 0, 0);
+            Box box = new Box(layoutRoot, 0, 0, 0, true);
 
             try {
                 if(model != null) {
@@ -432,7 +432,7 @@ public class TextArea extends Widget {
             if(styleClassResolver != null) {
                 styleClassResolver.layoutFinished();
             }
-
+            
             //System.out.println("layoutRoot.height="+layoutRoot.height+"  box.curY="+box.curY+"  remaining="+box.minRemainingWidth);
             
             if(layoutRoot.height != box.curY) {
@@ -987,7 +987,7 @@ public class TextArea extends Widget {
             }
 
             if(idx < end) {
-                LText lt = new LText(te, font, color, text, idx, end);
+                LText lt = new LText(te, font, color, text, idx, end, box.doCacheText);
                 if(advancePastFloaters) {
                     box.advancePastFloaters(lt.width, box.marginLeft, box.marginRight);
                 }
@@ -1047,7 +1047,7 @@ public class TextArea extends Widget {
 
                     end = idx + Math.max(1, count);
 
-                    LText lt = new LText(te, font, color, text, idx, end);
+                    LText lt = new LText(te, font, color, text, idx, end, box.doCacheText);
                     lt.x = box.getXAndAdvance(lt.width);
                     lt.marginTop = (short)box.marginTop;
                     box.layout.add(lt);
@@ -1158,7 +1158,7 @@ public class TextArea extends Widget {
             Style liStyle = li.getStyle();
             doMarginTop(box, liStyle);
             
-            LText lt = new LText(ole, font, color, label, 0, label.length());
+            LText lt = new LText(ole, font, color, label, 0, label.length(), box.doCacheText);
             int labelWidth = lt.width;
             int labelHeight = lt.height;
 
@@ -1182,13 +1182,13 @@ public class TextArea extends Widget {
         doMarginBottom(box, style);
     }
 
-    private Box layoutBox(LClip clip, int continerWidth, int paddingLeft, int paddingRight, TextAreaModel.ContainerElement ce, String href) {
+    private Box layoutBox(LClip clip, int continerWidth, int paddingLeft, int paddingRight, TextAreaModel.ContainerElement ce, String href, boolean doCacheText) {
         Style style = ce.getStyle();
         int paddingTop = convertToPX0(style, StyleAttribute.PADDING_TOP, continerWidth);
         int paddingBottom = convertToPX0(style, StyleAttribute.PADDING_BOTTOM, continerWidth);
         int marginBottom = convertToPX0(style, StyleAttribute.MARGIN_BOTTOM, continerWidth);
 
-        Box box = new Box(clip, paddingLeft, paddingRight, paddingTop);
+        Box box = new Box(clip, paddingLeft, paddingRight, paddingTop, doCacheText);
         box.href = href;
         layoutElements(box, ce);
         box.finish();
@@ -1246,7 +1246,7 @@ public class TextArea extends Widget {
                 LClip dummy = new LClip(null);
                 dummy.width = Math.max(0, box.lineWidth - paddingLeft - paddingRight);
 
-                Box dummyBox = layoutBox(dummy, box.boxWidth, paddingLeft, paddingRight, be, null);
+                Box dummyBox = layoutBox(dummy, box.boxWidth, paddingLeft, paddingRight, be, null, false);
                 dummyBox.nextLine(false);
                 
                 bgWidth = Math.max(0, dummy.width - dummyBox.minRemainingWidth);
@@ -1278,7 +1278,7 @@ public class TextArea extends Widget {
         clip.href = box.href;
         box.layout.add(clip);
 
-        Box clipBox = layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be, box.href);
+        Box clipBox = layoutBox(clip, box.boxWidth, paddingLeft, paddingRight, be, box.href, box.doCacheText);
 
         // sync main box with layout
         box.lineStartIdx = box.layout.size();
@@ -1332,7 +1332,7 @@ public class TextArea extends Widget {
 
                         LClip dummy = new LClip(null);
                         dummy.width = maxTableWidth;
-                        Box dummyBox = layoutBox(dummy, maxTableWidth, paddingLeft, paddingRight, cell, null);
+                        Box dummyBox = layoutBox(dummy, maxTableWidth, paddingLeft, paddingRight, cell, null, false);
                         dummyBox.finish();
 
                         cellWidth = maxTableWidth - dummyBox.minRemainingWidth;
@@ -1536,7 +1536,7 @@ public class TextArea extends Widget {
                     clip.marginTop = (short)convertToPX0(cellStyle, StyleAttribute.MARGIN_TOP, tableWidth);
                     box.layout.add(clip);
 
-                    layoutBox(clip, tableWidth, paddingLeft, paddingRight, cell, null);
+                    layoutBox(clip, tableWidth, paddingLeft, paddingRight, cell, null, box.doCacheText);
 
                     col += Math.max(0, cell.getColspan()-1);
                 }
@@ -1624,6 +1624,7 @@ public class TextArea extends Widget {
         final int boxWidth;
         final int boxMarginOffsetLeft;
         final int boxMarginOffsetRight;
+        final boolean doCacheText;
         int curY;
         int curX;
         int lineStartIdx;
@@ -1646,13 +1647,14 @@ public class TextArea extends Widget {
         TextAreaModel.HAlignment textAlignment;
         String href;
 
-        Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop) {
+        Box(LClip clip, int paddingLeft, int paddingRight, int paddingTop, boolean doCacheText) {
             this.clip = clip;
             this.layout = clip.layout;
             this.boxLeft = paddingLeft;
             this.boxWidth = Math.max(0, clip.width - paddingLeft - paddingRight);
             this.boxMarginOffsetLeft = paddingLeft;
             this.boxMarginOffsetRight = paddingRight;
+            this.doCacheText = doCacheText;
             this.curX = this.boxLeft;
             this.curY = paddingTop;
             this.lineStartX = boxLeft;
@@ -2046,14 +2048,14 @@ public class TextArea extends Widget {
         final int end;
         FontCache cache;
 
-        LText(TextAreaModel.Element element, Font font, Color color, String text, int start, int end) {
+        LText(TextAreaModel.Element element, Font font, Color color, String text, int start, int end, boolean doCache) {
             super(element);
             this.font = font;
             this.color = Color.WHITE.equals(color) ? null : color;
             this.text = text;
             this.start = start;
             this.end = end;
-            this.cache = font.cacheText(null, text, start, end);
+            this.cache = doCache ? font.cacheText(null, text, start, end) : null;
             this.height = font.getLineHeight();
 
             if(cache != null) {
