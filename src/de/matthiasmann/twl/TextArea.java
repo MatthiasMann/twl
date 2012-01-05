@@ -324,7 +324,11 @@ public class TextArea extends Widget {
         int prefWidth = -1;
         int prefHeight = -1;
         
-        if(getMaxWidth() > 0) {
+        if(model == null) {
+            prefWidth = 0;
+            prefHeight = 0;
+            
+        } else if(getMaxWidth() > 0) {
             final int borderHorizontal = getBorderHorizontal();
             final int maxWidth = Math.max(0, getMaxWidth() - borderHorizontal);
             final int minWidth = Math.max(0, getMinWidth() - borderHorizontal);
@@ -333,13 +337,18 @@ public class TextArea extends Widget {
                 //System.out.println("Doing preferred size computation");
                 
                 LClip tmpRoot = new LClip(null);
-                tmpRoot.width = maxWidth;
-                Box box = new Box(tmpRoot, 0, 0, 0, false);
-                layoutElements(box, model);
-                box.finish();
-                
-                prefWidth = Math.max(0, maxWidth - box.minRemainingWidth);
-                prefHeight = box.curY;
+                startLayout();
+                try {
+                    tmpRoot.width = maxWidth;
+                    Box box = new Box(tmpRoot, 0, 0, 0, false);
+                    layoutElements(box, model);
+                    box.finish();
+
+                    prefWidth = Math.max(0, maxWidth - box.minRemainingWidth);
+                    prefHeight = box.curY;
+                } finally {
+                    endLayout();
+                }
             }
         }
         preferredInnerSize = new Dimension(prefWidth, prefHeight);
@@ -403,17 +412,14 @@ public class TextArea extends Widget {
         // only recompute the layout when it has changed
         if(layoutRoot.width != targetWidth || forceRelayout) {
             layoutRoot.width = targetWidth;
-            this.inLayoutCode = true;
-            this.forceRelayout = false;
-
-            if(styleClassResolver != null) {
-                styleClassResolver.startLayout();
-            }
+            inLayoutCode = true;
+            forceRelayout = false;
+            int requiredHeight;
             
-            clearLayout();
-            Box box = new Box(layoutRoot, 0, 0, 0, true);
-
+            startLayout();
             try {
+                clearLayout();
+                Box box = new Box(layoutRoot, 0, 0, 0, true);
                 if(model != null) {
                     layoutElements(box, model);
 
@@ -424,19 +430,17 @@ public class TextArea extends Widget {
                     layoutRoot.collectBGImages(0, 0, allBGImages);
                 }
                 updateMouseHover();
+                requiredHeight = box.curY;
             } finally {
                 inLayoutCode = false;
+                endLayout();
             }
 
-            if(styleClassResolver != null) {
-                styleClassResolver.layoutFinished();
-            }
-            
             //System.out.println("layoutRoot.height="+layoutRoot.height+"  box.curY="+box.curY+"  remaining="+box.minRemainingWidth);
             
-            if(layoutRoot.height != box.curY) {
-                layoutRoot.height = box.curY;
-                if(getInnerHeight() != box.curY) {
+            if(layoutRoot.height != requiredHeight) {
+                layoutRoot.height = requiredHeight;
+                if(getInnerHeight() != requiredHeight) {
                     // call outside of inLayoutCode range
                     invalidateLayout();
                 }
@@ -599,6 +603,18 @@ public class TextArea extends Widget {
         layoutRoot.destroy();
         allBGImages.clear();
         super.removeAllChildren();
+    }
+    
+    private void startLayout() {
+        if(styleClassResolver != null) {
+            styleClassResolver.startLayout();
+        }
+    }
+    
+    private void endLayout() {
+        if(styleClassResolver != null) {
+            styleClassResolver.layoutFinished();
+        }
     }
 
     private void layoutElements(Box box, Iterable<TextAreaModel.Element> elements) {
