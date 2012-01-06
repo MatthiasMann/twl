@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -550,7 +550,10 @@ public final class GUI extends Widget {
      * <li> {@link #setCursor() }
      * </ol>
      * 
-     * This is the easiest method to use this GUI
+     * This is the easiest method to use this GUI.
+     * 
+     * <p>When not using this method care must be taken to invoke the methods
+     * in the right order. See the javadoc of the individual methods for details.</p>
      */
     public void update() {
         setSize();
@@ -579,6 +582,10 @@ public final class GUI extends Widget {
      * Updates the current time returned by {@code getCurrentTime} by calling
      * {@link Renderer#getTimeMillis() } and computes the delta time since the last update.
      *
+     * <p>This must be called exactly <b>once</b> per frame and befiore processing
+     * input events or calling {@link #updateTimers() }. See {@link #update() }
+     * for the sequence in which the methods of this class should be called.</p>
+     * 
      * @see #getCurrentTime()
      * @see #getTimeMillis()
      */
@@ -590,7 +597,9 @@ public final class GUI extends Widget {
 
     /**
      * Updates all active timers with the delta time computed by {@code updateTime}.
-     * This method must be called exactly once after a call to {@code updateTime}.
+     * 
+     * <p>This method must be called exactly once after a call to {@code updateTime}.</p>
+     * 
      * @see #updateTime() 
      */
     public void updateTimers() {
@@ -667,8 +676,18 @@ public final class GUI extends Widget {
     }
 
     /**
-     * Polls input by calling {@link Input#pollInput(de.matthiasmann.twl.GUI) } if an input source was specified.
-     * If {@code pollInput} returned false then {@link #clearKeyboardState() } and {@link #clearMouseState() } are called.
+     * Polls input by calling {@link Input#pollInput(de.matthiasmann.twl.GUI) }
+     * if an input source was specified, otherwise it does nothing.
+     * 
+     * <p>If {@code pollInput} returned false then {@link #clearKeyboardState() }
+     * and {@link #clearMouseState() } are called.</p>
+     * 
+     * <p>If you don't want to use polled input you can easily use a push model
+     * for handling input. Just call the following methods:</p><ul>
+     * <li>{@link #handleKey(int, char, boolean) } for every keyboard event
+     * <li>{@link #handleMouse(int, int, int, boolean) } for every mouse event (buttons or move)
+     * <li>{@link #handleMouseWheel(int) } for any mouse wheel event
+     * </ul> These metods (including this one) needs to be called after {@link #updateTime() }
      */
     public void handleInput() {
         if(input != null && !input.pollInput(this)) {
