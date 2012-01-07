@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -51,6 +51,10 @@ public abstract class AbstractTableModel extends AbstractTableColumnHeaderModel 
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, listener);
     }
 
+    protected boolean hasCallbacks() {
+        return callbacks != null;
+    }
+    
     protected void fireRowsInserted(int idx, int count) {
         if(callbacks != null) {
             for(ChangeListener cl : callbacks) {
