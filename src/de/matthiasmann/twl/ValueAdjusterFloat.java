@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -127,9 +127,6 @@ public class ValueAdjusterFloat extends ValueAdjuster {
     public void setModel(FloatModel model) {
         if(this.model != model) {
             removeModelCallback();
-            if(this.model != null) {
-                this.model.removeCallback(modelCallback);
-            }
             this.model = model;
             if(model != null) {
                 this.minValue = model.getMinValue();
@@ -231,6 +228,8 @@ public class ValueAdjusterFloat extends ValueAdjuster {
 
     protected void syncWithModel() {
         cancelEdit();
+        this.minValue = model.getMinValue();
+        this.maxValue = model.getMaxValue();
         this.value = model.getValue();
         setDisplayText();
     }
