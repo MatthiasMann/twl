@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -61,7 +61,6 @@ class ImageAdjustments implements Image, HasBorder {
         this.condition = condition;
     }
 
-
     public int getWidth() {
         if(sizeOverwriteH >= 0) {
             return sizeOverwriteH;
@@ -114,5 +113,10 @@ class ImageAdjustments implements Image, HasBorder {
         return new ImageAdjustments(image.createTintedVersion(color), border,
                 inset, sizeOverwriteH, sizeOverwriteV, center, condition);
     }
-
+    
+    boolean isSimple() {
+        // used for ImageManager.parseStateSelect
+        // only check parameters affecting rendering (except condition)
+        return !center && inset == null && sizeOverwriteH < 0 && sizeOverwriteV < 0;
+    }
 }

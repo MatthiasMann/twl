@@ -287,7 +287,8 @@ class ImageManager {
         ArrayList<Image> stateImages = new ArrayList<Image>();
         ArrayList<StateExpression> conditions = new ArrayList<StateExpression>();
         xmlp.nextTag();
-        while(!xmlp.isEndTag()) {
+        boolean last = false;
+        while(!last && !xmlp.isEndTag()) {
             xmlp.require(XmlPullParser.START_TAG, null, null);
             StateExpression cond = ParserUtil.parseCondition(xmlp);
             String tagName = xmlp.getName();
@@ -295,17 +296,22 @@ class ImageManager {
             params.border = getBorder(image, params.border);
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
             xmlp.nextTag();
+            last = cond == null;
+            
+            if(image instanceof ImageAdjustments) {
+                ImageAdjustments ia = (ImageAdjustments)image;
+                if(ia.isSimple()) {
+                    cond = and(cond, ia.condition);
+                    image = ia.image;
+                }
+            }
+            
             if(StateSelect.isUseOptimizer() && (image instanceof StateSelectImage)) {
                 inlineSelect((StateSelectImage)image, cond, stateImages, conditions);
-                if(cond == null) {
-                    break;
-                }
             } else {
                 stateImages.add(image);
                 if(cond != null) {
                     conditions.add(cond);
-                } else {
-                    break;
                 }
             }
         }
@@ -317,19 +323,24 @@ class ImageManager {
         return image;
     }
 
-    private void inlineSelect(StateSelectImage src, StateExpression cond, ArrayList<Image> stateImages, ArrayList<StateExpression> conditions) {
+    private static void inlineSelect(StateSelectImage src, StateExpression cond, ArrayList<Image> stateImages, ArrayList<StateExpression> conditions) {
         for(int i=0,n=src.images.length,m=src.select.getNumExpressions() ; i<n ; i++) {
             StateExpression imgCond = (i < m) ? src.select.getExpression(i) : null;
-            if(imgCond == null) {
-                imgCond = cond;
-            } else if(cond != null) {
-                imgCond = new StateExpression.Logic('+', imgCond, cond);
-            }
+            imgCond = and(imgCond, cond);
             stateImages.add(src.images[i]);
             if(imgCond != null) {
                 conditions.add(imgCond);
             }
         }
+    }
+
+    private static StateExpression and(StateExpression imgCond, StateExpression cond) {
+        if(imgCond == null) {
+            imgCond = cond;
+        } else if(cond != null) {
+            imgCond = new StateExpression.Logic('+', imgCond, cond);
+        }
+        return imgCond;
     }
 
     private Image parseArea(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {
