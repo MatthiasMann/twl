@@ -41,9 +41,9 @@ import de.matthiasmann.twl.utils.StateSelect;
  */
 public class StateSelectImage implements Image, HasBorder {
 
-    private final Image[] images;
-    private final StateSelect select;
-    private final Border border;
+    final Image[] images;
+    final StateSelect select;
+    final Border border;
 
     public StateSelectImage(StateSelect select, Border border, Image ... images) {
         assert images.length >= select.getNumExpressions();

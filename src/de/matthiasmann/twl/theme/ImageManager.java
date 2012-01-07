@@ -292,14 +292,21 @@ class ImageManager {
             StateExpression cond = ParserUtil.parseCondition(xmlp);
             String tagName = xmlp.getName();
             Image image = parseImageNoCond(xmlp, tagName, new ImageParams());
-            stateImages.add(image);
             params.border = getBorder(image, params.border);
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
             xmlp.nextTag();
-            if(cond != null) {
-                conditions.add(cond);
+            if(StateSelect.isUseOptimizer() && (image instanceof StateSelectImage)) {
+                inlineSelect((StateSelectImage)image, cond, stateImages, conditions);
+                if(cond == null) {
+                    break;
+                }
             } else {
-                break;
+                stateImages.add(image);
+                if(cond != null) {
+                    conditions.add(cond);
+                } else {
+                    break;
+                }
             }
         }
         if(conditions.size() < 1) {
@@ -308,6 +315,21 @@ class ImageManager {
         StateSelect select = new StateSelect(conditions);
         Image image = new StateSelectImage(select, params.border, stateImages.toArray(new Image[stateImages.size()]));
         return image;
+    }
+
+    private void inlineSelect(StateSelectImage src, StateExpression cond, ArrayList<Image> stateImages, ArrayList<StateExpression> conditions) {
+        for(int i=0,n=src.images.length,m=src.select.getNumExpressions() ; i<n ; i++) {
+            StateExpression imgCond = (i < m) ? src.select.getExpression(i) : null;
+            if(imgCond == null) {
+                imgCond = cond;
+            } else if(cond != null) {
+                imgCond = new StateExpression.Logic('+', imgCond, cond);
+            }
+            stateImages.add(src.images[i]);
+            if(imgCond != null) {
+                conditions.add(imgCond);
+            }
+        }
     }
 
     private Image parseArea(XMLParser xmlp, ImageParams params) throws IOException, XmlPullParserException {

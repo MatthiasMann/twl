@@ -91,6 +91,16 @@ public class StateSelect {
     }
     
     /**
+     * Retrives the specified expression
+     * @param idx the expression index
+     * @return the expression
+     * @see #getNumExpressions() 
+     */
+    public StateExpression getExpression(int idx) {
+        return expressions[idx];
+    }
+    
+    /**
      * Evaluates the expression list.
      * 
      * @param as the animation stateor null
