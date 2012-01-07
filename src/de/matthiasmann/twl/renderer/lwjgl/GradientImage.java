@@ -64,14 +64,22 @@ public class GradientImage implements Image {
         if(gradient == null) {
             throw new NullPointerException("gradient");
         }
-        if(gradient.getNumStops() < 2) {
-            throw new IllegalArgumentException("Need at least 2 stops for a gradient");
+        if(gradient.getNumStops() < 1) {
+            throw new IllegalArgumentException("Need at least 1 stop for a gradient");
         }
         
         this.renderer = renderer;
         this.type = gradient.getType();
         this.tint = Color.WHITE;
-        if(gradient.getWrap() == Wrap.MIRROR) {
+        if(gradient.getNumStops() == 1) {
+            Color color = gradient.getStop(0).getColor();
+            wrap = Wrap.SCALE;
+            stops = new Stop[] {
+                new Stop(0.0f, color),
+                new Stop(1.0f, color)
+            };
+            endPos = 1.0f;
+        } else if(gradient.getWrap() == Wrap.MIRROR) {
             int numStops = gradient.getNumStops();
             wrap = Wrap.REPEAT;
             stops = new Stop[numStops*2-1];
