@@ -324,13 +324,22 @@ class ImageManager {
     }
 
     private static void inlineSelect(StateSelectImage src, StateExpression cond, ArrayList<Image> stateImages, ArrayList<StateExpression> conditions) {
-        for(int i=0,n=src.images.length,m=src.select.getNumExpressions() ; i<n ; i++) {
+        int n = src.images.length;
+        int m = src.select.getNumExpressions();
+        for(int i=0 ; i<n ; i++) {
             StateExpression imgCond = (i < m) ? src.select.getExpression(i) : null;
             imgCond = and(imgCond, cond);
             stateImages.add(src.images[i]);
             if(imgCond != null) {
                 conditions.add(imgCond);
             }
+        }
+        if(n == m && cond != null) {
+            // when the src StateSelectImage doesn't have a default entry
+            // (which is used when no condition matched) then add one with
+            // NONE as image (except when inlining as default entry)
+            stateImages.add(NONE);
+            conditions.add(cond);
         }
     }
 
