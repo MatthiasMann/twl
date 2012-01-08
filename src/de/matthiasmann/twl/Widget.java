@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -52,6 +52,13 @@ import java.util.logging.Logger;
 /**
  * Root of the TWL class hierarchy.
  *
+ * <p>When subclassing the following methods should be overridden to ensure
+ * correct layout behavior:</p><ul>
+ * <li>{@link #layout() }</li>
+ * <li>{@link #getPreferredInnerWidth() }</li>
+ * <li>{@link #getPreferredInnerHeight() }</li>
+ * </ul>
+ * 
  * <p>The following methods are events and can be overridden when needed:</p><ul>
  * <li>{@link #afterAddToGUI(de.matthiasmann.twl.GUI) }</li>
  * <li>{@link #allChildrenRemoved() }</li>
@@ -68,6 +75,11 @@ import java.util.logging.Logger;
  * <li>{@link #positionChanged() }</li>
  * <li>{@link #sizeChanged() }</li>
  * <li>{@link #widgetDisabled() }</li>
+ * </ul>
+ * 
+ * <p>NOTE: The only thread safe methods of TWL are:</p><ul>
+ * <li>{@link #getGUI() }</li>
+ * <li>{@link GUI#invokeLater(java.lang.Runnable) }</li>
  * </ul>
  * 
  * @author Matthias Mann
@@ -145,14 +157,28 @@ public class Widget {
      */
     private static final ThreadLocal<Widget[]> focusTransferInfo = new ThreadLocal<Widget[]>();
     
+    /**
+     * Creates a Widget with it's own animation state
+     * 
+     * <p>The initial theme name is the lower case version of the simple class
+     * name of the concrete subclass - or in pseudo code:</p>
+     * <pre>{@code getClass().getSimpleName().toLowerCase() }</pre>
+     * 
+     * @see #setTheme(java.lang.String) 
+     */
     public Widget() {
         this(null, false);
     }
 
     /**
      * Creates a Widget with a shared animation state
+     * 
+     * <p>The initial theme name is the lower case version of the simple class
+     * name of the concrete subclass - or in pseudo code:</p>
+     * <pre>{@code getClass().getSimpleName().toLowerCase() }</pre>
      *
      * @param animState the animation state to share, can be null
+     * @see #setTheme(java.lang.String) 
      */
     public Widget(AnimationState animState) {
         this(animState, false);
@@ -160,9 +186,15 @@ public class Widget {
 
     /**
      * Creates a Widget with a shared or inherited animation state
+     * 
+     * <p>The initial theme name is the lower case version of the simple class
+     * name of the concrete subclass - or in pseudo code:</p>
+     * <pre>{@code getClass().getSimpleName().toLowerCase() }</pre>
      *
      * @param animState the animation state to share or inherit, can be null
-     * @param inherit true if the animation state should be inherited false for sharing
+     * @param inherit true if the animation state should be inherited, false for sharing
+     * @see AnimationState#AnimationState(de.matthiasmann.twl.AnimationState) 
+     * @see #setTheme(java.lang.String) 
      */
     public Widget(AnimationState animState, boolean inherit) {
         // determine the default theme name from the class name of this instance
