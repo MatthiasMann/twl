@@ -30,6 +30,7 @@
 package de.matthiasmann.twl.renderer.lwjgl;
 
 import de.matthiasmann.twl.renderer.CacheContext;
+import de.matthiasmann.twl.utils.PNGDecoder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -76,7 +77,7 @@ public class LWJGLCacheContext implements CacheContext {
         InputStream is = textureUrl.openStream();
         try {
             PNGDecoder dec = new PNGDecoder(is);
-            fmt = dec.decideTextureFormat(fmt);
+            fmt = decideTextureFormat(dec, fmt);
             int width = dec.getWidth();
             int height = dec.getHeight();
             int maxTextureSize = renderer.maxTextureSize;
@@ -95,7 +96,7 @@ public class LWJGLCacheContext implements CacheContext {
 
             int stride = width * fmt.getPixelSize();
             ByteBuffer buf = BufferUtils.createByteBuffer(stride * height);
-            dec.decode(buf, stride, fmt);
+            dec.decode(buf, stride, fmt.getPngFormat());
             buf.flip();
 
             if(tpp != null) {
@@ -145,4 +146,47 @@ public class LWJGLCacheContext implements CacheContext {
         }
     }
 
+    private static LWJGLTexture.Format decideTextureFormat(PNGDecoder decoder, LWJGLTexture.Format fmt) {
+        if(fmt == LWJGLTexture.Format.COLOR) {
+            fmt = autoColorFormat(decoder);
+        }
+        
+        PNGDecoder.Format pngFormat = decoder.decideTextureFormat(fmt.getPngFormat());
+        if(fmt.pngFormat == pngFormat) {
+            return fmt;
+        }
+
+        switch(pngFormat) {
+            case ALPHA:
+                return LWJGLTexture.Format.ALPHA;
+            case LUMINANCE:
+                return LWJGLTexture.Format.LUMINANCE;
+            case LUMINANCE_ALPHA:
+                return LWJGLTexture.Format.LUMINANCE_ALPHA;
+            case RGB:
+                return LWJGLTexture.Format.RGB;
+            case RGBA:
+                return LWJGLTexture.Format.RGBA;
+            case BGRA:
+                return LWJGLTexture.Format.BGRA;
+            case ABGR:
+                return LWJGLTexture.Format.ABGR;
+            default:
+                throw new UnsupportedOperationException("PNGFormat not handled: " + pngFormat);
+        }
+    }
+
+    private static LWJGLTexture.Format autoColorFormat(PNGDecoder decoder) {
+        if(decoder.hasAlpha()) {
+            if(decoder.isRGB()) {
+                return LWJGLTexture.Format.ABGR;
+            } else {
+                return LWJGLTexture.Format.LUMINANCE_ALPHA;
+            }
+        } else if(decoder.isRGB()) {
+            return LWJGLTexture.Format.ABGR;
+        } else {
+            return LWJGLTexture.Format.LUMINANCE;
+        }
+    }
 }
