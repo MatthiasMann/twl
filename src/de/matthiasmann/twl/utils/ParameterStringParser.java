@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -125,12 +125,7 @@ public class ParameterStringParser {
 
     private String substring(int start, int end) {
         if(trim) {
-            while(start < end && Character.isWhitespace(str.charAt(start))) {
-                start++;
-            }
-            while(end > start && Character.isWhitespace(str.charAt(end-1))) {
-                end--;
-            }
+            return TextUtil.trim(str, start, end);
         }
         return str.substring(start, end);
     }
