@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -31,9 +31,14 @@ package de.matthiasmann.twl;
 
 /**
  * A simple FPS counter.
- * Measures the time required to render a specified number of
- * frames (default 100) using System.nanoTime.
- *
+ * 
+ * <p>Measures the time required to render a specified number of
+ * frames (default 100) using System.nanoTime and displays the
+ * frame rate:</p><pre>{@code 1e9 * framesToCount / elapsedNanoseconds }</pre>
+ * 
+ * <p>This widget does not generate garbage while measuring and
+ * displaying the frame rate.</p>
+ * 
  * @see System#nanoTime()
  * @author Matthias Mann
  */
@@ -43,7 +48,7 @@ public class FPSCounter extends Label {
     private int frames;
     private int framesToCount = 100;
     
-    private final char[] fmtBuffer;
+    private final StringBuilder fmtBuffer;
     private final int decimalPoint;
     private final long scale;
 
@@ -60,13 +65,14 @@ public class FPSCounter extends Label {
         if(numDecimalDigits < 0) {
             throw new IllegalArgumentException("numDecimalDigits must be >= 0");
         }
-        decimalPoint = numDecimalDigits;
+        decimalPoint = numIntegerDigits + 1;
         startTime = System.nanoTime();
-        fmtBuffer = new char[numIntegerDigits + numDecimalDigits + Integer.signum(numDecimalDigits)];
+        fmtBuffer = new StringBuilder();
+        fmtBuffer.setLength(numIntegerDigits + numDecimalDigits + Integer.signum(numDecimalDigits));
 
         // compute the scale based on the number of decimal places
         long tmp = (long)1e9;
-        for(int i=0 ; i<decimalPoint ; i++) {
+        for(int i=0 ; i<numDecimalDigits ; i++) {
             tmp *= 10;
         }
         this.scale = tmp;
@@ -94,7 +100,7 @@ public class FPSCounter extends Label {
      * @param framesToCount the number of frames to count
      */
     public void setFramesToCount(int framesToCount) {
-        if(framesToCount < 1) {
+        if(framesToCount <= 0) {
             throw new IllegalArgumentException("framesToCount < 1");
         }
         this.framesToCount = framesToCount;
@@ -107,38 +113,37 @@ public class FPSCounter extends Label {
         }
         super.paintWidget(gui);
     }
-
-    private static void format(char[] buf, int value, int decimalPoint) {
-        int pos = buf.length;
-        while(pos > 0) {
-            buf[--pos] = (char)('0' + (value % 10));
-            value /= 10;
-            if(--decimalPoint == 0) {
-                buf[--pos] = '.';
-            }
-        }
-        if(value > 0) {
-            // when thw frame rate is too high, then we display "999.99"
-            for(int i=0 ; i<buf.length ; i++) {
-                if(buf[i] != '.') {
-                    buf[i] = '9';
-                }
-            }
-        }
-    }
-
+    
     private void updateFPS() {
         long curTime = System.nanoTime();
         long elapsed = curTime - startTime;
         startTime = curTime;
         
-        updateText((int)((frames * scale + (elapsed/2)) / elapsed));
+        updateText((int)((frames * scale + (elapsed >> 1)) / elapsed));
         frames = 0;
     }
 
-    private void updateText(int scaledValue) {
-        format(fmtBuffer, scaledValue, decimalPoint);
-        setText(new String(fmtBuffer));
+    private void updateText(int value) {
+        StringBuilder buf = fmtBuffer;
+        int pos = buf.length();
+        do {
+            buf.setCharAt(--pos, (char)('0' + (value % 10)));
+            value /= 10;
+            if(decimalPoint == pos) {
+                buf.setCharAt(--pos, '.');
+            }
+        } while(pos > 0);
+        if(value > 0) {
+            // when the frame rate is too high, then we display "999.99"
+            pos = buf.length();
+            do {
+                buf.setCharAt(--pos, '9');
+                if(decimalPoint == pos) {
+                    --pos;
+                }
+            } while(pos > 0);
+        }
+        setCharSequence(buf);
     }
 
 }
