@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -60,6 +60,14 @@ public class HasCallback implements WithRunnableCallback {
         callbacks = CallbackSupport.removeCallbackFromList(callbacks, callback);
     }
 
+    /**
+     * Returns true when the callback list is not empty
+     * @return true when the callback list is not empty
+     */
+    public boolean hasCallbacks() {
+        return callbacks != null;
+    }
+    
     /**
      * Calls all registered callbacks.
      *

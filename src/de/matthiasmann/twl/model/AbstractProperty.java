@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -39,7 +39,7 @@ import de.matthiasmann.twl.utils.CallbackSupport;
  */
 public abstract class AbstractProperty<T> implements Property<T> {
 
-    private Runnable[] valueChangedCallbacks = null;
+    private Runnable[] valueChangedCallbacks;
 
     public void addValueChangedCallback(Runnable cb) {
         valueChangedCallbacks = CallbackSupport.addCallbackToList(
@@ -51,6 +51,10 @@ public abstract class AbstractProperty<T> implements Property<T> {
                 valueChangedCallbacks, cb);
     }
 
+    public boolean hasValueChangedCallbacks() {
+        return valueChangedCallbacks != null;
+    }
+    
     protected void fireValueChangedCallback() {
         CallbackSupport.fireCallbacks(valueChangedCallbacks);
     }
