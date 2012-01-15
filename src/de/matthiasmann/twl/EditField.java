@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -44,7 +44,16 @@ import de.matthiasmann.twl.renderer.Image;
 import java.util.concurrent.ExecutorService;
 
 /**
- * A simple one line edit field
+ * A text edit control.
+ * 
+ * <p>It offers single or multi line editing, auto completion,
+ * syntax highlighting and info boxes.</p>
+ * 
+ * <p>The single line editing (default mode) uses internal scrolling using
+ * the cursor position.</p>
+ * 
+ * <p>The multi line version uses internal horizontal scrolling, but for
+ * vertical scrolling it should be wrapped into a {@see ScrollPane}.</p>
  * 
  * @author Matthias Mann
  */
@@ -283,16 +292,13 @@ public class EditField extends Widget {
     }
 
     public void setModel(StringModel model) {
+        removeModelChangeListener();
         if(this.model != null) {
             this.model.removeCallback(modelChangeListener);
         }
         this.model = model;
-        if(this.model != null) {
-            if(modelChangeListener == null) {
-                modelChangeListener = new ModelChangeListener();
-            }
-            this.model.addCallback(modelChangeListener);
-            modelChanged();
+        if(getGUI() != null) {
+            addModelChangeListener();
         }
     }
 
@@ -309,13 +315,17 @@ public class EditField extends Widget {
      * @see #setMultiLine(boolean)
      */
     public void setText(String text) {
+        setText(text, false);
+    }
+    
+    void setText(String text, boolean fromModel) {
         text = TextUtil.limitStringLength(text, maxTextLength);
         editBuffer.replace(0, editBuffer.length(), text);
         cursorPos = multiLine ? 0 : editBuffer.length();
         selectionStart = 0;
         selectionEnd = 0;
         updateSelection();
-        updateText(autoCompletionOnSetText, Event.KEY_NONE);
+        updateText(autoCompletionOnSetText, fromModel, Event.KEY_NONE);
         scrollToCursor(true);
     }
 
@@ -382,7 +392,7 @@ public class EditField extends Widget {
                 }
             }
             if(update) {
-                updateText(true, Event.KEY_NONE);
+                updateText(true, false, Event.KEY_NONE);
             }
         }
     }
@@ -418,7 +428,7 @@ public class EditField extends Widget {
         text = getSelectedText();
         if(!readOnly) {
             deleteSelection();
-            updateText(true, Event.KEY_DELETE);
+            updateText(true, false, Event.KEY_DELETE);
         }
         if(isPasswordMasking()) {
             text = TextUtil.createString(passwordChar, text.length());
@@ -432,6 +442,34 @@ public class EditField extends Widget {
 
     public void setMaxTextLength(int maxTextLength) {
         this.maxTextLength = maxTextLength;
+    }
+
+    void removeModelChangeListener() {
+        if(model != null && modelChangeListener != null) {
+            model.removeCallback(modelChangeListener);
+        }
+    }
+    
+    void addModelChangeListener() {
+        if(model != null) {
+            if(modelChangeListener == null) {
+                modelChangeListener = new ModelChangeListener();
+            }
+            model.addCallback(modelChangeListener);
+            modelChanged();
+        }
+    }
+    
+    @Override
+    protected void afterAddToGUI(GUI gui) {
+        super.afterAddToGUI(gui);
+        addModelChangeListener();
+    }
+
+    @Override
+    protected void beforeRemoveFromGUI(GUI gui) {
+        removeModelChangeListener();
+        super.beforeRemoveFromGUI(gui);
     }
 
     @Override
@@ -775,8 +813,8 @@ public class EditField extends Widget {
         return menu;
     }
 
-    private void updateText(boolean updateAutoCompletion, int key) {
-        if(model != null) {
+    private void updateText(boolean updateAutoCompletion, boolean fromModel, int key) {
+        if(model != null && !fromModel) {
             try {
                 model.setValue(getText());
                 if(errorMsgFromModel) {
@@ -959,7 +997,7 @@ public class EditField extends Widget {
                 }
             }
             if(update) {
-                updateText(true, Event.KEY_NONE);
+                updateText(true, false, Event.KEY_NONE);
             }
         }
     }
@@ -968,7 +1006,7 @@ public class EditField extends Widget {
         if(!readOnly) {
             if(hasSelection()) {
                 deleteSelection();
-                updateText(true, Event.KEY_DELETE);
+                updateText(true, false, Event.KEY_DELETE);
             } else if(cursorPos > 0) {
                 --cursorPos;
                 deleteNext();
@@ -980,10 +1018,10 @@ public class EditField extends Widget {
         if(!readOnly) {
             if(hasSelection()) {
                 deleteSelection();
-                updateText(true, Event.KEY_DELETE);
+                updateText(true, false, Event.KEY_DELETE);
             } else if(cursorPos < editBuffer.length()) {
                 if(editBuffer.replace(cursorPos, 1, "") >= 0) {
-                    updateText(true, Event.KEY_DELETE);
+                    updateText(true, false, Event.KEY_DELETE);
                 }
             }
         }
@@ -998,7 +1036,7 @@ public class EditField extends Widget {
     protected void modelChanged() {
         String modelText = model.getValue();
         if(editBuffer.length() != modelText.length() || !getText().equals(modelText)) {
-            setText(modelText);
+            setText(modelText, true);
         }
     }
 
