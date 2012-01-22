@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -442,7 +442,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                             tableElement.setRowStyle(row, rowStyles.get(row));
                             for(int col=0 ; col<numColumns && idx<cells.size() ; col++,idx++) {
                                 TableCellElement cell = cells.get(idx);
-                                tableElement.setSell(row, col, cell);
+                                tableElement.setCell(row, col, cell);
                             }
                         }
                         return tableElement;

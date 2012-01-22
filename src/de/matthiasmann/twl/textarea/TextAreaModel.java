@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,7 +29,6 @@
  */
 package de.matthiasmann.twl.textarea;
 
-import de.matthiasmann.twl.utils.TextUtil;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -232,13 +231,13 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
             return href;
         }
 
-        /*
+        /**
          * Replaces the href of this link.
          * This method does not cause the model callback to be fired.
          *
          * @param href the new href of the link, can be null.
          */
-        public void setHref(String href) {
+        public void setHREF(String href) {
             this.href = href;
         }
     }
@@ -346,7 +345,7 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
             return rowStyles[row];
         }
 
-        public void setSell(int row, int column, TableCellElement cell) {
+        public void setCell(int row, int column, TableCellElement cell) {
             if(column < 0 || column >= numColumns) {
                 throw new IndexOutOfBoundsException("column");
             }
