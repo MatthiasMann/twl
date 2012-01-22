@@ -80,6 +80,7 @@ public final class Value {
     
     public enum Unit {
         PX(false, "px"),
+        PT(false, "pt"),
         EM(true, "em"),
         EX(true, "ex"),
         PERCENT(false, "%"),

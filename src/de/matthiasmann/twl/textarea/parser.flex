@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -49,6 +49,7 @@ package de.matthiasmann.twl.textarea;
     static final int STYLE_END = 8;
     static final int COLON = 9;
     static final int SEMICOLON = 10;
+    static final int ATRULE = 11;
 
     boolean sawWhitespace;
 
@@ -82,6 +83,8 @@ Identifier = [-]?[_a-zA-Z][_a-zA-Z0-9-]*
     "*"                 { sawWhitespace = false; return STAR; }
     ">"                 { return GT; }
     "#"                 { return HASH; }
+    ":"                 { return COLON; }
+    "@"                 { return ATRULE; }
     "{"                 { yybegin(YYSTYLE); return STYLE_BEGIN; }
 
     {Comment}           { /* ignore */ }

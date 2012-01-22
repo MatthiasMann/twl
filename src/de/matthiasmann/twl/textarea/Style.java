@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -167,6 +167,18 @@ public class Style {
         return resolve(attribute, resolver).getNoResolve(attribute, resolver);
     }
 
+    /**
+     * Retrives the value of the specified attribute without resolving the style.
+     * 
+     * @param <V> The data type of the attribute
+     * @param attribute The attribute to lookup.
+     * @return the attribute value or null (no default value)
+     */
+    public<V> V getRaw(StyleAttribute<V> attribute) {
+        Object value = rawGet(attribute.ordinal());
+        return attribute.getDataType().cast(value);
+    }
+    
     /**
      * Returns the parent of this Style or null. The parent is used to lookup
      * attributes which can be inherited and are not specified in this Style.
