@@ -41,6 +41,7 @@ import de.matthiasmann.twl.renderer.Gradient;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Font;
+import de.matthiasmann.twl.renderer.FontMapper;
 import de.matthiasmann.twl.renderer.LineRenderer;
 import de.matthiasmann.twl.renderer.OffscreenRenderer;
 import de.matthiasmann.twl.renderer.Renderer;
@@ -100,6 +101,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
     private int mouseX;
     private int mouseY;
     private LWJGLCacheContext cacheContext;
+    private FontMapper fontMapper;
 
     final SWCursorAnimState swCursorAnimState;
     final ArrayList<TextureArea> textureAreas;
@@ -385,6 +387,21 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return null;
     }
 
+    public FontMapper getFontMapper() {
+        return fontMapper;
+    }
+    
+    /**
+     * Installs a font mapper. It is the responsibility of the font mapper to
+     * manage the OpenGL state correctly so that normal rendering by LWJGLRenderer
+     * is not disturbed.
+     * 
+     * @param fontMapper the font mapper object - can be null.
+     */
+    public void setFontMapper(FontMapper fontMapper) {
+        this.fontMapper = fontMapper;
+    }
+    
     public DynamicImage createDynamicImage(int width, int height) {
         if(width <= 0) {
             throw new IllegalArgumentException("width");
@@ -419,7 +436,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         // ARB and EXT versions use the same enum !
         int target = useTextureRectangle ?
             EXTTextureRectangle.GL_TEXTURE_RECTANGLE_EXT : GL11.GL_TEXTURE_2D;
-        int id = glGenTexture();
+        int id = GL11.glGenTextures();
 
         GL11.glBindTexture(target, id);
         GL11.glTexImage2D(target, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
@@ -632,23 +649,11 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         return Logger.getLogger(LWJGLRenderer.class.getName());
     }
 
-    int glGenTexture() {
-        ib16.clear().limit(1);
-        GL11.glGenTextures(ib16);
-        return ib16.get(0);
-    }
-
-    void glDeleteTexture(int id) {
-        ib16.clear();
-        ib16.put(id).flip();
-        GL11.glDeleteTextures(ib16);
-    }
-
     private static class SWCursorAnimState implements AnimationState {
         private final long[] lastTime;
         private final boolean[] active;
 
-        public SWCursorAnimState() {
+        SWCursorAnimState() {
             lastTime = new long[3];
             active = new boolean[3];
         }

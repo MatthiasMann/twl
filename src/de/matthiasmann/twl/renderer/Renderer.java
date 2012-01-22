@@ -145,6 +145,15 @@ public interface Renderer {
     public OffscreenRenderer getOffscreenRenderer();
     
     /**
+     * Returns the font mapper object if one is available.
+     * 
+     * This is an optional operation.
+     *
+     * @return the font mapper or null if not supported.
+     */
+    public FontMapper getFontMapper();
+    
+    /**
      * Creates a dynamic image with undefined content.
      * 
      * This is an optional operation.
