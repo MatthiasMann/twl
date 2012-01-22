@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -275,7 +275,7 @@ public class ResizableFrame extends Widget {
     protected void fadeTo(Color color, int duration) {
         //System.out.println("Start fade to " + color + " over " + duration + " ms");
         allocateTint().fadeTo(color, duration);
-        if(!super.isVisible() && color.getA() != 0) {
+        if(!super.isVisible() && color.getAlpha() != 0) {
             setHardVisible(true);
         }
     }
