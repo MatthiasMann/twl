@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -61,7 +61,7 @@ public class LWJGLDynamicImage extends TextureAreaBase implements DynamicImage {
 
     public void destroy() {
         if(id != 0) {
-            renderer.glDeleteTexture(id);
+            GL11.glDeleteTextures(id);
             renderer.dynamicImages.remove(this);
         }
     }
