@@ -40,6 +40,7 @@ import de.matthiasmann.twl.renderer.FontCache;
 import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.utils.StateSelect;
 import de.matthiasmann.twl.utils.TextUtil;
+import java.nio.FloatBuffer;
 
 /**
  *
@@ -292,7 +293,7 @@ public class LWJGLFont implements Font, Font2 {
         if(cache == null) {
             cache = new LWJGLAttributedStringFontCache(renderer, font);
         }
-        cache.allocateVA(end - start);
+        FloatBuffer va = cache.allocate(end - start);
         attributedString.setPosition(start);
         BitmapFont.Glyph lastGlyph = null;
         int x = 0;
@@ -324,7 +325,7 @@ public class LWJGLFont implements Font, Font2 {
                     }
                     lastGlyph = g;
                     if(g.width > 0 && g.height > 0) {
-                        g.draw(cache.va, x, y);
+                        g.draw(va, x, y);
                         runLength++;
                     }
                     x += g.xadvance;

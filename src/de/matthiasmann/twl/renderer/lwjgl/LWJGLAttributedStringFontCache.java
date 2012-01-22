@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,36 +32,31 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.renderer.AttributedStringFontCache;
 import de.matthiasmann.twl.renderer.lwjgl.LWJGLFont.FontState;
 import java.nio.FloatBuffer;
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 /**
  *
  * @author Matthias Mann
  */
-public class LWJGLAttributedStringFontCache implements AttributedStringFontCache {
+class LWJGLAttributedStringFontCache extends VertexArray implements AttributedStringFontCache {
 
     final LWJGLRenderer renderer;
     final BitmapFont font;
     int width;
     int height;
-    FloatBuffer va;
     private Run[] runs;
     private int numRuns;
 
-    public LWJGLAttributedStringFontCache(LWJGLRenderer renderer, BitmapFont font) {
+    LWJGLAttributedStringFontCache(LWJGLRenderer renderer, BitmapFont font) {
         this.renderer = renderer;
         this.font = font;
         this.runs = new Run[8];
     }
     
-    void allocateVA(int maxGlyphs) {
-        int capacity = 4 * 4 * maxGlyphs;
-        if(va == null || va.capacity() < capacity) {
-            va = BufferUtils.createFloatBuffer(capacity);
-        }
-        va.clear();
+    @Override
+    public FloatBuffer allocate(int maxGlyphs) {
         numRuns = 0;
+        return super.allocate(maxGlyphs);
     }
     
     Run addRun() {
@@ -96,12 +91,7 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
     
     public void draw(int x, int y) {
         if(font.bind()) {
-            va.position(2);
-            GL11.glVertexPointer(2, 4*4, va);
-            va.position(0);
-            GL11.glTexCoordPointer(2, 4*4, va);
-            GL11.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-            GL11.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+            bind();
             GL11.glPushMatrix();
             GL11.glTranslatef(x, y, 0f);
             final TintStack tintStack = renderer.tintStack;
@@ -116,7 +106,7 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
                     tintStack.setColor(state.color);
                     
                     if(numVertices > 0) {
-                        GL11.glDrawArrays(GL11.GL_QUADS, idx, numVertices);
+                        drawVertices(idx, numVertices);
                         idx += numVertices;
                     }
                     
@@ -126,8 +116,7 @@ public class LWJGLAttributedStringFontCache implements AttributedStringFontCache
                 }
             } finally {
                 GL11.glPopMatrix();
-                GL11.glDisableClientState(GL11.GL_VERTEX_ARRAY);
-                GL11.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                unbind();
             }
         }
     }
