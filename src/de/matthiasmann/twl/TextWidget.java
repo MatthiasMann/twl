@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -205,14 +205,18 @@ public class TextWidget extends Widget {
         if(hasText() && font != null) {
             int x = computeTextX();
             int y = computeTextY();
+            
+            paintTextAt(animState, x, y);
+        }
+    }
 
-            if(cache != null) {
-                cache.draw(animState, x, y);
-            } else if(numTextLines > 1) {
-                font.drawMultiLineText(animState, x, y, text, computeTextWidth(), alignment.fontHAlignment);
-            } else {
-                font.drawText(animState, x, y, text);
-            }
+    protected void paintTextAt(de.matthiasmann.twl.renderer.AnimationState animState, int x, int y) {
+        if(cache != null) {
+            cache.draw(animState, x, y);
+        } else if(numTextLines > 1) {
+            font.drawMultiLineText(animState, x, y, text, computeTextWidth(), alignment.fontHAlignment);
+        } else {
+            font.drawText(animState, x, y, text);
         }
     }
 
