@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,6 +29,8 @@
  */
 package de.matthiasmann.twl.renderer;
 
+import de.matthiasmann.twl.Widget;
+
 /**
  * An interface to allow offscreen rendering for special effects
  * 
@@ -41,6 +43,7 @@ public interface OffscreenRenderer {
      * into the returned offscreen surface. Rendering outside the specified area
      * will be ignored.
      * 
+     * @param widget the widget which will render to the returned surface - can be null.
      * @param oldSurface the previous offscreen surface to reuse / overwrite
      * @param x the X coordinate of the region, can be negative.
      * @param y the Y coordinate of the region, can be negative.
@@ -48,8 +51,8 @@ public interface OffscreenRenderer {
      * @param height the height, can be larger then the screen size
      * @return the OffscreenSurface or null if offscreen rendering could not be started.
      */
-    public OffscreenSurface startOffscreenRendering(OffscreenSurface oldSurface,
-            int x, int y, int width, int height);
+    public OffscreenSurface startOffscreenRendering(Widget widget,
+            OffscreenSurface oldSurface, int x, int y, int width, int height);
     
     /**
      * Ends the current offscreen rendering.

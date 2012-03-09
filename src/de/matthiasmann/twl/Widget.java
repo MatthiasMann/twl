@@ -2587,7 +2587,7 @@ public class Widget {
                 extraBottom += effectExtra[3];
             }
             offscreenSurface = offscreenRenderer.startOffscreenRendering(
-                    offscreenSurface, posX-extraLeft, posY-extraTop,
+                    this, offscreenSurface, posX-extraLeft, posY-extraTop,
                     width+extraLeft+extraRight, height+extraTop+extraBottom);
             if(offscreenSurface != null) {
                 try {
