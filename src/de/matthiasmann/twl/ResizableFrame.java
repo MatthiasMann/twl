@@ -681,7 +681,7 @@ public class ResizableFrame extends Widget {
         case POSITION:
             if(getParent() != null) {
                 int minY = getParent().getInnerY();
-                int maxY = getParent().getInnerHeight();
+                int maxY = getParent().getInnerBottom();
                 int height = dragInitialBottom - dragInitialTop;
                 top = Math.max(minY, Math.min(maxY - height, top + dy));
                 bottom = Math.min(maxY, Math.max(minY + height, bottom + dy));
