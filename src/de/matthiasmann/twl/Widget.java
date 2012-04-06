@@ -2586,6 +2586,10 @@ public class Widget {
                 extraRight += effectExtra[2];
                 extraBottom += effectExtra[3];
             }
+            if(offscreenSurface != null && !ro.needPainting(gui, parent, offscreenSurface)) {
+                ro.paintOffscreenSurface(gui, this, offscreenSurface);
+                return;
+            }
             offscreenSurface = offscreenRenderer.startOffscreenRendering(
                     this, offscreenSurface, posX-extraLeft, posY-extraTop,
                     width+extraLeft+extraRight, height+extraTop+extraBottom);
@@ -2946,5 +2950,20 @@ public class Widget {
          * @return the extra area in {@code top, left, right, bottom} order or null
          */
         public int[] getEffectExtraArea(Widget widget);
+        
+        /**
+         * Called before offscreen rendering is started.
+         * 
+         * <p>NOTE: when this function returns false none of the paint methods
+         * of that widget are called which might effect some widgets.</p>
+         * 
+         * <p>If you are unsure it is always safer to return true.</p>
+         * 
+         * @param gui the GUI instance
+         * @param widget the widget
+         * @param surface the previous offscreen surface - never null
+         * @return true if the surface needs to be updated, false if no new rendering should be done
+         */
+        public boolean needPainting(GUI gui, Widget widget, OffscreenSurface surface);
     }
 }
