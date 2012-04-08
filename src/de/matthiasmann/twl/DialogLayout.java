@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -1051,6 +1051,7 @@ public class DialogLayout extends Widget {
         /**
          * Adds a flexible gap with no minimum size.
          *
+         * <p>This is equivalent to {@code addGap(0, 0, Short.MAX_VALUE) }</p>
          * @return this Group
          */
         public Group addGap() {
@@ -1058,6 +1059,17 @@ public class DialogLayout extends Widget {
             return this;
         }
 
+        /**
+         * Adds a named gap.
+         * 
+         * <p>Named gaps are configured via the theme parameter "namedGaps" which
+         * maps from names to &lt;gap&gt; objects.</p>
+         * 
+         * <p>They behave equal to {@link #addGap(int, int, int) }.</p>
+         * 
+         * @param name the name of the gap (vcase sensitive)
+         * @return this Group
+         */
         public Group addGap(String name) {
             if(name.length() == 0) {
                 throw new IllegalArgumentException("name");
