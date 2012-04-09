@@ -250,11 +250,7 @@ public class TintAnimator {
                         (currentTint[2] < ONE_EPSILON) ||
                         (currentTint[3] < ONE_EPSILON);
                 // fire callbacks
-                if(fadeDoneCallbacks != null) {
-                    for(Runnable cb : fadeDoneCallbacks) {
-                        cb.run();
-                    }
-                }
+                CallbackSupport.fireCallbacks(fadeDoneCallbacks);
             }
         }
     }
