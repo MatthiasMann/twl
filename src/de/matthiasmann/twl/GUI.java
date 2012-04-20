@@ -1108,6 +1108,7 @@ public final class GUI extends Widget {
         popupEventOccured = true;
         closeInfoFromWidget(popup);
         requestKeyboardFocus(getTopPane());
+        resendLastMouseMove();
     }
 
     boolean hasOpenPopups(Widget owner) {
