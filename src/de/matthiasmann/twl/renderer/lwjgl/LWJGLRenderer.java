@@ -410,26 +410,32 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             throw new IllegalArgumentException("height");
         }
         if(width > maxTextureSize || height > maxTextureSize) {
+            getLogger().log(Level.WARNING, "requested size {0} x {1} exceeds maximum texture size {3}",
+                    new Object[]{ width, height, maxTextureSize });
             return null;
         }
 
+        int texWidth = width;
+        int texHeight = height;
+        
         ContextCapabilities caps = GLContext.getCapabilities();
         boolean useTextureRectangle = caps.GL_EXT_texture_rectangle || caps.GL_ARB_texture_rectangle;
 
         if(!useTextureRectangle && !caps.GL_ARB_texture_non_power_of_two) {
-            if((width & (width-1)) != 0 || (height & (height-1)) != 0) {
-                return null;
-            }
+            texWidth = nextPowerOf2(width);
+            texHeight = nextPowerOf2(height);
         }
 
         // ARB and EXT versions use the same enum !
         int proxyTarget = useTextureRectangle ?
             EXTTextureRectangle.GL_PROXY_TEXTURE_RECTANGLE_EXT : GL11.GL_PROXY_TEXTURE_2D;
 
-        GL11.glTexImage2D(proxyTarget, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
+        GL11.glTexImage2D(proxyTarget, 0, GL11.GL_RGBA, texWidth, texHeight, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
         ib16.clear();
         GL11.glGetTexLevelParameter(proxyTarget, 0, GL11.GL_TEXTURE_WIDTH, ib16);
-        if(ib16.get(0) != width) {
+        if(ib16.get(0) != texWidth) {
+            getLogger().log(Level.WARNING, "requested size {0} x {1} failed proxy texture test",
+                    new Object[]{ texWidth, texHeight });
             return null;
         }
 
@@ -439,11 +445,11 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
         int id = GL11.glGenTextures();
 
         GL11.glBindTexture(target, id);
-        GL11.glTexImage2D(target, 0, GL11.GL_RGBA, width, height, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
+        GL11.glTexImage2D(target, 0, GL11.GL_RGBA, texWidth, texHeight, 0, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (ByteBuffer)null);
         GL11.glTexParameteri(target, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
         GL11.glTexParameteri(target, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
 
-        LWJGLDynamicImage image = new LWJGLDynamicImage(this, target, id, width, height, Color.WHITE);
+        LWJGLDynamicImage image = new LWJGLDynamicImage(this, target, id, width, height, texWidth, texHeight, Color.WHITE);
         dynamicImages.add(image);
         return image;
     }
@@ -485,8 +491,7 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
                 }
             }
         } catch(LWJGLException ex) {
-            Logger.getLogger(LWJGLRenderer.class.getName()).log(Level.WARNING,
-                    "Could not set native cursor", ex);
+            getLogger().log(Level.WARNING, "Could not set native cursor", ex);
         }
     }
 
@@ -647,6 +652,25 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
 
     Logger getLogger() {
         return Logger.getLogger(LWJGLRenderer.class.getName());
+    }
+    
+    /**
+     * If the passed value is not a power of 2 then return the next highest power of 2
+     * otherwise the value is returned unchanged.
+     * 
+     * <p> Warren Jr., Henry S. (2002). Hacker's Delight. Addison Wesley. pp. 48. ISBN 978-0201914658</p>
+     * 
+     * @param i a non negative number &lt;= 2^31
+     * @return the smallest power of 2 which is &gt;= i
+     */
+    private static int nextPowerOf2(int i) {
+        i--;
+        i |= (i >>  1);
+        i |= (i >>  2);
+        i |= (i >>  4);
+        i |= (i >>  8);
+        i |= (i >> 16);
+        return i+1;
     }
 
     private static class SWCursorAnimState implements AnimationState {
