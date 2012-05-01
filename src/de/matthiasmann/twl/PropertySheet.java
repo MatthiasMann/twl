@@ -279,7 +279,7 @@ public class PropertySheet extends TreeTable {
             textRenderer.setText((String)data);
         }
         @Override
-        protected void setSubRenderer(Object colData) {
+        protected void setSubRenderer(int row, int column, Object colData) {
         }
     }
 
