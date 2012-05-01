@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -564,17 +564,17 @@ public class TreeTable extends TableBase {
 
         public void setCellData(int row, int column, Object data, TreeTableNode node) {
             level = getLevel(node);
-            setSubRenderer(data);
+            setSubRenderer(row, column, data);
         }
 
         protected int getIndentation() {
             return level * treeIndent + treeButtonSize.getX();
         }
 
-        protected void setSubRenderer(Object colData) {
+        protected void setSubRenderer(int row, int column, Object colData) {
             subRenderer = getCellRenderer(colData);
             if(subRenderer != null) {
-                subRenderer.setCellData(level, numColumns, colData);
+                subRenderer.setCellData(row, column, colData);
             }
         }
 
@@ -700,7 +700,7 @@ public class TreeTable extends TableBase {
         public void setCellData(int row, int column, Object data, NodeState nodeState) {
             assert nodeState != null;
             this.nodeState = nodeState;
-            setSubRenderer(data);
+            setSubRenderer(row, column, data);
             level = nodeState.level;
         }
     }
