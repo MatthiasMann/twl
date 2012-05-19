@@ -59,6 +59,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<Value> FONT_SIZE = new StyleAttribute<Value>(true, Value.class, new Value(14, Value.Unit.PX));
     public static final StyleAttribute<Integer> FONT_WEIGHT = new StyleAttribute<Integer>(true, Integer.class, 400);
     public static final StyleAttribute<Boolean> FONT_ITALIC = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
+    public static final StyleAttribute<Integer> TAB_SIZE = new StyleAttribute<Integer>(true, Integer.class, 8);
     public static final StyleAttribute<String> LIST_STYLE_IMAGE = new StyleAttribute<String>(true, String.class, "ul-bullet");
     public static final StyleAttribute<OrderedListType> LIST_STYLE_TYPE = new StyleAttribute<OrderedListType>(true, OrderedListType.class, OrderedListType.DECIMAL);
     public static final StyleAttribute<Boolean> PREFORMATTED = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);

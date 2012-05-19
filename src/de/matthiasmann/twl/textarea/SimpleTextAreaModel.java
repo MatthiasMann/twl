@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -35,17 +35,21 @@ import java.util.Iterator;
 
 /**
  * A simple text area model which represents the complete text as a single
- * paragraph without any styles.
+ * paragraph.
+ * 
+ * <p>The initial style is an empty style - see {@link Style#Style() }.
+ * It can be changed before setting the text.</p>
  *
  * @author Matthias Mann
+ * @see #setStyle(de.matthiasmann.twl.textarea.Style) 
  */
 public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
 
-    private static final Style EMPTY_STYLE = new Style();
-
+    private Style style;
     private Element element;
 
     public SimpleTextAreaModel() {
+        style = new Style();
     }
 
     /**
@@ -61,11 +65,34 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
     }
 
     /**
+     * Returns the style used for the next call to {@link #setText(java.lang.String, boolean) } 
+     * @return the style 
+     */
+    public Style getStyle() {
+        return style;
+    }
+
+    /**
+     * Sets the style used for the next call to {@link #setText(java.lang.String, boolean) }.
+     * It does not affect the currently set text.
+     * 
+     * @param style the style
+     * @throws NullPointerException when style is {@code null}
+     */
+    public void setStyle(Style style) {
+        if(style == null) {
+            throw new NullPointerException("style");
+        }
+        this.style = style;
+    }
+
+    /**
      * Sets the text for this SimpleTextAreaModel as pre-formatted text.
      * Use {@code '\n'} to create line breaks.
      *
      * This is equivalent to calling {@code setText(text, true);}
      * @param text the text (interpreted as pre-formatted)
+     * @see #setText(java.lang.String, boolean) 
      */
     public void setText(String text) {
         setText(text, true);
@@ -75,18 +102,18 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
      * Sets the text for this SimpleTextAreaModel.
      * Use {@code '\n'} to create line breaks.
      *
+     * <p>The {@code preformatted} will set the white space attribute as follows:</p>
+     * <pre>false = {@code white-space: normal}<br>true  = {@code white-space: pre}</pre>
+     * 
      * @param text the text
      * @param preformatted if the text should be treated as pre-formated or not.
      */
     public void setText(String text, boolean preformatted) {
-        Style style = EMPTY_STYLE;
-        if(preformatted) {
-            style = style.with(StyleAttribute.PREFORMATTED, Boolean.TRUE);
-        }
-        element = new TextElement(style, text);
+        Style textstyle = style.with(StyleAttribute.PREFORMATTED, preformatted);
+        element = new TextElement(textstyle, text);
         doCallback();
     }
-
+    
     public Iterator<Element> iterator() {
         return ((element != null)
                 ? Collections.<Element>singletonList(element)

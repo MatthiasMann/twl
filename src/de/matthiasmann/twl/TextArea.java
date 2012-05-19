@@ -1193,7 +1193,7 @@ public class TextArea extends Widget {
             while(idx < textEnd) {
                 if(text.charAt(idx) == '\t') {
                     idx++;
-                    int tabX = box.computeNextTabStop(font);
+                    int tabX = box.computeNextTabStop(te.getStyle(), font);
                     if(tabX < box.lineWidth) {
                         box.curX = tabX;
                     } else if(!box.isAtStartOfLine()) {
@@ -2089,10 +2089,16 @@ public class TextArea extends Widget {
             lineInfo.getChars(0, lineInfoLength, clip.lineInfo, 0);
         }
 
-        int computeNextTabStop(Font font) {
+        int computeNextTabStop(Style style, Font font) {
+            int em = font.getEM();
+            int tabSize = style.get(StyleAttribute.TAB_SIZE, styleClassResolver);
+            if(tabSize <= 0 || em <= 0) {
+                // replace with single space when tabs are disabled
+                return curX + font.getSpaceWidth();
+            }
+            int tabSizePX = Math.min(tabSize, Short.MAX_VALUE / em) * em;
             int x = curX - lineStartX + font.getSpaceWidth();
-            int tabSize = 8 * font.getEM();
-            return curX + tabSize - (x % tabSize);
+            return curX + tabSizePX - (x % tabSizePX);
         }
 
         private void removeObjFromList(ArrayList<LElement> list) {

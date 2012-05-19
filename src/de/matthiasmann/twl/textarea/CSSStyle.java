@@ -155,6 +155,10 @@ public class CSSStyle extends Style {
             parseColor(StyleAttribute.COLOR, value);
             return;
         }
+        if("tab-size".equals(key) || "-moz-tab-size".equals(key)) {
+            parseInteger(StyleAttribute.TAB_SIZE, value);
+            return;
+        }
         throw new IllegalArgumentException("Unsupported key: " + key);
     }
 
@@ -273,6 +277,15 @@ public class CSSStyle extends Style {
         put(attribute, parseValueUnit(value));
     }
 
+    private void parseInteger(StyleAttribute<Integer> attribute, String value) {
+        if("inherit".equals(value)) {
+            put(attribute, null);
+        } else {
+            int intval = Integer.parseInt(value);
+            put(attribute, intval);
+        }
+    }
+    
     private<T> void parseEnum(StyleAttribute<T> attribute, HashMap<String, T> map, String value) {
         T obj = map.get(value);
         if(obj == null) {
