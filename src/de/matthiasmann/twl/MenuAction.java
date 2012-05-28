@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -44,6 +44,14 @@ public class MenuAction extends MenuElement {
         this.cb = cb;
     }
 
+    /**
+     * Creates a menu action which displays the given name and invokes the
+     * specified callback when activated.
+     * 
+     * @param name the name/text of the menu action
+     * @param cb the callback to invoke
+     * @see #setCallback(java.lang.Runnable) 
+     */
     public MenuAction(String name, Runnable cb) {
         super(name);
         this.cb = cb;
@@ -53,6 +61,13 @@ public class MenuAction extends MenuElement {
         return cb;
     }
 
+    /**
+     * Sets the callback to invoke when the menu action is triggered.
+     * 
+     * <p>this callback is invoked after the menu is closed.</p>
+     * 
+     * @param cb the callback (can be null)
+     */
     public void setCallback(Runnable cb) {
         this.cb = cb;
     }
@@ -62,10 +77,11 @@ public class MenuAction extends MenuElement {
         Button b = new MenuBtn();
         setWidgetTheme(b, "button");
 
+        b.addCallback(mm.getCloseCallback());
+        
         if(cb != null) {
             b.addCallback(cb);
         }
-        b.addCallback(mm.getCloseCallback());
         
         return b;
     }
