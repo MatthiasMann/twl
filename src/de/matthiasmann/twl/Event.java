@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -499,6 +499,13 @@ public final class Event {
         subEvent.keyCode = keyCode;
         subEvent.modifier = modifier;
         return subEvent;
+    }
+    
+    final Event createSubEvent(int x, int y) {
+        Event e = createSubEvent(type);
+        e.mouseX = x;
+        e.mouseY = y;
+        return e;
     }
     
     void setModifier(int mask, boolean pressed) {

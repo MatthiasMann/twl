@@ -2746,8 +2746,17 @@ public class Widget {
         return sb.append(theme);
     }
 
+    Event translateMouseEvent(Event evt) {
+        if(renderOffscreen instanceof OffscreenMouseAdjustments) {
+            int[] newXY = ((OffscreenMouseAdjustments)renderOffscreen).adjustMouseCoordinates(this, evt);
+            evt = evt.createSubEvent(newXY[0], newXY[1]);
+        }
+        return evt;
+    }
+    
     Widget routeMouseEvent(Event evt) {
         assert !evt.isMouseDragEvent();
+        evt = translateMouseEvent(evt);
         if(children != null) {
             for(int i=children.size(); i-->0 ;) {
                 Widget child = children.get(i);
@@ -2892,7 +2901,7 @@ public class Widget {
         }
         return true;
     }
-
+    
     void collectLayoutLoop(ArrayList<Widget> result) {
         if(layoutInvalid != 0) {
             result.add(this);
@@ -2965,5 +2974,22 @@ public class Widget {
          * @return true if the surface needs to be updated, false if no new rendering should be done
          */
         public boolean needPainting(GUI gui, Widget widget, OffscreenSurface surface);
+    }
+    
+    public interface OffscreenMouseAdjustments extends RenderOffscreen {
+        
+        /**
+         * Called when mouse events are routed for the widget.
+         * 
+         * <p>All mouse coordinates in TWL are absolute.</p>
+         * 
+         * <p>The returned object can be reused on the next call and should not
+         * be stored by the caller.</p>
+         * 
+         * @param widget the widget
+         * @param evt the mouse event
+         * @return the new mouse coordinates in {@code x, y} order
+         */
+        public int[] adjustMouseCoordinates(Widget widget, Event evt);
     }
 }

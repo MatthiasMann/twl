@@ -1033,7 +1033,7 @@ public final class GUI extends Widget {
         
         if(target != null) {
             if(target.isEnabled() || !isMouseAction(event)) {
-                target.handleEvent(event);
+                target.handleEvent(target.translateMouseEvent(event));
             }
             return target;
         } else {
