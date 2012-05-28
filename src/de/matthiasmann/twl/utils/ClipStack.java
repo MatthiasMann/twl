@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -154,7 +154,10 @@ public class ClipStack {
 
     protected void intersect(Rect tos) {
         if(numClipRects > 1) {
-            tos.intersect(clipRects[numClipRects-2]);
+            Entry prev = clipRects[numClipRects-2];
+            if(!prev.disabled) {
+                tos.intersect(prev);
+            }
         }
     }
 
