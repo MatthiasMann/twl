@@ -438,6 +438,42 @@ public class ResizableFrame extends Widget {
     }
 
     @Override
+    public int getMaxWidth() {
+        int maxWidth = super.getMaxWidth();
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            if(!isFrameElement(child)) {
+                int aMaxWidth = child.getMaxWidth();
+                if(aMaxWidth > 0) {
+                    aMaxWidth += getBorderHorizontal();
+                    if(maxWidth == 0 || aMaxWidth < maxWidth) {
+                        maxWidth = aMaxWidth;
+                    }
+                }
+            }
+        }
+        return maxWidth;
+    }
+
+    @Override
+    public int getMaxHeight() {
+        int maxHeight = super.getMaxHeight();
+        for(int i=0,n=getNumChildren() ; i<n ; i++) {
+            Widget child = getChild(i);
+            if(!isFrameElement(child)) {
+                int aMaxHeight = child.getMaxHeight();
+                if(aMaxHeight > 0) {
+                    aMaxHeight += getBorderVertical();
+                    if(maxHeight == 0 || aMaxHeight < maxHeight) {
+                        maxHeight = aMaxHeight;
+                    }
+                }
+            }
+        }
+        return maxHeight;
+    }
+
+    @Override
     public int getPreferredInnerWidth() {
         int prefWidth = 0;
         for(int i=0,n=getNumChildren() ; i<n ; i++) {
