@@ -54,6 +54,22 @@ public class PropertySheet extends TreeTable {
         public void valueChanged();
         public void preDestroy();
         public void setSelected(boolean selected);
+        
+        /**
+         * Can be used to position the widget in a cell.
+         * <p>If this method returns false, the table will position the widget itself.</p>
+         *
+         * <p>This method is responsible to call setPosition and setSize on the
+         * widget or return false.</p>
+         *
+         * @param x the left edge of the cell
+         * @param y the top edge of the cell
+         * @param width the width of the cell
+         * @param height the height of the cell
+         * 
+         * @return true if the position was changed by this method.
+         */
+        public boolean positionWidget(int x, int y, int width, int height);
     }
 
     public interface PropertyEditorFactory<T> {
@@ -311,8 +327,10 @@ public class PropertySheet extends TreeTable {
             return editor.getWidget();
         }
         public void positionWidget(Widget widget, int x, int y, int w, int h) {
-            widget.setPosition(x, y);
-            widget.setSize(w, h);
+            if(!editor.positionWidget(x, y, w, h)) {
+                widget.setPosition(x, y);
+                widget.setSize(w, h);
+            }
         }
     }
     
@@ -375,6 +393,9 @@ public class PropertySheet extends TreeTable {
             editField.setErrorMessage(null);
             editField.setReadOnly(property.isReadOnly());
         }
+        public boolean positionWidget(int x, int y, int width, int height) {
+            return false;
+        }
     }
     static class StringEditorFactory implements PropertyEditorFactory<String> {
         public PropertyEditor createEditor(Property<String> property) {
@@ -426,6 +447,9 @@ public class PropertySheet extends TreeTable {
                 }
             }
             return -1;
+        }
+        public boolean positionWidget(int x, int y, int width, int height) {
+            return false;
         }
     }
     public static class ComboBoxEditorFactory<T> implements PropertyEditorFactory<T> {
