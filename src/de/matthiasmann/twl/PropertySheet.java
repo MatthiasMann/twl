@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -69,6 +69,7 @@ public class PropertySheet extends TreeTable {
         this(new Model());
     }
 
+    @SuppressWarnings("OverridableMethodCallInConstructor")
     private PropertySheet(Model model) {
         super(model);
         this.rootList = new SimplePropertyList("<root>");
@@ -162,6 +163,7 @@ public class PropertySheet extends TreeTable {
 
     static abstract class PropertyNode extends AbstractTreeTableNode implements Runnable, PSTreeTableNode {
         protected final Property<?> property;
+        @SuppressWarnings("LeakingThisInConstructor")
         public PropertyNode(TreeTableNode parent, Property<?> property) {
             super(parent);
             this.property = property;
@@ -256,6 +258,7 @@ public class PropertySheet extends TreeTable {
         public PropertyListCellRenderer() {
             bgRenderer = new Widget();
             textRenderer = new Label(bgRenderer.getAnimationState());
+            textRenderer.setAutoSize(false);
             bgRenderer.add(textRenderer);
             bgRenderer.setTheme(getTheme());
         }
@@ -337,6 +340,7 @@ public class PropertySheet extends TreeTable {
         private final EditField editField;
         private final Property<String> property;
 
+        @SuppressWarnings("LeakingThisInConstructor")
         public StringEditor(Property<String> property) {
             this.property = property;
             this.editField = new EditField();
@@ -383,6 +387,7 @@ public class PropertySheet extends TreeTable {
         protected final Property<T> property;
         protected final ListModel<T> model;
 
+        @SuppressWarnings({"LeakingThisInConstructor", "OverridableMethodCallInConstructor"})
         public ComboBoxEditor(Property<T> property, ListModel<T> model) {
             this.property = property;
             this.comboBox = new ComboBox<T>(model);
@@ -439,6 +444,7 @@ public class PropertySheet extends TreeTable {
         }
         class ModelForwarder extends AbstractListModel<T> implements ListModel.ChangeListener {
             private ListModel<T> model;
+            @SuppressWarnings("OverridableMethodCallInConstructor")
             public ModelForwarder(ListModel<T> model) {
                 setModel(model);
             }
