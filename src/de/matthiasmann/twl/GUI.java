@@ -665,14 +665,25 @@ public final class GUI extends Widget {
     /**
      * Sets the cursor from the widget under the mouse
      *
+     * <p>If the widget is disabled or did not define a cursor then
+     * it's parent widget is tried. If no cursor was found the default
+     * OS cursor will be displayed.</p>
+     * 
      * @see Renderer#setCursor(de.matthiasmann.twl.renderer.MouseCursor) 
      */
     public void setCursor() {
         Widget widget = getWidgetUnderMouse();
-        if(widget != null && widget.isEnabled()) {
-            MouseCursor cursor = widget.getMouseCursor();
-            renderer.setCursor(cursor);
+        MouseCursor cursor = null;
+        while(widget != null) {
+            if(widget.isEnabled()) {
+                cursor = widget.getMouseCursor();
+                if(cursor != null) {
+                    break;
+                }
+            }
+            widget = widget.getParent();
         }
+        renderer.setCursor(cursor);
     }
 
     /**
