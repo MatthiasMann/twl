@@ -120,6 +120,7 @@ public final class GUI extends Widget {
     private Widget lastMouseClickWidget;
     private PopupWindow boundDragPopup;
     private Runnable boundDragCallback;
+    private Widget focusKeyWidget;
     
     private int mouseIdleTime = 60;
     private boolean mouseIdleState;
@@ -948,10 +949,10 @@ public final class GUI extends Widget {
 
             if(pressed) {
                 keyRepeatDelay = KEYREPEAT_INITIAL_DELAY;
-                return sendEvent(Event.Type.KEY_PRESSED);
+                return sendKeyEvent(Event.Type.KEY_PRESSED);
             } else {
                 keyRepeatDelay = NO_REPEAT;
-                return sendEvent(Event.Type.KEY_RELEASED);
+                return sendKeyEvent(Event.Type.KEY_RELEASED);
             }
         } else {
             keyRepeatDelay = NO_REPEAT;
@@ -986,7 +987,7 @@ public final class GUI extends Widget {
                 keyEventTime = curTime;
                 keyRepeatDelay = KEYREPEAT_INTERVAL_DELAY;
                 event.keyRepeated = true;
-                sendEvent(Event.Type.KEY_PRESSED);  // refire last key event
+                sendKeyEvent(Event.Type.KEY_PRESSED);  // refire last key event
             }
         }
     }
@@ -1063,12 +1064,32 @@ public final class GUI extends Widget {
         }
     }
 
-    private boolean sendEvent(Event.Type type) {
-        assert !type.isMouseEvent;
+    private static final int FOCUS_KEY = Event.KEY_TAB;
+    
+    boolean isFocusKey() {
+        return event.keyCode == FOCUS_KEY &&
+                    ((event.modifier & (Event.MODIFIER_CTRL|Event.MODIFIER_META|Event.MODIFIER_ALT)) == 0);
+    }
+    
+    void setFocusKeyWidget(Widget widget) {
+        if(focusKeyWidget == null && isFocusKey()) {
+            focusKeyWidget = widget;
+        }
+    }
+    
+    private boolean sendKeyEvent(Event.Type type) {
+        assert type.isKeyEvent;
         popupEventOccured = false;
+        focusKeyWidget = null;
         event.type = type;
         event.dragEvent = false;
-        return getTopPane().handleEvent(event);
+        boolean handled = getTopPane().handleEvent(event);
+        if(!handled && focusKeyWidget != null) {
+            focusKeyWidget.handleFocusKeyEvent(event);
+            handled = true;
+        }
+        focusKeyWidget = null;  // allow GC
+        return handled;
     }
 
     private void sendPopupEvent(Event.Type type) {

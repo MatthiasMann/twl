@@ -91,8 +91,6 @@ public class Widget {
     public static final StateKey STATE_HAS_FOCUSED_CHILD = StateKey.get("hasFocusedChild");
     public static final StateKey STATE_DISABLED = StateKey.get("disabled");
     
-    private static final int FOCUS_KEY = Event.KEY_TAB;
-
     private static final int LAYOUT_INVALID_LOCAL  = 1;
     private static final int LAYOUT_INVALID_GLOBAL = 3;
     
@@ -2848,10 +2846,8 @@ public class Widget {
 
     private boolean handleKeyEvent(Event evt) {
         if(children != null) {
-            if(focusKeyEnabled && evt.getKeyCode() == FOCUS_KEY &&
-                    ((evt.getModifiers() & (Event.MODIFIER_CTRL|Event.MODIFIER_META|Event.MODIFIER_ALT)) == 0)) {
-                handleFocusKeyEvent(evt);
-                return true;
+            if(focusKeyEnabled && guiInstance != null) {
+                guiInstance.setFocusKeyWidget(this);
             }
             if(focusChild != null && focusChild.isVisible()) {
                 if(focusChild.handleEvent(evt)) {
@@ -2875,7 +2871,7 @@ public class Widget {
         return false;
     }
 
-    private void handleFocusKeyEvent(Event evt) {
+    void handleFocusKeyEvent(Event evt) {
         if(evt.isKeyPressedEvent()) {
             if((evt.getModifiers() & Event.MODIFIER_SHIFT) != 0) {
                 focusPrevChild();

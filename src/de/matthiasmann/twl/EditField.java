@@ -700,6 +700,8 @@ public class EditField extends Widget {
                     return true;
                 }
                 break;
+            case Event.KEY_TAB:
+                return false;
             default:
                 if(evt.hasKeyCharNoModifiers()) {
                     insertChar(evt.getKeyChar());
