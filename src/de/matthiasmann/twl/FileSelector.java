@@ -405,6 +405,23 @@ public class FileSelector extends DialogLayout {
         this.allowFolderSelection = allowFolderSelection;
         selectionChanged();
     }
+    
+    public boolean getAllowHorizontalScrolling() {
+        return fileTableSP.getFixed() != ScrollPane.Fixed.HORIZONTAL;
+    }
+    
+    /**
+     * Controls if the file table allows horizontal scrolling or not.
+     * 
+     * Default is true.
+     * 
+     * @param allowHorizontalScrolling true if horizontal scrolling is allowed
+     */
+    public void setAllowHorizontalScrolling(boolean allowHorizontalScrolling) {
+        fileTableSP.setFixed(allowHorizontalScrolling
+                ? ScrollPane.Fixed.NONE
+                : ScrollPane.Fixed.HORIZONTAL);
+    }
 
     public void addCallback(Callback callback) {
         callbacks = CallbackSupport.addCallbackToList(callbacks, callback, Callback.class);
