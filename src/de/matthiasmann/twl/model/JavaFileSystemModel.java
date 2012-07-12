@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -189,7 +189,11 @@ public class JavaFileSystemModel implements FileSystemModel {
     public Object getSpecialFolder(String key) {
         File file = null;
         if(SPECIAL_FOLDER_HOME.equals(key)) {
-            file = new File(System.getProperty("user.home"));
+            try {
+                file = new File(System.getProperty("user.home"));
+            } catch(SecurityException ex) {
+                // ignore
+            }
         }
         if(file != null && file.canRead() && file.isDirectory()) {
             return file;
