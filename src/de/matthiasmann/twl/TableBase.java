@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -1378,8 +1378,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     }
 
     protected void updateAllColumnWidth() {
-        columnModel.initializeAll(numColumns);
-        updateAllColumnWidth = false;
+        if(getInnerWidth() > 0) {
+            columnModel.initializeAll(numColumns);
+            updateAllColumnWidth = false;
+        }
     }
 
     protected void updateAll() {
@@ -1601,14 +1603,20 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     protected class ColumnSizeSequence extends SizeSequence {
         @Override
         protected void initializeSizes(int index, int count) {
-            if(isFixedWidthMode()) {
-                computeColumnHeaderLayout();
-                for(int i=0 ; i<count ; i++,index++) {
-                    table[index] = clampColumnWidth(columnHeaders[i].springWidth);
+            boolean useSprings = isFixedWidthMode();
+            if(!useSprings) {
+                int sum = 0;
+                for(int i=0 ; i<count ; i++) {
+                    int width = computePreferredColumnWidth(index);
+                    table[index+i] = width;
+                    sum += width;
                 }
-            } else {
-                for(int i=0 ; i<count ; i++,index++) {
-                    table[index] = computePreferredColumnWidth(index);
+                useSprings = sum < getInnerWidth();
+            }
+            if(useSprings) {
+                computeColumnHeaderLayout();
+                for(int i=0 ; i<count ; i++) {
+                    table[index+i] = clampColumnWidth(columnHeaders[i].springWidth);
                 }
             }
         }
