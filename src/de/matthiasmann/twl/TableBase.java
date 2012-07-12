@@ -1607,7 +1607,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             if(!useSprings) {
                 int sum = 0;
                 for(int i=0 ; i<count ; i++) {
-                    int width = computePreferredColumnWidth(index);
+                    int width = computePreferredColumnWidth(index+i);
                     table[index+i] = width;
                     sum += width;
                 }
