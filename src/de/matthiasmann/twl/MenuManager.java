@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -221,7 +221,7 @@ public class MenuManager extends PopupWindow {
     }
 
     void popupTimer() {
-        if(lastMouseOverWidget instanceof Menu.SubMenuBtn) {
+        if((lastMouseOverWidget instanceof Menu.SubMenuBtn) && lastMouseOverWidget.isEnabled()) {
             ((Menu.SubMenuBtn)lastMouseOverWidget).run();
         } else if(lastMouseOverWidget != this) {
             int level = 0;
