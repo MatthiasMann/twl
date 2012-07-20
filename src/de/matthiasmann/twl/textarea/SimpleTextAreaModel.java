@@ -61,6 +61,7 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
      */
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public SimpleTextAreaModel(String text) {
+        this();
         setText(text);
     }
 
