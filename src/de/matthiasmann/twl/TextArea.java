@@ -85,6 +85,25 @@ public class TextArea extends Widget {
          */
         public void handleLinkClicked(String href);
     }
+    
+    public interface Callback2 extends Callback {
+        /**
+         * Called for {@code MOUSE_BTNDOWN}, {@code MOUSE_BTNUP} and {@code MOUSE_CLICKED}
+         * events performed over elements.
+         * 
+         * <p>This callback is fired before {@link Callback#handleLinkClicked(java.lang.String) }</p>
+         * 
+         * <p>This callback should not modify the model - if this feature is required use
+         * {@link GUI#invokeLater(java.lang.Runnable) }.</p>
+         * 
+         * @param evt the mouse event
+         * @param element the element under the mouse
+         * @see Event.Type#MOUSE_BTNDOWN
+         * @see Event.Type#MOUSE_BTNUP
+         * @see Event.Type#MOUSE_CLICKED
+         */
+        public void handleMouseButton(Event evt, TextAreaModel.Element element);
+    }
 
     public static final StateKey STATE_HOVER = StateKey.get("hover");
     
@@ -544,6 +563,20 @@ public class TextArea extends Widget {
                     dragListener.dragStarted();
                 }
                 return true;
+            }
+            
+            if(curLElementUnderMouse != null && (
+                    eventType == Event.Type.MOUSE_CLICKED ||
+                    eventType == Event.Type.MOUSE_BTNDOWN ||
+                    eventType == Event.Type.MOUSE_BTNUP)) {
+                TextAreaModel.Element e = curLElementUnderMouse.element;
+                if(callbacks != null) {
+                    for(Callback l : callbacks) {
+                        if(l instanceof Callback2) {
+                            ((Callback2)l).handleMouseButton(evt, e);
+                        }
+                    }
+                }
             }
             
             if(eventType == Event.Type.MOUSE_CLICKED) {
