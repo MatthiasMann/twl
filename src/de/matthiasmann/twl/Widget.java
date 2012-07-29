@@ -1162,6 +1162,19 @@ public class Widget {
     public void setOverlay(Image overlay) {
         this.overlay = overlay;
     }
+    
+    /**
+     * Returns the mouse cursor which should be used for the given
+     * mouse coordinates and modifiers.
+     * 
+     * The default implementation calls {@link #getMouseCursor() }
+     * 
+     * @param evt only {@link Event#getMouseX() }, {@link Event#getMouseY() } and {@link Event#getModifiers() } are valid.
+     * @return the mouse cursor or null when no mouse cursor is defined for this widget
+     */
+    public MouseCursor getMouseCursor(Event evt) {
+        return getMouseCursor();
+    }
 
     public MouseCursor getMouseCursor() {
         return mouseCursor;

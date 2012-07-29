@@ -671,13 +671,15 @@ public final class GUI extends Widget {
      * OS cursor will be displayed.</p>
      * 
      * @see Renderer#setCursor(de.matthiasmann.twl.renderer.MouseCursor) 
+     * @see Widget#getMouseCursor(de.matthiasmann.twl.Event) 
      */
     public void setCursor() {
+        event.type = Event.Type.MOUSE_MOVED;
         Widget widget = getWidgetUnderMouse();
         MouseCursor cursor = null;
         while(widget != null) {
             if(widget.isEnabled()) {
-                cursor = widget.getMouseCursor();
+                cursor = widget.getMouseCursor(event);
                 if(cursor != null) {
                     break;
                 }
