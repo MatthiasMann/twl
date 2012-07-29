@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -44,11 +44,13 @@ import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.PositionAnimatedPanel;
 import de.matthiasmann.twl.ThemeInfo;
 import de.matthiasmann.twl.renderer.CacheContext;
+import de.matthiasmann.twl.renderer.FontMapper;
 import de.matthiasmann.twl.renderer.FontParameter;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.utils.AbstractMathInterpreter;
 import de.matthiasmann.twl.utils.StateExpression;
 import de.matthiasmann.twl.utils.StateSelect;
+import de.matthiasmann.twl.utils.StringList;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
 import java.io.IOException;
@@ -368,6 +370,22 @@ public class ThemeManager {
             url = new URL(url, fileName);
         }
         
+        StringList fontFamilies = parseList(xmlp, "families");
+        int fontSize = 0;
+        int fontStyle = 0;
+        if(fontFamilies != null) {
+            fontSize = xmlp.parseIntFromAttribute("size");
+            StringList style = parseList(xmlp, "style");
+            while(style != null) {
+                if("bold".equalsIgnoreCase(style.getValue())) {
+                    fontStyle |= FontMapper.STYLE_BOLD;
+                } else if("italic".equalsIgnoreCase(style.getValue())) {
+                    fontStyle |= FontMapper.STYLE_ITALIC;
+                }
+                style = style.getNext();
+            }
+        }
+        
         FontParameter baseParams = new FontParameter();
         parseFontParameter(xmlp, baseParams);
         ArrayList<FontParameter> fontParams = new ArrayList<FontParameter>();
@@ -393,8 +411,20 @@ public class ThemeManager {
         }
         
         fontParams.add(baseParams);
-        return renderer.loadFont(url, new StateSelect(stateExpr),
-                fontParams.toArray(new FontParameter[fontParams.size()]));
+        StateSelect stateSelect = new StateSelect(stateExpr);
+        FontParameter[] stateParams = fontParams.toArray(new FontParameter[fontParams.size()]);
+        
+        if(fontFamilies != null) {
+            FontMapper fontMapper = renderer.getFontMapper();
+            if(fontMapper != null) {
+                Font font = fontMapper.getFont(fontFamilies, fontSize, fontStyle, stateSelect, stateParams);
+                if(font != null) {
+                    return font;
+                }
+            }
+        }
+        
+        return renderer.loadFont(url, stateSelect, stateParams);
     }
     
     private void parseFontParameter(XMLParser xmlp, FontParameter fp) throws XmlPullParserException {
@@ -432,6 +462,26 @@ public class ThemeManager {
                 }
             }
         }
+    }
+    
+    private static StringList parseList(XMLParser xmlp, String name) {
+        String value = xmlp.getAttributeValue(null, name);
+        if(value != null) {
+            return parseList(value, 0);
+        }
+        return null;
+    }
+    
+    private static StringList parseList(String value, int idx) {
+        idx = TextUtil.skipSpaces(value, idx);
+        if(idx >= value.length()) {
+            return null;
+        }
+        
+        int end = TextUtil.indexOf(value, ',', idx);
+        String part = TextUtil.trim(value, idx, end);
+        
+        return new StringList(part, parseList(value, end+1));
     }
 
     private void parseThemeWildcardRef(XMLParser xmlp, ThemeInfoImpl parent) throws IOException, XmlPullParserException {
