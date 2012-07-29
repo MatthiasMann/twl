@@ -228,11 +228,7 @@ public class ResizableFrame extends Widget {
 
     protected void applyThemeResizableFrame(ThemeInfo themeInfo) {
         for(DragMode m : DragMode.values()) {
-            if(m.cursorName != null) {
-                cursors[m.ordinal()] = themeInfo.getMouseCursor(m.cursorName);
-            } else {
-                cursors[m.ordinal()] = null;
-            }
+            cursors[m.ordinal()] = themeInfo.getMouseCursor(m.cursorName);
         }
         titleAreaTop = themeInfo.getParameter("titleAreaTop", 0);
         titleAreaLeft = themeInfo.getParameter("titleAreaLeft", 0);
@@ -538,10 +534,6 @@ public class ResizableFrame extends Widget {
             return true;
         }
 
-        DragMode cursorMode = getDragMode(evt.getMouseX(), evt.getMouseY());
-        MouseCursor cursor = cursors[cursorMode.ordinal()];
-        setMouseCursor(cursor);
-
         if(!isMouseExit && resizeHandle != null && resizeHandle.isVisible()) {
             resizeHandle.getAnimationState().setAnimationState(
                     TextWidget.STATE_HOVER, resizeHandle.isMouseInside(evt));
@@ -551,7 +543,6 @@ public class ResizableFrame extends Widget {
             if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
                     evt.getMouseButton() == Event.MOUSE_LBUTTON &&
                     handleMouseDown(evt)) {
-                setMouseCursor(cursors[dragMode.ordinal()]);
                 return true;
             }
         }
@@ -561,6 +552,19 @@ public class ResizableFrame extends Widget {
         }
 
         return evt.isMouseEvent();
+    }
+
+    @Override
+    public MouseCursor getMouseCursor(Event evt) {
+        DragMode cursorMode = dragMode;
+        if(cursorMode == DragMode.NONE) {
+            cursorMode = getDragMode(evt.getMouseX(), evt.getMouseY());
+            if(cursorMode == DragMode.NONE) {
+                return getMouseCursor();
+            }
+        }
+        
+        return cursors[cursorMode.ordinal()];
     }
 
     private DragMode getDragMode(int mx, int my) {
