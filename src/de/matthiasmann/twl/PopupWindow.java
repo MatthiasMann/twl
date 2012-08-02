@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -327,5 +327,13 @@ public class PopupWindow extends Container {
         if(closeOnClickedOutside) {
             requestPopupClose();
         }
+    }
+
+    @Override
+    void setParent(Widget parent) {
+        if(!(parent instanceof GUI)) {
+            throw new IllegalArgumentException("PopupWindow can't be used as child widget");
+        }
+        super.setParent(parent);
     }
 }

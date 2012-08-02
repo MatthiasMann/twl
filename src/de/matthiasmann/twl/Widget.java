@@ -1249,8 +1249,8 @@ public class Widget {
         if(index < 0 || index > children.size()) {
             throw new IndexOutOfBoundsException();
         }
+        child.setParent(this);  // can throw exception - see PopupWindow
         children.add(index, child);
-        child.parent = this;
         GUI gui = getGUI();
         if(gui != null) {
             child.recursivelySetGUI(gui);
@@ -2358,6 +2358,10 @@ public class Widget {
     //
     // start of internal stuff
     //
+    
+    void setParent(Widget parent) {
+        this.parent = parent;
+    }
     
     private void unparentChild(Widget child) {
         GUI gui = getGUI();
