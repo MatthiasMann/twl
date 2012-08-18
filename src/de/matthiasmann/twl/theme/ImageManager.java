@@ -495,12 +495,18 @@ class ImageManager {
     }
 
     private void parseSubImages(XMLParser xmlp, Image[] textures) throws XmlPullParserException, IOException {
-        for(int i=0 ; i<textures.length ; i++) {
-            xmlp.require(XmlPullParser.START_TAG, null, null);
+        int idx = 0;
+        while(xmlp.isStartTag()) {
+            if(idx == textures.length) {
+                throw xmlp.error("Too many sub images");
+            }
             String tagName = xmlp.getName();
-            textures[i] = parseImage(xmlp, tagName);
+            textures[idx++] = parseImage(xmlp, tagName);
             xmlp.require(XmlPullParser.END_TAG, null, tagName);
             xmlp.nextTag();
+        }
+        if(idx != textures.length) {
+            throw xmlp.error("Not enough sub images");
         }
     }
 

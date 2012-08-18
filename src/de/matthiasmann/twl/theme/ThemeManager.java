@@ -261,7 +261,7 @@ public class ThemeManager {
         constants.put("MAX", Short.MAX_VALUE);
     }
     
-    private void parseThemeFile(URL url) throws XmlPullParserException, IOException {
+    private void parseThemeFile(URL url) throws IOException {
         try {
             XMLParser xmlp = new XMLParser(url);
             try {
@@ -272,6 +272,10 @@ public class ThemeManager {
             } finally {
                 xmlp.close();
             }
+        } catch (XmlPullParserException ex) {
+            throw new ThemeException(ex.getMessage(), url, ex.getLineNumber(), ex.getColumnNumber(), ex);
+        } catch (ThemeException ex) {
+            throw ex;
         } catch (Exception ex) {
             throw (IOException)(new IOException("while parsing Theme XML: " + url).initCause(ex));
         }
@@ -288,7 +292,12 @@ public class ThemeManager {
                 imageManager.parseImages(xmlp, baseUrl);
             } else if("include".equals(tagName)) {
                 String fontFileName = xmlp.getAttributeNotNull("filename");
-                parseThemeFile(new URL(baseUrl, fontFileName));
+                try {
+                    parseThemeFile(new URL(baseUrl, fontFileName));
+                } catch (ThemeException ex) {
+                    ex.addIncludedBy(baseUrl, xmlp.getLineNumber(), xmlp.getColumnNumber());
+                    throw ex;
+                }
                 xmlp.nextTag();
             } else {
                 final String name = xmlp.getAttributeNotNull("name");

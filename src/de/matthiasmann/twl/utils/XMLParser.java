@@ -214,6 +214,14 @@ public class XMLParser implements Closeable {
         return desc;
     }
 
+    public int getLineNumber() {
+        return xpp.getLineNumber();
+    }
+
+    public int getColumnNumber() {
+        return xpp.getColumnNumber();
+    }
+
     public String getName() {
         return xpp.getName();
     }
