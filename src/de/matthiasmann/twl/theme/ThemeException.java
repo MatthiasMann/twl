@@ -33,7 +33,8 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- *
+ * This exception is thrown when a theme file could not be parsed.
+ * 
  * @author Matthias Mann
  */
 public class ThemeException extends IOException {
@@ -46,7 +47,7 @@ public class ThemeException extends IOException {
         initCause(cause);
     }
     
-    public void addIncludedBy(URL url, int lineNumber, int columnNumber) {
+    void addIncludedBy(URL url, int lineNumber, int columnNumber) {
         Source head = source;
         while(head.includedBy != null) {
             head = head.includedBy;
@@ -66,14 +67,26 @@ public class ThemeException extends IOException {
         }
         return sb.toString();
     }
+
+    /**
+     * Returns the source URL of the XML file and the line/column number
+     * where the exception originated.
+     * @return the source
+     */
+    public Source getSource() {
+        return source;
+    }
     
-    public static class Source {
+    /**
+     * Describes a position in an XML file
+     */
+    public static final class Source {
         protected final URL url;
         protected final int lineNumber;
         protected final int columnNumber;
         protected Source includedBy;
 
-        public Source(URL url, int lineNumber, int columnNumber) {
+        Source(URL url, int lineNumber, int columnNumber) {
             this.url = url;
             this.lineNumber = lineNumber;
             this.columnNumber = columnNumber;
