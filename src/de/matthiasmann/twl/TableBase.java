@@ -497,11 +497,20 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
 
     @Override
     public int getPreferredInnerWidth() {
+        if(getInnerWidth() == 0) {
+            return columnModel.computePreferredWidth();
+        }
+        if(updateAllColumnWidth) {
+            updateAllColumnWidth();
+        }
         return (numColumns > 0) ? getColumnEndPosition(numColumns-1) : 0;
     }
 
     @Override
     public int getPreferredInnerHeight() {
+        if(autoSizeAllRows) {
+            autoSizeAllRows();
+        }
         return columnHeaderHeight + 1 + // +1 for drop marker
                 ((numRows > 0) ? getRowEndPosition(numRows-1) : 0);
     }
@@ -1641,6 +1650,25 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 }
                 g.setSize(DialogLayout.AXIS_X, 0, getInnerWidth());
             }
+        }
+        int computePreferredWidth() {
+            int count = getNumColumns();
+            if(!isFixedWidthMode()) {
+                int sum = 0;
+                for(int i=0 ; i<count ; i++) {
+                    int width = computePreferredColumnWidth(i);
+                    sum += width;
+                }
+                return sum;
+            }
+            if(columnHeaders != null) {
+                DialogLayout.SequentialGroup g = (DialogLayout.SequentialGroup)(new DialogLayout()).createSequentialGroup();
+                for(ColumnHeader h : columnHeaders) {
+                    g.addSpring(h.spring);
+                }
+                return g.getPrefSize(DialogLayout.AXIS_X);
+            }
+            return 0;
         }
     }
 
