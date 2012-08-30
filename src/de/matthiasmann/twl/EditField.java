@@ -1341,7 +1341,12 @@ public class EditField extends Widget {
 
         @Override
         protected int computeTextX() {
-            return getInnerX() - lastScrollPos;
+            int x = getInnerX();
+            int pos = getAlignment().hpos;
+            if(pos > 0) {
+                x += Math.max(0, getInnerWidth() - computeTextWidth()) * pos / 2;
+            }
+            return x - lastScrollPos;
         }
 
         @Override
