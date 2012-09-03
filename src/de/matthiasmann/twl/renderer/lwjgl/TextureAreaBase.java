@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -51,17 +51,17 @@ public class TextureAreaBase {
         this.height = (short)Math.abs(height);
         float fx = x;
         float fy = y;
-        if(width == 1) {
+        if(width == 1 || width == -1) {
             fx += 0.5f;
             width = 0;
-        } else if(width < -1) {
-            fx -= width + 1;
+        } else if(width < 0) {
+            fx -= width;
         }
-        if(height == 1) {
+        if(height == 1 || height == -1) {
             fy += 0.5f;
             height = 0;
-        } else if(height < -1) {
-            fy -= height + 1;
+        } else if(height < 0) {
+            fy -= height;
         }
         this.tx0 = fx / texWidth;
         this.ty0 = fy / texHeight;
