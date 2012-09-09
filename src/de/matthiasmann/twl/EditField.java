@@ -508,7 +508,17 @@ public class EditField extends Widget {
     }
 
     private void layoutAutocompletionWindow() {
-        autoCompletionWindow.setPosition(getX(), getBottom());
+        int y = getBottom();
+        GUI gui = getGUI();
+        if(gui != null) {
+            if(y + autoCompletionHeight > gui.getInnerBottom()) {
+                int ytop = y - autoCompletionHeight;
+                if(ytop >= gui.getInnerY()) {
+                    y = ytop;
+                }
+            }
+        }
+        autoCompletionWindow.setPosition(getX(), y);
         autoCompletionWindow.setSize(getWidth(), autoCompletionHeight);
     }
 
