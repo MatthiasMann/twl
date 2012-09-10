@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -92,6 +92,7 @@ public class TabbedPane extends Widget {
 
         addActionMapping("nextTab", "cycleTabs", +1);
         addActionMapping("prevTab", "cycleTabs", -1);
+        setCanAcceptKeyboardFocus(false);
     }
 
     public TabPosition getTabPosition() {
@@ -526,6 +527,7 @@ public class TabbedPane extends Widget {
         
         TabButton(BooleanModel model) {
             super(model);
+            setCanAcceptKeyboardFocus(false);
             closeButtonAlignment = Alignment.RIGHT;
         }
 
