@@ -512,7 +512,7 @@ public class EditField extends Widget {
         GUI gui = getGUI();
         if(gui != null) {
             if(y + autoCompletionHeight > gui.getInnerBottom()) {
-                int ytop = y - autoCompletionHeight;
+                int ytop = getY() - autoCompletionHeight;
                 if(ytop >= gui.getInnerY()) {
                     y = ytop;
                 }
