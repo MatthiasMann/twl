@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -648,6 +648,15 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             GL11.glDisable(GL11.GL_SCISSOR_TEST);
             hasScissor = false;
         }
+    }
+
+    /**
+     * Retrieves the active clip region from the top of the stack
+     * @param rect the rect coordinates - may not be updated when clipping is disabled
+     * @return true if clipping is active, false if clipping is disabled
+     */
+    public boolean getClipRect(Rect rect) {
+        return clipStack.getClipRect(rect);
     }
 
     Logger getLogger() {
