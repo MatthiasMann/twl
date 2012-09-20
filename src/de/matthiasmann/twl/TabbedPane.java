@@ -225,6 +225,21 @@ public class TabbedPane extends Widget {
         tabs.clear();
         activeTab = null;
     }
+    
+    public int getNumTabs() {
+        return tabs.size();
+    }
+    
+    public Tab getTab(int index) {
+        return tabs.get(index);
+    }
+    
+    public int getActiveTabIndex() {
+        if(tabs.isEmpty()) {
+            return -1;
+        }
+        return tabs.indexOf(activeTab);
+    }
 
     public void cycleTabs(int direction) {
         if(!tabs.isEmpty()) {
@@ -445,6 +460,7 @@ public class TabbedPane extends Widget {
         final TabButton button;
         Widget pane;
         Runnable closeCallback;
+        Object userValue;
 
         Tab() {
             button = new TabButton(this);
@@ -480,6 +496,18 @@ public class TabbedPane extends Widget {
         public Tab setTitle(String title) {
             button.setText(title);
             return this;
+        }
+        
+        public String getTitle() {
+            return button.getText();
+        }
+
+        public Object getUserValue() {
+            return userValue;
+        }
+
+        public void setUserValue(Object userValue) {
+            this.userValue = userValue;
         }
 
         /**
