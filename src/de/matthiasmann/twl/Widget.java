@@ -2417,6 +2417,7 @@ public class Widget {
     private void recursivelyClearGUI(GUI gui) {
         assert guiInstance == gui : "guiInstance must be null";
         guiInstance = null;
+        themeManager = null;
         if(children != null) {
             for(int i=children.size() ; i-->0 ;) {
                 children.get(i).recursivelyClearGUI(gui);
