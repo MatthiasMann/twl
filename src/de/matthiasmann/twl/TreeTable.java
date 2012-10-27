@@ -572,7 +572,7 @@ public class TreeTable extends TableBase {
         }
 
         protected void setSubRenderer(int row, int column, Object colData) {
-            subRenderer = getCellRenderer(colData);
+            subRenderer = getCellRenderer(colData, column);
             if(subRenderer != null) {
                 subRenderer.setCellData(row, column, colData);
             }
