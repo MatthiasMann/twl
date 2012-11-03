@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -146,7 +146,7 @@ public class TableSearchWindow extends InfoWindow implements TableBase.KeyboardS
                     }
                     break;
                 default:
-                    if(evt.hasKeyCharNoModifiers()) {
+                    if(evt.hasKeyCharNoModifiers() && !Character.isISOControl(evt.getKeyChar())) {
                         if(searchTextBuffer.length() == 0) {
                             currentRow = Math.max(0, getTable().getSelectionManager().getLeadRow());
                             searchStartOnly = true;
