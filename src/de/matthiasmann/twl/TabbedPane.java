@@ -502,6 +502,11 @@ public class TabbedPane extends Widget {
             return button.getText();
         }
 
+        public Tab setTooltipContent(Object tooltipContent) {
+            button.setTooltipContent(tooltipContent);
+            return this;
+        }
+
         public Object getUserValue() {
             return userValue;
         }
