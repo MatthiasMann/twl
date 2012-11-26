@@ -105,7 +105,12 @@ public final class Event {
         /**
          * A popup has closed. Input events delivery will resume if no other popups are open.
          */
-        POPUP_CLOSED(false, false);
+        POPUP_CLOSED(false, false),
+        /**
+         * Send when {@link GUI#clearKeyboardState() } is called.
+         * Widgets which remeber {@link #KEY_PRESSED} events should clear their state.
+         */
+        CLEAR_KEYBOARD_STATE(false, false);
         
         final boolean isMouseEvent;
         final boolean isKeyEvent;

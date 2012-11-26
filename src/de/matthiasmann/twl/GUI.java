@@ -972,6 +972,9 @@ public final class GUI extends Widget {
     public final void clearKeyboardState() {
         event.modifier &= ~(Event.MODIFIER_ALT | Event.MODIFIER_CTRL | Event.MODIFIER_SHIFT | Event.MODIFIER_META);
         keyRepeatDelay = NO_REPEAT;
+        
+        event.type = Event.Type.CLEAR_KEYBOARD_STATE;
+        routePopupEvent(event);
     }
     
     /**
