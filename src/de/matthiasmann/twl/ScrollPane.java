@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2012, Matthias Mann
  *
  * All rights reserved.
  *
@@ -441,8 +441,8 @@ public class ScrollPane extends Widget {
         int border = getBorderHorizontal();
         //minWidth = Math.max(minWidth, scrollbarH.getMinWidth() + border);
         if(fixed == Fixed.HORIZONTAL && content != null) {
-            minWidth = Math.max(minWidth, content.getMinWidth() +
-                    border + scrollbarV.getMinWidth());
+            int sbWidth = scrollbarV.isVisible() ? scrollbarV.getMinWidth() : 0;
+            minWidth = Math.max(minWidth, content.getMinWidth() + border + sbWidth);
         }
         return minWidth;
     }
@@ -453,8 +453,8 @@ public class ScrollPane extends Widget {
         int border = getBorderVertical();
         //minHeight = Math.max(minHeight, scrollbarV.getMinHeight() + border);
         if(fixed == Fixed.VERTICAL && content != null) {
-            minHeight = Math.max(minHeight, content.getMinHeight() +
-                    border + scrollbarH.getMinHeight());
+            int sbHeight = scrollbarH.isVisible() ? scrollbarH.getMinHeight() : 0;
+            minHeight = Math.max(minHeight, content.getMinHeight() + border + sbHeight);
         }
         return minHeight;
     }
@@ -716,8 +716,15 @@ public class ScrollPane extends Widget {
                 scrollbarsToggleFlags |= 8;
             }
             
-            if(visibleH != scrollbarH.isVisible() || visibleV != scrollbarV.isVisible()) {
-                invalidateLayoutLocally();
+            boolean changedH = visibleH ^ scrollbarH.isVisible();
+            boolean changedV = visibleV ^ scrollbarV.isVisible();
+            if(changedH || changedV) {
+                if((changedH && fixed == Fixed.VERTICAL) ||
+                   (changedV && fixed == Fixed.HORIZONTAL)) {
+                    invalidateLayout();
+                } else {
+                    invalidateLayoutLocally();
+                }
             }
 
             int pageSizeX, pageSizeY;
