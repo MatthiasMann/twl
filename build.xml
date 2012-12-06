@@ -105,6 +105,7 @@
     <target name="build-pngdecoder-jar" depends="jar">
         <jar basedir="${build.classes.dir}" jarfile="${dist.dir}/PNGDecoder.jar">
             <include name="de/matthiasmann/twl/utils/PNGDecoder*.class"/>
+            <include name="de/matthiasmann/twl/license.txt"/>
         </jar>
     </target>
 
