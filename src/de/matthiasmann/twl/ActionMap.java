@@ -94,11 +94,30 @@ public class ActionMap {
      * @param event the event which caused the invocation
      * @return true if a mapping was found, false if no mapping was found.
      * @see #addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     * @throws NullPointerException when either action or event is null
      */
     public boolean invoke(String action, Event event) {
         Mapping mapping = HashEntry.get(mappings, action);
         if(mapping != null) {
             mapping.call(event);
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Invoke the mapping for the given action if one is defined without
+     * checking any flags.
+     * 
+     * @param action the action name
+     * @return true if a mapping was found, false if no mapping was found.
+     * @see #addMapping(java.lang.String, java.lang.Object, java.lang.reflect.Method, java.lang.Object[], int)
+     * @throws NullPointerException when action is null
+     */
+    public boolean invokeDirect(String action) {
+        Mapping mapping = HashEntry.get(mappings, action);
+        if(mapping != null) {
+            mapping.call();
             return true;
         }
         return false;
@@ -302,12 +321,16 @@ public class ActionMap {
             if((type == Event.Type.KEY_RELEASED && ((flags & FLAG_ON_RELEASE) != 0)) ||
                     (type == Event.Type.KEY_PRESSED && ((flags & FLAG_ON_PRESSED) != 0) &&
                     (!e.isKeyRepeated() || ((flags & FLAG_ON_REPEAT) != 0)))) {
-                try {
-                    method.invoke(target, params);
-                } catch (Exception ex) {
-                    Logger.getLogger(ActionMap.class.getName()).log(Level.SEVERE,
-                            "Exception while invoking action handler", ex);
-                }
+                call();
+            }
+        }
+        
+        void call() {
+            try {
+                method.invoke(target, params);
+            } catch (Exception ex) {
+                Logger.getLogger(ActionMap.class.getName()).log(Level.SEVERE,
+                        "Exception while invoking action handler", ex);
             }
         }
     }
