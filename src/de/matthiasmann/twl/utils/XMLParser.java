@@ -221,6 +221,13 @@ public class XMLParser implements Closeable {
     public int getColumnNumber() {
         return xpp.getColumnNumber();
     }
+    
+    public String getFilePosition() {
+        if(source != null) {
+            return source+":"+getLineNumber();
+        }
+        return xpp.getPositionDescription();
+    }
 
     public String getName() {
         return xpp.getName();

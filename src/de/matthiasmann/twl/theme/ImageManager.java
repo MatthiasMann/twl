@@ -316,7 +316,15 @@ class ImageManager {
             }
         }
         if(conditions.size() < 1) {
-            throw xmlp.error("state select image needs atleast 1 condition");
+            System.err.println(xmlp.getFilePosition() + ": state select image needs atleast 1 condition");
+            
+            if(conditions.isEmpty()) {
+                if(stateImages.isEmpty()) {
+                    return NONE;
+                } else {
+                    return stateImages.get(0);
+                }
+            }
         }
         StateSelect select = new StateSelect(conditions);
         Image image = new StateSelectImage(select, params.border, stateImages.toArray(new Image[stateImages.size()]));
