@@ -791,23 +791,11 @@ public class EditField extends Widget {
     protected Menu createPopupMenu() {
         Menu menu = new Menu();
         if(!readOnly) {
-            menu.add("cut", new Runnable() {
-                public void run() {
-                    cutToClipboard();
-                }
-            });
+            menu.add("cut", new ActionCallback(this, "cut"));
         }
-        menu.add("copy", new Runnable() {
-            public void run() {
-                copyToClipboard();
-            }
-        });
+        menu.add("copy", new ActionCallback(this, "copy"));
         if(!readOnly) {
-            menu.add("paste", new Runnable() {
-                public void run() {
-                    pasteFromClipboard();
-                }
-            });
+            menu.add("paste", new ActionCallback(this, "paste"));
             menu.add("clear", new Runnable() {
                 public void run() {
                     if(!isReadOnly()) {
@@ -817,11 +805,7 @@ public class EditField extends Widget {
             });
         }
         menu.addSpacer();
-        menu.add("select all", new Runnable() {
-            public void run() {
-                selectAll();
-            }
-        });
+        menu.add("select all", new ActionCallback(this, "selectAll"));
         return menu;
     }
 
