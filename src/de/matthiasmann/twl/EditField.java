@@ -147,6 +147,7 @@ public class EditField extends Widget {
         addActionMapping("copy", "copyToClipboard");
         addActionMapping("paste", "pasteFromClipboard");
         addActionMapping("selectAll", "selectAll");
+        addActionMapping("duplicateLineDown", "duplicateLineDown");
     }
 
     /**
@@ -434,6 +435,26 @@ public class EditField extends Widget {
             text = TextUtil.createString(passwordChar, text.length());
         }
         Clipboard.setClipboard(text);
+    }
+    
+    public void duplicateLineDown() {
+        if(multiLine && !readOnly) {
+            int lineStart, lineEnd;
+            if(hasSelection()) {
+                lineStart = selectionStart;
+                lineEnd   = selectionEnd;
+            } else {
+                lineStart = cursorPos;
+                lineEnd   = cursorPos;
+            }
+            lineStart = computeLineStart(lineStart);
+            lineEnd   = computeLineEnd(lineEnd);
+            String line = editBuffer.substring(lineStart, lineEnd);
+            line = "\n".concat(line);
+            editBuffer.replace(lineEnd, 0, line);
+            setCursorPos(cursorPos + line.length());
+            updateText(true, false, Event.KEY_NONE);
+        }
     }
 
     public int getMaxTextLength() {
