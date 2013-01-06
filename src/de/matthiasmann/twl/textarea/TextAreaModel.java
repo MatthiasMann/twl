@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -105,6 +105,12 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         }
     }
 
+    public class LineBreakElement extends Element {
+        public LineBreakElement(Style style) {
+            super(style);
+        }
+    };
+    
     public class TextElement extends Element {
         private String text;
 

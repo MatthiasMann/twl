@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -49,12 +49,24 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *
+ * A style sheet.
+ * 
+ * <p>Each StyleSheet class contains the following rules:</p>
+ * <pre>pre {
+ *    white-space: pre
+ *}</pre>
+ * 
  * @author Matthias Mann
  */
 public class StyleSheet implements StyleSheetResolver {
 
     static final Object NULL = new Object();
+    
+    private static final Selector PRE_SELECTOR = new Selector("pre", null, null, null, null);
+    static {
+        (PRE_SELECTOR.style = new CSSStyle()).put(StyleAttribute.PREFORMATTED, Boolean.TRUE);
+        PRE_SELECTOR.score = 0x100;
+    }
     
     private final ArrayList<Selector> rules;
     private final IdentityHashMap<Style, Object> cache;
@@ -63,6 +75,8 @@ public class StyleSheet implements StyleSheetResolver {
     public StyleSheet() {
         this.rules = new ArrayList<Selector>();
         this.cache = new IdentityHashMap<Style, Object>();
+        
+        rules.add(PRE_SELECTOR);
     }
 
     public void parse(URL url) throws IOException {

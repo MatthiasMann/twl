@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -283,10 +283,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                     break;
                 }
                 ++level;
-                if("br".equals(name)) {
-                    sb.append("\n");
-                    break;
-                }
                 finishText();
                 Style style = pushStyle(xpp);
                 Element element;
@@ -334,6 +330,8 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 } else if("table".equals(name)) {
                     element = parseTable(xpp, style);
                     --level;
+                } else if("br".equals(name)) {
+                    element = new LineBreakElement(style);
                 } else {
                     break;
                 }
@@ -344,10 +342,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             }
             case XmlPullParser.END_TAG: {
                 --level;
-                String name = xpp.getName();
-                if("br".equals(name)) {
-                    break;
-                }
                 finishText();
                 popStyle();
                 break;
@@ -355,11 +349,7 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             case XmlPullParser.TEXT: {
                 char[] buf = xpp.getTextCharacters(startLength);
                 if(startLength[1] > 0) {
-                    int pos = sb.length();
                     sb.append(buf, startLength[0], startLength[1]);
-                    if(!isPre()) {
-                        removeBreaks(pos);
-                    }
                 }
                 break;
             }
@@ -514,10 +504,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
                 (name.charAt(1) >= '0' && name.charAt(1) <= '6');
     }
     
-    private boolean isPre() {
-        return getStyle().get(StyleAttribute.PREFORMATTED, null);
-    }
-    
     private Style getStyle() {
         return styleStack.get(styleStack.size()-1);
     }
@@ -543,10 +529,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             newStyle = new Style(parent, key);
         }
 
-        if(xpp != null && "pre".equals(xpp.getName())) {
-            newStyle.put(StyleAttribute.PREFORMATTED, Boolean.TRUE);
-        }
-
         styleStack.add(newStyle);
         return newStyle;
     }
@@ -565,28 +547,6 @@ public class HTMLTextAreaModel extends HasCallback implements TextAreaModel {
             registerElement(e);
             curContainer.add(e);
             sb.setLength(0);
-        }
-    }
-
-    private void removeBreaks(int pos) {
-        // strip special characters of the new added block
-        for(int idx=sb.length() ; idx-->pos ;) {
-            char ch = sb.charAt(idx);
-            if(Character.isWhitespace(ch) || Character.isISOControl(ch)) {
-                sb.setCharAt(idx, ' ');
-            }
-        }
-        // HTML treats consecutive spaces as one space - so remove them
-        if(pos > 0) {
-            pos--;
-        }
-        boolean wasSpace = false;
-        for(int idx=sb.length() ; idx-->pos ;) {
-            boolean isSpace = sb.charAt(idx) == ' ';
-            if(isSpace && wasSpace) {
-                sb.deleteCharAt(idx);
-            }
-            wasSpace = isSpace;
         }
     }
 }

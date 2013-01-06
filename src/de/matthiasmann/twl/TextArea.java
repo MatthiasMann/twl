@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -288,6 +288,9 @@ public class TextArea extends Widget {
      * Sets a default style sheet with the following content:
      * <pre>p, ul {
      *    margin-bottom: 1em
+     *}
+     *pre {
+     *    white-space: pre
      *}</pre>
      */
     public void setDefaultStyleSheet() {
@@ -676,6 +679,8 @@ public class TextArea extends Widget {
 
         if(e instanceof TextAreaModel.TextElement) {
             layoutTextElement(box, (TextAreaModel.TextElement)e);
+        } else if(e instanceof TextAreaModel.LineBreakElement) {
+            box.nextLine(true);
         } else {
             if(box.wasPreformatted) {
                 box.nextLine(false);
@@ -1076,20 +1081,19 @@ public class TextArea extends Widget {
             box.nextLine(false);
         }
         
-        int idx = 0;
-        while(idx < text.length()) {
-            int end = TextUtil.indexOf(text, '\n', idx);
-            if(pre) {
+        if(pre) {
+            int idx = 0;
+            while(idx < text.length()) {
+                int end = TextUtil.indexOf(text, '\n', idx);
                 layoutTextPre(box, te, fontData, text, idx, end, inheritHover);
-            } else {
-                layoutText(box, te, fontData, text, idx, end, inheritHover);
+                if(end < text.length() && text.charAt(end) == '\n') {
+                    end++;
+                    box.nextLine(true);
+                }
+                idx = end;
             }
-            
-            if(end < text.length() && text.charAt(end) == '\n') {
-                end++;
-                box.nextLine(true);
-            }
-            idx = end;
+        } else {
+            layoutText(box, te, fontData, text, 0, text.length(), inheritHover);
         }
 
         box.wasPreformatted = pre;
@@ -2025,6 +2029,7 @@ public class TextArea extends Widget {
 
         boolean nextLine(boolean force) {
             if(isAtStartOfLine() && (wasAutoBreak || !force)) {
+                wasAutoBreak = !force;
                 return false;
             }
 
