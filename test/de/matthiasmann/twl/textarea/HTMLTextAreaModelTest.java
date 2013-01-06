@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -56,7 +56,7 @@ public class HTMLTextAreaModelTest {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt\nNot a new line");
         Iterator<TextAreaModel.Element> i1 = m.iterator();
         Iterator<TextAreaModel.Element> i = assertBlock(i1);
-        assertText(i, "default", "Hallo Welt Not a new line");
+        assertText(i, "default", "Hallo Welt\nNot a new line");
         assertFalse(i.hasNext());
     }
 
@@ -88,7 +88,9 @@ public class HTMLTextAreaModelTest {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/>A new line");
         Iterator<TextAreaModel.Element> i1 = m.iterator();
         Iterator<TextAreaModel.Element> i = assertBlock(i1);
-        assertText(i, "default", "Hallo Welt\nA new line");
+        assertText(i, "default", "Hallo Welt");
+        assertLineBreak(i);
+        assertText(i, "default", "A new line");
         assertFalse(i.hasNext());
     }
 
@@ -97,7 +99,8 @@ public class HTMLTextAreaModelTest {
         HTMLTextAreaModel m = new HTMLTextAreaModel("Hallo Welt<br/><span/>A new line");
         Iterator<TextAreaModel.Element> i1 = m.iterator();
         Iterator<TextAreaModel.Element> i = assertBlock(i1);
-        assertText(i, "default", "Hallo Welt\n");
+        assertText(i, "default", "Hallo Welt");
+        assertLineBreak(i);
         assertText(i, "default", "A new line");
         assertFalse(i.hasNext());
     }
@@ -108,7 +111,8 @@ public class HTMLTextAreaModelTest {
         Iterator<TextAreaModel.Element> i1 = m.iterator();
         Iterator<TextAreaModel.Element> i = assertBlock(i1);
         assertText(i, "default", "Hallo Welt");
-        assertText(i, "default", "\nA new line");
+        assertLineBreak(i);
+        assertText(i, "default", "A new line");
         assertFalse(i.hasNext());
     }
 
@@ -127,5 +131,9 @@ public class HTMLTextAreaModelTest {
     private Iterator<TextAreaModel.Element> assertBlock(Iterator<TextAreaModel.Element> i) {
         TextAreaModel.BlockElement be = next(i, TextAreaModel.BlockElement.class);
         return be.iterator();
+    }
+    
+    private void assertLineBreak(Iterator<TextAreaModel.Element> i) {
+        TextAreaModel.LineBreakElement br = next(i, TextAreaModel.LineBreakElement.class);
     }
 }
