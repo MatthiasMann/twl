@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -424,7 +424,7 @@ public class CSSStyle extends Style {
             public String format(int nr) {
                 if(nr >= 1 && nr <= TextUtil.MAX_ROMAN_INTEGER) {
                     String str = TextUtil.toRomanNumberString(nr);
-                    return lowercase ? str.toLowerCase() : str;
+                    return lowercase ? str.toLowerCase(Locale.ENGLISH) : str;
                 } else {
                     return Integer.toString(nr);
                 }
