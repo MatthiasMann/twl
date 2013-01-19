@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,7 +32,6 @@ package de.matthiasmann.twl;
 import de.matthiasmann.twl.model.ListSelectionModel;
 import de.matthiasmann.twl.renderer.Font;
 import de.matthiasmann.twl.utils.CallbackSupport;
-import de.matthiasmann.twl.Label.CallbackReason;
 import de.matthiasmann.twl.model.IntegerModel;
 import de.matthiasmann.twl.model.ListModel;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
@@ -87,12 +86,6 @@ public class ComboBox<T> extends ComboBoxBase {
         button.getModel().addStateCallback(new Runnable() {
             public void run() {
                 updateHover();
-            }
-        });
-        
-        label.addCallback(new CallbackWithReason<Label.CallbackReason>() {
-            public void callback(CallbackReason reason) {
-                openPopup();
             }
         });
         
@@ -240,6 +233,13 @@ public class ComboBox<T> extends ComboBoxBase {
         return false;
     }
     
+    /**
+     * Called when a right click was made on the ComboboxLabel.
+     * The default implementation does nothing
+     */
+    protected void handleRightClick() {
+    }
+    
     protected void listBoxSelectionChanged(boolean close) {
         updateLabel();
         if(close) {
@@ -372,14 +372,26 @@ public class ComboBox<T> extends ComboBoxBase {
         }
 
         @Override
-        protected void handleMouseHover(Event evt) {
+        protected boolean handleEvent(Event evt) {
             if(evt.isMouseEvent()) {
                 boolean newHover = evt.getType() != Event.Type.MOUSE_EXITED;
                 if(newHover != hover) {
                     hover = newHover;
                     updateHover();
                 }
+                
+                if(evt.getType() == Event.Type.MOUSE_CLICKED) {
+                    openPopup();
+                }
+                
+                if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
+                        evt.getMouseButton() == Event.MOUSE_RBUTTON) {
+                    handleRightClick();
+                }
+                
+                return evt.getType() != Event.Type.MOUSE_WHEEL;
             }
+            return false;  
         }
     }
 

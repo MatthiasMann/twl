@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -133,7 +133,7 @@ public abstract class ComboBoxBase extends Widget {
         }
     }
 
-    private void setRecursive(Widget w, StateKey what, boolean state) {
+    private static void setRecursive(Widget w, StateKey what, boolean state) {
         w.getAnimationState().setAnimationState(what, state);
         for(int i=0 ; i<w.getNumChildren() ; ++i) {
             Widget child = w.getChild(i);
