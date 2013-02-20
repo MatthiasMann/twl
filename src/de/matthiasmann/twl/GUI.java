@@ -210,9 +210,12 @@ public final class GUI extends Widget {
         setFocusKeyEnabled(false);
         setSize();
         
+        // insert rootPane (user provided class) last incase it invokes methods
+        // which access GUI state (like requestKeyboardFocus) in overridable
+        // methods (like afterAddToGUI)
+        super.insertChild(infoWindowPlaceholder, 0);
+        super.insertChild(tooltipWindow, 1);
         super.insertChild(rootPane, 0);
-        super.insertChild(infoWindowPlaceholder, 1);
-        super.insertChild(tooltipWindow, 2);
         
         resyncTimerAfterPause();
     }
