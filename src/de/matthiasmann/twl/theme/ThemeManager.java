@@ -158,6 +158,24 @@ public class ThemeManager {
     /**
      * Loads the specified theme using the provided renderer and cache context.
      *
+     * This is equivalent to calling {@code createThemeManager(url, renderer, renderer.createNewCacheContext(), null)}
+     * 
+     * @param url The URL of the theme
+     * @param renderer The renderer which is used to load and render the resources
+     * @param cacheContext The cache context into which the resources are loaded
+     * @return a new ThemeManager
+     * @throws IOException if an error occured while loading
+     * @throws IllegalArgumentException if one of the passed parameters is {@code null}
+     * @see #createThemeManager(java.net.URL, de.matthiasmann.twl.renderer.Renderer, de.matthiasmann.twl.renderer.CacheContext, java.util.Map) 
+     * @see #destroy() 
+     */
+    public static ThemeManager createThemeManager(URL url, Renderer renderer, CacheContext cacheContext) throws IOException {
+        return createThemeManager(url, renderer, cacheContext, null);
+    }
+    
+    /**
+     * Loads the specified theme using the provided renderer and cache context.
+     *
      * The provided {@code cacheContext} is set active in the provided {@code renderer}.
      *
      * The cache context is stored inside the created ThemeManager. Calling
@@ -167,13 +185,15 @@ public class ThemeManager {
      * @param url The URL of the theme
      * @param renderer The renderer which is used to load and render the resources
      * @param cacheContext The cache context into which the resources are loaded
+     * @param constants A map containing constants which as exposed to the theme
+     *                  as if defined by &lt;constantDef/&gt;, can be null.
      * @return a new ThemeManager
      * @throws IOException if an error occured while loading
      * @throws IllegalArgumentException if one of the passed parameters is {@code null}
      * @see Renderer#setActiveCacheContext(de.matthiasmann.twl.renderer.CacheContext)
      * @see #destroy() 
      */
-    public static ThemeManager createThemeManager(URL url, Renderer renderer, CacheContext cacheContext) throws IOException {
+    public static ThemeManager createThemeManager(URL url, Renderer renderer, CacheContext cacheContext, Map<String, Object> constants) throws IOException {
         if(url == null) {
             throw new IllegalArgumentException("url is null");
         }
@@ -187,6 +207,9 @@ public class ThemeManager {
             renderer.setActiveCacheContext(cacheContext);
             ThemeManager tm = new ThemeManager(renderer, cacheContext);
             tm.insertDefaultConstants();
+            if(constants != null && !constants.isEmpty()) {
+                tm.insertConstants(constants);
+            }
             tm.parseThemeFile(url);
             if(tm.defaultFont == null) {
                 tm.defaultFont = tm.firstFont;
@@ -259,6 +282,10 @@ public class ThemeManager {
     private void insertDefaultConstants() {
         constants.put("SINGLE_COLUMN", ListBox.SINGLE_COLUMN);
         constants.put("MAX", Short.MAX_VALUE);
+    }
+    
+    private void insertConstants(Map<String, Object> src) {
+        constants.put(src);
     }
     
     private void parseThemeFile(URL url) throws IOException {
@@ -383,7 +410,7 @@ public class ThemeManager {
         int fontSize = 0;
         int fontStyle = 0;
         if(fontFamilies != null) {
-            fontSize = xmlp.parseIntFromAttribute("size");
+            fontSize = parseMath(xmlp, xmlp.getAttributeNotNull("size")).intValue();
             StringList style = parseList(xmlp, "style");
             while(style != null) {
                 if("bold".equalsIgnoreCase(style.getValue())) {
