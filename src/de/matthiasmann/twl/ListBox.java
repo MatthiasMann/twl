@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -475,11 +475,23 @@ public class ListBox<T> extends Widget {
                     }
                     return true;
                 }
-                break;
+                return false;
             }
             return true;
         case KEY_RELEASED:
-            return true;
+            switch (evt.getKeyCode()) {
+            case Event.KEY_UP:
+            case Event.KEY_DOWN:
+            case Event.KEY_LEFT:
+            case Event.KEY_RIGHT:
+            case Event.KEY_PRIOR:
+            case Event.KEY_NEXT:
+            case Event.KEY_HOME:
+            case Event.KEY_END:
+            case Event.KEY_RETURN:
+                return true;
+            }
+            return false;
         }
         // delegate to children (listbox, displays, etc...)
         if(super.handleEvent(evt)) {
