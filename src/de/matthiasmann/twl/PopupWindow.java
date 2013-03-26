@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -268,10 +268,8 @@ public class PopupWindow extends Container {
             mouseClickedOutside(evt);
             return true;
         }
-        if(closeOnEscape &&
-                evt.isKeyPressedEvent() &&
-                evt.getKeyCode() == Event.KEY_ESCAPE) {
-            requestPopupClose();
+        if(evt.isKeyPressedEvent() && evt.getKeyCode() == Event.KEY_ESCAPE) {
+            escapePressed(evt);
             return true;
         }
         // eat all events
@@ -329,6 +327,21 @@ public class PopupWindow extends Container {
         }
     }
 
+    /**
+     * Called when the escape key was pressed.
+     *
+     * The default implementation calls {@code requestPopupClose} when
+     * {@code closeOnEscape} is active.
+     *
+     * @param evt The click event
+     * @see #setCloseOnEscape(boolean)
+     */
+    protected void escapePressed(Event evt) {
+        if(closeOnEscape) {
+            requestPopupClose();
+        }
+    }
+    
     @Override
     void setParent(Widget parent) {
         if(!(parent instanceof GUI)) {
