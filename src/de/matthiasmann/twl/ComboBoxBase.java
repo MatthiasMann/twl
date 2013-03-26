@@ -48,7 +48,12 @@ public abstract class ComboBoxBase extends Widget {
     
     protected ComboBoxBase() {
         this.button = new Button(getAnimationState());
-        this.popup = new PopupWindow(this);
+        this.popup = new PopupWindow(this) {
+            @Override
+            protected void escapePressed(Event evt) {
+                ComboBoxBase.this.popupEscapePressed(evt);
+            }
+        };
 
         button.addCallback(new Runnable() {
             public void run() {
@@ -152,5 +157,15 @@ public abstract class ComboBoxBase extends Widget {
         super.keyboardFocusLost();
         setRecursive(getLabel(), STATE_COMBOBOX_KEYBOARD_FOCUS, false);
     }
-
+    
+    /**
+     * Called when the escape key is pressed in the open popup.
+     * 
+     * The default implementation closes the popup.
+     * 
+     * @param evt the event
+     */
+    protected void popupEscapePressed(Event evt) {
+        popup.closePopup();
+    }
 }
