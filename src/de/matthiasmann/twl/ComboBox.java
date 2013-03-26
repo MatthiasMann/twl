@@ -59,6 +59,7 @@ public class ComboBox<T> extends ComboBoxBase {
     boolean noSelectionIsError;
     boolean computeWidthFromModel;
     int modelWidth = INVALID_WIDTH;
+    int selectionOnPopupOpen = ListBox.NO_SELECTION;
     
     @SuppressWarnings("OverridableMethodCallInConstructor")
     public ComboBox(ListSelectionModel<T> model) {
@@ -227,10 +228,17 @@ public class ComboBox<T> extends ComboBoxBase {
     protected boolean openPopup() {
         if(super.openPopup()) {
             popup.validateLayout();
+            selectionOnPopupOpen = getSelected();
             listbox.scrollToSelected();
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected void popupEscapePressed(Event evt) {
+        setSelected(selectionOnPopupOpen);
+        super.popupEscapePressed(evt);
     }
     
     /**
