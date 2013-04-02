@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -74,6 +74,52 @@ public class LWJGLCacheContext implements CacheContext {
         if(!valid) {
             throw new IllegalStateException("CacheContext already destroyed");
         }
+        TextureDecoder decoder = (TextureDecoder)textureUrl.getContent(new Class<?>[]{TextureDecoder.class});
+        if(decoder != null) {
+            return createDecoderTexture(textureUrl, decoder, fmt, filter, tpp);
+        } else {
+            return createPNGTexture(textureUrl, fmt, filter, tpp);
+        }
+    }
+    
+    private LWJGLTexture createDecoderTexture(URL textureUrl, TextureDecoder dec, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter, TexturePostProcessing tpp) throws IOException {
+        dec.open();
+        try {
+            fmt = dec.decideTextureFormat(fmt);
+            if(fmt == null) {
+                throw new NullPointerException("TextureDecoder.decideTextureFormat() returned null");
+            }
+            int width = dec.getWidth();
+            int height = dec.getHeight();
+            int maxTextureSize = renderer.maxTextureSize;
+
+            if(width > maxTextureSize || height > maxTextureSize) {
+                throw new IOException("Texture size too large. Maximum supported texture by this system is " + maxTextureSize);
+            }
+
+            int stride = width * fmt.getPixelSize();
+            ByteBuffer buf = BufferUtils.createByteBuffer(stride * height);
+            dec.decode(buf, stride, fmt);
+            buf.flip();
+
+            if(tpp != null) {
+                tpp.process(buf, stride, width, height, fmt);
+            }
+
+            LWJGLTexture texture = new LWJGLTexture(renderer, width, height, buf, fmt, filter);
+            allTextures.add(texture);
+            return texture;
+        } catch (IOException ex) {
+            throw (IOException)(new IOException("Unable to load texture via decoder: " + textureUrl).initCause(ex));
+        } finally {
+            try {
+                dec.close();
+            } catch (IOException ex) {
+            }
+        }
+    }
+    
+    private LWJGLTexture createPNGTexture(URL textureUrl, LWJGLTexture.Format fmt, LWJGLTexture.Filter filter, TexturePostProcessing tpp) throws IOException {
         InputStream is = textureUrl.openStream();
         try {
             PNGDecoder dec = new PNGDecoder(is);
