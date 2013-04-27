@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -54,6 +54,8 @@ import java.util.concurrent.ExecutorService;
  * 
  * <p>The multi line version uses internal horizontal scrolling, but for
  * vertical scrolling it should be wrapped into a {@see ScrollPane}.</p>
+ * 
+ * <p>NOTE: The EditField font is controlled by the sub widget "renderer".</p>
  * 
  * @author Matthias Mann
  */
