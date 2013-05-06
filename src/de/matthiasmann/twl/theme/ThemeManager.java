@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -273,6 +273,10 @@ public class ThemeManager {
 
     public Object getCursor(String name) {
         return imageManager.getCursor(name);
+    }
+    
+    public Font getFont(String name) {
+        return fonts.get(name);
     }
 
     public ParameterMap getConstants() {
