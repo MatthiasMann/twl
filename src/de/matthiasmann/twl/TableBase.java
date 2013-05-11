@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -1238,6 +1238,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
     protected int dragStartX;
     protected int dragStartColWidth;
     protected int dragStartSumWidth;
+    protected MouseCursor dragCursor;
 
     protected void cancelDragging() {
         if(dragActive == DRAG_USER) {
@@ -1263,7 +1264,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                     dragActive = DRAG_IGNORE;
                     break;
             }
-            setMouseCursor(normalCursor);
+            dragCursor = null;
         }
 
         return true;
@@ -1320,7 +1321,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                     break;
                 }
                 case DRAG_USER: {
-                    setMouseCursor(dragListener.dragged(evt));
+                    dragCursor = dragListener.dragged(evt);
                     if(evt.isMouseDragEnd()) {
                         dragListener.dragStopped(evt);
                     }
@@ -1333,7 +1334,7 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             }
             if(evt.isMouseDragEnd()) {
                 dragActive = DRAG_INACTIVE;
-                setMouseCursor(normalCursor);
+                dragCursor = null;
             }
             return true;
         }
@@ -1346,8 +1347,6 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
             // lastMouseRow and lastMouseColumn have been updated in routeMouseEvent()
             
             if(column >= 0 && (column < getNumColumns()-1 || !fixedWidthMode)) {
-                setMouseCursor(columnResizeCursor);
-
                 if(evtType == Event.Type.MOUSE_BTNDOWN) {
                     dragStartColWidth = getColumnWidth(column);
                     dragColumn = column;
@@ -1372,11 +1371,10 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
 
             if(evt.isMouseDragEvent()) {
                 if(dragListener != null && dragListener.dragStarted(row, row, evt)) {
-                    setMouseCursor(dragListener.dragged(evt));
+                    dragCursor = dragListener.dragged(evt);
                     dragActive = DRAG_USER;
                 } else {
                     dragActive = DRAG_IGNORE;
-                    setMouseCursor(dragNotPossibleCursor);
                 }
                 return true;
             }
@@ -1401,11 +1399,35 @@ public abstract class TableBase extends Widget implements ScrollPane.Scrollable,
                 }
             }
         }
-
-        setMouseCursor(normalCursor);
-
+        
         // let ScrollPane handle mouse wheel
         return evtType != Event.Type.MOUSE_WHEEL;
+    }
+
+    @Override
+    public MouseCursor getMouseCursor(Event evt) {
+        switch(dragActive) {
+            case DRAG_COLUMN_HEADER:
+                return columnResizeCursor;
+            case DRAG_USER:
+                return dragCursor;
+            case DRAG_IGNORE:
+                return dragNotPossibleCursor;
+        }
+        
+        boolean inHeader = isMouseInColumnHeader(evt.getMouseY());
+        if(inHeader) {
+            final int column = getColumnSeparatorUnderMouse(evt.getMouseX());
+            final boolean fixedWidthMode = isFixedWidthMode();
+
+            // lastMouseRow and lastMouseColumn have been updated in routeMouseEvent()
+            
+            if(column >= 0 && (column < getNumColumns()-1 || !fixedWidthMode)) {
+                return columnResizeCursor;
+            }
+        }
+        
+        return normalCursor;
     }
 
     private void columnHeaderDragged(int newWidth) {
