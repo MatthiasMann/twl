@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -31,6 +31,7 @@ package de.matthiasmann.twl.theme;
 
 import de.matthiasmann.twl.Border;
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.utils.AbstractMathInterpreter;
 import de.matthiasmann.twl.utils.StateExpression;
 import de.matthiasmann.twl.utils.TextUtil;
 import de.matthiasmann.twl.utils.XMLParser;
@@ -134,6 +135,29 @@ final class ParserUtil {
         }
     }
 
+    static int parseIntExpressionFromAttribute(XMLParser xmlp, String attribute, int defaultValue, AbstractMathInterpreter interpreter) throws XmlPullParserException {
+        try {
+            String value = xmlp.getAttributeValue(null, attribute);
+            if(value == null) {
+                return defaultValue;
+            }
+            if(TextUtil.isInteger(value)) {
+                return Integer.parseInt(value);
+            }
+            Number n = interpreter.execute(value);
+            if(!(n instanceof Integer)) {
+                if(n.intValue() != n.doubleValue()) {
+                    throw xmlp.error("Not an integer");
+                }
+            }
+            return n.intValue();
+        } catch(NumberFormatException ex) {
+            throw xmlp.error("Unable to parse", ex);
+        } catch(ParseException ex) {
+            throw xmlp.error("Unable to parse", ex);
+        }
+    }
+    
     static<V> SortedMap<String,V> find(SortedMap<String,V> map, String baseName) {
         return map.subMap(baseName, baseName.concat("\uFFFF"));
     }

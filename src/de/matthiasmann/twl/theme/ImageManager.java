@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -36,6 +36,7 @@ import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
 import de.matthiasmann.twl.renderer.Renderer;
 import de.matthiasmann.twl.renderer.Texture;
+import de.matthiasmann.twl.utils.AbstractMathInterpreter;
 import de.matthiasmann.twl.utils.StateExpression;
 import de.matthiasmann.twl.utils.StateSelect;
 import de.matthiasmann.twl.utils.TextUtil;
@@ -56,10 +57,11 @@ import org.xmlpull.v1.XmlPullParserException;
  */
 class ImageManager {
 
-    private final ParameterMapImpl constants;
+    final ParameterMapImpl constants;
     private final Renderer renderer;
     private final TreeMap<String, Image> images;
     private final TreeMap<String, MouseCursor> cursors;
+    private final MathInterpreter mathInterpreter;
 
     private Texture currentTexture;
     
@@ -71,6 +73,7 @@ class ImageManager {
         this.renderer = renderer;
         this.images = new TreeMap<String, Image>();
         this.cursors = new TreeMap<String, MouseCursor>();
+        this.mathInterpreter = new MathInterpreter();
 
         images.put("none", NONE);
         cursors.put("os-default", NOCURSOR);
@@ -173,7 +176,7 @@ class ImageManager {
         }
     }
 
-    private Border getBorder(Image image, Border border) {
+    private static Border getBorder(Image image, Border border) {
         if(border == null && (image instanceof HasBorder)) {
             border = ((HasBorder)image).getBorder();
         }
@@ -758,8 +761,8 @@ class ImageManager {
         params.inset = ParserUtil.parseBorderFromAttribute(xmlp, "inset");
         params.repeatX = xmlp.parseBoolFromAttribute("repeatX", false);
         params.repeatY = xmlp.parseBoolFromAttribute("repeatY", false);
-        params.sizeOverwriteH = xmlp.parseIntFromAttribute("sizeOverwriteH", -1);
-        params.sizeOverwriteV = xmlp.parseIntFromAttribute("sizeOverwriteV", -1);
+        params.sizeOverwriteH = ParserUtil.parseIntExpressionFromAttribute(xmlp, "sizeOverwriteH", -1, mathInterpreter);
+        params.sizeOverwriteV = ParserUtil.parseIntExpressionFromAttribute(xmlp, "sizeOverwriteV", -1, mathInterpreter);
         params.center = xmlp.parseBoolFromAttribute("center", false);
     }
 
@@ -787,5 +790,40 @@ class ImageManager {
         float zoomY;
         float zoomCenterX;
         float zoomCenterY;
+    }
+    
+    class MathInterpreter extends AbstractMathInterpreter {
+        public void accessVariable(String name) {
+            Image img = getImage(name);
+            if(img != null) {
+                push(img);
+                return;
+            }
+            Object obj = constants.getParam(name);
+            if(obj != null) {
+                push(obj);
+                return;
+            }
+            throw new IllegalArgumentException("variable not found: " + name);
+        }
+
+        @Override
+        protected Object accessField(Object obj, String field) {
+            if(obj instanceof ParameterMapImpl) {
+                Object result = ((ParameterMapImpl)obj).getParam(field);
+                if(result == null) {
+                    throw new IllegalArgumentException("field not found: " + field);
+                }
+                return result;
+            }
+            if((obj instanceof Image) && "border".equals(field)) {
+                Border border = null;
+                if(obj instanceof HasBorder) {
+                    border = ((HasBorder)obj).getBorder();
+                }
+                return (border != null) ? border : Border.ZERO;
+            }
+            return super.accessField(obj, field);
+        }
     }
 }
