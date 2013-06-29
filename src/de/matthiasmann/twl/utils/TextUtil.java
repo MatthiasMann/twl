@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -206,6 +206,32 @@ public final class TextUtil {
         return result;
     }
 
+    /**
+     * Checks if the passed string is an integer.
+     * <p>It checks the following regular expression:
+     * <pre>-?[0-9]+</pre></p>
+     * 
+     * @param str the string to check
+     * @return true if the string matches the above condition
+     */
+    public static boolean isInteger(String str) {
+        int idx = 0;
+        int len = str.length();
+        if(len > 0 && str.charAt(0) == '-') {
+            idx++;
+        }
+        if(idx == len) {
+            return false;
+        }
+        do {
+            char ch = str.charAt(idx++);
+            if(ch < '0' || ch > '9') {
+                return false;
+            }
+        }while(idx < len);
+        return true;
+    }
+    
     /**
      * Counts the comma separated elements.
      * @param str the string to analyze
