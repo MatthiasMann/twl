@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2011, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -139,7 +139,7 @@ public class SimpleMathParser {
 
     private void parseIdentOrConst() throws ParseException {
         int ch = peek();
-        if(Character.isJavaIdentifierStart((char)ch)) {
+        if(ch == '\'' || Character.isJavaIdentifierStart((char)ch)) {
             String ident = parseIdent();
             ch = peek();
             if(ch == '(') {
@@ -262,7 +262,14 @@ public class SimpleMathParser {
         return -1;
     }
 
-    private String parseIdent() {
+    private String parseIdent() throws ParseException {
+        if(str.charAt(pos) == '\'') {
+            int start = ++pos;
+            pos = TextUtil.indexOf(str, '\'', pos);
+            String ident = str.substring(start, pos);
+            expect('\'');
+            return ident;
+        }
         int start = pos;
         while(pos < str.length() && Character.isJavaIdentifierPart(str.charAt(pos))) {
             pos++;
