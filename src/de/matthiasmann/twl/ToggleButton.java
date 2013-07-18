@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -30,9 +30,25 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.model.BooleanModel;
+import de.matthiasmann.twl.model.EnumModel;
+import de.matthiasmann.twl.model.IntegerModel;
+import de.matthiasmann.twl.model.OptionBooleanModel;
+import de.matthiasmann.twl.model.OptionEnumModel;
 import de.matthiasmann.twl.model.ToggleButtonModel;
 
 /**
+ * A toggle button.
+ * 
+ * <p>This class extends Button with the ablity to bind the selected state
+ * to a {@link BooleanModel}.</p>
+ * 
+ * <p>The prefert way to use this class is by using the callback on the
+ * {@code BooleanModel}.</p>
+ * 
+ * <p>To implement radio buttons one of the option models can be used:<ul>
+ * <li>{@link OptionBooleanModel} which is backed by an {@link IntegerModel}</li>
+ * <li>{@link OptionEnumModel} which is backed by an {@link EnumModel}</li>
+ * </ul></p>
  *
  * @author Matthias Mann
  */
