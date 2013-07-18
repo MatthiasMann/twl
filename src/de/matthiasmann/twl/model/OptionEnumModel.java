@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -42,8 +42,8 @@ package de.matthiasmann.twl.model;
  */
 public class OptionEnumModel<T extends Enum<T>> extends AbstractOptionModel {
 
-    private final EnumModel<T> optionState;
-    private final T optionCode;
+    protected final EnumModel<T> optionState;
+    protected final T optionCode;
 
     public OptionEnumModel(EnumModel<T> optionState, T optionCode) {
         if(optionState == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -41,8 +41,8 @@ package de.matthiasmann.twl.model;
  */
 public class OptionBooleanModel extends AbstractOptionModel {
 
-    private final IntegerModel optionState;
-    private final int optionCode;
+    protected final IntegerModel optionState;
+    protected final int optionCode;
 
     /**
      * Creates a new OptionBooleanModel with the specified IntegerModel and
