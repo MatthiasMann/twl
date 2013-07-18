@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2010, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -36,6 +36,8 @@ import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 
 /**
  * A generic button. Behavior is defined by a ButtonModel.
+ * 
+ * <p>To implement toggle or radio buttons use {@link ToggleButton}</p>
  * 
  * @author Matthias Mann
  */
