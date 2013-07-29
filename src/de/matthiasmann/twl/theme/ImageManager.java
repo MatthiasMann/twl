@@ -376,7 +376,7 @@ class ImageManager {
             for(int r=0 ; r<rows ; r++) {
                 final int imgY, imgH;
                 if(splity != null) {
-                    imgY = params.y + splity[r];
+                    imgY = (params.h < 0) ? (params.y - params.h - splity[r+1]) : (params.y + splity[r]);
                     imgH = (splity[r+1] - splity[r]) * Integer.signum(params.h);
                 } else {
                     imgY = params.y;
@@ -385,7 +385,7 @@ class ImageManager {
                 for(int c=0 ; c<columns ; c++) {
                     final int imgX, imgW;
                     if(splitx != null) {
-                        imgX = params.x + splitx[c];
+                        imgX = (params.w < 0) ? (params.x - params.w - splitx[c+1]) : (params.x + splitx[c]);
                         imgW = (splitx[c+1] - splitx[c]) * Integer.signum(params.w);
                     } else {
                         imgX = params.x;
