@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -31,6 +31,7 @@ package de.matthiasmann.twl.renderer;
 
 import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.Rect;
+import de.matthiasmann.twl.input.Input;
 import de.matthiasmann.twl.utils.StateSelect;
 import java.io.IOException;
 import java.net.URL;
@@ -47,6 +48,16 @@ public interface Renderer {
      * @return the elapsed time in milliseconds.
      */
     public long getTimeMillis();
+    
+    /**
+     * Returns the polled input object for this renderer target.
+     * 
+     * <p>When using the "push" method for input event generation
+     * return null.</p>
+     * 
+     * @return the Input object or null if none is available/used.
+     */
+    public Input getInput();
     
     /**
      * Setup rendering for TWL.

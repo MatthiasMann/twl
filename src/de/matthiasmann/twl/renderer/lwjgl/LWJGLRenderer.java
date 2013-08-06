@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,6 +32,8 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.Event;
 import de.matthiasmann.twl.Rect;
+import de.matthiasmann.twl.input.Input;
+import de.matthiasmann.twl.input.lwjgl.LWJGLInput;
 import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.CacheContext;
@@ -252,6 +254,14 @@ public class LWJGLRenderer implements Renderer, LineRenderer {
             time = (time * 1000) / res;
         }
         return time;
+    }
+    
+    /**
+     * Creates a new instance of {@link LWJGLInput}
+     * @return a new instance of {@code LWJGLInput}
+     */
+    public Input getInput() {
+        return new LWJGLInput();
     }
     
     protected void setupGLState() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  * 
  * All rights reserved.
  * 
@@ -30,7 +30,6 @@
 package de.matthiasmann.twl;
 
 import de.matthiasmann.twl.input.Input;
-import de.matthiasmann.twl.input.lwjgl.LWJGLInput;
 import de.matthiasmann.twl.renderer.AnimationState.StateKey;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Renderer;
@@ -160,14 +159,15 @@ public final class GUI extends Widget {
     }
 
     /**
-     * Constructs a new GUI manager with the given renderer, root pane and a LWJGLInput input source
+     * Constructs a new GUI manager with the given renderer, root pane and a
+     * input source obtained from the renderer.
      * 
      * @param rootPane the root pane
      * @param renderer the renderer
-     * @see LWJGLInput
+     * @see Renderer#getInput() 
      */
     public GUI(Widget rootPane, Renderer renderer) {
-        this(rootPane, renderer, new LWJGLInput());
+        this(rootPane, renderer, renderer.getInput());
     }
 
     /**
