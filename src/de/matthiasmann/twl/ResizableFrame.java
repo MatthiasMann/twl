@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -86,6 +86,7 @@ public class ResizableFrame extends Widget {
     private final MouseCursor[] cursors;
     private ResizableAxis resizableAxis = ResizableAxis.BOTH;
     private boolean draggable = true;
+    private boolean backgroundDraggable;
     private DragMode dragMode = DragMode.NONE;
     private int dragStartX;
     private int dragStartY;
@@ -165,7 +166,24 @@ public class ResizableFrame extends Widget {
         this.draggable = movable;
     }
 
-    public boolean hasTitleBar() {
+    public boolean isBackgroundDraggable() {
+        return backgroundDraggable;
+    }
+
+    /**
+     * Controls weather the ResizableFrame can be dragged via the background
+     * (eg space not occupied by any widget or a resizable edge), default is false.
+     * 
+     * <p>This works independent of {@link #setDraggable(boolean) }.</p>
+     * 
+     * @param backgroundDraggable if dragging via the background is allowed - default is false.
+     * @see #setDraggable(boolean) 
+     */
+    public void setBackgroundDraggable(boolean backgroundDraggable) {
+        this.backgroundDraggable = backgroundDraggable;
+    }
+
+    public final boolean hasTitleBar() {
         return titleWidget != null && titleWidget.getParent() == this;
     }
 
@@ -574,7 +592,7 @@ public class ResizableFrame extends Widget {
         boolean top = my < getInnerY();
         boolean bot = my >= getInnerBottom();
 
-        if(titleWidget != null && titleWidget.getParent() == this) {
+        if(hasTitleBar()) {
             if(titleWidget.isInside(mx, my)) {
                 if(draggable) {
                     return DragMode.POSITION;
@@ -590,6 +608,9 @@ public class ResizableFrame extends Widget {
         }
 
         if(resizableAxis == ResizableAxis.NONE) {
+            if(backgroundDraggable) {
+                return DragMode.POSITION;
+            }
             return DragMode.NONE;
         }
         
@@ -629,6 +650,9 @@ public class ResizableFrame extends Widget {
         }
         if(bot) {
             return DragMode.EDGE_BOTTOM;
+        }
+        if(backgroundDraggable) {
+            return DragMode.POSITION;
         }
         return DragMode.NONE;
     }
