@@ -66,7 +66,7 @@ class ImageManager {
     private Texture currentTexture;
     
     static final EmptyImage NONE = new EmptyImage(0, 0);
-    static final MouseCursor NOCURSOR = new MouseCursor() {};
+    private static final MouseCursor INHERIT_CURSOR = new MouseCursor() {};
     
     ImageManager(ParameterMapImpl constants, Renderer renderer) {
         this.constants = constants;
@@ -76,7 +76,8 @@ class ImageManager {
         this.mathInterpreter = new MathInterpreter();
 
         images.put("none", NONE);
-        cursors.put("os-default", NOCURSOR);
+        cursors.put("os-default", MouseCursor.OS_DEFAULT);
+        cursors.put("inherit", INHERIT_CURSOR);
     }
 
     Image getImage(String name) {
@@ -116,7 +117,7 @@ class ImageManager {
     }
 
     Map<String, MouseCursor> getCursors(String ref, String name) {
-        return ParserUtil.resolve(cursors, ref, name, NOCURSOR);
+        return ParserUtil.resolve(cursors, ref, name, INHERIT_CURSOR);
     }
 
     void parseImages(XMLParser xmlp, URL baseUrl) throws XmlPullParserException, IOException {
@@ -166,7 +167,7 @@ class ImageManager {
     }
 
     private MouseCursor unwrapCursor(MouseCursor cursor) {
-        return (cursor == NOCURSOR) ? null : cursor;
+        return (cursor == INHERIT_CURSOR) ? null : cursor;
     }
     
     private void checkImageName(String name, XMLParser xmlp) throws XmlPullParserException, XmlPullParserException {
@@ -204,7 +205,7 @@ class ImageManager {
             }
             cursor = currentTexture.createCursor(imageParams.x, imageParams.y, imageParams.w, imageParams.h, hotSpotX, hotSpotY, imageRef);
             if(cursor == null) {
-                cursor = NOCURSOR;
+                cursor = MouseCursor.OS_DEFAULT;
             }
         }
         cursors.put(name, cursor);

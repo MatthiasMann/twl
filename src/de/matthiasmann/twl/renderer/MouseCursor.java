@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2009, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -29,9 +29,20 @@
  */
 package de.matthiasmann.twl.renderer;
 
+import de.matthiasmann.twl.GUI;
+
 /**
  *
  * @author Matthias Mann
  */
 public interface MouseCursor {
+    
+    /**
+     * An alias for the standard OS mouse cursor.
+     * 
+     * <p>{@link GUI#setCursor() } will replace that with null before
+     * calling {@link Renderer#setCursor(de.matthiasmann.twl.renderer.MouseCursor) }</p>
+     */
+    public static final MouseCursor OS_DEFAULT = new MouseCursor() {};
+
 }

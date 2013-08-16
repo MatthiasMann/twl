@@ -689,6 +689,9 @@ public final class GUI extends Widget {
             }
             widget = widget.getParent();
         }
+        if(cursor == MouseCursor.OS_DEFAULT) {
+            cursor = null;
+        }
         renderer.setCursor(cursor);
     }
 
