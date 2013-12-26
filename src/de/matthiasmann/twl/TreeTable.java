@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2013, Matthias Mann
  *
  * All rights reserved.
  *
@@ -166,7 +166,7 @@ public class TreeTable extends TableBase {
             TreeTableNode parent = node.getParent();
             int row = getRowFromNodeExpand(parent);
             int idx = parent.getChildIndex(node);
-            NodeState ns = HashEntry.get(nodeStateTable, parent);
+            NodeState ns = getOrCreateNodeState(parent);
             ns.setValue(true);
             if(ns.childSizes == null) {
                 ns.initChildSizes();
