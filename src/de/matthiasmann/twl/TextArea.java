@@ -1699,6 +1699,9 @@ public class TextArea extends Widget {
                 box.curY = box.computeTopPadding(marginTop);
                 
                 Image image = selectImage(rowStyle, StyleAttribute.BACKGROUND_IMAGE);
+                if(image == null) {
+                    image = createBackgroundColor(rowStyle);
+                }
                 if(image != null) {
                     rowBGImage = new LImage(te, image);
                     rowBGImage.y = box.curY;
