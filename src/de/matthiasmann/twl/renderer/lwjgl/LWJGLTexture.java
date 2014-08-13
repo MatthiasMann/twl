@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2012, Matthias Mann
+ * Copyright (c) 2008-2014, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,6 +32,7 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.renderer.MouseCursor;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.QueriablePixels;
 import de.matthiasmann.twl.renderer.Resource;
 import de.matthiasmann.twl.renderer.Texture;
 import de.matthiasmann.twl.utils.PNGDecoder;
@@ -49,7 +50,7 @@ import org.lwjgl.opengl.Util;
  *
  * @author Matthias Mann
  */
-public class LWJGLTexture implements Texture, Resource {
+public class LWJGLTexture implements Texture, Resource, QueriablePixels {
 
     public enum Format {
         ALPHA(GL11.GL_ALPHA, GL11.GL_ALPHA8, PNGDecoder.Format.ALPHA),
@@ -243,6 +244,68 @@ public class LWJGLTexture implements Texture, Resource {
             return cursor;
         }
         return null;
+    }
+
+    public int getPixelValue(int x, int y) {
+        if(x < 0 || y < 0 || x >= width || y >= height) {
+            throw new IllegalArgumentException();
+        }
+        
+        int stride = texDataFmt.getPixelSize() * this.width;
+        int offset;
+        int a, r, g, b;
+        
+        switch(texDataFmt) {
+        case RGB:
+            offset = y*stride + x*3;
+            r = texData.get(offset + 0) & 255;
+            g = texData.get(offset + 1) & 255;
+            b = texData.get(offset + 2) & 255;
+            a = 255;
+            break;
+        case RGBA:
+            offset = y*stride + x*4;
+            r = texData.get(offset + 0) & 255;
+            g = texData.get(offset + 1) & 255;
+            b = texData.get(offset + 2) & 255;
+            a = texData.get(offset + 3) & 255;
+            break;
+        case ABGR:
+            offset = y*stride + x*4;
+            r = texData.get(offset + 3) & 255;
+            g = texData.get(offset + 2) & 255;
+            b = texData.get(offset + 1) & 255;
+            a = texData.get(offset + 0) & 255;
+            break;
+        case LUMINANCE:
+            offset = y*stride + x;
+            g = texData.get(offset) & 255;
+            r = g;
+            b = g;
+            a = 255;
+            break;
+        case LUMINANCE_ALPHA:
+            offset = y*stride + x*2;
+            g = texData.get(offset + 0) & 255;
+            r = g;
+            b = g;
+            a = texData.get(offset + 1) & 255;
+            break;
+        case ALPHA:
+            offset = y*stride + x;
+            r = 255;
+            g = 255;
+            b = 255;
+            a = texData.get(offset) & 255;
+            break;
+        default:
+            throw new IllegalStateException("Unsupported color format");
+        }
+        
+        return ((a & 255) << 24) |
+                ((r & 255) << 16) |
+                ((g & 255) <<  8) |
+                ((b & 255)      );
     }
 
     public void themeLoadingDone() {

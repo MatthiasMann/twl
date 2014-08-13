@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008, Matthias Mann
+ * Copyright (c) 2008-2014, Matthias Mann
  *
  * All rights reserved.
  *
@@ -32,6 +32,7 @@ package de.matthiasmann.twl.renderer.lwjgl;
 import de.matthiasmann.twl.Color;
 import de.matthiasmann.twl.renderer.AnimationState;
 import de.matthiasmann.twl.renderer.Image;
+import de.matthiasmann.twl.renderer.QueriablePixels;
 import de.matthiasmann.twl.renderer.SupportsDrawRepeat;
 import org.lwjgl.opengl.GL11;
 
@@ -40,7 +41,7 @@ import org.lwjgl.opengl.GL11;
  * 
  * @author Matthias Mann
  */
-public class TextureArea extends TextureAreaBase implements Image, SupportsDrawRepeat {
+public class TextureArea extends TextureAreaBase implements Image, SupportsDrawRepeat, QueriablePixels {
 
     protected static final int REPEAT_CACHE_SIZE = 10;
     
@@ -58,6 +59,44 @@ public class TextureArea extends TextureAreaBase implements Image, SupportsDrawR
         super(src);
         this.texture = src.texture;
         this.tintColor = tintColor;
+    }
+
+    public int getPixelValue(int x, int y) {
+        if(x < 0 || y < 0 || x >= width || y >= height) {
+            throw new IllegalArgumentException();
+        }
+        
+        int texWidth = texture.getTexWidth();
+        int texHeight = texture.getTexHeight();
+        
+        int baseX = (int)(tx0*texWidth);
+        int baseY = (int)(ty0*texHeight);
+        
+        if(tx0 > tx1) {
+            x = baseX - x;
+        } else {
+            x = baseX + x;
+        }
+        
+        if(ty0 > ty1) {
+            y = baseY - y;
+        } else {
+            y = baseY + y;
+        }
+        
+        if(x < 0) {
+            x = 0;
+        } else if(x >= texWidth) {
+            x = texWidth-1;
+        }
+        
+        if(y < 0) {
+            y = 0;
+        } else if(y >= texHeight) {
+            y = texHeight-1;
+        }
+        
+        return texture.getPixelValue(x, y);
     }
 
     public void draw(AnimationState as, int x, int y) {
