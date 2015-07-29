@@ -143,7 +143,7 @@ public final class TextUtil {
     /**
      * Returns a whitespace trimmed substring.
      * 
-     * This method is mostly equivant to
+     * This method is mostly equivalent to
      * <pre>{@code s.subSequence(start).toString().trim() }</pre>
      * 
      * @param s the sequence
@@ -158,7 +158,7 @@ public final class TextUtil {
     /**
      * Returns a whitespace trimmed substring.
      * 
-     * This method is mostly equivant to
+     * This method is mostly equivalent to
      * <pre>{@code s.subSequence(start, end).toString().trim() }</pre>
      * 
      * @param s the sequence
@@ -196,10 +196,21 @@ public final class TextUtil {
      * @throws NumberFormatException if the string could not be parsed
      */
     public static int[] parseIntArray(String str) throws NumberFormatException {
+        return parseIntArray(str, ',');
+    }
+    
+    /**
+     * Parse a list of separated integers. No space is allowed between separator and numbers
+     * @param str the string to parse
+     * @param separator the separator character
+     * @return the parsed integer array. Contains at least 1 element.
+     * @throws NumberFormatException if the string could not be parsed
+     */
+    public static int[] parseIntArray(String str, char separator) throws NumberFormatException {
         int count = countElements(str);
         int[] result = new int[count];
         for(int idx=0,pos=0 ; idx<count ; idx++) {
-            int comma = indexOf(str, ',', pos);
+            int comma = indexOf(str, separator, pos);
             result[idx] = Integer.parseInt(str.substring(pos, comma));
             pos = comma + 1;
         }
@@ -235,13 +246,23 @@ public final class TextUtil {
     /**
      * Counts the comma separated elements.
      * @param str the string to analyze
-     * @return the number of comma separated parts. Always &gt;= 1.
+     * @return the number of comma separated parts. Always &gt;= 1. unless the passed string is empty
      */
     public static int countElements(String str) {
+        return countElements(str, ',');
+    }
+    
+    /**
+     * Counts separated elements.
+     * @param str the string to analyze
+     * @param separator the separator character
+     * @return the number of comma separated parts. Always &gt;= 1. unless the passed string is empty
+     */
+    public static int countElements(String str, char separator) {
         int count = 0;
         for(int pos=0 ; pos<str.length() ;) {
             count++;
-            pos = indexOf(str, ',', pos) + 1;
+            pos = indexOf(str, separator, pos) + 1;
         }
         return count;
     }
