@@ -48,6 +48,7 @@ import de.matthiasmann.twl.utils.TintAnimator;
 public class ResizableFrame extends Widget {
 
     public static final StateKey STATE_FADE = StateKey.get("fade");
+    public static final StateKey STATE_FRAME_KEYBOARD_FOCUS = StateKey.get("frameKeyboardFocus");
 
     public enum ResizableAxis {
         NONE(false, false),
@@ -327,6 +328,18 @@ public class ResizableFrame extends Widget {
         return widget == titleWidget || widget == closeButton || widget == resizeHandle;
     }
 
+    protected void setFrameElementkeyboardFocus(boolean hasKeyboardFocus) {
+        if(titleWidget != null) {
+            titleWidget.getAnimationState().setAnimationState(STATE_FRAME_KEYBOARD_FOCUS, hasKeyboardFocus);
+        }
+        if(closeButton != null) {
+            closeButton.getAnimationState().setAnimationState(STATE_FRAME_KEYBOARD_FOCUS, hasKeyboardFocus);
+        }
+        if(resizeHandle != null) {
+            resizeHandle.getAnimationState().setAnimationState(STATE_FRAME_KEYBOARD_FOCUS, hasKeyboardFocus);
+        }
+    }
+    
     @Override
     protected void layout() {
         int minWidth = getMinWidth();
@@ -423,6 +436,7 @@ public class ResizableFrame extends Widget {
     @Override
     protected void keyboardFocusGained() {
         fadeTo(Color.WHITE, fadeDurationActivate);
+        setFrameElementkeyboardFocus(true);
     }
 
     @Override
@@ -430,6 +444,7 @@ public class ResizableFrame extends Widget {
         if(!hasOpenPopups() && super.isVisible()) {
             fadeTo(fadeColorInactive, fadeDurationDeactivate);
         }
+        setFrameElementkeyboardFocus(false);
     }
 
     @Override
