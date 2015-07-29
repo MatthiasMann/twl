@@ -206,6 +206,14 @@ public class ResizableFrame extends Widget {
         }
     }
 
+    public boolean hasCloseCallbacks() {
+        return closeButton.hasCallbacks();
+    }
+    
+    public void fireCloseCallbacks() {
+        closeButton.doCallback();
+    }
+    
     public int getFadeDurationActivate() {
         return fadeDurationActivate;
     }
