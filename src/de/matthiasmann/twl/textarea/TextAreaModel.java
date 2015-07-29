@@ -71,6 +71,12 @@ public interface TextAreaModel extends Iterable<TextAreaModel.Element> {
         RIGHT
     }
 
+    public enum WhiteSpace {
+        NORMAL,
+        PRE,
+        PRE_WRAP
+    }
+    
     public abstract class Element {
         private Style style;
 

@@ -35,6 +35,7 @@ import de.matthiasmann.twl.textarea.TextAreaModel.Display;
 import de.matthiasmann.twl.textarea.TextAreaModel.FloatPosition;
 import de.matthiasmann.twl.textarea.TextAreaModel.HAlignment;
 import de.matthiasmann.twl.textarea.TextAreaModel.VAlignment;
+import de.matthiasmann.twl.textarea.TextAreaModel.WhiteSpace;
 import de.matthiasmann.twl.utils.StringList;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -62,7 +63,7 @@ public final class StyleAttribute<T> {
     public static final StyleAttribute<Integer> TAB_SIZE = new StyleAttribute<Integer>(true, Integer.class, 8);
     public static final StyleAttribute<String> LIST_STYLE_IMAGE = new StyleAttribute<String>(true, String.class, "ul-bullet");
     public static final StyleAttribute<OrderedListType> LIST_STYLE_TYPE = new StyleAttribute<OrderedListType>(true, OrderedListType.class, OrderedListType.DECIMAL);
-    public static final StyleAttribute<Boolean> PREFORMATTED = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
+    public static final StyleAttribute<WhiteSpace> WHITE_SPACE = new StyleAttribute<WhiteSpace>(true, WhiteSpace.class, WhiteSpace.NORMAL);
     public static final StyleAttribute<Boolean> BREAKWORD = new StyleAttribute<Boolean>(true, Boolean.class, Boolean.FALSE);
     public static final StyleAttribute<Color> COLOR = new StyleAttribute<Color>(true, Color.class, Color.WHITE);
     public static final StyleAttribute<Color> COLOR_HOVER = new StyleAttribute<Color>(true, Color.class, null);

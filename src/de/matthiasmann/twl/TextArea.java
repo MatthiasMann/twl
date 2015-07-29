@@ -45,6 +45,7 @@ import de.matthiasmann.twl.textarea.Style;
 import de.matthiasmann.twl.textarea.StyleAttribute;
 import de.matthiasmann.twl.textarea.StyleSheet;
 import de.matthiasmann.twl.textarea.StyleSheetResolver;
+import de.matthiasmann.twl.textarea.TextAreaModel.WhiteSpace;
 import de.matthiasmann.twl.textarea.TextDecoration;
 import de.matthiasmann.twl.textarea.Value;
 import de.matthiasmann.twl.theme.StateSelectImage;
@@ -1061,7 +1062,7 @@ public class TextArea extends Widget {
         final String text = te.getText();
         final Style style = te.getStyle();
         final FontData fontData = createFontData(style);
-        final boolean pre = style.get(StyleAttribute.PREFORMATTED, styleClassResolver);
+        final WhiteSpace ws = style.get(StyleAttribute.WHITE_SPACE, styleClassResolver);
 
         if(fontData == null) {
             return;
@@ -1077,6 +1078,7 @@ public class TextArea extends Widget {
         
         box.setupTextParams(style, fontData.font, false);
 
+        boolean pre = ws != WhiteSpace.NORMAL;
         if(pre && !box.wasPreformatted) {
             box.nextLine(false);
         }
@@ -1085,7 +1087,7 @@ public class TextArea extends Widget {
             int idx = 0;
             while(idx < text.length()) {
                 int end = TextUtil.indexOf(text, '\n', idx);
-                layoutTextPre(box, te, fontData, text, idx, end, inheritHover);
+                layoutTextPre(box, te, fontData, text, idx, end, inheritHover, ws);
                 if(end < text.length() && text.charAt(end) == '\n') {
                     end++;
                     box.nextLine(true);
@@ -1223,7 +1225,7 @@ public class TextArea extends Widget {
     }
 
     private void layoutTextPre(Box box, TextAreaModel.TextElement te, FontData fontData,
-            String text, int textStart, int textEnd, boolean inheritHover) {
+            String text, int textStart, int textEnd, boolean inheritHover, WhiteSpace ws) {
         Font font = fontData.font;
         int idx = textStart;
         for(;;) {
@@ -1245,12 +1247,13 @@ public class TextArea extends Widget {
                 }
 
                 if(end > idx) {
-                    int count = font.computeVisibleGlpyhs(text, idx, end, box.getRemaining());
-                    if(count == 0 && !box.isAtStartOfLine()) {
-                        break;
+                    if(ws == WhiteSpace.PRE_WRAP) {
+                        int count = font.computeVisibleGlpyhs(text, idx, end, box.getRemaining());
+                        if(count == 0 && !box.isAtStartOfLine()) {
+                            break;
+                        }
+                        end = idx + Math.max(1, count);
                     }
-
-                    end = idx + Math.max(1, count);
 
                     LText lt = new LText(te, fontData, text, idx, end, box.doCacheText);
                     lt.x = box.getXAndAdvance(lt.width);

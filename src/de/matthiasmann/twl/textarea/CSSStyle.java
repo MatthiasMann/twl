@@ -31,6 +31,7 @@ package de.matthiasmann.twl.textarea;
 
 import de.matthiasmann.twl.utils.StringList;
 import de.matthiasmann.twl.Color;
+import de.matthiasmann.twl.textarea.TextAreaModel.WhiteSpace;
 import de.matthiasmann.twl.utils.ParameterStringParser;
 import de.matthiasmann.twl.utils.TextUtil;
 import java.util.HashMap;
@@ -108,7 +109,7 @@ public class CSSStyle extends Style {
             return;
         }
         if("white-space".equals(key)) {
-            parseEnum(StyleAttribute.PREFORMATTED, PRE, value);
+            parseEnum(StyleAttribute.WHITE_SPACE, WHITESPACE, value);
             return;
         }
         if("word-wrap".equals(key)) {
@@ -410,7 +411,7 @@ public class CSSStyle extends Style {
         return new StringList(part, parseList(value, end+1));
     }
     
-    static final HashMap<String, Boolean> PRE = new HashMap<String, Boolean>();
+    static final HashMap<String, WhiteSpace> WHITESPACE = new HashMap<String, WhiteSpace>();
     static final HashMap<String, Boolean> BREAKWORD = new HashMap<String, Boolean>();
     static final HashMap<String, OrderedListType> OLT = new HashMap<String, OrderedListType>();
     static final HashMap<String, Boolean> ITALIC = new HashMap<String, Boolean>();
@@ -433,8 +434,9 @@ public class CSSStyle extends Style {
     }
     
     static {
-        PRE.put("pre", Boolean.TRUE);
-        PRE.put("normal", Boolean.FALSE);
+        WHITESPACE.put("pre", WhiteSpace.PRE);
+        WHITESPACE.put("pre-wrap", WhiteSpace.PRE_WRAP);
+        WHITESPACE.put("normal", WhiteSpace.NORMAL);
 
         BREAKWORD.put("normal", Boolean.FALSE);
         BREAKWORD.put("break-word", Boolean.TRUE);

@@ -110,7 +110,7 @@ public class SimpleTextAreaModel extends HasCallback implements TextAreaModel {
      * @param preformatted if the text should be treated as pre-formated or not.
      */
     public void setText(String text, boolean preformatted) {
-        Style textstyle = style.with(StyleAttribute.PREFORMATTED, preformatted);
+        Style textstyle = style.with(StyleAttribute.WHITE_SPACE, WhiteSpace.PRE);
         element = new TextElement(textstyle, text);
         doCallback();
     }

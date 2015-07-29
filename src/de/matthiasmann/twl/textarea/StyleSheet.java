@@ -64,7 +64,7 @@ public class StyleSheet implements StyleSheetResolver {
     
     private static final Selector PRE_SELECTOR = new Selector("pre", null, null, null, null);
     static {
-        (PRE_SELECTOR.style = new CSSStyle()).put(StyleAttribute.PREFORMATTED, Boolean.TRUE);
+        (PRE_SELECTOR.style = new CSSStyle()).put(StyleAttribute.WHITE_SPACE, TextAreaModel.WhiteSpace.PRE);
         PRE_SELECTOR.score = 0x100;
     }
     
