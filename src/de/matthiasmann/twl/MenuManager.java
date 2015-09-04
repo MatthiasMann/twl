@@ -60,6 +60,7 @@ public class MenuManager extends PopupWindow {
                 popupTimer();
             }
         };
+        setCloseAndIgnoreMouseDownOutside(true);
     }
 
     public Runnable getCloseCallback() {
@@ -207,6 +208,10 @@ public class MenuManager extends PopupWindow {
         }
         if(evt.getType() == Event.Type.MOUSE_CLICKED) {
             mouseClickedOutside(evt);
+            return true;
+        }
+        if(evt.getType() == Event.Type.MOUSE_BTNDOWN) {
+            mouseButtonDownOutside(evt);
             return true;
         }
         return false;

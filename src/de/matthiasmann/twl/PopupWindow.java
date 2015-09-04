@@ -62,6 +62,7 @@ public class PopupWindow extends Container {
 
     private boolean closeOnClickedOutside = true;
     private boolean closeOnEscape = true;
+    private boolean closeAndIgnoreMouseDownOutside = false;
     private Runnable requestCloseCallback;
     
     /**
@@ -110,6 +111,22 @@ public class PopupWindow extends Container {
      */
     public void setCloseOnEscape(boolean closeOnEscape) {
         this.closeOnEscape = closeOnEscape;
+    }
+
+    public boolean isCloseAndIgnoreMouseDownOutside() {
+        return closeAndIgnoreMouseDownOutside;
+    }
+
+    /**
+     * Controls if the pop-up should close and ignore mouse down events outside of it's area.
+     * These mouse down events are then resend to the next lower level.
+     * 
+     * Default is false.
+     * 
+     * @param closeAndIgnoreMouseDownOutside 
+     */
+    public void setCloseAndIgnoreMouseDownOutside(boolean closeAndIgnoreMouseDownOutside) {
+        this.closeAndIgnoreMouseDownOutside = closeAndIgnoreMouseDownOutside;
     }
 
     public Runnable getRequestCloseCallback() {
@@ -260,6 +277,11 @@ public class PopupWindow extends Container {
      */
     @Override
     protected final boolean handleEvent(Event evt) {
+        if(evt.getType() == Event.Type.MOUSE_BTNDOWN &&
+                !isInside(evt.getMouseX(), evt.getMouseY())) {
+            mouseButtonDownOutside(evt);
+            return true;
+        }
         if(handleEventPopup(evt)) {
             return true;
         }
@@ -338,6 +360,20 @@ public class PopupWindow extends Container {
      */
     protected void escapePressed(Event evt) {
         if(closeOnEscape) {
+            requestPopupClose();
+        }
+    }
+    
+    /**
+     * Called when a mouse button was pressed outside of the popup.
+     * 
+     * The default implementation calls {@code requestPopupClose} when
+     * {@code closeAndIgnoreMouseDownOutside} is active.
+     * 
+     * @param evt The mouse down event
+     */
+    protected void mouseButtonDownOutside(Event evt) {
+        if(closeAndIgnoreMouseDownOutside) {
             requestPopupClose();
         }
     }

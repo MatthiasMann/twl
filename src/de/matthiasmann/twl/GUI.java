@@ -115,6 +115,7 @@ public final class GUI extends Widget {
     private long keyEventTime;
     private int keyRepeatDelay;
     private boolean popupEventOccured;
+    private boolean popupClosed;
     private Widget lastMouseDownWidget;
     private Widget lastMouseClickWidget;
     private PopupWindow boundDragPopup;
@@ -819,7 +820,10 @@ public final class GUI extends Widget {
                     mouseDownX = mouseX;
                     mouseDownY = mouseY;
                     dragButton = button;
-                    lastMouseDownWidget = sendMouseEvent(Event.Type.MOUSE_BTNDOWN, null);
+                    do {
+                        popupClosed = false;
+                        lastMouseDownWidget = sendMouseEvent(Event.Type.MOUSE_BTNDOWN, null);
+                    } while(popupClosed && lastMouseDownWidget instanceof PopupWindow && !((PopupWindow)lastMouseDownWidget).isOpen());
                 } else if(lastMouseDownWidget != null && boundDragPopup == null) {
                     // if another button is pressed while one button is already
                     // pressed then route the second button to the widget which
@@ -1149,6 +1153,7 @@ public final class GUI extends Widget {
         popup.getOwner().recalcOpenPopups(this);
         sendPopupEvent(Event.Type.POPUP_CLOSED);
         popupEventOccured = true;
+        popupClosed = true;
         closeInfoFromWidget(popup);
         requestKeyboardFocus(getTopPane());
         resendLastMouseMove();
