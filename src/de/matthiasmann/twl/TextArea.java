@@ -1258,6 +1258,7 @@ public class TextArea extends Widget {
                     LText lt = new LText(te, fontData, text, idx, end, box.doCacheText);
                     lt.x = box.getXAndAdvance(lt.width);
                     lt.marginTop = (short)box.marginTop;
+                    lt.href = box.href;
                     lt.inheritHover = inheritHover;
                     box.layout.add(lt);
                 }
@@ -1532,7 +1533,7 @@ public class TextArea extends Widget {
                 TextAreaModel.TableCellElement cell = te.getCell(row, col);
                 if(cell != null) {
                     Style cellStyle = cell.getStyle();
-                    int colspan = cell.getColspan();
+                    int colspan = Math.min(cell.getColspan(), numColumns - col);
                     int cellWidth = convertToPX(cellStyle, StyleAttribute.WIDTH, maxTableWidth, Integer.MIN_VALUE);
                     if(cellWidth == Integer.MIN_VALUE && (colspan > 1 || !hasFixedWidth)) {
                         int paddingLeft = Math.max(cellPadding, convertToPX0(cellStyle, StyleAttribute.PADDING_LEFT, maxTableWidth));
@@ -1723,7 +1724,8 @@ public class TextArea extends Widget {
                 TextAreaModel.TableCellElement cell = te.getCell(row, col);
                 int width = columnWidth[col];
                 if(cell != null) {
-                    for(int c=1 ; c<cell.getColspan() ; c++) {
+                    int colspan = Math.min(cell.getColspan(), numColumns - col);
+                    for(int c=1 ; c<colspan ; c++) {
                         width += columnSpacing[col+c] + columnWidth[col+c];
                     }
 
