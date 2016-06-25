@@ -2900,16 +2900,24 @@ public class Widget {
     }
 
     boolean setMouseOverChild(Widget child, Event evt) {
-        if (lastChildMouseOver != child) {
+        final Widget childMouseOver = lastChildMouseOver;
+        if (childMouseOver != child) {
             if(child != null) {
-                Widget result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));
+                Widget result = null;
+                try {
+                    // temporary set lastChildMouseOver while processing the MOUSE_ENTERED event
+                    lastChildMouseOver = child;
+                    result = child.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_ENTERED));
+                } finally {
+                    lastChildMouseOver = childMouseOver;
+                }
                 if(result == null) {
                     // this child widget doesn't want mouse events
                     return false;
                 }
             }
-            if (lastChildMouseOver != null) {
-                lastChildMouseOver.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_EXITED));
+            if (childMouseOver != null) {
+                childMouseOver.routeMouseEvent(evt.createSubEvent(Event.Type.MOUSE_EXITED));
             }
             lastChildMouseOver = child;
         }
