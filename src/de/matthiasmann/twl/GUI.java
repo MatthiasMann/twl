@@ -78,6 +78,32 @@ public final class GUI extends Widget {
         public void failed(Exception ex);
     }
 
+    /**
+     * Implement this interface on a {@link Widget} to adjust it's tooltip locations
+     */
+    public interface TooltipPositionAdjuster {
+        public static class TooltipPositionData {
+            public int x;
+            public int y;
+            public Alignment alignment;
+
+            public TooltipPositionData(int x, int y, Alignment alignment) {
+                this.x = x;
+                this.y = y;
+                this.alignment = alignment;
+            }
+        }
+        
+        /**
+         * Called to adjust the tooltip location.
+         * 
+         * Modify the values in the passed object to the desired location.
+         * 
+         * @param tpd a temporary object containing the position data
+         */
+        public void adjustTooltipPosition(TooltipPositionData tpd);
+    }
+    
     private static final int DRAG_DIST = 3;
     private static final int DBLCLICK_TIME = 500;   // ms
     private static final int KEYREPEAT_INITIAL_DELAY = 250; // ms
@@ -1022,12 +1048,17 @@ public final class GUI extends Widget {
             if(widgetUnderMouse != null && (
                     ((curTime-tooltipEventTime) > tooltipDelay) ||
                     (hadOpenTooltip && (curTime-tooltipClosedTime) < tooltipReappearDelay))) {
-                setTooltip(
+                TooltipPositionAdjuster.TooltipPositionData tpd = new TooltipPositionAdjuster.TooltipPositionData(
                         event.mouseX + tooltipOffsetX,
                         event.mouseY + tooltipOffsetY,
+                        Alignment.BOTTOMLEFT);
+                if(widgetUnderMouse instanceof TooltipPositionAdjuster) {
+                    ((TooltipPositionAdjuster)widgetUnderMouse).adjustTooltipPosition(tpd);
+                }
+                setTooltip(tpd.x, tpd.y,
                         widgetUnderMouse,
                         widgetUnderMouse.getTooltipContentAt(event.mouseX, event.mouseY),
-                        Alignment.BOTTOMLEFT);
+                        tpd.alignment);
             } else {
                 hideTooltip();
             }
